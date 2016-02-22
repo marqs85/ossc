@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# This script creates the ucosii_net_zipfs Board Support Package (BSP).
+
+BSP_TYPE=hal
+BSP_DIR=.
+SOPC_DIR=../../
+SOPC_FILE=../../sys.sopcinfo
+NIOS2_BSP_ARGS=""
+CPU_NAME=
+
+if [ -n "$CPU_NAME" ]; then
+  NIOS2_BSP_ARGS="$NIOS2_BSP_ARGS --cpu-name $CPU_NAME"
+fi
+
+# Don't run make if create-this-app script is called with --no-make arg
+SKIP_MAKE=
+while [ $# -gt 0 ]
+do
+  case "$1" in
+		--no-make)
+        	SKIP_MAKE=1
+        	;;
+		*)
+			NIOS2_BSP_ARGS="$NIOS2_BSP_ARGS $1"
+			;;
+  esac
+  shift
+done
+
+
+# Run nios2-bsp utility to create a hal BSP in this directory
+# for the system with a .sopc file in $SOPC_FILE.
+# Deprecating $SOPC_DIR in 10.1. Multiple .sopcinfo files in a directory may exist.
+
+if [ -z "$SOPC_FILE" ]; then
+	echo "WARNING: Use of a directory for locating a .sopcinfo file is deprecated in 10.1. Multiple .sopcinfo files may exist. You must specify the full .sopcinfo path."
+	cmd="nios2-bsp $BSP_TYPE $BSP_DIR $SOPC_DIR $NIOS2_BSP_ARGS"
+else
+	cmd="nios2-bsp $BSP_TYPE $BSP_DIR $SOPC_FILE $NIOS2_BSP_ARGS"
+fi
+
+
+echo "create-this-bsp: Running \"$cmd\""
+$cmd || {
+    echo "$cmd failed"
+    exit 1
+}
+if [ -z "$SKIP_MAKE" ]; then
+	echo "create-this-bsp: Running make"
+	make
+fi

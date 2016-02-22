@@ -1,0 +1,1 @@
+set_global_assignment -name SEARCH_PATH $::quartus(qip_path)

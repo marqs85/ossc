@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+<file path="hdl_sim/sys_onchip_memory2_0.dat" type="DAT" initParamName="INIT_FILE" memoryPath="onchip_memory2_0" />
+<file path="epcq_controller_0.hex" type="HEX" memoryPath="epcq_controller_0" />
+<file path="sys_onchip_memory2_0.hex" type="HEX" initParamName="INIT_FILE" memoryPath="onchip_memory2_0" />
+</simPackage>
