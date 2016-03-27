@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="ossc_sw_bsp" InternalType="">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
+    </Plugin>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }, {
+  "name": "Release",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+  </Plugins>
+  <VirtualDirectory Name="software">
+    <VirtualDirectory Name="sys_controller_bsp">
+      <VirtualDirectory Name="drivers">
+        <VirtualDirectory Name="inc">
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_jtag_uart.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_jtag_uart_regs.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/ci_crc.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/crc.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_epcq_controller_mod_regs.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_jtag_uart_fd.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_epcq_controller_mod.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/i2c_opencores_regs.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/i2c_opencores.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/Altera_UP_SD_Card_Avalon_Interface_mod.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_pio_regs.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="software/sys_controller_bsp/drivers/src/altera_epcq_controller_mod.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_read.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_ioctl.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/ci_crc.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/Altera_UP_SD_Card_Avalon_Interface_mod.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/i2c_opencores.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_init.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/crc.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_write.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_fd.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <VirtualDirectory Name="HAL">
+        <VirtualDirectory Name="inc">
+          <VirtualDirectory Name="sys">
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_license_reminder_ucosii.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_flash_dev.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_sys_init.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_driver.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_irq_entry.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_sim.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/termios.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_flash_types.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_llist.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_warning.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_stdio.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_dma_dev.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_alarm.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_log_printf.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_flash.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_load.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_cache.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_dev.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_debug.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_irq.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_set_args.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_dma.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_sys_wrappers.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_exceptions.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/ioctl.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_errno.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_timestamp.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/sys/alt_stack.h"/>
+          </VirtualDirectory>
+          <VirtualDirectory Name="priv">
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_dev_llist.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_iic_isr_register.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/nios2_gmon_data.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_file.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_alarm.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_exception_handler_registry.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_legacy_irq.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_busy_sleep.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_no_error.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/priv/alt_irq_table.h"/>
+          </VirtualDirectory>
+          <VirtualDirectory Name="os">
+            <File Name="software/sys_controller_bsp/HAL/inc/os/alt_hooks.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/os/alt_sem.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/os/alt_syscall.h"/>
+            <File Name="software/sys_controller_bsp/HAL/inc/os/alt_flag.h"/>
+          </VirtualDirectory>
+          <File Name="software/sys_controller_bsp/HAL/inc/alt_types.h"/>
+          <File Name="software/sys_controller_bsp/HAL/inc/io.h"/>
+          <File Name="software/sys_controller_bsp/HAL/inc/nios2.h"/>
+          <File Name="software/sys_controller_bsp/HAL/inc/altera_nios2_gen2_irq.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="software/sys_controller_bsp/HAL/src/alt_instruction_exception_register.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_environ.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_unlink.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dev.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_io_redirect.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_kill.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_close.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_env_lock.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_irq_vars.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_log_printf.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_stat.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_usleep.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_iic.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_gettod.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_ioctl.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_printf.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dma_rxchan_open.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_isatty.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_getpid.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_gmon.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_iic_isr_register.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_malloc_lock.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_busy_sleep.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fd_lock.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_ecc_fatal_exception.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_putcharbuf.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_putchar.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/altera_nios2_gen2_irq.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fd_unlock.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_alarm_start.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dcache_flush.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_main.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dev_llist_insert.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fcntl.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_lseek.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_find_file.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_uncached_free.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fork.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_wait.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_do_ctors.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_exit.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_read.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_load.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_remap_uncached.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_flash_dev.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_irq_handler.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_tick.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_settod.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dcache_flush_no_writeback.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_do_dtors.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_rename.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_getchar.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_open.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_instruction_exception_entry.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_remap_cached.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_get_fd.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_irq_register.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dcache_flush_all.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fs_reg.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_icache_flush_all.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_icache_flush.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_find_dev.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_link.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_sbrk.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_errno.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_release_fd.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_times.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_fstat.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_write.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_execve.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_uncached_malloc.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_dma_txchan_open.c"/>
+          <File Name="software/sys_controller_bsp/HAL/src/alt_putstr.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="software/sys_controller_bsp/linker.h"/>
+      <File Name="software/sys_controller_bsp/alt_sys_init.c"/>
+      <File Name="software/sys_controller_bsp/system.h"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <VirtualDirectory Name="ip">
+    <VirtualDirectory Name="i2c_opencores">
+      <VirtualDirectory Name="HAL">
+        <VirtualDirectory Name="inc">
+          <File Name="ip/i2c_opencores/HAL/inc/i2c_opencores.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="ip/i2c_opencores/HAL/src/i2c_opencores.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <VirtualDirectory Name="Docs">
+        <File Name="ip/i2c_opencores/Docs/I2C_tests.c"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="inc">
+        <File Name="ip/i2c_opencores/inc/i2c_opencores_regs.h"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="nios2_hw_crc">
+      <VirtualDirectory Name="HAL">
+        <VirtualDirectory Name="doc">
+          <File Name="ip/nios2_hw_crc/HAL/doc/crc_main.c"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="inc">
+          <File Name="ip/nios2_hw_crc/HAL/inc/ci_crc.h"/>
+          <File Name="ip/nios2_hw_crc/HAL/inc/crc.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="ip/nios2_hw_crc/HAL/src/ci_crc.c"/>
+          <File Name="ip/nios2_hw_crc/HAL/src/crc.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="altera_up_sd_card_avalon_interface_mod">
+      <VirtualDirectory Name="HAL">
+        <VirtualDirectory Name="inc">
+          <File Name="ip/altera_up_sd_card_avalon_interface_mod/HAL/inc/Altera_UP_SD_Card_Avalon_Interface_mod.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="ip/altera_up_sd_card_avalon_interface_mod/HAL/src/Altera_UP_SD_Card_Avalon_Interface_mod.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="altera_epcq_controller_mod">
+      <VirtualDirectory Name="HAL">
+        <VirtualDirectory Name="inc">
+          <File Name="ip/altera_epcq_controller_mod/HAL/inc/altera_epcq_controller_mod.h"/>
+        </VirtualDirectory>
+        <VirtualDirectory Name="src">
+          <File Name="ip/altera_epcq_controller_mod/HAL/src/altera_epcq_controller_mod.c"/>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <VirtualDirectory Name="inc">
+        <File Name="ip/altera_epcq_controller_mod/inc/altera_epcq_controller_mod_regs.h"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <Description/>
+  <Dependencies/>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
+  <Settings Type="Dynamic Library">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g" C_Options="-g" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>nios2-bsp-generate-files --bsp-dir . --settings settings.bsp</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>$(ProjectPath)/software/sys_controller_bsp</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="-O2" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>nios2-bsp-generate-files --bsp-dir . --settings settings.bsp</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>$(ProjectPath)/software/sys_controller_bsp</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+</CodeLite_Project>

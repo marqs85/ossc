@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -28,30 +28,30 @@
 #define I2CA_BASE I2C_OPENCORES_0_BASE
 
 typedef enum {
-	TVP_INPUT1 = 0,
-	TVP_INPUT2 = 1,
-	TVP_INPUT3 = 2
+    TVP_INPUT1 = 0,
+    TVP_INPUT2 = 1,
+    TVP_INPUT3 = 2
 } tvp_input_t;
 
 static const alt_u8 Kvco[] = {75, 85, 150, 200};
 static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
 
 typedef enum {
-	REFCLK_EXT27 	= 0,
-	REFCLK_INTCLK 	= 1
+    REFCLK_EXT27    = 0,
+    REFCLK_INTCLK   = 1
 } tvp_refclk_t;
 
 typedef struct {
-	const char *name;
-	alt_u16 R_Y;
-	alt_u16 R_Pb;
-	alt_u16 R_Pr;
-	alt_u16 G_Y;
-	alt_u16 G_Pb;
-	alt_u16 G_Pr;
-	alt_u16 B_Y;
-	alt_u16 B_Pb;
-	alt_u16 B_Pr;
+    const char *name;
+    alt_u16 R_Y;
+    alt_u16 R_Pb;
+    alt_u16 R_Pr;
+    alt_u16 G_Y;
+    alt_u16 G_Pb;
+    alt_u16 G_Pr;
+    alt_u16 B_Y;
+    alt_u16 B_Pb;
+    alt_u16 B_Pr;
 } ypbpr_to_rgb_csc_t;
 
 static const alt_u32 clkrate[] = {27000000, 6500000}; //in MHz
@@ -80,6 +80,8 @@ void tvp_set_lpf(alt_u8 val);
 void tvp_set_sync_lpf(alt_u8 val);
 
 void tvp_set_hpll_phase(alt_u8 val);
+
+void tvp_set_sog_thold(alt_u8 val);
 
 void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 refclk);
 

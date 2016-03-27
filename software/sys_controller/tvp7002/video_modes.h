@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -24,18 +24,18 @@
 #include "sysconfig.h"
 
 typedef enum {
-	FORMAT_RGBS = 0,
-	FORMAT_RGBHV = 1,
-	FORMAT_RGsB = 2,
-	FORMAT_YPbPr = 3
+    FORMAT_RGBS = 0,
+    FORMAT_RGBHV = 1,
+    FORMAT_RGsB = 2,
+    FORMAT_YPbPr = 3
 } video_format;
 
 typedef enum {
-	VIDEO_LDTV = (1<<0),
-	VIDEO_SDTV = (1<<1),
+    VIDEO_LDTV = (1<<0),
+    VIDEO_SDTV = (1<<1),
     VIDEO_EDTV = (1<<2),
-	VIDEO_HDTV = (1<<3),
-	VIDEO_PC   = (1<<4)
+    VIDEO_HDTV = (1<<3),
+    VIDEO_PC   = (1<<4)
 } video_type;
 
 #define MODE_L3ENABLE_MASK 0xf
@@ -45,11 +45,11 @@ typedef enum {
     MODE_L3_MODE1   = (1<<1),
     MODE_L3_MODE2   = (1<<2),
     MODE_L3_MODE3   = (1<<3),
-	MODE_L2ENABLE	= (1<<4),
-	MODE_INTERLACED = (1<<5),
-	MODE_PLLDIVBY2	= (1<<6),
-	MODE_DTV480P	= (1<<7),
-	MODE_VGA480P	= (1<<8)
+    MODE_L2ENABLE   = (1<<4),
+    MODE_INTERLACED = (1<<5),
+    MODE_PLLDIVBY2  = (1<<6),
+    MODE_DTV480P    = (1<<7),
+    MODE_VGA480P    = (1<<8)
 } mode_flags;
 
 typedef struct {

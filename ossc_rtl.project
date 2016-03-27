@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="ossc_rtl" InternalType="">
+  <VirtualDirectory Name="ip">
+    <VirtualDirectory Name="nios2_hw_crc">
+      <VirtualDirectory Name="hdl">
+        <File Name="ip/nios2_hw_crc/hdl/CRC_Component.v"/>
+        <File Name="ip/nios2_hw_crc/hdl/CRC_Custom_Instruction.v"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="altera_epcq_controller_mod">
+      <File Name="ip/altera_epcq_controller_mod/altera_epcq_controller_fifo.v"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="altera_nios_custom_instr_endianconverter_qsys">
+      <File Name="ip/altera_nios_custom_instr_endianconverter_qsys/endianconverter_qsys.v"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="i2c_opencores">
+      <File Name="ip/i2c_opencores/i2c_master_defines.v"/>
+      <File Name="ip/i2c_opencores/i2c_master_bit_ctrl.v"/>
+      <File Name="ip/i2c_opencores/i2c_master_top.v"/>
+      <File Name="ip/i2c_opencores/i2c_master_byte_ctrl.v"/>
+      <File Name="ip/i2c_opencores/timescale.v"/>
+      <File Name="ip/i2c_opencores/i2c_opencores.v"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
+  <Description/>
+  <Dependencies/>
+  <Settings Type="Dynamic Library">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g" C_Options="-g" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>make</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>$(WorkspacePath)</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+    <Configuration Name="Release" CompilerType="GCC" DebuggerType="GNU gdb debugger" Type="Dynamic Library" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="-O2" Required="yes"/>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="yes">
+        <RebuildCommand/>
+        <CleanCommand>make clean</CleanCommand>
+        <BuildCommand>make</BuildCommand>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName>None</ThirdPartyToolName>
+        <WorkingDirectory>$(WorkspacePath)</WorkingDirectory>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+  <VirtualDirectory Name="rtl">
+    <File Name="rtl/ir_rcv.v"/>
+    <File Name="rtl/pll_3x_lowfreq_BAK.v"/>
+    <File Name="rtl/ossc.v"/>
+    <File Name="rtl/pll_2x.v"/>
+    <File Name="rtl/ir_rcv_option2.v"/>
+    <File Name="rtl/pll_3x_lowfreq.v"/>
+    <File Name="rtl/pll_3x_lowfreq_bb.v"/>
+    <File Name="rtl/linebuf_inst.v"/>
+    <File Name="rtl/videogen.v"/>
+    <File Name="rtl/pll_3x_BAK.v"/>
+    <File Name="rtl/timescale.v"/>
+    <File Name="rtl/pll_2x_bb.v"/>
+    <File Name="rtl/linebuf.v"/>
+    <File Name="rtl/pll_2x_BAK.v"/>
+    <File Name="rtl/pll_3x.v"/>
+    <File Name="rtl/scanconverter.v"/>
+    <File Name="rtl/linebuf_bb.v"/>
+  </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
+</CodeLite_Project>

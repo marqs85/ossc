@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -17,42 +17,42 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-`define STATE_IDLE		        2'b00
-`define STATE_LEADVERIFY		2'b01
-`define STATE_DATARCV			2'b10
+`define STATE_IDLE              2'b00
+`define STATE_LEADVERIFY        2'b01
+`define STATE_DATARCV           2'b10
 
 module ir_rcv (
     input clk27,
     input reset_n,
     input ir_rx,
-	output reg [15:0] ir_code,
-	output reg ir_code_ack
+    output reg [15:0] ir_code,
+    output reg ir_code_ack
 );
 
-// 20ns clock period
+// ~37ns clock period
 
-parameter LEADCODE_LO_THOLD     = 124200;  //4.60ms
-parameter LEADCODE_HI_THOLD     = 113400;  //4.20ms
-parameter LEADCODE_HI_RPT_THOLD = 56700;  //2.1ms
+parameter LEADCODE_LO_THOLD     = 226800;  //8.4ms
+parameter LEADCODE_HI_THOLD     = 118800;  //4.4ms
+parameter LEADCODE_HI_RPT_THOLD = 54000;   //2.0ms
 parameter RPT_RELEASE_THOLD     = 3240000; //120ms
-parameter BIT_ONE_THOLD         = 22410;   //0.83ms
+parameter BIT_ONE_THOLD         = 27000;   //1.0ms
 parameter BIT_DETECT_THOLD      = 10800;   //0.4ms
-parameter IDLE_THOLD            = 141557;  //5.24ms
+parameter IDLE_THOLD            = 141480;  //5.24ms
 
-reg [1:0] state;        // 3 states
-reg [31:0] databuf;     // temp. buffer
+reg [1:0] state;            // 3 states
+reg [31:0] databuf;         // temp. buffer
 reg [5:0] bits_detected;    // max. 63, effectively between 0 and 33
-reg [17:0] act_cnt;     // max. 5.2ms
-reg [17:0] leadvrf_cnt; // max. 5.2ms
-reg [17:0] datarcv_cnt; // max. 5.2ms
-reg [22:0] rpt_cnt;     // max. 166ms
+reg [17:0] act_cnt;         // max. 5.2ms
+reg [17:0] leadvrf_cnt;     // max. 5.2ms
+reg [17:0] datarcv_cnt;     // max. 5.2ms
+reg [22:0] rpt_cnt;         // max. 166ms
 
 // activity when signal is low
 always @(posedge clk27 or negedge reset_n)
 begin
     if (!reset_n)
         act_cnt <= 0;
-	else
+    else
     begin
         if ((state == `STATE_IDLE) & (~ir_rx))
             act_cnt <= act_cnt + 1'b1;
@@ -66,7 +66,7 @@ always @(posedge clk27 or negedge reset_n)
 begin
     if (!reset_n)
         leadvrf_cnt <= 0;
-	else
+    else
     begin
         if ((state == `STATE_LEADVERIFY) & ir_rx)
             leadvrf_cnt <= leadvrf_cnt + 1'b1;
@@ -85,7 +85,7 @@ begin
         bits_detected <= 0;
         databuf <= 0;
     end
-	else
+    else
     begin
         if (state == `STATE_DATARCV)
         begin
@@ -117,7 +117,7 @@ begin
         ir_code_ack <= 1'b0;
         ir_code <= 16'h00000000;
     end
-	else
+    else
     begin
         if ((bits_detected == 32) & (databuf[31:24] == ~databuf[23:16]) & (databuf[15:8] == ~databuf[7:0]))
         begin
