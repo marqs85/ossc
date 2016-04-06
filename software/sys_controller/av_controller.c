@@ -744,17 +744,17 @@ void display_menu(alt_u8 forcedisp)
 
     switch (menu[menu_page].id) {
     case SCANLINE_MODE:
-        if ((code == VAL_MINUS) && (tc.sl_mode > 0))
-            tc.sl_mode--;
-        else if ((code == VAL_PLUS) && (tc.sl_mode < SL_MODE_MAX))
-            tc.sl_mode++;
+        if (code == VAL_MINUS)
+            tc.sl_mode = tc.sl_mode ? tc.sl_mode-1 : SL_MODE_MAX;
+        else if (code == VAL_PLUS)
+            tc.sl_mode = tc.sl_mode < SL_MODE_MAX ? tc.sl_mode+1 : 0;
         strncpy(menu_row2, sl_mode_desc[tc.sl_mode], LCD_ROW_LEN+1);
         break;
     case SCANLINE_STRENGTH:
-        if ((code == VAL_MINUS) && (tc.sl_str > 0))
-            tc.sl_str--;
-        else if ((code == VAL_PLUS) && (tc.sl_str < SCANLINESTR_MAX))
-            tc.sl_str++;
+        if (code == VAL_MINUS)
+        	tc.sl_str = tc.sl_str ? tc.sl_str-1 : SCANLINESTR_MAX;
+        else if (code == VAL_PLUS)
+        	tc.sl_str = tc.sl_str < SCANLINESTR_MAX ? tc.sl_str+1 : 0;
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((tc.sl_str+1)*125)/10);
         break;
     case SCANLINE_ID:
@@ -777,17 +777,17 @@ void display_menu(alt_u8 forcedisp)
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", tc.v_mask<<2);
         break;
     case SAMPLER_480P:
-        if ((code == VAL_MINUS) && (tc.s480p_mode > 0))
-            tc.s480p_mode--;
-        else if ((code == VAL_PLUS) && (tc.s480p_mode < S480P_MODE_MAX))
-            tc.s480p_mode++;
+        if (code == VAL_MINUS)
+        	tc.s480p_mode = tc.s480p_mode ? tc.s480p_mode-1 : S480P_MODE_MAX;
+        else if (code == VAL_PLUS)
+        	tc.s480p_mode = tc.s480p_mode < S480P_MODE_MAX ? tc.s480p_mode+1 : 0;
         strncpy(menu_row2, s480p_desc[tc.s480p_mode], LCD_ROW_LEN+1);
         break;
     case SAMPLER_PHASE:
-        if ((code == VAL_MINUS) && (tc.sampler_phase > SAMPLER_PHASE_MIN))
-            tc.sampler_phase--;
-        else if ((code == VAL_PLUS) && (tc.sampler_phase < SAMPLER_PHASE_MAX))
-            tc.sampler_phase++;
+        if (code == VAL_MINUS)
+        	tc.sampler_phase = tc.sampler_phase > SAMPLER_PHASE_MIN ? tc.sampler_phase-1 : SAMPLER_PHASE_MAX;
+        else if (code == VAL_PLUS)
+        	tc.sampler_phase = tc.sampler_phase < SAMPLER_PHASE_MAX ? tc.sampler_phase+1 : SAMPLER_PHASE_MIN;
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg", ((tc.sampler_phase-SAMPLER_PHASE_MIN)*1125)/100);
         break;
     case YPBPR_COLORSPACE:
@@ -796,24 +796,24 @@ void display_menu(alt_u8 forcedisp)
         strncpy(menu_row2, csc_coeffs[tc.ypbpr_cs].name, LCD_ROW_LEN+1);
         break;
     case SYNC_THOLD:
-        if ((code == VAL_MINUS) && (tc.sync_thold > SYNC_THOLD_MIN))
-            tc.sync_thold--;
-        else if ((code == VAL_PLUS) && (tc.sync_thold < SYNC_THOLD_MAX))
-            tc.sync_thold++;
+        if (code == VAL_MINUS)
+        	tc.sync_thold = tc.sync_thold > SYNC_THOLD_MIN ? tc.sync_thold-1 : SYNC_THOLD_MAX;
+        else if (code == VAL_PLUS)
+        	tc.sync_thold = tc.sync_thold < SYNC_THOLD_MAX ? tc.sync_thold+1 : SYNC_THOLD_MIN;
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", ((tc.sync_thold-SYNC_THOLD_MIN)*1127)/100);
         break;
     case SYNC_LPF:
-        if ((code == VAL_MINUS) && (tc.sync_lpf > 0))
-            tc.sync_lpf--;
-        else if ((code == VAL_PLUS) && (tc.sync_lpf < SYNC_LPF_MAX))
-            tc.sync_lpf++;
+        if (code == VAL_MINUS)
+        	tc.sync_lpf = tc.sync_lpf ? tc.sync_lpf-1 : SYNC_LPF_MAX;
+        else if (code == VAL_PLUS)
+        	tc.sync_lpf = tc.sync_lpf < SYNC_LPF_MAX ? tc.sync_lpf+1 : 0;
         strncpy(menu_row2, sync_lpf_desc[tc.sync_lpf], LCD_ROW_LEN+1);
         break;
     case VIDEO_LPF:
-        if ((code == VAL_MINUS) && (tc.video_lpf > 0))
-            tc.video_lpf--;
-        else if ((code == VAL_PLUS) && (tc.video_lpf < VIDEO_LPF_MAX))
-            tc.video_lpf++;
+        if (code == VAL_MINUS)
+        	tc.video_lpf = tc.video_lpf ? tc.video_lpf-1 : VIDEO_LPF_MAX;
+        else if (code == VAL_PLUS)
+        	tc.video_lpf = tc.video_lpf < VIDEO_LPF_MAX ? tc.video_lpf+1 : 0;
         strncpy(menu_row2, video_lpf_desc[tc.video_lpf], LCD_ROW_LEN+1);
         break;
     case LINETRIPLE_ENABLE:
@@ -822,10 +822,10 @@ void display_menu(alt_u8 forcedisp)
         sniprintf(menu_row2, LCD_ROW_LEN+1, tc.linemult_target ? "On" : "Off");
         break;
     case LINETRIPLE_MODE:
-        if ((code == VAL_MINUS) && (tc.l3_mode > 0))
-            tc.l3_mode--;
-        else if ((code == VAL_PLUS) && (tc.l3_mode < L3_MODE_MAX))
-            tc.l3_mode++;
+        if (code == VAL_MINUS)
+        	tc.l3_mode = tc.l3_mode ? tc.l3_mode-1 : L3_MODE_MAX;
+        else if (code == VAL_PLUS)
+        	tc.l3_mode = tc.l3_mode < L3_MODE_MAX ? tc.l3_mode+1 : 0;
         strncpy(menu_row2, l3_mode_desc[tc.l3_mode], LCD_ROW_LEN+1);
         break;
     case TX_MODE:
