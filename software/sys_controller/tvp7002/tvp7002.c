@@ -97,14 +97,7 @@ static void tvp_set_alc(video_type type)
     //tvp_writereg(TVP_ALCEN, 0x00);
     //tvp_writereg(TVP_ALCEN, 0x80);
 
-    //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
-    tvp_writereg(TVP_BG_CGAIN, 0x88);
-    tvp_writereg(TVP_R_CGAIN, 0x08);
 
-    //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
-    tvp_writereg(TVP_R_FGAIN, 26);
-    tvp_writereg(TVP_G_FGAIN, 26);
-    tvp_writereg(TVP_B_FGAIN, 26);
 
     //select ALC placement
     switch (type) {
@@ -319,6 +312,15 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
     // Clamp position and ALC
     tvp_set_clamp_position(type);
     tvp_set_alc(type);
+
+    //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
+    tvp_writereg(TVP_BG_CGAIN, 0x88);
+    tvp_writereg(TVP_R_CGAIN, 0x08);
+
+    //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
+    tvp_writereg(TVP_R_FGAIN, 26);
+    tvp_writereg(TVP_G_FGAIN, 26);
+    tvp_writereg(TVP_B_FGAIN, 26);
 
     // Macrovision enable/disable, coast disable for RGBHV.
     // Coast needs to be enabled when HSYNC is missing during VSYNC. Valid only for RGBHV?
