@@ -86,15 +86,6 @@ static void tvp_set_alc(video_type type)
     //tvp_writereg(TVP_ALCEN, 0x00);
     //tvp_writereg(TVP_ALCEN, 0x80);
 
-    //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
-    tvp_writereg(TVP_BG_CGAIN, 0x88);
-    tvp_writereg(TVP_R_CGAIN, 0x08);
-
-    //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
-    tvp_writereg(TVP_R_FGAIN, 26);
-    tvp_writereg(TVP_G_FGAIN, 26);
-    tvp_writereg(TVP_B_FGAIN, 26);
-
     //select ALC placement
     switch (type) {
     case VIDEO_LDTV:
@@ -200,6 +191,15 @@ void tvp_init()
     // Common sync separator threshold
     // Some arcade games need more that the default 0x40
     tvp_set_ssthold(DEFAULT_VSYNC_THOLD);
+
+    //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
+    tvp_writereg(TVP_BG_CGAIN, 0x88);
+    tvp_writereg(TVP_R_CGAIN, 0x08);
+
+    //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
+    tvp_writereg(TVP_R_FGAIN, 26);
+    tvp_writereg(TVP_G_FGAIN, 26);
+    tvp_writereg(TVP_B_FGAIN, 26);
 }
 
 // Configure H-PLL (sampling rate, VCO gain and charge pump current)
