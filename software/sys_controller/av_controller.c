@@ -763,7 +763,7 @@ void display_menu(alt_u8 forcedisp)
         sniprintf(menu_row2, LCD_ROW_LEN+1, tc.sl_id ? "Odd" : "Even");
         break;
     case H_MASK:
-        if ((code == VAL_MINUS) && (tc.h_mask > 0))
+    	if ((code == VAL_MINUS) && (tc.h_mask > 0))
             tc.h_mask--;
         else if ((code == VAL_PLUS) && (tc.h_mask < HV_MASK_MAX))
             tc.h_mask++;
@@ -897,13 +897,16 @@ void read_control()
         } else if (remote_code == rc_keymap[RC_LCDBL]) {
             IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) ^ (1<<1)));
         } else if (remote_code == rc_keymap[RC_HOTKEY1]) {
-            tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
+            //tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
+            tc.sl_mode = tc.sl_mode < SL_MODE_MAX ? tc.sl_mode+1 : 0;
         } else if (remote_code == rc_keymap[RC_HOTKEY2]) {
-            if (tc.sl_str > 0)
-                tc.sl_str--;
+            //if (tc.sl_str > 0)
+            //    tc.sl_str--;
+                tc.sl_str = tc.sl_str ? tc.sl_str-1 : SCANLINESTR_MAX;
         } else if (remote_code == rc_keymap[RC_HOTKEY3]) {
-            if (tc.sl_str < SCANLINESTR_MAX)
-                tc.sl_str++;
+            //if (tc.sl_str < SCANLINESTR_MAX)
+            //    tc.sl_str++;
+            tc.sl_str = tc.sl_str < SCANLINESTR_MAX ? tc.sl_str+1 : 0;
         }
     }
 
