@@ -705,13 +705,16 @@ void setup_rc()
 
 inline void TX_enable(tx_mode_t mode)
 {
-    //SetAVMute(TRUE);
+    // shut down TX before setting new config
+    SetAVMute(TRUE);
+    DisableVideoOutput();
+    EnableAVIInfoFrame(FALSE, NULL);
+    // re-setup
+    EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
     if (mode == TX_HDMI) {
-        EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 1);
         HDMITX_SetAVIInfoFrame(1, F_MODE_RGB444, 0, 0);
-    } else {
-        EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 0);
     }
+    // start TX
     SetAVMute(FALSE);
 }
 
