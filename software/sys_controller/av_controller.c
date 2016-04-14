@@ -152,6 +152,7 @@ typedef enum {
     VIDEO_LPF,
     LINETRIPLE_ENABLE,
     LINETRIPLE_MODE,
+    EN_ALC,
     TX_MODE,
 #ifndef DEBUG
     FW_UPDATE,
@@ -190,6 +191,7 @@ typedef struct {
     alt_8 vsync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
+    alt_u8 en_alc;
     alt_u8 pre_coast;
     alt_u8 post_coast;
 } avconfig_t;
@@ -236,6 +238,7 @@ const menuitem_t menu[] = {
     { VIDEO_LPF,            "Video LPF" },
     { LINETRIPLE_ENABLE,    "240p/288p lineX3" },
     { LINETRIPLE_MODE,      "Linetriple mode" },
+    { EN_ALC,               "Auto Lev. Contr." },
     { TX_MODE,              "TX mode" },
 #ifndef DEBUG
     { FW_UPDATE,            "<Firmware update>" },
@@ -632,6 +635,7 @@ void set_default_avconfig()
     tc.pre_coast = DEFAULT_PRE_COAST;
     tc.post_coast = DEFAULT_POST_COAST;
     tc.vsync_thold = DEFAULT_VSYNC_THOLD;
+    tc.en_alc = 1;
 }
 
 int read_userdata()
@@ -886,6 +890,11 @@ void display_menu(alt_u8 forcedisp)
         else if ((code == VAL_PLUS) && (tc.l3_mode < L3_MODE_MAX))
             tc.l3_mode++;
         strncpy(menu_row2, l3_mode_desc[tc.l3_mode], LCD_ROW_LEN+1);
+        break;
+    case EN_ALC:
+        if ((code == VAL_MINUS) || (code == VAL_PLUS))
+            tc.en_alc = !tc.en_alc;
+        sniprintf(menu_row2, LCD_ROW_LEN+1, tc.en_alc ? "Enabled" : "Disabled");
         break;
     case TX_MODE:
         if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) && ((code == VAL_MINUS) || (code == VAL_PLUS))) {
@@ -1167,6 +1176,9 @@ status_t get_status(tvp_input_t input, video_format format)
     if (tc.sync_lpf != cm.cc.sync_lpf)
         tvp_set_sync_lpf(tc.sync_lpf);
 
+    if (tc.en_alc != cm.cc.en_alc)
+        tvp_set_alc(tc.en_alc, target_type);
+
     // use memcpy instead?
     cm.cc = tc;
 
@@ -1241,7 +1253,7 @@ void program_mode()
 
     printf("Mode %s selected\n", video_modes[cm.id].name);
 
-    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
+    tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }

@@ -80,31 +80,6 @@ static void tvp_set_clamp_position(video_type type)
     }
 }
 
-static void tvp_set_alc(video_type type)
-{
-    //disable ALC
-    //tvp_writereg(TVP_ALCEN, 0x00);
-    //tvp_writereg(TVP_ALCEN, 0x80);
-
-    //select ALC placement
-    switch (type) {
-    case VIDEO_LDTV:
-        tvp_writereg(TVP_ALCPLACE, 0x9);
-        break;
-    case VIDEO_SDTV:
-    case VIDEO_EDTV:
-    case VIDEO_PC:
-        tvp_writereg(TVP_ALCPLACE, 0x18);
-        break;
-    case VIDEO_HDTV:
-        tvp_writereg(TVP_ALCPLACE, 0x5A);
-        break;
-    default:
-        break;
-    }
-}
-
-
 inline alt_u32 tvp_readreg(alt_u32 regaddr)
 {
     I2C_start(I2CA_BASE, TVP_BASE, 0);
@@ -314,11 +289,37 @@ void tvp_set_sog_thold(alt_u8 val)
     printf("SOG thold set to 0x%x\n", val);
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_set_alc(alt_u8 en_alc, video_type type)
+{
+    if (en_alc) {
+        tvp_writereg(TVP_ALCEN, 0x80); //enable ALC
+
+        //select ALC placement
+        switch (type) {
+        case VIDEO_LDTV:
+            tvp_writereg(TVP_ALCPLACE, 0x9);
+            break;
+        case VIDEO_SDTV:
+        case VIDEO_EDTV:
+        case VIDEO_PC:
+            tvp_writereg(TVP_ALCPLACE, 0x18);
+            break;
+        case VIDEO_HDTV:
+            tvp_writereg(TVP_ALCPLACE, 0x5A);
+            break;
+        default:
+            break;
+        }
+    } else {
+        tvp_writereg(TVP_ALCEN, 0x00); //disable ALC
+    }
+}
+
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
 {
     // Clamp position and ALC
     tvp_set_clamp_position(type);
-    tvp_set_alc(type);
+    tvp_set_alc(en_alc, type);
 
     tvp_set_ssthold(vsync_thold);
 
