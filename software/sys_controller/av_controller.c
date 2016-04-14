@@ -746,13 +746,18 @@ void setup_rc()
 
 inline void TX_enable(tx_mode_t mode)
 {
-    if (mode == TX_HDMI) {
-        EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 1);
-        //TODO: set correct VID based on mode
+    // shut down TX before setting new config
+    SetAVMute(TRUE);
+    DisableVideoOutput();
+    EnableAVIInfoFrame(FALSE, NULL);
+
+    // re-setup
+    EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
+    //TODO: set correct VID based on mode
+    if (mode == TX_HDMI)
         HDMITX_SetAVIInfoFrame(HDMI_480p60, F_MODE_RGB444, 0, 0);
-    } else {
-        EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 0);
-    }
+
+    // start TX
     SetAVMute(FALSE);
 }
 
