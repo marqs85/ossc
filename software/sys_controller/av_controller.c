@@ -39,39 +39,39 @@ alt_u8 fw_ver_major = 0;
 alt_u8 fw_ver_minor = 67;
 #define FW_UPDATE_RETRIES 3
 
-#define LINECNT_THOLD       1
-#define STABLE_THOLD        1
-#define MIN_VALID_LINES     100
-#define SYNC_LOSS_THOLD     5
+#define LINECNT_THOLD     1
+#define STABLE_THOLD      1
+#define MIN_VALID_LINES 100
+#define SYNC_LOSS_THOLD   5
 
-#define MAINLOOP_SLEEP_US   10000
+#define MAINLOOP_SLEEP_US 10000
 
-#define SCANLINESTR_MAX         0x07
-#define HV_MASK_MAX             0x0f
-#define L3_MODE_MAX             3
-#define S480P_MODE_MAX          2
-#define SL_MODE_MAX             2
-#define SYNC_LPF_MAX            3
-#define VIDEO_LPF_MAX           5
-#define SAMPLER_PHASE_MIN       -16
-#define SAMPLER_PHASE_MAX       15
-#define SYNC_THOLD_MIN          -11
-#define SYNC_THOLD_MAX         20
+#define SCANLINESTR_MAX   0x07
+#define HV_MASK_MAX       0x0f
+#define L3_MODE_MAX          3
+#define S480P_MODE_MAX       2
+#define SL_MODE_MAX          2
+#define SYNC_LPF_MAX         3
+#define VIDEO_LPF_MAX        5
+#define SAMPLER_PHASE_MIN  -16
+#define SAMPLER_PHASE_MAX   15
+#define SYNC_THOLD_MIN     -11
+#define SYNC_THOLD_MAX      20
 
-//#define TVP_CLKSEL_BIT          (1<<7)
+//#define TVP_CLKSEL_BIT (1<<7)
 
-#define RC_MASK                 0x0000ffff
-#define PB_MASK                 0x00030000
-#define PB0_MASK                0x00010000
-#define PB1_MASK                0x00020000
-#define HDMITX_MODE_MASK        0x00040000
+#define RC_MASK          0x0000ffff
+#define PB_MASK          0x00030000
+#define PB0_MASK         0x00010000
+#define PB1_MASK         0x00020000
+#define HDMITX_MODE_MASK 0x00040000
 
 static const char *rc_keydesc[] = { "1", "2", "3", "MENU", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "HOTKEY1", "HOTKEY2", "HOTKEY3"};
 #define REMOTE_MAX_KEYS (sizeof(rc_keydesc)/sizeof(char*))
 alt_u16 rc_keymap[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3E4D, 0x3EED, 0x3E2D, 0x3ECD, 0x3EAD, 0x3E6D, 0x3E65, 0x3E01, 0x3EC1, 0x3E41, 0x3EA1};
 
 typedef enum {
-    RC_BTN1                 = 0,
+    RC_BTN1 = 0,
     RC_BTN2,
     RC_BTN3,
     RC_MENU,
@@ -98,23 +98,23 @@ static const char *sync_lpf_desc[] = { "Off", "33MHz", "10MHz", "2.5MHz" };
 static const char *video_lpf_desc[] = { "Auto", "Off", "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
 
 typedef enum {
-    AV_KEEP         = 0,
-    AV1_RGBs        = 1,
-    AV1_RGsB        = 2,
-    AV2_YPBPR       = 3,
-    AV2_RGsB        = 4,
-    AV3_RGBHV       = 5,
-    AV3_RGBs        = 6,
-    AV3_RGsB        = 7
+    AV_KEEP   = 0,
+    AV1_RGBs  = 1,
+    AV1_RGsB  = 2,
+    AV2_YPBPR = 3,
+    AV2_RGsB  = 4,
+    AV3_RGBHV = 5,
+    AV3_RGBs  = 6,
+    AV3_RGsB  = 7
 } avinput_t;
 
 // In reverse order of importance
 typedef enum {
-    NO_CHANGE           = 0,
-    INFO_CHANGE         = 1,
-    MODE_CHANGE         = 2,
-    TX_MODE_CHANGE      = 3,
-    ACTIVITY_CHANGE     = 4
+    NO_CHANGE       = 0,
+    INFO_CHANGE     = 1,
+    MODE_CHANGE     = 2,
+    TX_MODE_CHANGE  = 3,
+    ACTIVITY_CHANGE = 4
 } status_t;
 
 typedef enum {
@@ -140,16 +140,16 @@ typedef enum {
 } menuitem_id;
 
 typedef enum {
-    NO_ACTION           = 0,
-    NEXT_PAGE           = 1,
-    PREV_PAGE           = 2,
-    VAL_PLUS            = 3,
-    VAL_MINUS           = 4,
+    NO_ACTION = 0,
+    NEXT_PAGE = 1,
+    PREV_PAGE = 2,
+    VAL_PLUS  = 3,
+    VAL_MINUS = 4,
 } menucode_id;
 
 typedef enum {
-    TX_HDMI             = 0,
-    TX_DVI              = 1
+    TX_HDMI = 0,
+    TX_DVI  = 1
 } tx_mode_t;
 
 typedef struct {
@@ -162,9 +162,9 @@ typedef struct {
     alt_u8 v_mask;
     alt_u8 tx_mode;
     alt_u8 s480p_mode;
-    alt_8 sampler_phase;
+    alt_8  sampler_phase;
     alt_u8 ypbpr_cs;
-    alt_8 sync_thold;
+    alt_8  sync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
     alt_u8 disable_alc;
@@ -175,14 +175,14 @@ avconfig_t tc;
 
 //TODO: transform binary values into flags
 typedef struct {
-    alt_u32 totlines;
-    alt_u32 clkcnt;
-    alt_u8 progressive;
-    alt_u8 macrovis;
-    alt_u8 refclk;
-    alt_8 id;
-    alt_u8 sync_active;
-    alt_u8 linemult;
+    alt_u32   totlines;
+    alt_u32   clkcnt;
+    alt_u8    progressive;
+    alt_u8    macrovis;
+    alt_u8    refclk;
+    alt_8     id;
+    alt_u8    sync_active;
+    alt_u8    linemult;
     avinput_t avinput;
     // Current configuration
     avconfig_t cc;
@@ -192,39 +192,39 @@ typedef struct {
 avmode_t cm;
 
 typedef struct {
-    const menuitem_id id;
-    const char *desc;
+    const menuitem_id  id;
+    const char        *desc;
 } menuitem_t;
 
 const menuitem_t menu[] = {
-    { SCANLINE_MODE,        "Scanlines" },
-    { SCANLINE_STRENGTH,    "Scanline str." },
-    { SCANLINE_ID,          "Scanline id" },
-    { H_MASK,               "Horizontal mask" },
-    { V_MASK,               "Vertical mask" },
-    { SAMPLER_480P,         "480p in sampler" },
-    { SAMPLER_PHASE,        "Sampling phase" },
-    { YPBPR_COLORSPACE,     "YPbPr in ColSpa" },
-    { SYNC_THOLD,           "Analog sync thld" },
-    { SYNC_LPF,             "Analog sync LPF" },
-    { VIDEO_LPF,            "Video LPF" },
-    { LINETRIPLE_ENABLE,    "240p/288p lineX3" },
-    { LINETRIPLE_MODE,      "Linetriple mode" },
-    { DISABLE_ALC,          "Auto Lev. Contr." },
-    { TX_MODE,              "TX mode" },
+    { SCANLINE_MODE,     "Scanlines" },
+    { SCANLINE_STRENGTH, "Scanline str." },
+    { SCANLINE_ID,       "Scanline id" },
+    { H_MASK,            "Horizontal mask" },
+    { V_MASK,            "Vertical mask" },
+    { SAMPLER_480P,      "480p in sampler" },
+    { SAMPLER_PHASE,     "Sampling phase" },
+    { YPBPR_COLORSPACE,  "YPbPr in ColSpa" },
+    { SYNC_THOLD,        "Analog sync thld" },
+    { SYNC_LPF,          "Analog sync LPF" },
+    { VIDEO_LPF,         "Video LPF" },
+    { LINETRIPLE_ENABLE, "240p/288p lineX3" },
+    { LINETRIPLE_MODE,   "Linetriple mode" },
+    { DISABLE_ALC,       "Auto Lev. Contr." },
+    { TX_MODE,           "TX mode" },
 #ifndef DEBUG
-    { FW_UPDATE,            "Firmware update" },
+    { FW_UPDATE,         "Firmware update" },
 #endif
-    { SAVE_CONFIG,          "Save settings" },
+    { SAVE_CONFIG,       "Save settings" },
 };
 
 #define MENUITEMS (sizeof(menu)/sizeof(menuitem_t))
 
 typedef struct {
-    char fw_key[4];
-    alt_u8 version_major;
-    alt_u8 version_minor;
-    char version_suffix[8];
+    char    fw_key[4];
+    alt_u8  version_major;
+    alt_u8  version_minor;
+    char    version_suffix[8];
     alt_u32 hdr_len;
     alt_u32 data_len;
     alt_u32 data_crc;
@@ -233,7 +233,7 @@ typedef struct {
 
 #define USERDATA_HDR_SIZE 11
 typedef struct {
-    char userdata_key[8];
+    char   userdata_key[8];
     alt_u8 version_major;
     alt_u8 version_minor;
     alt_u8 num_entries;
