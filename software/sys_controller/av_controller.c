@@ -131,7 +131,7 @@ typedef enum {
     VIDEO_LPF,
     LINETRIPLE_ENABLE,
     LINETRIPLE_MODE,
-    EN_ALC,
+    DISABLE_ALC,
     TX_MODE,
 #ifndef DEBUG
     FW_UPDATE,
@@ -167,7 +167,7 @@ typedef struct {
     alt_8 sync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
-    alt_u8 en_alc;
+    alt_u8 disable_alc;
 } avconfig_t;
 
 // Target configuration
@@ -210,7 +210,7 @@ const menuitem_t menu[] = {
     { VIDEO_LPF,            "Video LPF" },
     { LINETRIPLE_ENABLE,    "240p/288p lineX3" },
     { LINETRIPLE_MODE,      "Linetriple mode" },
-    { EN_ALC,               "Auto Lev. Contr." },
+    { DISABLE_ALC,          "Auto Lev. Contr." },
     { TX_MODE,              "TX mode" },
 #ifndef DEBUG
     { FW_UPDATE,            "Firmware update" },
@@ -834,10 +834,10 @@ void display_menu(alt_u8 forcedisp)
         	tc.l3_mode = tc.l3_mode < L3_MODE_MAX ? tc.l3_mode+1 : 0;
         strncpy(menu_row2, l3_mode_desc[tc.l3_mode], LCD_ROW_LEN+1);
         break;
-    case EN_ALC:
+    case DISABLE_ALC:
         if ((code == VAL_MINUS) || (code == VAL_PLUS))
-            tc.en_alc = !tc.en_alc;
-        sniprintf(menu_row2, LCD_ROW_LEN+1, tc.en_alc ? "Enabled" : "Disabled");
+            tc.disable_alc = !tc.disable_alc;
+        sniprintf(menu_row2, LCD_ROW_LEN+1, tc.disable_alc ? "Disabled" : "Enabled");
         break;
     case TX_MODE:
         if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) && ((code == VAL_MINUS) || (code == VAL_PLUS))) {
@@ -1060,7 +1060,7 @@ status_t get_status(tvp_input_t input)
     if ((tc.linemult_target != cm.cc.linemult_target) ||
 	(tc.l3_mode != cm.cc.l3_mode) ||
 	((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P))) ||
-	(tc.en_alc != cm.cc.en_alc))
+	(tc.disable_alc != cm.cc.disable_alc))
         status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
     cm.totlines = totlines;
@@ -1163,7 +1163,7 @@ void program_mode()
 
     printf("Mode %s selected\n", video_modes[cm.id].name);
 
-    tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.refclk);
+    tvp_source_setup(cm.id, target_type, cm.cc.disable_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.refclk);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }
