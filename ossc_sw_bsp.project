@@ -319,7 +319,7 @@
       <CustomBuild Enabled="yes">
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>nios2-bsp-generate-files --bsp-dir . --settings settings.bsp</BuildCommand>
+        <BuildCommand>nios2-bsp-generate-files --bsp-dir ./ --settings settings.bsp</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>

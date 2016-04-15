@@ -31,23 +31,26 @@
 #include "lcd.h"
 #include "sysconfig.h"
 #include "it6613.h"
+#include "it6613_sys.h"
 #include "HDMI_TX.h"
 #include "hdmitx.h"
 #include "ci_crc.h"
 
 alt_u8 fw_ver_major = 0;
-alt_u8 fw_ver_minor = 67;
-#define FW_UPDATE_RETRIES 3
+alt_u8 fw_ver_minor = 69;
+#define FW_UPDATE_RETRIES       3
 
-#define LINECNT_THOLD       1
-#define STABLE_THOLD        1
-#define MIN_VALID_LINES     100
-#define SYNC_LOSS_THOLD     5
+#define LINECNT_THOLD           1
+#define STABLE_THOLD            1
+#define MIN_LINES_PROGRESSIVE   200
+#define MIN_LINES_INTERLACED    400
+#define SYNC_LOSS_THOLD         5
+#define STATUS_TIMEOUT          10000
 
-#define MAINLOOP_SLEEP_US   10000
+#define MAINLOOP_SLEEP_US       10000
 
-#define SCANLINESTR_MAX         0x07
-#define HV_MASK_MAX             0x0f
+#define SCANLINESTR_MAX         15
+#define HV_MASK_MAX             63
 #define L3_MODE_MAX             3
 #define S480P_MODE_MAX          2
 #define SL_MODE_MAX             2
@@ -56,14 +59,17 @@ alt_u8 fw_ver_minor = 67;
 #define SAMPLER_PHASE_MIN       -16
 #define SAMPLER_PHASE_MAX       15
 #define SYNC_THOLD_MIN          -11
-#define SYNC_THOLD_MAX         20
+#define SYNC_THOLD_MAX          20
+#define PLL_COAST_MIN           0
+#define PLL_COAST_MAX           5
 
-//#define TVP_CLKSEL_BIT          (1<<7)
+#define DEFAULT_PRE_COAST       1
+#define DEFAULT_POST_COAST      0
 
 #define RC_MASK                 0x0000ffff
 #define PB_MASK                 0x00030000
-#define PB0_MASK                0x00010000
-#define PB1_MASK                0x00020000
+#define PB0_BIT                 0x00010000
+#define PB1_BIT                 0x00020000
 #define HDMITX_MODE_MASK        0x00040000
 
 static const char *rc_keydesc[] = { "1", "2", "3", "MENU", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "HOTKEY1", "HOTKEY2", "HOTKEY3"};
@@ -127,6 +133,8 @@ typedef enum {
     SAMPLER_PHASE,
     YPBPR_COLORSPACE,
     SYNC_THOLD,
+    PRE_COAST,
+    POST_COAST,
     SYNC_LPF,
     VIDEO_LPF,
     LINETRIPLE_ENABLE,
@@ -166,6 +174,8 @@ typedef struct {
     alt_8 sync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
+    alt_u8 pre_coast;
+    alt_u8 post_coast;
 } avconfig_t;
 
 // Target configuration
@@ -204,6 +214,8 @@ const menuitem_t menu[] = {
     { SAMPLER_PHASE,        "Sampling phase" },
     { YPBPR_COLORSPACE,     "YPbPr in ColSpa" },
     { SYNC_THOLD,           "Analog sync thld" },
+    { PRE_COAST,            "H-PLL Pre-Coast" },
+    { POST_COAST,           "H-PLL Post-Coast" },
     { SYNC_LPF,             "Analog sync LPF" },
     { VIDEO_LPF,            "Video LPF" },
     { LINETRIPLE_ENABLE,    "240p/288p lineX3" },
@@ -273,7 +285,8 @@ char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_ro
 short int sd_fw_handle;
 
 alt_u8 menu_active, menu_page;
-alt_u32 remote_code, remote_code_prev;
+alt_u32 remote_code;
+alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
 
 int check_flash()
@@ -594,6 +607,17 @@ int write_userdata()
     return 0;
 }
 
+
+void set_default_avconfig()
+{
+    memset(&cm.cc, 0, sizeof(avconfig_t));
+    memset(&tc, 0, sizeof(avconfig_t));
+    cm.cc.pre_coast = DEFAULT_PRE_COAST;
+    tc.pre_coast = DEFAULT_PRE_COAST;
+    cm.cc.post_coast = DEFAULT_POST_COAST;
+    tc.post_coast = DEFAULT_POST_COAST;
+}
+
 int read_userdata()
 {
     int retval, i;
@@ -662,6 +686,7 @@ int read_userdata()
 void setup_rc()
 {
     int i, confirm;
+    alt_u32 remote_code_prev;
 
     for (i=0; i<REMOTE_MAX_KEYS; i++) {
         strncpy(menu_row1, "Press", LCD_ROW_LEN+1);
@@ -672,7 +697,7 @@ void setup_rc()
         while (1) {
             remote_code = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
 
-            if ((remote_code_prev == 0) && (remote_code != 0)) {
+            if (remote_code && (remote_code != remote_code_prev)) {
                 if (confirm == 0) {
                     rc_keymap[i] = remote_code;
                     strncpy(menu_row1, "Confirm", LCD_ROW_LEN+1);
@@ -702,10 +727,10 @@ void setup_rc()
 
 inline void TX_enable(tx_mode_t mode)
 {
-    //SetAVMute(TRUE);
     if (mode == TX_HDMI) {
         EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 1);
-        HDMITX_SetAVIInfoFrame(1, F_MODE_RGB444, 0, 0);
+        //TODO: set correct VID based on mode
+        HDMITX_SetAVIInfoFrame(HDMI_480p60, F_MODE_RGB444, 0, 0);
     } else {
         EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, 0);
     }
@@ -717,20 +742,16 @@ void display_menu(alt_u8 forcedisp)
     menucode_id code;
     int retval;
 
-    if (remote_code_prev == 0) {
-        if (remote_code == rc_keymap[RC_UP])
-            code = PREV_PAGE;
-        else if (remote_code == rc_keymap[RC_DOWN])
-            code = NEXT_PAGE;
-        else if (remote_code == rc_keymap[RC_RIGHT])
-            code = VAL_PLUS;
-        else if (remote_code == rc_keymap[RC_LEFT])
-            code = VAL_MINUS;
-        else
-            code = NO_ACTION;
-    } else {
+    if (remote_code == rc_keymap[RC_UP])
+        code = PREV_PAGE;
+    else if (remote_code == rc_keymap[RC_DOWN])
+        code = NEXT_PAGE;
+    else if (remote_code == rc_keymap[RC_RIGHT])
+        code = VAL_PLUS;
+    else if (remote_code == rc_keymap[RC_LEFT])
+        code = VAL_MINUS;
+    else
         code = NO_ACTION;
-    }
 
     if (!forcedisp && (code == NO_ACTION))
         return;
@@ -755,7 +776,7 @@ void display_menu(alt_u8 forcedisp)
             tc.sl_str--;
         else if ((code == VAL_PLUS) && (tc.sl_str < SCANLINESTR_MAX))
             tc.sl_str++;
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((tc.sl_str+1)*125)/10);
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((tc.sl_str+1)*625)/100);
         break;
     case SCANLINE_ID:
         if ((code == VAL_MINUS) || (code == VAL_PLUS))
@@ -767,14 +788,14 @@ void display_menu(alt_u8 forcedisp)
             tc.h_mask--;
         else if ((code == VAL_PLUS) && (tc.h_mask < HV_MASK_MAX))
             tc.h_mask++;
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", tc.h_mask<<2);
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", tc.h_mask);
         break;
     case V_MASK:
         if ((code == VAL_MINUS) && (tc.v_mask > 0))
             tc.v_mask--;
         else if ((code == VAL_PLUS) && (tc.v_mask < HV_MASK_MAX))
             tc.v_mask++;
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", tc.v_mask<<2);
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", tc.v_mask);
         break;
     case SAMPLER_480P:
         if ((code == VAL_MINUS) && (tc.s480p_mode > 0))
@@ -801,6 +822,20 @@ void display_menu(alt_u8 forcedisp)
         else if ((code == VAL_PLUS) && (tc.sync_thold < SYNC_THOLD_MAX))
             tc.sync_thold++;
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", ((tc.sync_thold-SYNC_THOLD_MIN)*1127)/100);
+        break;
+    case PRE_COAST:
+        if ((code == VAL_MINUS) && (tc.pre_coast > PLL_COAST_MIN))
+            tc.pre_coast--;
+        else if ((code == VAL_PLUS) && (tc.pre_coast < PLL_COAST_MAX))
+            tc.pre_coast++;
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u lines", tc.pre_coast);
+        break;
+    case POST_COAST:
+        if ((code == VAL_MINUS) && (tc.post_coast > PLL_COAST_MIN))
+            tc.post_coast--;
+        else if ((code == VAL_PLUS) && (tc.post_coast < PLL_COAST_MAX))
+            tc.post_coast++;
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u lines", tc.post_coast);
         break;
     case SYNC_LPF:
         if ((code == VAL_MINUS) && (tc.sync_lpf > 0))
@@ -875,50 +910,43 @@ void display_menu(alt_u8 forcedisp)
 
 void read_control()
 {
-    if (remote_code_prev == 0) {
-        if (remote_code == rc_keymap[RC_MENU]) {
-            menu_active = !menu_active;
+    if (remote_code == rc_keymap[RC_MENU]) {
+        menu_active = !menu_active;
 
-            if (menu_active) {
-                display_menu(1);
-            } else {
-                lcd_write_status();
-            }
-        } else if (remote_code == rc_keymap[RC_BACK]) {
-            menu_active = 0;
+        if (menu_active) {
+            display_menu(1);
+        } else {
             lcd_write_status();
-        } else if (remote_code == rc_keymap[RC_INFO]) {
-            sniprintf(menu_row1, LCD_ROW_LEN+1, "VMod: %s", video_modes[cm.id].name);
-            //sniprintf(menu_row1, LCD_ROW_LEN+1, "0x%x 0x%x 0x%x", ths_readreg(THS_CH1), ths_readreg(THS_CH2), ths_readreg(THS_CH3));
-            sniprintf(menu_row2, LCD_ROW_LEN+1, "LO: %u VSM: %u", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3);
-            lcd_write_menu();
-            printf("Mod: %s\n", video_modes[cm.id].name);
-            printf("Lines: %u M: %u\n", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, cm.macrovis);
-        } else if (remote_code == rc_keymap[RC_LCDBL]) {
-            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) ^ (1<<1)));
-        } else if (remote_code == rc_keymap[RC_HOTKEY1]) {
-            tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
-        } else if (remote_code == rc_keymap[RC_HOTKEY2]) {
-            if (tc.sl_str > 0)
-                tc.sl_str--;
-        } else if (remote_code == rc_keymap[RC_HOTKEY3]) {
-            if (tc.sl_str < SCANLINESTR_MAX)
-                tc.sl_str++;
         }
+    } else if (remote_code == rc_keymap[RC_BACK]) {
+        menu_active = 0;
+        lcd_write_status();
+    } else if (remote_code == rc_keymap[RC_INFO]) {
+        sniprintf(menu_row1, LCD_ROW_LEN+1, "VMod: %s", video_modes[cm.id].name);
+        //sniprintf(menu_row1, LCD_ROW_LEN+1, "0x%x 0x%x 0x%x", ths_readreg(THS_CH1), ths_readreg(THS_CH2), ths_readreg(THS_CH3));
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "LO: %u VSM: %u", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3);
+        lcd_write_menu();
+        printf("Mod: %s\n", video_modes[cm.id].name);
+        printf("Lines: %u M: %u\n", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, cm.macrovis);
+    } else if (remote_code == rc_keymap[RC_LCDBL]) {
+        IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) ^ (1<<1)));
+    } else if (remote_code == rc_keymap[RC_HOTKEY1]) {
+        tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
+    } else if (remote_code == rc_keymap[RC_HOTKEY2]) {
+        if (tc.sl_str > 0)
+            tc.sl_str--;
+    } else if (remote_code == rc_keymap[RC_HOTKEY3]) {
+        if (tc.sl_str < SCANLINESTR_MAX)
+            tc.sl_str++;
     }
 
     if (btn_code_prev == 0) {
-        if (btn_code & PB1_MASK)
+        if (btn_code & PB1_BIT)
             tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
     }
 
-    if (menu_active) {
+    if (menu_active)
         display_menu(0);
-        return;
-    }
-
-    if (remote_code_prev != 0)
-        return;
 }
 
 void set_lpf(alt_u8 lpf)
@@ -973,7 +1001,7 @@ status_t get_status(tvp_input_t input)
     status = NO_CHANGE;
 
     // Wait until vsync active (avoid noise coupled to I2C bus on earlier prototypes)
-    for (ctr=0; ctr<25000; ctr++) {
+    for (ctr=0; ctr<STATUS_TIMEOUT; ctr++) {
         if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & (1<<31))) {
             //printf("ctrval %u\n", ctr);
             break;
@@ -1023,35 +1051,26 @@ status_t get_status(tvp_input_t input)
     data2 = tvp_readreg(TVP_CLKCNT2);
     clkcnt = ((data2 & 0x0f) << 8) | data1;
 
-    //Not fully implemented yet
-    /*refclk = !!(cword & TVP_CLKSEL_BIT);
-    refclk = 0;
+    if ((progressive && (totlines > MIN_LINES_PROGRESSIVE)) || (!progressive && (totlines > MIN_LINES_INTERLACED))) {
+        if ((abs((alt_16)totlines - (alt_16)cm.totlines) > LINECNT_THOLD) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
+            printf("totlines: %u (cur) / %u (prev), clkcnt: %u (cur) / %u (prev). Data1: 0x%.2x, Data2: 0x%.2x\n", (unsigned)totlines, (unsigned)cm.totlines, (unsigned)clkcnt, (unsigned)cm.clkcnt, (unsigned)data1, (unsigned)data2);
+            stable_frames = 0;
+        } else if (stable_frames != STABLE_THOLD) {
+            stable_frames++;
+            if (stable_frames == STABLE_THOLD)
+                status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+        }
 
-    if (refclk != cm.refclk)
-        status = (status < REFCLK_CHANGE) ? REFCLK_CHANGE : status;*/
-
-    /*if (tc.tx_mode != cm.cc.tx_mode)
-        status = (status < TX_MODE_CHANGE) ? TX_MODE_CHANGE : status;*/
-
-    // TODO: avoid random sync losses?
-    if ((abs((alt_16)totlines - (alt_16)cm.totlines) > LINECNT_THOLD) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
-        printf("totlines: %u (cur) / %u (prev), clkcnt: %u (cur) / %u (prev). Data1: 0x%.2x, Data2: 0x%.2x\n", (unsigned)totlines, (unsigned)cm.totlines, (unsigned)clkcnt, (unsigned)cm.clkcnt, (unsigned)data1, (unsigned)data2);
-        stable_frames = 0;
-    } else if (stable_frames != STABLE_THOLD) {
-        stable_frames++;
-        if (stable_frames == STABLE_THOLD)
+        if ((tc.linemult_target != cm.cc.linemult_target) || (tc.l3_mode != cm.cc.l3_mode))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+
+        if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P)))
+            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+
+        cm.totlines = totlines;
+        cm.clkcnt = clkcnt;
+        cm.progressive = progressive;
     }
-
-    if ((tc.linemult_target != cm.cc.linemult_target) || (tc.l3_mode != cm.cc.l3_mode))
-        status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
-
-    if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P)))
-        status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
-
-    cm.totlines = totlines;
-    cm.clkcnt = clkcnt;
-    cm.progressive = progressive;
 
     if ((tc.sl_mode != cm.cc.sl_mode) ||
         (tc.sl_str != cm.cc.sl_str) ||
@@ -1065,6 +1084,9 @@ status_t get_status(tvp_input_t input)
 
     if (tc.sync_thold != cm.cc.sync_thold)
         tvp_set_sog_thold(tc.sync_thold-SYNC_THOLD_MIN);
+
+    if ((tc.pre_coast != cm.cc.pre_coast) || (tc.post_coast != cm.cc.post_coast))
+        tvp_set_hpllcoast(tc.pre_coast, tc.post_coast);
 
     if (tc.ypbpr_cs != cm.cc.ypbpr_cs)
         tvp_sel_csc(&csc_coeffs[tc.ypbpr_cs]);
@@ -1081,11 +1103,11 @@ status_t get_status(tvp_input_t input)
     return status;
 }
 
-// h_info:     [31:30]          [29:28]      [27]      [26:16]      [15:12]      [11:8]             [7:0]
-//           | H_LINEMULT[1:0] | H_L3MODE[1:0] |    | H_ACTIVE[10:0] |         | H_MASK[3:0] |  H_BACKPORCH[7:0] |
+// h_info:     [31:30]           [29:28]         [27:22]      [21]  [20:10]          [7:0]
+//           | H_LINEMULT[1:0] | H_L3MODE[1:0] | H_MASK[5:0] |    | H_ACTIVE[10:0] | H_BACKPORCH[7:0] |
 //
-// v_info:     [31:30]         [29]                                         [26:24]             [23:13]       [15:10]       [9:6]         [5:0]
-//           |              | V_SCANLINES | V_SCANLINEDIR | V_SCANLINEID | V_SCANLINESTR[2:0] | V_ACTIVE[10:0] |         | V_MASK[3:0]|  V_BACKPORCH[5:0] |
+// v_info:     [31]          [30]            [29]           [28:25]              [24:19]      [18]  [17:7]          [6]  [5:0]
+//           | V_SCANLINES | V_SCANLINEDIR | V_SCANLINEID | V_SCANLINESTR[3:0] | V_MASK[5:0] |    | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
 void set_videoinfo()
 {
     alt_u8 slid_target;
@@ -1101,8 +1123,8 @@ void set_videoinfo()
         slid_target = cm.cc.sl_id;
     }
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (video_modes[cm.id].h_active<<16) | (cm.cc.h_mask)<<8 | video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((!!cm.cc.sl_mode)<<29) | (cm.cc.sl_mode > 0 ? (cm.cc.sl_mode-1)<<28 : 0) | (slid_target<<27) | (cm.cc.sl_str<<24) | (video_modes[cm.id].v_active<<13) | (cm.cc.v_mask<<6) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (cm.cc.h_mask)<<22 | (video_modes[cm.id].h_active<<10) | video_modes[cm.id].h_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((!!cm.cc.sl_mode)<<31) | (cm.cc.sl_mode > 0 ? (cm.cc.sl_mode-1)<<30 : 0) | (slid_target<<19) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -1149,7 +1171,7 @@ void program_mode()
 
     printf("Mode %s selected\n", video_modes[cm.id].name);
 
-    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.refclk);
+    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.refclk, cm.cc.pre_coast, cm.cc.post_coast);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }
@@ -1160,6 +1182,7 @@ int init_hw()
     alt_u32 chiprev;
 
     // Reset error vector and scan converter
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x03);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x00);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, 0x00000000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, 0x00000000);
@@ -1208,6 +1231,8 @@ int init_hw()
         return -1;
     }
 
+    set_default_avconfig();
+
     // safe?
     read_userdata();
 
@@ -1217,11 +1242,11 @@ int init_hw()
         tc.tx_mode = TX_DVI;
     }
 
-    if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_MASK))
+    if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
 
-    //enable TX (videogen)
-    usleep(200000);
+    // init always is HDMI mode (fixes yellow screen bug)
+    TX_enable(TX_HDMI);
     TX_enable(cm.cc.tx_mode);
 
     return 0;
@@ -1250,6 +1275,8 @@ int main()
     alt_u8 av_init = 0;
     status_t status;
 
+    alt_u32 input_vec;
+
     int init_stat;
 
     init_stat = init_hw();
@@ -1257,7 +1284,11 @@ int main()
     if (init_stat >= 0) {
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u", fw_ver_major, fw_ver_minor);
+#ifndef DEBUG
         strncpy(row2, "2014-2016  marqs", LCD_ROW_LEN+1);
+#else
+        strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
+#endif
         lcd_write_status();
     } else {
         sniprintf(row1, LCD_ROW_LEN+1, "Init error  %d", init_stat);
@@ -1268,38 +1299,44 @@ int main()
 
     while(1) {
         // Select target input and mode
-        remote_code = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-        btn_code = ~IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB_MASK;
+        input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
+        remote_code = input_vec & RC_MASK;
+        btn_code = ~input_vec & PB_MASK;
+        remote_rpt = input_vec >> 24;
 
-        if (remote_code_prev == 0 && remote_code != 0)
-            printf("RCODE: 0x%.4x\n", remote_code);
+        if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
+            remote_code = 0;
+        /*else if ((remote_rpt >= 6) && (remote_rpt % 2))
+            remote_code = 0;*/
+
+        if (remote_code)
+            printf("RCODE: 0x%.4x, %u\n", remote_code, remote_rpt);
 
         if (btn_code_prev == 0 && btn_code != 0)
             printf("BCODE: 0x%.2x\n", btn_code>>16);
 
         target_mode = AV_KEEP;
 
-        if (remote_code_prev == 0) {
-            if (remote_code == rc_keymap[RC_BTN1]) {
-                if (cm.avinput == AV1_RGBs)
-                    target_mode = AV1_RGsB;
-                else
-                    target_mode = AV1_RGBs;
-            } else if (remote_code == rc_keymap[RC_BTN2]) {
-                if (cm.avinput == AV2_YPBPR)
-                    target_mode = AV2_RGsB;
-                else
-                    target_mode = AV2_YPBPR;
-            } else if (remote_code == rc_keymap[RC_BTN3]) {
-                if (cm.avinput == AV3_RGBHV)
-                    target_mode = AV3_RGBs;
-                else if (cm.avinput == AV3_RGBs)
-                    target_mode = AV3_RGsB;
-                else
-                    target_mode = AV3_RGBHV;
-            }
+        if (remote_code == rc_keymap[RC_BTN1]) {
+            if (cm.avinput == AV1_RGBs)
+                target_mode = AV1_RGsB;
+            else
+                target_mode = AV1_RGBs;
+        } else if (remote_code == rc_keymap[RC_BTN2]) {
+            if (cm.avinput == AV2_YPBPR)
+                target_mode = AV2_RGsB;
+            else
+                target_mode = AV2_YPBPR;
+        } else if (remote_code == rc_keymap[RC_BTN3]) {
+            if (cm.avinput == AV3_RGBHV)
+                target_mode = AV3_RGBs;
+            else if (cm.avinput == AV3_RGBs)
+                target_mode = AV3_RGsB;
+            else
+                target_mode = AV3_RGBHV;
         }
-        if ((btn_code_prev == 0) && (btn_code & PB0_MASK)) {
+
+        if ((btn_code_prev == 0) && (btn_code & PB0_BIT)) {
             target_mode = (cm.avinput == AV3_RGsB) ? AV1_RGBs : (cm.avinput+1);
         }
 
@@ -1394,19 +1431,8 @@ int main()
                         lcd_write_status();
                 }
                 break;
-                /*case TX_MODE_CHANGE:
-                    if (cm.sync_active)
-                        TX_enable(cm.cc.tx_mode);
-                    printf("TX mode change\n");
-                  break;*/
-                /*case REFCLK_CHANGE:
-                    if (cm.sync_active) {
-                        printf("Refclk change\n");
-                        tvp_sel_clk(cm.refclk);
-                    }
-                  break;*/
             case MODE_CHANGE:
-                if (cm.sync_active && (cm.totlines >= MIN_VALID_LINES)) {
+                if (cm.sync_active) {
                     printf("Mode change\n");
                     program_mode();
                 }
@@ -1422,8 +1448,8 @@ int main()
             }
         }
 
-        remote_code_prev = remote_code;
         btn_code_prev = btn_code;
+        remote_rpt_prev = remote_rpt;
     }
 
     return 0;

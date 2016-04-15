@@ -40,12 +40,6 @@ const ypbpr_to_rgb_csc_t csc_coeffs[] = {
 
 extern mode_data_t video_modes[];
 
-static inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
-{
-    tvp_writereg(TVP_HPLLPRECOAST, pre);
-    tvp_writereg(TVP_HPLLPOSTCOAST, post);
-}
-
 static inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
 {
     tvp_writereg(TVP_SSTHOLD, vsdetect_thold);
@@ -165,6 +159,12 @@ inline void tvp_enable_output()
     usleep(10000);
     tvp_writereg(TVP_MISCCTRL2, 0x02);
     usleep(10000);
+}
+
+inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
+{
+    tvp_writereg(TVP_HPLLPRECOAST, pre);
+    tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
 void tvp_init()
@@ -311,7 +311,7 @@ void tvp_set_sog_thold(alt_u8 val)
     printf("SOG thold set to 0x%x\n", val);
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 refclk)
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 refclk, alt_u8 pre_coast, alt_u8 post_coast)
 {
     // Configure clock settings
     tvp_sel_clk(refclk);
@@ -348,8 +348,9 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
     //Long coast may lead to PLL frequency drift and sync loss (e.g. SNES)
     /*if (video_modes[modeid].v_active < 720)
         tvp_set_hpllcoast(3, 3);
-    else*/
-    tvp_set_hpllcoast(1, 0);
+    else
+        tvp_set_hpllcoast(1, 0);*/
+    tvp_set_hpllcoast(pre_coast, post_coast);
 
     // Hsync output width
     tvp_writereg(TVP_HSOUTWIDTH, video_modes[modeid].h_synclen);
