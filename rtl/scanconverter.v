@@ -423,7 +423,8 @@ begin
     if (!reset_n)
         begin
             hcnt_1x <= 0;
-            hmax[line_idx] <= 0;
+            hmax[0] <= 0;
+            hmax[1] <= 0;
             line_idx <= 0;
             vcnt_1x <= 0;
             vcnt_1x_tvp <= 0;
@@ -481,24 +482,24 @@ begin
                         fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] <= (vcnt_1x_tvp < `MIN_VALID_LINES);
 
                     if (!(`FALSE_FIELD))
-                    begin
-                        vcnt_1x <= 0;
-                        lines_1x <= vcnt_1x;
-                    end
+                        begin
+                            vcnt_1x <= 0;
+                            lines_1x <= vcnt_1x;
+                        end
                     
                     //Read configuration data from CPU
-                    H_ACTIVE <= h_info[26:16];      // Horizontal active length from by the CPU - 11bits (0...2047)
+                    H_ACTIVE <= h_info[20:10];      // Horizontal active length from by the CPU - 11bits (0...2047)
                     H_BACKPORCH <= h_info[7:0];     // Horizontal backporch length from by the CPU - 8bits (0...255)
                     H_LINEMULT <= h_info[31:30];    // Horizontal line multiply mode
                     H_L3MODE <= h_info[29:28];      // Horizontal line triple mode
-                    H_MASK <= {h_info[11:8], 2'b00};
-                    V_ACTIVE <= v_info[23:13];      // Vertical active length from by the CPU, 11bits (0...2047)
+                    H_MASK <= h_info[27:22];
+                    V_ACTIVE <= v_info[17:7];       // Vertical active length from by the CPU, 11bits (0...2047)
                     V_BACKPORCH <= v_info[5:0];     // Vertical backporch length from by the CPU, 6bits (0...64)
-                    V_SCANLINES <= v_info[29];
-                    V_SCANLINEDIR <= v_info[28];
-                    V_SCANLINEID <= v_info[27];
-                    V_SCANLINESTR <= ((v_info[26:24]+8'h01)<<5)-1'b1;
-                    V_MASK <= {v_info[9:6], 2'b00};
+                    V_SCANLINES <= v_info[31];
+                    V_SCANLINEDIR <= v_info[30];
+                    V_SCANLINEID <= v_info[29];
+                    V_SCANLINESTR <= ((v_info[28:25]+8'h01)<<4)-1'b1;
+                    V_MASK <= v_info[24:19];
                 end
                 
             prev_hs <= HSYNC_in;
@@ -522,9 +523,6 @@ begin
             
             h_enable_1x <= ((hcnt_1x >= H_BACKPORCH) & (hcnt_1x < H_BACKPORCH + H_ACTIVE));
             v_enable_1x <= ((vcnt_1x >= V_BACKPORCH) & (vcnt_1x < V_BACKPORCH + V_ACTIVE)); //- FID_in ???
-            
-            /*HSYNC_out_debug <= HSYNC_in;
-            VSYNC_out_debug <= VSYNC_in;*/
         end
 end
 
@@ -570,12 +568,12 @@ begin
                 end
                 
             if (pclk_1x == 1'b0)
-            begin
-                if (fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] == 1'b1)
-                    VSYNC_2x <= (vcnt_2x >= lines_1x - `VSYNCGEN_LEN) ? 1'b0 : 1'b1;
-                else if (vcnt_1x > V_ACTIVE)
-                    VSYNC_2x <= VSYNC_in;
-            end
+                begin
+                    if (fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] == 1'b1)
+                        VSYNC_2x <= (vcnt_2x >= lines_1x - `VSYNCGEN_LEN) ? 1'b0 : 1'b1;
+                    else if (vcnt_1x > V_ACTIVE)
+                        VSYNC_2x <= VSYNC_in;
+                end
 
             HSYNC_2x <= ~(hcnt_2x >= HSYNC_start);
             //TODO: VSYNC_2x

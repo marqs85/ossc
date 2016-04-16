@@ -113,19 +113,15 @@
   </Settings>
   <VirtualDirectory Name="rtl">
     <File Name="rtl/ir_rcv.v"/>
-    <File Name="rtl/pll_3x_lowfreq_BAK.v"/>
     <File Name="rtl/ossc.v"/>
     <File Name="rtl/pll_2x.v"/>
-    <File Name="rtl/ir_rcv_option2.v"/>
     <File Name="rtl/pll_3x_lowfreq.v"/>
     <File Name="rtl/pll_3x_lowfreq_bb.v"/>
     <File Name="rtl/linebuf_inst.v"/>
     <File Name="rtl/videogen.v"/>
-    <File Name="rtl/pll_3x_BAK.v"/>
     <File Name="rtl/timescale.v"/>
     <File Name="rtl/pll_2x_bb.v"/>
     <File Name="rtl/linebuf.v"/>
-    <File Name="rtl/pll_2x_BAK.v"/>
     <File Name="rtl/pll_3x.v"/>
     <File Name="rtl/scanconverter.v"/>
     <File Name="rtl/linebuf_bb.v"/>

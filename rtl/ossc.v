@@ -64,6 +64,7 @@ wire [10:0] lines_out;
 wire [1:0] fpga_vsyncgen;
 
 wire [15:0] ir_code;
+wire [7:0] ir_code_cnt;
 
 wire [7:0] R_out, G_out, B_out;
 wire HSYNC_out;
@@ -80,15 +81,14 @@ wire DATA_enable_videogen;
 wire [7:0] lcd_ctrl;
 
 reg [3:0] reset_n_ctr;
+reg reset_n_reg = 1'b1;
 
 `ifdef DEBUG
-assign LED_G = {clk27, PCLK_in};
-assign LED_R = {HSYNC_in, VSYNC_in};
+assign LED_R = HSYNC_in;
+assign LED_G = VSYNC_in;
 `else
-//assign LED_G = {(pclk_lock != 3'b000), (ir_code != 0)};
-//assign LED_R = {(pll_lock_lost != 3'b000), h_unstable};
-assign LED_G = (ir_code == 0);
 assign LED_R = (pll_lock_lost != 3'b000)|h_unstable;
+assign LED_G = (ir_code == 0);
 `endif
 
 assign LCD_CS_N = lcd_ctrl[0];
@@ -122,7 +122,10 @@ begin
     if (reset_n_ctr == 4'b1000)
         reset_n_reg <= 1'b1;
     else
-        reset_n_ctr <= reset_n_ctr + 1'b1;
+        begin
+            reset_n_ctr <= reset_n_ctr + 1'b1;
+            reset_n_reg <= 1'b0;
+        end
 end
 
 assign cpu_reset_n = reset_n_reg;
@@ -131,14 +134,10 @@ sys sys_inst(
     .clk_clk                            (clk27),
     .reset_reset_n                      (cpu_reset_n),
     .pio_0_sys_ctrl_out_export          (sys_ctrl),
-    .pio_1_controls_in_export           ({13'b00000000000000, HDMI_TX_MODE, btn, ir_code}),
+    .pio_1_controls_in_export           ({ir_code_cnt, 5'b00000, HDMI_TX_MODE, btn, ir_code}),
     .pio_2_horizontal_info_out_export   (h_info),
     .pio_3_vertical_info_out_export     (v_info),
-`ifdef DEBUG
-    .pio_4_linecount_in_export          ({8'h00, R_in, G_in, B_in}),
-`else
     .pio_4_linecount_in_export          ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out}),
-`endif
     .pio_5_lcd_ctrl_out_export          (lcd_ctrl),
     .i2c_opencores_0_export_scl_pad_io  (scl),
     .i2c_opencores_0_export_sda_pad_io  (sda),
@@ -149,7 +148,7 @@ sys sys_inst(
 );
 
 scanconverter scanconverter_inst (
-    .reset_n        (reset_n_reg),
+    .reset_n        (reset_n),
     .HSYNC_in       (HSYNC_in),
     .VSYNC_in       (VSYNC_in),
     .PCLK_in        (PCLK_in),
@@ -178,7 +177,8 @@ ir_rcv ir0 (
     .reset_n        (reset_n_reg),
     .ir_rx          (ir_rx),
     .ir_code        (ir_code),
-    .ir_code_ack    ()
+    .ir_code_ack    (),
+    .ir_code_cnt    (ir_code_cnt)
 );
 
 `ifdef VIDEOGEN
