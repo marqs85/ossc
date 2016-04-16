@@ -1332,9 +1332,10 @@ int init_hw()
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
 
-    // init always is HDMI mode (fixes yellow screen bug)
+    // init always in HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI);
-    TX_enable(tc.tx_mode);
+    if (tc.tx_mode == TX_DVI)
+        TX_enable(tc.tx_mode);
 
     return 0;
 }
