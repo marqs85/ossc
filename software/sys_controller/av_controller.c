@@ -1262,7 +1262,8 @@ int init_hw()
 
     // init always is HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI);
-    TX_enable(cm.cc.tx_mode);
+    if (cm.cc.tx_mode)
+        TX_enable(cm.cc.tx_mode);
 
     return 0;
 }
