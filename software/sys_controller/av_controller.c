@@ -38,9 +38,8 @@
 
 alt_u8 fw_ver_major = 0;
 alt_u8 fw_ver_minor = 69;
-#define FW_UPDATE_RETRIES       3
+#define FW_UPDATE_RETRIES 3
 
-<<<<<<< HEAD
 #define LINECNT_THOLD             1
 #define STABLE_THOLD              1
 #define MIN_LINES_PROGRESSIVE   200
@@ -69,8 +68,8 @@ alt_u8 fw_ver_minor = 69;
 
 #define RC_MASK          0x0000ffff
 #define PB_MASK          0x00030000
-#define PB0_MASK         0x00010000
-#define PB1_MASK         0x00020000
+#define PB0_BIT          0x00010000
+#define PB1_BIT          0x00020000
 #define HDMITX_MODE_MASK 0x00040000
 
 static const char *rc_keydesc[] = { "1", "2", "3", "MENU", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "HOTKEY1", "HOTKEY2", "HOTKEY3"};
@@ -176,9 +175,9 @@ typedef struct {
     alt_8  sync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
-    alt_u8 disable_alc;
     alt_u8 pre_coast;
     alt_u8 post_coast;
+    alt_u8 disable_alc;
 } avconfig_t;
 
 // Target configuration
@@ -1075,9 +1074,13 @@ status_t get_status(tvp_input_t input)
         
         if ((tc.linemult_target != cm.cc.linemult_target) ||
 	        (tc.l3_mode != cm.cc.l3_mode) ||
-	        ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P))) ||
-	        (tc.disable_alc != cm.cc.disable_alc))
+	        ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P))))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+
+
+        if (tc.disable_alc != cm.cc.disable_alc)
+            tvp_set_alc(target_type, tc.disable_alc);
+
 
         cm.totlines = totlines;
         cm.clkcnt = clkcnt;
