@@ -56,6 +56,7 @@ typedef struct {
 
 static const alt_u32 clkrate[] = {27000000, 6500000}; //in MHz
 
+void tvp_set_alc(alt_u8 disable_alc, video_type type);
 
 inline alt_u32 tvp_readreg(alt_u32 regaddr);
 

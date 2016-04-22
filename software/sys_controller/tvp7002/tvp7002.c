@@ -85,7 +85,7 @@ static void tvp_set_clamp_position(video_type type)
     }
 }
 
-static void tvp_set_alc(alt_u8 disable_alc, video_type type)
+void tvp_set_alc(alt_u8 disable_alc, video_type type)
 {
     if (!disable_alc) {
         tvp_writereg(TVP_ALCEN, 0x80); //enable ALC

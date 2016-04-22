@@ -137,9 +137,9 @@ typedef enum {
     POST_COAST,
     SYNC_LPF,
     VIDEO_LPF,
+    DISABLE_ALC,
     LINETRIPLE_ENABLE,
     LINETRIPLE_MODE,
-    DISABLE_ALC,
     TX_MODE,
 #ifndef DEBUG
     FW_UPDATE,
@@ -220,9 +220,9 @@ const menuitem_t menu[] = {
     { POST_COAST,        "H-PLL Post-Coast" },
     { SYNC_LPF,          "Analog sync LPF" },
     { VIDEO_LPF,         "Video LPF" },
+    { DISABLE_ALC,       "Auto Lev. Contr." },
     { LINETRIPLE_ENABLE, "240p/288p lineX3" },
     { LINETRIPLE_MODE,   "Linetriple mode" },
-    { DISABLE_ALC,       "Auto Lev. Contr." },
     { TX_MODE,           "TX mode" },
 #ifndef DEBUG
     { FW_UPDATE,         "Firmware update" },
@@ -1079,7 +1079,7 @@ status_t get_status(tvp_input_t input)
 
 
         if (tc.disable_alc != cm.cc.disable_alc)
-            tvp_set_alc(target_type, tc.disable_alc);
+            tvp_set_alc(tc.disable_alc, target_type);
 
 
         cm.totlines = totlines;
