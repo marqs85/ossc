@@ -192,9 +192,9 @@ BSP_ROOT_DIR := ../sys_controller_bsp/
 # List of application specific include directories, library directories and library names
 APP_INCLUDE_DIRS += it6613
 APP_INCLUDE_DIRS += tvp7002
-APP_INCLUDE_DIRS += ./
 APP_INCLUDE_DIRS += ths7353
 APP_INCLUDE_DIRS += spi_charlcd
+APP_INCLUDE_DIRS += ossc
 APP_LIBRARY_DIRS :=
 APP_LIBRARY_NAMES :=
 
