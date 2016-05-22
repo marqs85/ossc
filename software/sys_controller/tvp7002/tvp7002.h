@@ -33,9 +33,6 @@ typedef enum {
     TVP_INPUT3 = 2
 } tvp_input_t;
 
-static const alt_u8 Kvco[] = {75, 85, 150, 200};
-static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
-
 typedef enum {
     REFCLK_EXT27    = 0,
     REFCLK_INTCLK   = 1
@@ -54,21 +51,20 @@ typedef struct {
     alt_u16 B_Pr;
 } ypbpr_to_rgb_csc_t;
 
-static const alt_u32 clkrate[] = {27000000, 6500000}; //in MHz
 
 void tvp_set_alc(alt_u8 disable_alc, video_type type);
 
-inline alt_u32 tvp_readreg(alt_u32 regaddr);
+alt_u32 tvp_readreg(alt_u32 regaddr);
 
-inline void tvp_writereg(alt_u32 regaddr, alt_u8 data);
+void tvp_writereg(alt_u32 regaddr, alt_u8 data);
 
-inline void tvp_reset();
+void tvp_reset();
 
-inline void tvp_disable_output();
+void tvp_disable_output();
 
-inline void tvp_enable_output();
+void tvp_enable_output();
 
-inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
+void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
 
 void tvp_init();
 

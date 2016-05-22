@@ -142,17 +142,22 @@ ACDS_VERSION := 14.1
 ELF := sys_controller.elf
 
 # Paths to C, C++, and assembly source files.
-C_SRCS += av_controller.c
 C_SRCS += it6613/EDID.c
 C_SRCS += it6613/HDMI_TX.c
 C_SRCS += it6613/hdmitx_nios2.c
 C_SRCS += it6613/it6613.c
 C_SRCS += it6613/it6613_drv.c
-C_SRCS += it6613/it6613_sys.c
 C_SRCS += tvp7002/tvp7002.c
 C_SRCS += tvp7002/video_modes.c
 C_SRCS += ths7353/ths7353.c
 C_SRCS += spi_charlcd/lcd.c
+C_SRCS += ossc/memory.c
+C_SRCS += it6613/it6613_sys.c
+C_SRCS += main.c
+C_SRCS += ossc/av_controller.c
+C_SRCS += ossc/controls.c
+C_SRCS += ossc/menu.c
+C_SRCS += ossc/cfg.c
 CXX_SRCS :=
 ASM_SRCS :=
 
