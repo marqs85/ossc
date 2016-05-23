@@ -40,11 +40,6 @@ const ypbpr_to_rgb_csc_t csc_coeffs[] = {
 
 extern mode_data_t video_modes[];
 
-static inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
-{
-    tvp_writereg(TVP_SSTHOLD, vsdetect_thold);
-}
-
 static void tvp_set_clamp(video_format fmt)
 {
     switch (fmt) {
@@ -167,12 +162,20 @@ inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
     tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
+inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
+{
+    tvp_writereg(TVP_SSTHOLD, vsdetect_thold);
+}
+
 void tvp_init()
 {
     // disable output
     tvp_disable_output();
 
     //Set global defaults
+
+    // Configure external refclk
+    tvp_sel_clk(REFCLK_EXT27);
 
     // Hsync input->output delay (horizontal shift)
     // Default is 13, which maintains alignment of RGB and hsync at output
@@ -196,7 +199,7 @@ void tvp_init()
 
     // Common sync separator threshold
     // Some arcade games need more that the default 0x40
-    tvp_set_ssthold(0x44);
+    tvp_set_ssthold(DEFAULT_VSYNC_THOLD);
 }
 
 // Configure H-PLL (sampling rate, VCO gain and charge pump current)
@@ -311,14 +314,13 @@ void tvp_set_sog_thold(alt_u8 val)
     printf("SOG thold set to 0x%x\n", val);
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 refclk, alt_u8 pre_coast, alt_u8 post_coast)
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
 {
-    // Configure clock settings
-    tvp_sel_clk(refclk);
-
     // Clamp position and ALC
     tvp_set_clamp_position(type);
     tvp_set_alc(type);
+
+    tvp_set_ssthold(vsync_thold);
 
     // Macrovision enable/disable, coast disable for RGBHV.
     // Coast needs to be enabled when HSYNC is missing during VSYNC. Valid only for RGBHV?
@@ -356,7 +358,7 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
     tvp_writereg(TVP_HSOUTWIDTH, video_modes[modeid].h_synclen);
 }
 
-void tvp_source_sel(tvp_input_t input, video_format fmt, alt_u8 refclk)
+void tvp_source_sel(tvp_input_t input, video_format fmt)
 {
     alt_u8 sync_status;
     alt_u8 sog_ch;
@@ -371,14 +373,11 @@ void tvp_source_sel(tvp_input_t input, video_format fmt, alt_u8 refclk)
     // RGB+SOG input select
     tvp_writereg(TVP_INPMUX1, (sog_ch<<6) | (input<<4) | (input<<2) | input);
 
-    // Configure clock settings
-    tvp_sel_clk(refclk);
-
     // Clamp setup
     tvp_set_clamp(fmt);
 
     // HV/SOG sync select
-    if ((input == TVP_INPUT3) && (fmt != FORMAT_RGsB)) {
+    if ((input == TVP_INPUT3) && ((fmt == FORMAT_RGBHV) || (fmt == FORMAT_RGBS))) {
         if (fmt == FORMAT_RGBHV)
             tvp_writereg(TVP_SYNCCTRL1, 0x52);
         else // RGBS
@@ -417,15 +416,16 @@ void tvp_source_sel(tvp_input_t input, video_format fmt, alt_u8 refclk)
     printf("\n");
 }
 
-alt_u8 tvp_check_sync(tvp_input_t input)
+alt_u8 tvp_check_sync(tvp_input_t input, video_format fmt)
 {
     alt_u8 sync_status;
 
     sync_status = tvp_readreg(TVP_SYNCSTAT);
 
-    if (input == TVP_INPUT3)
-        return !!((sync_status & 0x98) > 0x80);
-    //return !!((sync_status & 0x90) == 0x90);
+    if ((input == TVP_INPUT3) && (fmt == FORMAT_RGBHV))
+        return ((sync_status & 0x90) == 0x90);
+    else if ((input == TVP_INPUT3) && (fmt == FORMAT_RGBS))
+        return ((sync_status & 0x88) == 0x88);
     else
         return !!(sync_status & (1<<1));
 }

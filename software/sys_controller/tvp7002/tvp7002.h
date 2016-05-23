@@ -27,6 +27,8 @@
 //#define I2C_DEBUG
 #define I2CA_BASE I2C_OPENCORES_0_BASE
 
+#define DEFAULT_VSYNC_THOLD 0x44
+
 typedef enum {
     TVP_INPUT1 = 0,
     TVP_INPUT2 = 1,
@@ -69,6 +71,8 @@ inline void tvp_enable_output();
 
 inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
 
+inline void tvp_set_ssthold(alt_u8 vsdetect_thold);
+
 void tvp_init();
 
 void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 plldivby2);
@@ -85,10 +89,10 @@ void tvp_set_hpll_phase(alt_u8 val);
 
 void tvp_set_sog_thold(alt_u8 val);
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 refclk, alt_u8 pre_coast, alt_u8 post_coast);
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold);
 
-void tvp_source_sel(tvp_input_t input, video_format fmt, alt_u8 refclk);
+void tvp_source_sel(tvp_input_t input, video_format fmt);
 
-alt_u8 tvp_check_sync(tvp_input_t input);
+alt_u8 tvp_check_sync(tvp_input_t input, video_format fmt);
 
 #endif /* TVP7002_H_ */
