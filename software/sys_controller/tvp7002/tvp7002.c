@@ -106,11 +106,15 @@ inline void tvp_reset()
 
 inline void tvp_disable_output()
 {
-    usleep(10000);
+    alt_u8 syncproc_rst = tvp_readreg(TVP_MISCCTRL4) | (1<<7);
+
     tvp_writereg(TVP_MISCCTRL1, 0x13);
     usleep(10000);
     tvp_writereg(TVP_MISCCTRL2, 0x03);
     usleep(10000);
+    tvp_writereg(TVP_MISCCTRL4, syncproc_rst);
+    usleep(1000);
+    tvp_writereg(TVP_MISCCTRL4, syncproc_rst & 0x7F);
 }
 
 inline void tvp_enable_output()
