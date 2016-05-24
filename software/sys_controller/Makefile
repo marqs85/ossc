@@ -153,6 +153,8 @@ C_SRCS += tvp7002/tvp7002.c
 C_SRCS += tvp7002/video_modes.c
 C_SRCS += ths7353/ths7353.c
 C_SRCS += spi_charlcd/lcd.c
+C_SRCS += memory/flash.c
+C_SRCS += memory/sdcard.c
 CXX_SRCS :=
 ASM_SRCS :=
 
@@ -192,9 +194,10 @@ BSP_ROOT_DIR := ../sys_controller_bsp/
 # List of application specific include directories, library directories and library names
 APP_INCLUDE_DIRS += it6613
 APP_INCLUDE_DIRS += tvp7002
-APP_INCLUDE_DIRS += ./
 APP_INCLUDE_DIRS += ths7353
 APP_INCLUDE_DIRS += spi_charlcd
+APP_INCLUDE_DIRS += memory
+APP_INCLUDE_DIRS += ossc
 APP_LIBRARY_DIRS :=
 APP_LIBRARY_NAMES :=
 

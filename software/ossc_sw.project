@@ -60,6 +60,13 @@
     </VirtualDirectory>
     <File Name="sys_controller/av_controller.c"/>
     <File Name="sys_controller/sysconfig.h"/>
+    <VirtualDirectory Name="memory">
+      <File Name="sys_controller/memory/flash.h"/>
+      <File Name="sys_controller/memory/flash.c"/>
+      <File Name="sys_controller/memory/sdcard.h"/>
+      <File Name="sys_controller/memory/sdcard.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ossc"/>
   </VirtualDirectory>
   <Description/>
   <Dependencies/>
