@@ -1073,7 +1073,7 @@ void set_videoinfo()
     }
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (cm.cc.h_mask)<<22 | (video_modes[cm.id].h_active<<10) | video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((!!cm.cc.sl_mode)<<31) | (cm.cc.sl_mode > 0 ? (cm.cc.sl_mode-1)<<30 : 0) | (slid_target<<19) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((!!cm.cc.sl_mode)<<31) | (cm.cc.sl_mode > 0 ? (cm.cc.sl_mode-1)<<30 : 0) | (slid_target<<29) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
