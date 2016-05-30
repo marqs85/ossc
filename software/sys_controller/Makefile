@@ -155,6 +155,7 @@ C_SRCS += ths7353/ths7353.c
 C_SRCS += spi_charlcd/lcd.c
 C_SRCS += memory/flash.c
 C_SRCS += memory/sdcard.c
+C_SRCS += ossc/menu.c
 CXX_SRCS :=
 ASM_SRCS :=
 

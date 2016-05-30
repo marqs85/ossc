@@ -59,14 +59,17 @@
       <File Name="sys_controller/tvp7002/tvp7002.c"/>
     </VirtualDirectory>
     <File Name="sys_controller/av_controller.c"/>
-    <File Name="sys_controller/sysconfig.h"/>
     <VirtualDirectory Name="memory">
       <File Name="sys_controller/memory/flash.h"/>
       <File Name="sys_controller/memory/flash.c"/>
       <File Name="sys_controller/memory/sdcard.h"/>
       <File Name="sys_controller/memory/sdcard.c"/>
     </VirtualDirectory>
-    <VirtualDirectory Name="ossc"/>
+    <VirtualDirectory Name="ossc">
+      <File Name="sys_controller/ossc/menu.c"/>
+      <File Name="sys_controller/ossc/menu.h"/>
+      <File Name="sys_controller/ossc/sysconfig.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Description/>
   <Dependencies/>
