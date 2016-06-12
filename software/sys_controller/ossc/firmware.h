@@ -17,20 +17,27 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SYSCONFIG_H_
-#define SYSCONFIG_H_
+#ifndef FIRMWARE_H_
+#define FIRMWARE_H_
 
-#ifndef DEBUG
-#define OS_PRINTF(...)
-#define ErrorF(...)
-#define printf(...)
-#else
-#define OS_PRINTF printf
-#define ErrorF printf
-// use reduced printf
-//#define printf alt_printf
+#include "alt_types.h"
+
+#define FW_VER_MAJOR            0
+#define FW_VER_MINOR            70
+
+#define FW_UPDATE_RETRIES       3
+
+typedef struct {
+    char fw_key[4];
+    alt_u8 version_major;
+    alt_u8 version_minor;
+    char version_suffix[8];
+    alt_u32 hdr_len;
+    alt_u32 data_len;
+    alt_u32 data_crc;
+    alt_u32 hdr_crc;
+} fw_hdr;
+
+int fw_update();
+
 #endif
-
-#define WAITLOOP_SLEEP_US   10000
-
-#endif /* SYSCONFIG_H_ */

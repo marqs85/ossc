@@ -17,20 +17,31 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SYSCONFIG_H_
-#define SYSCONFIG_H_
+#ifndef USERDATA_H_
+#define USERDATA_H_
 
-#ifndef DEBUG
-#define OS_PRINTF(...)
-#define ErrorF(...)
-#define printf(...)
-#else
-#define OS_PRINTF printf
-#define ErrorF printf
-// use reduced printf
-//#define printf alt_printf
+#include "alt_types.h"
+
+#define USERDATA_HDR_SIZE 11
+typedef struct {
+    char userdata_key[8];
+    alt_u8 version_major;
+    alt_u8 version_minor;
+    alt_u8 num_entries;
+} userdata_hdr;
+
+#define USERDATA_ENTRY_HDR_SIZE 2
+typedef struct {
+    alt_u8 type;
+    alt_u8 entry_len;
+} userdata_entry;
+
+typedef enum {
+    UDE_REMOTE_MAP  = 0,
+    UDE_AVCONFIG,
+} userdata_entry_type;
+
 #endif
 
-#define WAITLOOP_SLEEP_US   10000
-
-#endif /* SYSCONFIG_H_ */
+int write_userdata();
+int read_userdata();

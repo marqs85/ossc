@@ -23,6 +23,7 @@
 #include "string.h"
 #include "altera_avalon_pio_regs.h"
 #include "i2c_opencores.h"
+#include "av_controller.h"
 #include "tvp7002.h"
 #include "ths7353.h"
 #include "video_modes.h"
@@ -30,16 +31,14 @@
 #include "flash.h"
 #include "sdcard.h"
 #include "menu.h"
+#include "avconfig.h"
 #include "sysconfig.h"
+#include "firmware.h"
+#include "userdata.h"
 #include "it6613.h"
 #include "it6613_sys.h"
 #include "HDMI_TX.h"
 #include "hdmitx.h"
-#include "ci_crc.h"
-
-alt_u8 fw_ver_major = 0;
-alt_u8 fw_ver_minor = 70;
-#define FW_UPDATE_RETRIES       3
 
 #define LINECNT_THOLD           1
 #define STABLE_THOLD            1
@@ -48,109 +47,18 @@ alt_u8 fw_ver_minor = 70;
 #define SYNC_LOSS_THOLD         5
 #define STATUS_TIMEOUT          10000
 
-#define MAINLOOP_SLEEP_US       10000
-
-#define DEFAULT_PRE_COAST       1
-#define DEFAULT_POST_COAST      0
-#define DEFAULT_SAMPLER_PHASE   16
-#define DEFAULT_SYNC_VTH        11
-
-#define RC_MASK                 0x0000ffff
-#define PB_MASK                 0x00030000
-#define PB0_BIT                 0x00010000
-#define PB1_BIT                 0x00020000
 #define HDMITX_MODE_MASK        0x00040000
-
-static const char *rc_keydesc[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MENU", "OK", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "SCANLINE_TGL", "SCANLINE_INT+", "SCANLINE_INT-"};
-#define REMOTE_MAX_KEYS (sizeof(rc_keydesc)/sizeof(char*))
-alt_u16 rc_keymap[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3EE9, 0x3E19, 0x3E99, 0x3E59, 0x3ED9, 0x3E39, 0x3EC9, 0x3E4D, 0x3E1D, 0x3EED, 0x3E2D, 0x3ECD, 0x3EAD, 0x3E6D, 0x3E65, 0x3E01, 0x1C48, 0x1C50, 0x1CD0};
-
-#define lcd_write_menu() lcd_write((char*)&menu_row1, (char*)&menu_row2)
-#define lcd_write_status() lcd_write((char*)&row1, (char*)&row2)
-
-static const char *avinput_str[] = { "-", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr" };
-
-typedef enum {
-    AV_KEEP         = 0,
-    AV1_RGBs        = 1,
-    AV1_RGsB        = 2,
-    AV1_YPBPR       = 3,
-    AV2_YPBPR       = 4,
-    AV2_RGsB        = 5,
-    AV3_RGBHV       = 6,
-    AV3_RGBs        = 7,
-    AV3_RGsB        = 8,
-    AV3_YPBPR       = 9
-} avinput_t;
-
-// In reverse order of importance
-typedef enum {
-    NO_CHANGE           = 0,
-    INFO_CHANGE         = 1,
-    MODE_CHANGE         = 2,
-    TX_MODE_CHANGE      = 3,
-    ACTIVITY_CHANGE     = 4
-} status_t;
-
-typedef enum {
-    TX_HDMI             = 0,
-    TX_DVI              = 1
-} tx_mode_t;
-
-
-
-// Target configuration
-avconfig_t tc;
-
-//TODO: transform binary values into flags
-typedef struct {
-    alt_u32 totlines;
-    alt_u32 clkcnt;
-    alt_u8 progressive;
-    alt_u8 macrovis;
-    alt_8 id;
-    alt_u8 sync_active;
-    alt_u8 linemult;
-    avinput_t avinput;
-    // Current configuration
-    avconfig_t cc;
-} avmode_t;
 
 // Current mode
 avmode_t cm;
 
-typedef struct {
-    char fw_key[4];
-    alt_u8 version_major;
-    alt_u8 version_minor;
-    char version_suffix[8];
-    alt_u32 hdr_len;
-    alt_u32 data_len;
-    alt_u32 data_crc;
-    alt_u32 hdr_crc;
-} fw_hdr;
-
-#define USERDATA_HDR_SIZE 11
-typedef struct {
-    char userdata_key[8];
-    alt_u8 version_major;
-    alt_u8 version_minor;
-    alt_u8 num_entries;
-} userdata_hdr;
-
-#define USERDATA_ENTRY_HDR_SIZE 2
-typedef struct {
-    alt_u8 type;
-    alt_u8 entry_len;
-} userdata_entry;
-
-typedef enum {
-    UDE_REMOTE_MAP  = 0,
-    UDE_AVCONFIG,
-} userdata_entry_type;
-
 extern mode_data_t video_modes[];
 extern ypbpr_to_rgb_csc_t csc_coeffs[];
+extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern alt_u32 remote_code;
+extern alt_u32 btn_code, btn_code_prev;
+extern alt_u8 remote_rpt, remote_rpt_prev;
+extern avconfig_t tc;
 
 alt_u8 target_typemask;
 alt_u8 target_type;
@@ -158,336 +66,16 @@ alt_u8 stable_frames;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
-alt_u8 menu_active;
-alt_u32 remote_code;
-alt_u8 remote_rpt, remote_rpt_prev;
-alt_u32 btn_code, btn_code_prev;
+extern alt_u8 menu_active;
 avinput_t target_mode;
 
-int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
+inline void lcd_write_menu()
 {
-    alt_u32 crcval, tmp;
-
-    strncpy(hdr->fw_key, (char*)databuf, 4);
-    if (strncmp(hdr->fw_key, "OSSC", 4)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid image");
-        menu_row2[0] = '\0';
-        return 1;
-    }
-
-    hdr->version_major = databuf[4];
-    hdr->version_minor = databuf[5];
-    strncpy(hdr->version_suffix, (char*)(databuf+6), 8);
-    hdr->version_suffix[7] = 0;
-
-    memcpy(&tmp, databuf+14, 4);
-    hdr->hdr_len = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
-    memcpy(&tmp, databuf+18, 4);
-    hdr->data_len = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
-    memcpy(&tmp, databuf+22, 4);
-    hdr->data_crc = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
-    // Always at bytes [508-511]
-    memcpy(&tmp, databuf+508, 4);
-    hdr->hdr_crc = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
-
-    if (hdr->hdr_len < 26 || hdr->hdr_len > 508) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid header");
-        menu_row2[0] = '\0';
-        return -1;
-    }
-
-    crcval = crcCI(databuf, hdr->hdr_len, 1);
-
-    if (crcval != hdr->hdr_crc) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid hdr CRC");
-        menu_row2[0] = '\0';
-        return -2;
-    }
-
-    return 0;
+    lcd_write((char*)&menu_row1, (char*)&menu_row2);
 }
 
-int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_u8 *tmpbuf)
-{
-    alt_u32 crcval=0, i, bytes_to_read;
-    int retval;
-
-    for (i=0; i<size; i=i+SD_BUFFER_SIZE) {
-        bytes_to_read = ((size-i < SD_BUFFER_SIZE) ? (size-i) : SD_BUFFER_SIZE);
-        retval = read_sd_block(offset+i, bytes_to_read, tmpbuf);
-        if (retval != 0)
-            return -2;
-
-        crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
-    }
-
-    if (crcval != golden_crc) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid data CRC");
-        menu_row2[0] = '\0';
-        return -3;
-    }
-
-    return 0;
-}
-
-#ifdef DEBUG
-int fw_update()
-{
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "Not implemented");
-    lcd_write_menu();
-    usleep(1000000);
-    return -1;
-}
-#else
-int fw_update()
-{
-    int retval, i;
-    int retries = FW_UPDATE_RETRIES;
-    alt_u8 databuf[SD_BUFFER_SIZE];
-    alt_u32 btn_vec;
-    alt_u32 bytes_to_rw;
-    fw_hdr fw_header;
-
-    retval = check_sdcard(databuf);
-    if (retval != 0)
-        goto failure;
-
-    retval = check_fw_header(databuf, &fw_header);
-    if (retval != 0)
-        goto failure;
-
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "Validating data");
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u bytes", (unsigned)fw_header.data_len);
-    lcd_write_menu();
-    retval = check_fw_image(512, fw_header.data_len, fw_header.data_crc, databuf);
-    if (retval != 0)
-        goto failure;
-
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "%u.%.2u%s%s", fw_header.version_major, fw_header.version_minor, (fw_header.version_suffix[0] == 0) ? "" : "-", fw_header.version_suffix);
-    strncpy(menu_row2, "Update? 1=Y, 2=N", LCD_ROW_LEN+1);
-    lcd_write_menu();
-
-    while (1) {
-        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-
-        if (btn_vec == rc_keymap[RC_BTN1]) {
-            break;
-        } else if (btn_vec == rc_keymap[RC_BTN2]) {
-            retval = 2;
-            return 1;
-        }
-
-        usleep(MAINLOOP_SLEEP_US);
-    }
-
-    //disable video output
-    tvp_disable_output();
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) | (1<<2)));
-    usleep(MAINLOOP_SLEEP_US);
-
-    strncpy(menu_row1, "Updating FW", LCD_ROW_LEN+1);
-update_init:
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
-
-    for (i=0; i<fw_header.data_len; i=i+SD_BUFFER_SIZE) {
-        bytes_to_rw = ((fw_header.data_len-i < SD_BUFFER_SIZE) ? (fw_header.data_len-i) : SD_BUFFER_SIZE);
-        retval = read_sd_block(512+i, bytes_to_rw, databuf);
-        if (retval != 0)
-            return -200;
-
-        retval = write_flash_page(databuf, ((bytes_to_rw < PAGESIZE) ? bytes_to_rw : PAGESIZE), (i/PAGESIZE));
-        if (retval != 0)
-            goto failure;
-        //TODO: support multiple page sizes
-        if (bytes_to_rw > PAGESIZE) {
-            retval = write_flash_page(databuf+PAGESIZE, (bytes_to_rw-PAGESIZE), (i/PAGESIZE)+1);
-            if (retval != 0)
-                goto failure;
-        }
-    }
-
-    strncpy(menu_row1, "Verifying flash", LCD_ROW_LEN+1);
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
-    retval = verify_flash(0, fw_header.data_len, fw_header.data_crc, databuf);
-    if (retval != 0)
-        goto failure;
-
-    return 0;
-
-
-failure:
-    lcd_write_menu();
-    usleep(1000000);
-
-    // Probable rw error, retry update
-    if ((retval <= -200) && (retries > 0)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Retrying update");
-        retries--;
-        goto update_init;
-    }
-
-    return -1;
-}
-#endif
-
-int write_userdata()
-{
-    alt_u8 databuf[PAGESIZE];
-    int retval;
-
-    strncpy((char*)databuf, "USRDATA", 8);
-    databuf[8] = fw_ver_major;
-    databuf[9] = fw_ver_minor;
-    databuf[10] = 2;
-
-    retval = write_flash_page(databuf, USERDATA_HDR_SIZE, (USERDATA_OFFSET/PAGESIZE));
-    if (retval != 0) {
-        return -1;
-    }
-
-    databuf[0] = UDE_REMOTE_MAP;
-    databuf[1] = 4+sizeof(rc_keymap);
-    databuf[2] = databuf[3] = 0;    //padding
-    memcpy(databuf+4, rc_keymap, sizeof(rc_keymap));
-
-    retval = write_flash_page(databuf, databuf[1], (USERDATA_OFFSET/PAGESIZE)+1);
-    if (retval != 0) {
-        return -1;
-    }
-
-    databuf[0] = UDE_AVCONFIG;
-    databuf[1] = 4+sizeof(avconfig_t);
-    databuf[2] = databuf[3] = 0;    //padding
-    memcpy(databuf+4, &tc, sizeof(avconfig_t));
-
-    retval = write_flash_page(databuf, databuf[1], (USERDATA_OFFSET/PAGESIZE)+2);
-    if (retval != 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-
-int set_default_avconfig()
-{
-    memset(&tc, 0, sizeof(avconfig_t));
-    tc.pre_coast = DEFAULT_PRE_COAST;
-    tc.post_coast = DEFAULT_POST_COAST;
-    tc.sampler_phase = DEFAULT_SAMPLER_PHASE;
-    tc.sync_vth = DEFAULT_SYNC_VTH;
-    tc.vsync_thold = DEFAULT_VSYNC_THOLD;
-    tc.en_alc = 1;
-
-    return 0;
-}
-
-int read_userdata()
-{
-    int retval, i;
-    alt_u8 databuf[PAGESIZE];
-    userdata_hdr udhdr;
-    userdata_entry udentry;
-
-    retval = read_flash(USERDATA_OFFSET, USERDATA_HDR_SIZE, databuf);
-    if (retval != 0) {
-        printf("Flash read error\n");
-        return -1;
-    }
-
-    strncpy(udhdr.userdata_key, (char*)databuf, 8);
-    if (strncmp(udhdr.userdata_key, "USRDATA", 8)) {
-        printf("No userdata found on flash\n");
-        return 1;
-    }
-
-    udhdr.version_major = databuf[8];
-    udhdr.version_minor = databuf[9];
-    udhdr.num_entries = databuf[10];
-
-    //TODO: check version compatibility
-    printf("Userdata: v%u.%.2u, %u entries\n", udhdr.version_major, udhdr.version_minor, udhdr.num_entries);
-
-    for (i=0; i<udhdr.num_entries; i++) {
-        retval = read_flash(USERDATA_OFFSET+((i+1)*PAGESIZE), USERDATA_ENTRY_HDR_SIZE, databuf);
-        if (retval != 0) {
-            printf("Flash read error\n");
-            return -1;
-        }
-
-        udentry.type = databuf[0];
-        udentry.entry_len = databuf[1];
-
-        retval = read_flash(USERDATA_OFFSET+((i+1)*PAGESIZE), udentry.entry_len, databuf);
-        if (retval != 0) {
-            printf("Flash read error\n");
-            return -1;
-        }
-
-        switch (udentry.type) {
-        case UDE_REMOTE_MAP:
-            if ((udentry.entry_len-4) == sizeof(rc_keymap)) {
-                memcpy(rc_keymap, databuf+4, sizeof(rc_keymap));
-                printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
-            }
-            break;
-        case UDE_AVCONFIG:
-            if ((udentry.entry_len-4) == sizeof(avconfig_t)) {
-                memcpy(&tc, databuf+4, sizeof(avconfig_t));
-                printf("Avconfig data read (%u bytes)\n", sizeof(avconfig_t));
-            }
-            break;
-        default:
-            printf("Unknown userdata entry\n");
-            break;
-        }
-    }
-
-    return 0;
-}
-
-void setup_rc()
-{
-    int i, confirm;
-    alt_u32 remote_code_prev;
-
-    for (i=0; i<REMOTE_MAX_KEYS; i++) {
-        strncpy(menu_row1, "Press", LCD_ROW_LEN+1);
-        strncpy(menu_row2, rc_keydesc[i], LCD_ROW_LEN+1);
-        lcd_write_menu();
-        confirm = 0;
-
-        while (1) {
-            remote_code = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-
-            if (remote_code && (remote_code != remote_code_prev)) {
-                if (confirm == 0) {
-                    rc_keymap[i] = remote_code;
-                    strncpy(menu_row1, "Confirm", LCD_ROW_LEN+1);
-                    lcd_write_menu();
-                    confirm = 1;
-                } else {
-                    if (remote_code == rc_keymap[i]) {
-                        confirm = 2;
-                    } else {
-                        strncpy(menu_row1, "Mismatch, retry", LCD_ROW_LEN+1);
-                        lcd_write_menu();
-                        confirm = 0;
-                    }
-                }
-
-            }
-
-            remote_code_prev = remote_code;
-
-            if (confirm == 2)
-                break;
-
-            usleep(MAINLOOP_SLEEP_US);
-        }
-    }
+inline void lcd_write_status() {
+    lcd_write((char*)&row1, (char*)&row2);
 }
 
 inline void TX_enable(tx_mode_t mode)
@@ -505,70 +93,6 @@ inline void TX_enable(tx_mode_t mode)
 
     // start TX
     SetAVMute(FALSE);
-}
-
-void parse_control()
-{
-    if (remote_code)
-        printf("RCODE: 0x%.4x, %u\n", remote_code, remote_rpt);
-
-    if (btn_code_prev == 0 && btn_code != 0)
-        printf("BCODE: 0x%.2x\n", btn_code>>16);
-
-    if (remote_code == rc_keymap[RC_BTN1]) {
-        target_mode = AV1_RGBs;
-    } else if (remote_code == rc_keymap[RC_BTN4]) {
-        target_mode = AV1_RGsB;
-    } else if (remote_code == rc_keymap[RC_BTN7]) {
-        target_mode = AV1_YPBPR;
-    } else if (remote_code == rc_keymap[RC_BTN2]) {
-        target_mode = AV2_YPBPR;
-    } else if (remote_code == rc_keymap[RC_BTN5]) {
-        target_mode = AV2_RGsB;
-    } else if (remote_code == rc_keymap[RC_BTN3]) {
-        target_mode = AV3_RGBHV;
-    } else if (remote_code == rc_keymap[RC_BTN6]) {
-        target_mode = AV3_RGBs;
-    } else if (remote_code == rc_keymap[RC_BTN9]) {
-        target_mode = AV3_RGsB;
-    } else if (remote_code == rc_keymap[RC_BTN0]) {
-        target_mode = AV3_YPBPR;
-    } else if (remote_code == rc_keymap[RC_MENU]) {
-        menu_active = !menu_active;
-
-        if (menu_active) {
-            display_menu(1);
-        } else {
-            lcd_write_status();
-        }
-    /*} else if (remote_code == rc_keymap[RC_BACK]) {
-        menu_active = 0;
-        lcd_write_status();*/
-    } else if (remote_code == rc_keymap[RC_INFO]) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "VMod: %s", video_modes[cm.id].name);
-        //sniprintf(menu_row1, LCD_ROW_LEN+1, "0x%x 0x%x 0x%x", ths_readreg(THS_CH1), ths_readreg(THS_CH2), ths_readreg(THS_CH3));
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "LO: %u VSM: %u", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3);
-        lcd_write_menu();
-        printf("Mod: %s\n", video_modes[cm.id].name);
-        printf("Lines: %u M: %u\n", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, cm.macrovis);
-    } else if (remote_code == rc_keymap[RC_LCDBL]) {
-        IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) ^ (1<<1)));
-    } else if (remote_code == rc_keymap[RC_SL_TGL]) {
-        tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
-    } else if (remote_code == rc_keymap[RC_SL_MINUS]) {
-        if (tc.sl_str > 0)
-            tc.sl_str--;
-    } else if (remote_code == rc_keymap[RC_SL_PLUS]) {
-        if (tc.sl_str < SCANLINESTR_MAX)
-            tc.sl_str++;
-    }
-
-    if (btn_code_prev == 0) {
-        if (btn_code & PB0_BIT)
-            target_mode = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
-        if (btn_code & PB1_BIT)
-            tc.sl_mode = (tc.sl_mode > 0) ? 0 : 1;
-    }
 }
 
 void set_lpf(alt_u8 lpf)
@@ -704,6 +228,7 @@ status_t get_status(tvp_input_t input, video_format format)
     }
 
     if ((tc.sl_mode != cm.cc.sl_mode) ||
+        (tc.sl_type != cm.cc.sl_type) ||
         (tc.sl_str != cm.cc.sl_str) ||
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
@@ -747,6 +272,8 @@ status_t get_status(tvp_input_t input, video_format format)
 void set_videoinfo()
 {
     alt_u8 slid_target;
+    alt_u8 sl_en_fpga;
+    alt_u8 sl_mode_fpga = 0;
 
     if (video_modes[cm.id].flags & MODE_L3ENABLE_MASK) {
         cm.linemult = 2;
@@ -759,8 +286,20 @@ void set_videoinfo()
         slid_target = cm.cc.sl_id;
     }
 
+    if (cm.cc.sl_mode == 0) {
+        sl_en_fpga = 0;
+    } else if (cm.cc.sl_mode == 2) {    //manual
+        sl_en_fpga = 1;
+        sl_mode_fpga = cm.cc.sl_type;
+    } else if ((video_modes[cm.id].flags & (MODE_L2ENABLE|MODE_L3ENABLE_MASK)) && !(video_modes[cm.id].flags & MODE_INTERLACED)) {
+        sl_en_fpga = 1;
+        sl_mode_fpga = 0;
+    } else {
+        sl_en_fpga = 0;
+    }
+
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (cm.cc.h_mask)<<22 | (video_modes[cm.id].h_active<<10) | video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((!!cm.cc.sl_mode)<<31) | (cm.cc.sl_mode > 0 ? (cm.cc.sl_mode-1)<<30 : 0) | (slid_target<<29) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_en_fpga<<31) | (sl_mode_fpga<<30) | (slid_target<<29) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -787,7 +326,6 @@ void program_mode()
     data2 = tvp_readreg(TVP_VSINWIDTH);
     printf("Hswidth: %u  Vswidth: %u  Macrovision: %u\n", (unsigned)data1, (unsigned)(data2 & 0x1F), (unsigned)cm.macrovis);
 
-    //TODO: rewrite with strncpy to reduce code size
     sniprintf(row1, LCD_ROW_LEN+1, "%s %u%c", avinput_str[cm.avinput], (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
     //strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
@@ -919,7 +457,7 @@ int main()
 
     if (init_stat >= 0) {
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
-        sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u", fw_ver_major, fw_ver_minor);
+        sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u", FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
         strncpy(row2, "2014-2016  marqs", LCD_ROW_LEN+1);
 #else

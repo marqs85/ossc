@@ -18,8 +18,10 @@
 //
 
 #include <unistd.h>
+#include <string.h>
 #include "flash.h"
 #include "lcd.h"
+#include "ci_crc.h"
 
 extern alt_epcq_controller_dev epcq_controller_0;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];

@@ -241,7 +241,7 @@ void tvp_sel_clk(alt_u8 refclk)
     }
 }
 
-void tvp_sel_csc(ypbpr_to_rgb_csc_t *csc)
+void tvp_sel_csc(const ypbpr_to_rgb_csc_t *csc)
 {
     tvp_writereg(TVP_CSC1HI, (csc->G_Y >> 8));
     tvp_writereg(TVP_CSC1LO, (csc->G_Y & 0xff));

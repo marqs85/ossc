@@ -17,20 +17,31 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SYSCONFIG_H_
-#define SYSCONFIG_H_
+#include <string.h>
+#include "avconfig.h"
+#include "tvp7002.h"
 
-#ifndef DEBUG
-#define OS_PRINTF(...)
-#define ErrorF(...)
-#define printf(...)
-#else
-#define OS_PRINTF printf
-#define ErrorF printf
-// use reduced printf
-//#define printf alt_printf
-#endif
+#define DEFAULT_PRE_COAST       1
+#define DEFAULT_POST_COAST      0
+#define DEFAULT_SAMPLER_PHASE   16
+#define DEFAULT_SYNC_VTH        11
 
-#define WAITLOOP_SLEEP_US   10000
+// Target configuration
+avconfig_t tc;
 
-#endif /* SYSCONFIG_H_ */
+// Default configuration
+const avconfig_t tc_default = {
+  .sampler_phase = DEFAULT_SAMPLER_PHASE,
+  .sync_vth = DEFAULT_SYNC_VTH,
+  .vsync_thold = DEFAULT_VSYNC_THOLD,
+  .en_alc = 1,
+  .pre_coast = DEFAULT_PRE_COAST,
+  .post_coast = DEFAULT_POST_COAST,
+};
+
+int set_default_avconfig()
+{
+    memcpy(&tc, &tc_default, sizeof(avconfig_t));
+
+    return 0;
+}

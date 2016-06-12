@@ -1225,7 +1225,7 @@ SetInputMode(BYTE InputMode,BYTE bInputSignalType)
 static void
 SetCSCScale(BYTE bInputMode,BYTE bOutputMode)
 {
-    BYTE ucData,csc ;
+    BYTE ucData,csc=0 ;
     BYTE filter = 0 ; // filter is for Video CTRL DN_FREE_GO,EN_DITHER,and ENUDFILT
 
 

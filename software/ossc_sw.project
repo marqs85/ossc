@@ -58,7 +58,6 @@
       <File Name="sys_controller/tvp7002/tvp7002.h"/>
       <File Name="sys_controller/tvp7002/tvp7002.c"/>
     </VirtualDirectory>
-    <File Name="sys_controller/av_controller.c"/>
     <VirtualDirectory Name="memory">
       <File Name="sys_controller/memory/flash.h"/>
       <File Name="sys_controller/memory/flash.c"/>
@@ -69,6 +68,16 @@
       <File Name="sys_controller/ossc/menu.c"/>
       <File Name="sys_controller/ossc/menu.h"/>
       <File Name="sys_controller/ossc/sysconfig.h"/>
+      <File Name="sys_controller/ossc/controls.h"/>
+      <File Name="sys_controller/ossc/controls.c"/>
+      <File Name="sys_controller/ossc/avconfig.h"/>
+      <File Name="sys_controller/ossc/avconfig.c"/>
+      <File Name="sys_controller/ossc/av_controller.c"/>
+      <File Name="sys_controller/ossc/av_controller.h"/>
+      <File Name="sys_controller/ossc/firmware.h"/>
+      <File Name="sys_controller/ossc/firmware.c"/>
+      <File Name="sys_controller/ossc/userdata.h"/>
+      <File Name="sys_controller/ossc/userdata.c"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Description/>

@@ -79,7 +79,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
 
 void tvp_sel_clk(alt_u8 refclk);
 
-void tvp_sel_csc(ypbpr_to_rgb_csc_t *csc);
+void tvp_sel_csc(const ypbpr_to_rgb_csc_t *csc);
 
 void tvp_set_lpf(alt_u8 val);
 

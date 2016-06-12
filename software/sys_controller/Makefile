@@ -142,7 +142,6 @@ ACDS_VERSION := 14.1
 ELF := sys_controller.elf
 
 # Paths to C, C++, and assembly source files.
-C_SRCS += av_controller.c
 C_SRCS += it6613/EDID.c
 C_SRCS += it6613/HDMI_TX.c
 C_SRCS += it6613/hdmitx_nios2.c
@@ -155,7 +154,12 @@ C_SRCS += ths7353/ths7353.c
 C_SRCS += spi_charlcd/lcd.c
 C_SRCS += memory/flash.c
 C_SRCS += memory/sdcard.c
+C_SRCS += ossc/av_controller.c
+C_SRCS += ossc/avconfig.c
+C_SRCS += ossc/controls.c
+C_SRCS += ossc/firmware.c
 C_SRCS += ossc/menu.c
+C_SRCS += ossc/userdata.c
 CXX_SRCS :=
 ASM_SRCS :=
 
@@ -177,7 +181,7 @@ APP_CFLAGS_DEFINED_SYMBOLS := -DNO_I2C_DEBUG -DNO_DEBUG
 APP_CFLAGS_UNDEFINED_SYMBOLS :=
 APP_CFLAGS_OPTIMIZATION := -Os
 APP_CFLAGS_DEBUG_LEVEL :=
-APP_CFLAGS_WARNINGS := -Wall
+APP_CFLAGS_WARNINGS := -Wall -Wno-unused-but-set-variable -Wno-unused-variable -Wno-unused-function
 APP_CFLAGS_USER_FLAGS := -fdata-sections -ffunction-sections -fshort-enums
 
 APP_ASFLAGS_USER :=

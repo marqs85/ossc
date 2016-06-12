@@ -279,7 +279,7 @@ HDMITX_ChangeDisplayOption(HDMI_Video_Type OutputVideoTiming, HDMI_OutputColorMo
         bInputColorMode &= ~F_VIDMODE_ITU709 ;
     }
     
-    if( Colorimetry != HDMI_640x480p60)
+    if( OutputVideoTiming != HDMI_640x480p60)
     {
         bInputColorMode |= F_VIDMODE_16_235 ;
     }
@@ -377,7 +377,7 @@ ParseEDID()
     // collect the EDID ucdata of segment 0
     BYTE CheckSum ;
     BYTE BlockCount ;
-    BOOL err ;
+    BOOL err = FALSE ;
     BOOL bValidCEA = FALSE ;
     int i ;
 
