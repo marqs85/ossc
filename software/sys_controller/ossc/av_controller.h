@@ -20,72 +20,54 @@
 #ifndef AV_CONTROLLER_H_
 #define AV_CONTROLLER_H_
 
-#include "altera_epcq_controller_mod.h"
-#include "typedef.h"
-#include "cfg.h"
-#include "lcd.h"
-#include "tvp7002.h"
+#include "avconfig.h"
 
-#define RC_MASK          0x0000ffff
-#define PB_MASK          0x00030000
-#define PB0_BIT          0x00010000
-#define PB1_BIT          0x00020000
-#define HDMITX_MODE_MASK 0x00040000
+#define HDMITX_MODE_MASK        0x00040000
 
-extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
+static const char *avinput_str[] = { "-", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr" };
 
-#define lcd_write_menu() lcd_write((char*)&menu_row1, (char*)&menu_row2)
-#define lcd_write_status() lcd_write((char*)&row1, (char*)&row2)
+typedef enum {
+    AV_KEEP         = 0,
+    AV1_RGBs        = 1,
+    AV1_RGsB        = 2,
+    AV1_YPBPR       = 3,
+    AV2_YPBPR       = 4,
+    AV2_RGsB        = 5,
+    AV3_RGBHV       = 6,
+    AV3_RGBs        = 7,
+    AV3_RGsB        = 8,
+    AV3_YPBPR       = 9
+} avinput_t;
 
 // In reverse order of importance
 typedef enum {
-    NO_CHANGE       = 0,
-    INFO_CHANGE     = 1,
-    MODE_CHANGE     = 2,
-    TX_MODE_CHANGE  = 3,
-    ACTIVITY_CHANGE = 4
+    NO_CHANGE           = 0,
+    INFO_CHANGE         = 1,
+    MODE_CHANGE         = 2,
+    TX_MODE_CHANGE      = 3,
+    ACTIVITY_CHANGE     = 4
 } status_t;
 
 typedef enum {
-    AV_KEEP   = 0,
-    AV1_RGBs  = 1,
-    AV1_RGsB  = 2,
-    AV2_YPBPR = 3,
-    AV2_RGsB  = 4,
-    AV3_RGBHV = 5,
-    AV3_RGBs  = 6,
-    AV3_RGsB  = 7
-} avinput_t;
+    TX_HDMI             = 0,
+    TX_DVI              = 1
+} tx_mode_t;
 
 //TODO: transform binary values into flags
 typedef struct {
-    alt_u32   totlines;
-    alt_u32   clkcnt;
-    alt_u8    progressive;
-    alt_u8    macrovis;
-    alt_u8    refclk;
-    alt_8     id;
-    alt_u8    sync_active;
-    alt_u8    linemult;
+    alt_u32 totlines;
+    alt_u32 clkcnt;
+    alt_u8 progressive;
+    alt_u8 macrovis;
+    alt_8 id;
+    alt_u8 sync_active;
+    alt_u8 linemult;
     avinput_t avinput;
     // Current configuration
     avconfig_t cc;
 } avmode_t;
 
-typedef enum {
-    TX_HDMI = 0,
-    TX_DVI  = 1
-} tx_mode_t;
+void lcd_write_menu();
+void lcd_write_status();
 
-
-status_t get_status(tvp_input_t input);
-
-void TX_enable(tx_mode_t mode);
-
-void program_mode(void);
-void set_videoinfo(void);
-
-int init_hw(void);
-void enable_outputs(void);
-
-#endif /* AV_CONTROLLER_H_ */
+#endif

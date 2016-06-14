@@ -20,6 +20,87 @@
 #ifndef MENU_H_
 #define MENU_H_
 
+#include "alt_types.h"
+#include "controls.h"
+
+typedef enum {
+    OPT_AVCONFIG_SELECTION,
+    OPT_AVCONFIG_NUMVALUE,
+    OPT_SUBMENU,
+    OPT_FUNC_CALL,
+} menuitem_type;
+
+typedef int (*func_call)(void);
+typedef void (*disp_func)(alt_u8);
+
+
+typedef struct {
+    alt_u8 *data;
+    alt_u8 wrap_cfg;
+    alt_u8 min;
+    alt_u8 max;
+    const char **setting_str;
+} opt_avconfig_selection;
+
+typedef struct {
+    alt_u8 *data;
+    alt_u8 wrap_cfg;
+    alt_u8 min;
+    alt_u8 max;
+    disp_func f;
+} opt_avconfig_numvalue;
+
+typedef struct {
+    func_call f;
+    char *text_success;
+} opt_func_call;
+
+typedef struct menustruct menu_t;
+
+typedef struct {
+    char *name;
+    menuitem_type type;
+    union {
+        opt_avconfig_selection sel;
+        opt_avconfig_numvalue num;
+        const menu_t *sub;
+        opt_func_call fun;
+    };
+} menuitem_t;
+
+struct menustruct {
+    alt_u8 num_items;
+    menuitem_t *items;
+};
+
+typedef struct {
+    menu_t *menu;
+} opt_submenu;
+
+#define SETTING_ITEM(x) 0, sizeof(x)/sizeof(char*)-1, x
+#define MENU(X, Y) menuitem_t X##_items[] = Y; const menu_t X = { sizeof(X##_items)/sizeof(menuitem_t), X##_items };
+#define P99_PROTECT(...) __VA_ARGS__
+
+typedef enum {
+    NO_ACTION    = 0,
+    OPT_SELECT   = RC_OK,
+    PREV_MENU    = RC_BACK,
+    PREV_PAGE    = RC_UP,
+    NEXT_PAGE    = RC_DOWN,
+    VAL_MINUS    = RC_LEFT,
+    VAL_PLUS     = RC_RIGHT,
+} menucode_id; // order must be consequential with rc_code_t
+
+typedef struct {
+    const menu_t *m;
+    alt_u8 mp;
+} menunavi;
+
 void display_menu(alt_u8 forcedisp);
 
-#endif /* MENU_H_ */
+//TODO: move all below to separate header(s)
+int write_userdata();
+int fw_update();
+
+
+#endif

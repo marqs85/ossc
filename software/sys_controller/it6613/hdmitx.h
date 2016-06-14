@@ -78,6 +78,8 @@ HDCP_ResumeAuthentication()
 }
 #endif
 
+void DelayMS(unsigned int ms);
+
 //#include "edid.h"
 // #include "dss_sha.h"
 #include "it6613_drv.h"

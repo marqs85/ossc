@@ -17,16 +17,27 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef CONTROL_H_
-#define CONTROL_H_
+#ifndef CONTROLS_H_
+#define CONTROLS_H_
 
-#define REMOTE_MAX_KEYS 14
+#define RC_MASK             0x0000ffff
+#define PB_MASK             0x00030000
+#define PB0_BIT             0x00010000
+#define PB1_BIT             0x00020000
 
 typedef enum {
-    RC_BTN1 = 0,
+    RC_BTN1                 = 0,
     RC_BTN2,
     RC_BTN3,
+    RC_BTN4,
+    RC_BTN5,
+    RC_BTN6,
+    RC_BTN7,
+    RC_BTN8,
+    RC_BTN9,
+    RC_BTN0,
     RC_MENU,
+    RC_OK,
     RC_BACK,
     RC_UP,
     RC_DOWN,
@@ -34,13 +45,16 @@ typedef enum {
     RC_RIGHT,
     RC_INFO,
     RC_LCDBL,
-    RC_HOTKEY1,
-    RC_HOTKEY2,
-    RC_HOTKEY3,
+    RC_SL_MODE,
+    RC_SL_TYPE,
+    RC_SL_PLUS,
+    RC_SL_MINUS,
+    RC_LM_MODE,
 } rc_code_t;
 
+#define REMOTE_MAX_KEYS RC_LM_MODE-RC_BTN1+1
 
-void setup_rc(void);
-void read_control(void);
+void setup_rc();
+void parse_control();
 
-#endif /* CONTROL_H_ */
+#endif

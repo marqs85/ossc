@@ -17,9 +17,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <unistd.h>
+#include <string.h>
 #include "lcd.h"
 #include "alt_types.h"
 #include "altera_avalon_pio_regs.h"
+#include "i2c_opencores.h"
 
 #define LCD_CMD     0x00
 #define LCD_DATA    0x40
