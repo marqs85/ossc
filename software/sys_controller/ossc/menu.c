@@ -20,6 +20,8 @@
 #include <string.h>
 #include "menu.h"
 #include "av_controller.h"
+#include "firmware.h"
+#include "userdata.h"
 #include "controls.h"
 #include "lcd.h"
 #include "tvp7002.h"
@@ -188,7 +190,7 @@ void display_menu(alt_u8 forcedisp)
             break;
         case OPT_FUNC_CALL:
             if (code == OPT_SELECT)
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : "Error");
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : "failed");
             else
                 menu_row2[0] = 0;
             break;

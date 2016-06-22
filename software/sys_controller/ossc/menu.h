@@ -98,9 +98,4 @@ typedef struct {
 
 void display_menu(alt_u8 forcedisp);
 
-//TODO: move all below to separate header(s)
-int write_userdata();
-int fw_update();
-
-
 #endif

@@ -388,6 +388,7 @@ void tvp_source_sel(tvp_input_t input, video_format fmt)
         else // RGBS
             tvp_writereg(TVP_SYNCCTRL1, 0x53);
 
+        usleep(1000);
         sync_status = tvp_readreg(TVP_SYNCSTAT);
         if (sync_status & (1<<7))
             printf("%s detected, %s polarity\n", (sync_status & (1<<3)) ? "Csync" : "Hsync", (sync_status & (1<<5)) ? "pos" : "neg");
@@ -395,6 +396,7 @@ void tvp_source_sel(tvp_input_t input, video_format fmt)
             printf("Vsync detected, %s polarity\n", (sync_status & (1<<2)) ? "pos" : "neg");
     } else {
         tvp_writereg(TVP_SYNCCTRL1, 0x5B);
+        usleep(1000);
         sync_status = tvp_readreg(TVP_SYNCSTAT);
         if (sync_status & (1<<1))
             printf("SOG detected\n");

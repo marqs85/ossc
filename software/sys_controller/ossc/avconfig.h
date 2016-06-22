@@ -55,7 +55,7 @@ typedef struct {
     alt_u8 en_alc;
     alt_u8 pre_coast;
     alt_u8 post_coast;
-} avconfig_t;
+} __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();
 
