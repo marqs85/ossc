@@ -18,8 +18,11 @@
 //
 
 #include <string.h>
+#include "system.h"
+#include "altera_avalon_pio_regs.h"
 #include "avconfig.h"
 #include "tvp7002.h"
+#include "av_controller.h"
 
 #define DEFAULT_PRE_COAST       1
 #define DEFAULT_POST_COAST      0
@@ -43,5 +46,9 @@ int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
 
+    // enforce DVI mode on non-DIY boards
+    if ((IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK)) {
+        tc.tx_mode = TX_DVI;
+    }
     return 0;
 }

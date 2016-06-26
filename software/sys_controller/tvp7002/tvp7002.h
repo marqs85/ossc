@@ -59,19 +59,19 @@ typedef struct {
 static const alt_u32 clkrate[] = {27000000, 6500000}; //in MHz
 
 
-inline alt_u32 tvp_readreg(alt_u32 regaddr);
+alt_u32 tvp_readreg(alt_u32 regaddr);
 
-inline void tvp_writereg(alt_u32 regaddr, alt_u8 data);
+void tvp_writereg(alt_u32 regaddr, alt_u8 data);
 
-inline void tvp_reset();
+void tvp_reset();
 
-inline void tvp_disable_output();
+void tvp_disable_output();
 
-inline void tvp_enable_output();
+void tvp_enable_output();
 
-inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
+void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
 
-inline void tvp_set_ssthold(alt_u8 vsdetect_thold);
+void tvp_set_ssthold(alt_u8 vsdetect_thold);
 
 void tvp_init();
 

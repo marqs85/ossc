@@ -1,11 +1,8 @@
-#ifndef __WARNING_H__
-#define __WARNING_H__
-
 /******************************************************************************
 *                                                                             *
 * License Agreement                                                           *
 *                                                                             *
-* Copyright (c) 2003 Altera Corporation, San Jose, California, USA.           *
+* Copyright (c) 2015 Altera Corporation, San Jose, California, USA.           *
 * All rights reserved.                                                        *
 *                                                                             *
 * Permission is hereby granted, free of charge, to any person obtaining a     *
@@ -29,47 +26,55 @@
 * This agreement shall be governed in all respects by the laws of the State   *
 * of California and by the laws of the United States of America.              *
 *                                                                             *
+* Altera does not recommend, suggest or require that this reference design    *
+* file be used in conjunction or combination with any other product.          *
 ******************************************************************************/
 
-/*
- * alt_warning.h provides macro definitions that can be used to generate link 
- * time warnings.
- */ 
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+#ifdef ALT_SEMIHOSTING
+#include "sys/alt_stdio.h"
+#include "unistd.h"
 
-/*
- * The symbol "__alt_invalid" is used to force a link error. There should be 
- * no corresponding implementation of this function.
- */  
-
-extern void __alt_invalid (void);
-
-#define ALT_LINK_WARNING(symbol, msg)                                                      \
-  __asm__(".ifndef __evoke_link_warning_" #symbol                                          \
-          "\n\t .section .gnu.warning." #symbol                                            \
-          "\n__evoke_link_warning_" #symbol ":\n\t .string \x22" msg "\x22 \n\t .previous" \
-          "\n .endif");
-
-/* A canned warning for sysdeps/stub functions.  */
-
-#define ALT_STUB_WARNING(name) \
-  ALT_LINK_WARNING (name, \
-    "warning: " #name " is not implemented and will always fail")
-
-#define ALT_OBSOLETE_FUNCTION_WARNING(name) \
-  ALT_LINK_WARNING (name, \
-    "warning: " #name " is a deprecated function")
-
-#define ALT_LINK_ERROR(msg) \
-  ALT_LINK_WARNING (__alt_invalid, msg); \
-  __alt_invalid()
-
-#ifdef __cplusplus
-}
+#ifndef ALT_PUTBUF_SIZE
+#define ALT_PUTBUF_SIZE 64
 #endif
 
-#endif /* __WARNING_H__ */
+// Buffer for the printed chars
+static char buf[ALT_PUTBUF_SIZE] ={0};
+// index into the buffer
+static unsigned int fill_index;
+
+/* 
+ * ALT putcharbuf funtion
+ * Used only for semihosting. 
+ * Not thread safe!
+ * This fucntion buffers up chars to be printed until either alt_putbufflush()
+ * is called or the buffer is full.
+ * It is called by alt_printf when semihosting is turned on
+ * Its purpose is to minimize the number of Break 1 issuesd by the semihosting
+ * libraries. 
+ */
+int 
+alt_putcharbuf(int c)
+{
+    buf[fill_index++] = (char)(c & 0xff);
+    if(fill_index >= ALT_PUTBUF_SIZE)
+        alt_putbufflush();
+    return c;
+}
+
+/*
+ * ALT putbufflush 
+ * used only for smehosting
+ * Not thread safe!
+ * Dumps all the chars in the buffer to STDOUT
+ */
+int 
+alt_putbufflush()
+{
+    int results;
+    results = write(STDOUT_FILENO,buf,fill_index);
+    fill_index = 0;
+    return results;
+}
+#endif

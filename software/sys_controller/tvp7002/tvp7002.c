@@ -80,7 +80,7 @@ static void tvp_set_clamp_position(video_type type)
     }
 }
 
-inline alt_u32 tvp_readreg(alt_u32 regaddr)
+alt_u32 tvp_readreg(alt_u32 regaddr)
 {
     I2C_start(I2CA_BASE, TVP_BASE, 0);
     I2C_write(I2CA_BASE, regaddr, 1);   //don't use repeated start as it seems unreliable at 400kHz
@@ -88,14 +88,14 @@ inline alt_u32 tvp_readreg(alt_u32 regaddr)
     return I2C_read(I2CA_BASE,1);
 }
 
-inline void tvp_writereg(alt_u32 regaddr, alt_u8 data)
+void tvp_writereg(alt_u32 regaddr, alt_u8 data)
 {
     I2C_start(I2CA_BASE, TVP_BASE, 0);
     I2C_write(I2CA_BASE, regaddr, 0);
     I2C_write(I2CA_BASE, data, 1);
 }
 
-inline void tvp_reset()
+void tvp_reset()
 {
     usleep(10000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x00);
@@ -104,7 +104,7 @@ inline void tvp_reset()
     usleep(10000);
 }
 
-inline void tvp_disable_output()
+void tvp_disable_output()
 {
     alt_u8 syncproc_rst = tvp_readreg(TVP_MISCCTRL4) | (1<<7);
 
@@ -117,7 +117,7 @@ inline void tvp_disable_output()
     tvp_writereg(TVP_MISCCTRL4, syncproc_rst & 0x7F);
 }
 
-inline void tvp_enable_output()
+void tvp_enable_output()
 {
     usleep(10000);
     tvp_writereg(TVP_MISCCTRL1, 0x11);
@@ -126,13 +126,13 @@ inline void tvp_enable_output()
     usleep(10000);
 }
 
-inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
+void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
 {
     tvp_writereg(TVP_HPLLPRECOAST, pre);
     tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
-inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
+void tvp_set_ssthold(alt_u8 vsdetect_thold)
 {
     tvp_writereg(TVP_SSTHOLD, vsdetect_thold);
 }

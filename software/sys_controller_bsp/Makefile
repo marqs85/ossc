@@ -93,12 +93,12 @@ OBJ_DIR := ./obj
 
 # This following VERSION comment indicates the version of the tool used to 
 # generate this makefile. A makefile variable is provided for VERSION as well. 
-# ACDS_VERSION: 15.1
-ACDS_VERSION := 15.1
+# ACDS_VERSION: 16.0
+ACDS_VERSION := 16.0
 
 # This following BUILD_NUMBER comment indicates the build number of the tool 
 # used to generate this makefile. 
-# BUILD_NUMBER: 185
+# BUILD_NUMBER: 211
 
 SETTINGS_FILE := settings.bsp
 SOPC_FILE := ../../sys.sopcinfo
@@ -140,6 +140,17 @@ BSP_CFLAGS_WARNINGS = -Wall
 
 # C compiler command. 
 CC = nios2-elf-gcc -xc
+
+# C/C++ compiler to generate (do not generate) GP-relative accesses. 'none' 
+# tells the compilter not to generate GP-relative accesses. 'local' will 
+# generate GP-relative accesses for small data objects that are not external, 
+# weak, or uninitialized common symbols. Also use GP-relative addressing for 
+# objects that have been explicitly placed in a small data section via a 
+# section attribute. provides the default set of debug symbols typically 
+# required to debug a typical application. 'global' is same as 'local' but also 
+# generate GP-relative accesses for small data objects that are external, weak, 
+# or common. 
+CFLAGS_MGPOPT = -mgpopt=local
 
 # C++ compiler command. 
 CXX = nios2-elf-gcc -xc++
@@ -402,6 +413,7 @@ BSP_CFLAGS += \
   $(BSP_CFLAGS_DEBUG) \
   $(BSP_CFLAGS_WARNINGS) \
   $(BSP_CFLAGS_USER_FLAGS) \
+  $(CFLAGS_MGPOPT) \
   $(ALT_CFLAGS) \
   $(CFLAGS) 
 

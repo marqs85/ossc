@@ -22,6 +22,8 @@
 
 #include "avconfig.h"
 
+#define HDMITX_MODE_MASK        0x00040000
+
 static const char *avinput_str[] = { "-", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr" };
 
 typedef enum {
@@ -65,7 +67,7 @@ typedef struct {
     avconfig_t cc;
 } avmode_t;
 
-inline void lcd_write_menu();
-inline void lcd_write_status();
+void lcd_write_menu();
+void lcd_write_status();
 
 #endif
