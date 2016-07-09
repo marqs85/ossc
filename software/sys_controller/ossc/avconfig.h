@@ -32,7 +32,7 @@
 #define PLL_COAST_MAX       5
 
 #define SL_MODE_MAX         2
-#define SL_TYPE_MAX         1
+#define SL_TYPE_MAX         2
 #define LM_MODE_MAX         1
 
 typedef struct {
@@ -55,6 +55,8 @@ typedef struct {
     alt_u8 en_alc;
     alt_u8 pre_coast;
     alt_u8 post_coast;
+    alt_u8 edtv_l2x;
+    alt_u8 interlace_pt;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();

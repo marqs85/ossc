@@ -31,6 +31,11 @@
 `define LINETRIPLE_M2           2'h2
 `define LINETRIPLE_M3           2'h3
 
+`define SCANLINES_OFF           2'h0
+`define SCANLINES_H             2'h1
+`define SCANLINES_V             2'h2
+`define SCANLINES_ALT           2'h3
+
 `define VSYNCGEN_LEN            6
 `define VSYNCGEN_GENMID_BIT     0
 `define VSYNCGEN_CHOPMID_BIT    1
@@ -122,9 +127,8 @@ reg [10:0] H_ACTIVE;    //max. 2047
 reg [7:0] H_BACKPORCH;  //max. 255
 reg [10:0] V_ACTIVE;    //max. 2047
 reg [5:0] V_BACKPORCH;  //max. 63
-reg V_SCANLINES;
-reg V_SCANLINEDIR;
-reg V_SCANLINEID;
+reg [1:0] V_SCANLINES;
+reg [1:0] V_SCANLINEID;
 reg [7:0] V_SCANLINESTR;
 reg [5:0] V_MASK;
 reg [1:0] H_LINEMULT;
@@ -150,17 +154,19 @@ assign pclk_out_3x_h5x = pclk_3x_h5x;
 
 //Scanline generation
 function [8:0] apply_scanlines;
-    input enable;
-    input dir;
+    input [1:0] mode;
     input [8:0] data;
     input [8:0] str;
     input [1:0] actid;
     input [1:0] lineid;
     input pixid;
+    input fid;
     begin
-        if (enable & (dir == 1'b0) & (actid == lineid))
+        if ((mode == `SCANLINES_H) & (actid == lineid))
             apply_scanlines = (data > str) ? (data-str) : 8'h00;
-        else if (enable & (dir == 1'b1) & (actid == pixid))
+        else if ((mode == `SCANLINES_V) & (actid == pixid))
+            apply_scanlines = (data > str) ? (data-str) : 8'h00;
+        else if ((mode == `SCANLINES_ALT) & ((actid[0]^fid) == lineid[0]))
             apply_scanlines = (data > str) ? (data-str) : 8'h00;
         else
             apply_scanlines = data;
@@ -371,9 +377,9 @@ begin
             VSYNC_pp1 <= VSYNC_act;
             DATA_enable_pp1 <= DATA_enable_act;
             
-            R_out <= apply_scanlines(V_SCANLINES, V_SCANLINEDIR, R_pp1, V_SCANLINESTR, {1'b0, V_SCANLINEID}, slid_act, hcnt_act[0]);
-            G_out <= apply_scanlines(V_SCANLINES, V_SCANLINEDIR, G_pp1, V_SCANLINESTR, {1'b0, V_SCANLINEID}, slid_act, hcnt_act[0]);
-            B_out <= apply_scanlines(V_SCANLINES, V_SCANLINEDIR, B_pp1, V_SCANLINESTR, {1'b0, V_SCANLINEID}, slid_act, hcnt_act[0]);
+            R_out <= apply_scanlines(V_SCANLINES, R_pp1, V_SCANLINESTR, V_SCANLINEID, slid_act, hcnt_act[0], FID_prev);
+            G_out <= apply_scanlines(V_SCANLINES, G_pp1, V_SCANLINESTR, V_SCANLINEID, slid_act, hcnt_act[0], FID_prev);
+            B_out <= apply_scanlines(V_SCANLINES, B_pp1, V_SCANLINESTR, V_SCANLINEID, slid_act, hcnt_act[0], FID_prev);
             HSYNC_out <= HSYNC_pp1;
             VSYNC_out <= VSYNC_pp1;
             DATA_enable <= DATA_enable_pp1;
@@ -439,7 +445,6 @@ begin
             V_ACTIVE <= 0;
             V_BACKPORCH <= 0;
             V_SCANLINES <= 0;
-            V_SCANLINEDIR <= 0;
             V_SCANLINEID <= 0;
             V_SCANLINESTR <= 0;
             V_MASK <= 0;
@@ -495,11 +500,10 @@ begin
                     H_MASK <= h_info[27:22];
                     V_ACTIVE <= v_info[17:7];       // Vertical active length from by the CPU, 11bits (0...2047)
                     V_BACKPORCH <= v_info[5:0];     // Vertical backporch length from by the CPU, 6bits (0...64)
-                    V_SCANLINES <= v_info[31];
-                    V_SCANLINEDIR <= v_info[30];
-                    V_SCANLINEID <= v_info[29];
-                    V_SCANLINESTR <= ((v_info[28:25]+8'h01)<<4)-1'b1;
-                    V_MASK <= v_info[24:19];
+                    V_SCANLINES <= v_info[31:30];
+                    V_SCANLINEID <= v_info[29:28];
+                    V_SCANLINESTR <= ((v_info[27:24]+8'h01)<<4)-1'b1;
+                    V_MASK <= v_info[23:18];
                 end
                 
             prev_hs <= HSYNC_in;

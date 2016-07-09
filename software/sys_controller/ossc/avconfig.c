@@ -18,7 +18,10 @@
 //
 
 #include <string.h>
+#include "system.h"
 #include "avconfig.h"
+#include "av_controller.h"
+#include "altera_avalon_pio_regs.h"
 #include "tvp7002.h"
 
 #define DEFAULT_PRE_COAST       1
@@ -42,6 +45,7 @@ const avconfig_t tc_default = {
 int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
+    tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
 
     return 0;
 }

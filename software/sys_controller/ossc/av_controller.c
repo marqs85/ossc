@@ -47,8 +47,6 @@
 #define SYNC_LOSS_THOLD         5
 #define STATUS_TIMEOUT          10000
 
-#define HDMITX_MODE_MASK        0x00040000
-
 // Current mode
 avmode_t cm;
 
@@ -232,7 +230,9 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.sl_str != cm.cc.sl_str) ||
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
-        (tc.v_mask != cm.cc.v_mask))
+        (tc.v_mask != cm.cc.v_mask) ||
+        (tc.edtv_l2x != cm.cc.edtv_l2x) ||
+        (tc.interlace_pt != cm.cc.interlace_pt))
         status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
 
     if (tc.sampler_phase != cm.cc.sampler_phase)
@@ -264,21 +264,20 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:30]           [29:28]         [27:22]      [21]  [20:10]          [7:0]
-//           | H_LINEMULT[1:0] | H_L3MODE[1:0] | H_MASK[5:0] |    | H_ACTIVE[10:0] | H_BACKPORCH[7:0] |
+// h_info:     [31:30]           [29:28]         [27:22]      [21]  [20:10]         [9:8]  [7:0]
+//           | H_LINEMULT[1:0] | H_L3MODE[1:0] | H_MASK[5:0] |    | H_ACTIVE[10:0] |     | H_BACKPORCH[7:0] |
 //
-// v_info:     [31]          [30]            [29]           [28:25]              [24:19]      [18]  [17:7]          [6]  [5:0]
-//           | V_SCANLINES | V_SCANLINEDIR | V_SCANLINEID | V_SCANLINESTR[3:0] | V_MASK[5:0] |    | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
+// v_info:     [31]          [30]            [29:28]        [27:24]              [23:18]       [17:7]          [6]  [5:0]
+//           | V_SCANLINES | V_SCANLINEDIR | V_SCANLINEID | V_SCANLINESTR[3:0] | V_MASK[5:0] | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
 void set_videoinfo()
 {
     alt_u8 slid_target;
-    alt_u8 sl_en_fpga;
-    alt_u8 sl_mode_fpga = 0;
+    alt_u8 sl_mode_fpga;
 
     if (video_modes[cm.id].flags & MODE_L3ENABLE_MASK) {
         cm.linemult = 2;
-        slid_target = cm.cc.sl_id ? 2 : 0;
-    } else if (video_modes[cm.id].flags & MODE_L2ENABLE) {
+        slid_target = cm.cc.sl_id ? (cm.cc.sl_type == 1 ? 1 : 2) : 0;
+    } else if ((video_modes[cm.id].flags & MODE_L2ENABLE) || (cm.cc.edtv_l2x && (video_modes[cm.id].type & VIDEO_EDTV))) {
         cm.linemult = 1;
         slid_target = cm.cc.sl_id;
     } else {
@@ -286,20 +285,33 @@ void set_videoinfo()
         slid_target = cm.cc.sl_id;
     }
 
-    if (cm.cc.sl_mode == 0) {
-        sl_en_fpga = 0;
-    } else if (cm.cc.sl_mode == 2) {    //manual
-        sl_en_fpga = 1;
-        sl_mode_fpga = cm.cc.sl_type;
-    } else if ((video_modes[cm.id].flags & (MODE_L2ENABLE|MODE_L3ENABLE_MASK)) && !(video_modes[cm.id].flags & MODE_INTERLACED)) {
-        sl_en_fpga = 1;
-        sl_mode_fpga = 0;
+    if (cm.cc.sl_mode == 2) {    //manual
+        sl_mode_fpga = 1+cm.cc.sl_type;
+    } else if (cm.cc.sl_mode == 1) {   //auto
+        if (video_modes[cm.id].flags & MODE_INTERLACED)
+            sl_mode_fpga = 3;
+        else if (video_modes[cm.id].flags & (MODE_L2ENABLE|MODE_L3ENABLE_MASK))
+            sl_mode_fpga = 1;
+        else
+            sl_mode_fpga = 0;
     } else {
-        sl_en_fpga = 0;
+        sl_mode_fpga = 0;
+    }
+
+    if ((cm.cc.interlace_pt) && (video_modes[cm.id].flags & MODE_INTERLACED)) {
+        cm.linemult = 0;
+        sl_mode_fpga = 0;
     }
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (cm.cc.h_mask)<<22 | (video_modes[cm.id].h_active<<10) | video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_en_fpga<<31) | (sl_mode_fpga<<30) | (slid_target<<29) | (cm.cc.sl_str<<25) | (cm.cc.v_mask<<19) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (slid_target<<28) | (cm.cc.sl_str<<24) | (cm.cc.v_mask<<18) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+
+    if (video_modes[cm.id].type & VIDEO_EDTV)
+        HDMITX_SetPixelRepetition(cm.cc.edtv_l2x, 0);
+    else if (video_modes[cm.id].flags & MODE_INTERLACED)
+        HDMITX_SetPixelRepetition(cm.cc.interlace_pt, (cm.cc.tx_mode==TX_HDMI));
+    else
+        HDMITX_SetPixelRepetition(0, 0);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -410,19 +422,11 @@ int init_hw()
     // safe?
     read_userdata();
 
-    // enforce DVI mode on non-DIY boards
-    if ((IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK)) {
-        cm.cc.tx_mode = TX_DVI;
-        tc.tx_mode = TX_DVI;
-    }
-
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
 
     // init always in HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI);
-    if (tc.tx_mode == TX_DVI)
-        TX_enable(tc.tx_mode);
 
     return 0;
 }
@@ -569,6 +573,7 @@ int main()
         if (tc.tx_mode != cm.cc.tx_mode) {
             TX_enable(tc.tx_mode);
             cm.cc.tx_mode = tc.tx_mode;
+            cm.clkcnt = 0; //TODO: proper invalidate
         }
 
         if (av_init) {

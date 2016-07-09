@@ -87,7 +87,7 @@ reg reset_n_reg = 1'b1;
 assign LED_R = HSYNC_in;
 assign LED_G = VSYNC_in;
 `else
-assign LED_R = (pll_lock_lost != 3'b000)|h_unstable;
+assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 3'b000)|h_unstable);
 assign LED_G = (ir_code == 0);
 `endif
 

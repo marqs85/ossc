@@ -827,6 +827,7 @@ BOOL EnableAudioInfoFrame(BYTE bEnable,BYTE *pAudioInfoFrame);
 void SetAVMute(BYTE bEnable) ;
 void SetOutputColorDepthPhase(BYTE ColorDepth,BYTE bPhase) ;
 void Get6613Reg(BYTE *pReg) ;
+void HDMITX_SetPixelRepetition(int pixelrep, int set_infoframe);
 
 ////////////////////////////////////////////////////////////////////
 // Required Interfance
