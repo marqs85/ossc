@@ -23,7 +23,7 @@
 #include "alt_types.h"
 
 #define FW_VER_MAJOR            0
-#define FW_VER_MINOR            71
+#define FW_VER_MINOR            72
 
 #define FW_UPDATE_RETRIES       3
 

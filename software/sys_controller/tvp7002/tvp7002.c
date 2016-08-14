@@ -205,7 +205,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
 
     pclk_est = ((alt_u32)h_samplerate * v_lines * hz) / 1000; //in kHz
 
-    printf("Estimated PCLK: %u.%.3u MHz\n", pclk_est/1000, pclk_est%1000);
+    printf("Estimated PCLK: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
 
     if (pclk_est < 36000) {
         vco_range = 0;
@@ -319,20 +319,13 @@ void tvp_set_alc(alt_u8 en_alc, video_type type)
     }
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_setup_glitchstripper(video_type type, alt_u8 sd_winwidth)
 {
-    // Clamp position and ALC
-    tvp_set_clamp_position(type);
-    tvp_set_alc(en_alc, type);
-
-    tvp_set_ssthold(vsync_thold);
-
-    // Macrovision enable/disable, coast disable for RGBHV.
-    // Coast needs to be enabled when HSYNC is missing during VSYNC. Valid only for RGBHV?
-    // Macrovision should be enabled when serration pulses etc. present, so disable only for RGBHV.
+    // Setup Macrovision stripper and H-PLL coast.
+    // Coast needs to be enabled when HSYNC is missing during VSYNC. Disabled only for RGBHV.
+    // Macrovision stripper filters out glitches and serration pulses that may occur outside of sync window (HSYNC_lead +- TVP_MVSWIDTH*37ns). Enabled for all inputs.
     switch (type) {
     case VIDEO_PC:
-        //tvp_writereg(TVP_MISCCTRL4, 0x04);
         tvp_writereg(TVP_MISCCTRL4, 0x0C);
         tvp_writereg(TVP_MVSWIDTH, 0x03);
         break;
@@ -340,15 +333,29 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlin
         tvp_writereg(TVP_MISCCTRL4, 0x08);
         tvp_writereg(TVP_MVSWIDTH, 0x0E);
         break;
-    case VIDEO_LDTV:
-    case VIDEO_SDTV:
     case VIDEO_EDTV:
         tvp_writereg(TVP_MISCCTRL4, 0x08);
-        tvp_writereg(TVP_MVSWIDTH, 0x88); // TODO: check mode
+        tvp_writereg(TVP_MVSWIDTH, 0x44);
+        break;
+    case VIDEO_LDTV:
+    case VIDEO_SDTV:
+        tvp_writereg(TVP_MISCCTRL4, 0x08);
+        tvp_writereg(TVP_MVSWIDTH, sd_winwidth);
         break;
     default:
         break;
     }
+}
+
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold, alt_u8 sd_sync_win)
+{
+    // Clamp position and ALC
+    tvp_set_clamp_position(type);
+    tvp_set_alc(en_alc, type);
+
+    tvp_set_ssthold(vsync_thold);
+
+    tvp_setup_glitchstripper(type, sd_sync_win);
 
     tvp_setup_hpll(video_modes[modeid].h_total, vlines, hz, !!(video_modes[modeid].flags & MODE_PLLDIVBY2));
 

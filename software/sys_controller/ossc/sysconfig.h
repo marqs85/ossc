@@ -25,6 +25,7 @@
 #define ErrorF(...)
 #define printf(...)
 #else
+#include <stdio.h>
 #define OS_PRINTF printf
 #define ErrorF printf
 // use reduced printf

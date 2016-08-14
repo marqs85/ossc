@@ -40,11 +40,11 @@
 #include "HDMI_TX.h"
 #include "hdmitx.h"
 
-#define LINECNT_THOLD           1
 #define STABLE_THOLD            1
 #define MIN_LINES_PROGRESSIVE   200
 #define MIN_LINES_INTERLACED    400
-#define SYNC_LOSS_THOLD         5
+#define SYNC_LOCK_THOLD         3
+#define SYNC_LOSS_THOLD         -5
 #define STATUS_TIMEOUT          10000
 
 // Current mode
@@ -97,7 +97,7 @@ void set_lpf(alt_u8 lpf)
 {
     alt_u32 pclk;
     pclk = (clkrate[REFCLK_EXT27]/cm.clkcnt)*video_modes[cm.id].h_total;
-    printf("PCLK: %uHz\n", pclk);
+    printf("PCLK: %luHz\n", pclk);
 
     //Auto
     if (lpf == 0) {
@@ -146,7 +146,7 @@ status_t get_status(tvp_input_t input, video_format format)
     alt_u8 vsyncmode;
     alt_u16 fpga_totlines;
     status_t status;
-    static alt_u8 act_ctr;
+    static alt_8 act_ctr;
     alt_u32 ctr;
     int valid_linecnt;
 
@@ -161,7 +161,7 @@ status_t get_status(tvp_input_t input, video_format format)
     }
 
     sync_active = tvp_check_sync(input, format);
-    vsyncmode = IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16;
+    vsyncmode = cm.sync_active ? (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) : 0;
 
     data1 = tvp_readreg(TVP_LINECNT1);
     data2 = tvp_readreg(TVP_LINECNT2);
@@ -184,17 +184,22 @@ status_t get_status(tvp_input_t input, video_format format)
     // TVP7002 may randomly report "no sync" (especially with arcade boards),
     // thus disable output only after N consecutive "no sync"-events
     if (!cm.sync_active && sync_active && valid_linecnt) {
-        cm.sync_active = sync_active;
-        status = ACTIVITY_CHANGE;
-        act_ctr = 0;
-    } else if (cm.sync_active && (!sync_active || !valid_linecnt)) {
-        printf("Sync down in %u...\n", SYNC_LOSS_THOLD-act_ctr);
-        if (act_ctr >= SYNC_LOSS_THOLD) {
+        printf("Sync up in %d...\n", SYNC_LOCK_THOLD-act_ctr);
+        if (act_ctr >= SYNC_LOCK_THOLD) {
             act_ctr = 0;
-            cm.sync_active = sync_active;
+            cm.sync_active = 1;
             status = ACTIVITY_CHANGE;
         } else {
             act_ctr++;
+        }
+    } else if (cm.sync_active && (!sync_active || !valid_linecnt)) {
+        printf("Sync down in %d...\n", act_ctr-SYNC_LOSS_THOLD);
+        if (act_ctr <= SYNC_LOSS_THOLD) {
+            act_ctr = 0;
+            cm.sync_active = 0;
+            status = ACTIVITY_CHANGE;
+        } else {
+            act_ctr--;
         }
     } else {
         act_ctr = 0;
@@ -205,8 +210,10 @@ status_t get_status(tvp_input_t input, video_format format)
     clkcnt = ((data2 & 0x0f) << 8) | data1;
 
     if (valid_linecnt) {
-        if ((abs((alt_16)totlines - (alt_16)cm.totlines) > LINECNT_THOLD) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
-            printf("totlines: %u (cur) / %u (prev), clkcnt: %u (cur) / %u (prev). Data1: 0x%.2x, Data2: 0x%.2x\n", (unsigned)totlines, (unsigned)cm.totlines, (unsigned)clkcnt, (unsigned)cm.clkcnt, (unsigned)data1, (unsigned)data2);
+        if ((totlines != cm.totlines) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
+            printf("totlines: %lu (cur) / %lu (prev), clkcnt: %lu (cur) / %lu (prev). Data1: 0x%.2x, Data2: 0x%.2x\n", totlines, cm.totlines, clkcnt, cm.clkcnt, (unsigned)data1, (unsigned)data2);
+            /*if (!cm.sync_active)
+                act_ctr = 0;*/
             stable_frames = 0;
         } else if (stable_frames != STABLE_THOLD) {
             stable_frames++;
@@ -243,6 +250,9 @@ status_t get_status(tvp_input_t input, video_format format)
 
     if (tc.vsync_thold != cm.cc.vsync_thold)
         tvp_set_ssthold(tc.vsync_thold);
+
+    if (tc.sd_sync_win != cm.cc.sd_sync_win)
+        tvp_setup_glitchstripper(target_type, tc.sd_sync_win);
 
     if ((tc.pre_coast != cm.cc.pre_coast) || (tc.post_coast != cm.cc.post_coast))
         tvp_set_hpllcoast(tc.pre_coast, tc.post_coast);
@@ -325,7 +335,7 @@ void program_mode()
 
     if ((cm.clkcnt != 0) && (cm.totlines != 0)) { //prevent div by 0
         h_hz = clkrate[REFCLK_EXT27]/cm.clkcnt;
-        v_hz_x100 = cm.progressive ? (100*clkrate[REFCLK_EXT27]/cm.clkcnt)/cm.totlines : (2*(100*clkrate[REFCLK_EXT27]/cm.clkcnt))/cm.totlines;
+        v_hz_x100 = cm.progressive ? ((100*clkrate[REFCLK_EXT27])/cm.totlines)/cm.clkcnt : (2*((100*clkrate[REFCLK_EXT27])/cm.totlines))/cm.clkcnt;
     } else {
         h_hz = 15700;
         v_hz_x100 = 6000;
@@ -340,15 +350,13 @@ void program_mode()
 
     sniprintf(row1, LCD_ROW_LEN+1, "%s %u%c", avinput_str[cm.avinput], (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
-    //strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
-    //strncpy(row2, avinput_str[cm.avinput], LCD_ROW_LEN+1);
     if (!menu_active)
         lcd_write_status();
 
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
     cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, target_typemask, cm.cc.linemult_target, cm.cc.l3_mode, cm.cc.s480p_mode);
 
-    if ( cm.id == -1) {
+    if (cm.id == -1) {
         printf ("Error: no suitable mode found, defaulting to 240p\n");
         cm.id = 4;
     }
@@ -357,7 +365,7 @@ void program_mode()
 
     printf("Mode %s selected\n", video_modes[cm.id].name);
 
-    tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
+    tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold, cm.cc.sd_sync_win);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }
@@ -475,6 +483,8 @@ int main()
         while (1) {}
     }
 
+    target_mode = tc.def_input;
+
     // Mainloop
     while(1) {
         // Read remote control and PCB button status
@@ -482,7 +492,6 @@ int main()
         remote_code = input_vec & RC_MASK;
         btn_code = ~input_vec & PB_MASK;
         remote_rpt = input_vec >> 24;
-        target_mode = AV_KEEP;
 
         if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
             remote_code = 0;
@@ -615,6 +624,7 @@ int main()
 
         btn_code_prev = btn_code;
         remote_rpt_prev = remote_rpt;
+        target_mode = AV_KEEP;
         usleep(300);    // Avoid executing mainloop multiple times per vsync
     }
 

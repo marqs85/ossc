@@ -55,7 +55,7 @@ int init_it() {
 	vendor_id = read_it(IT_VENDORID);
 	device_id = read_it(IT_DEVICEID);
 
-	printf("VEN: 0x%.2X, DEV: 0x%.2X\n", vendor_id, device_id);
+	printf("VEN: 0x%.2lX, DEV: 0x%.2lX\n", vendor_id, device_id);
 
 	if (!((vendor_id == IT6613_VENDORID) && (device_id == IT6613_DEVICEID)))
 		return -1;

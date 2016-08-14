@@ -37,6 +37,7 @@ const avconfig_t tc_default = {
   .sampler_phase = DEFAULT_SAMPLER_PHASE,
   .sync_vth = DEFAULT_SYNC_VTH,
   .vsync_thold = DEFAULT_VSYNC_THOLD,
+  .sd_sync_win = DEFAULT_SD_SYNC_WIN,
   .en_alc = 1,
   .pre_coast = DEFAULT_PRE_COAST,
   .post_coast = DEFAULT_POST_COAST,

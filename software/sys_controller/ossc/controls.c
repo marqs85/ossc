@@ -89,10 +89,10 @@ void parse_control()
     int i;
 
     if (remote_code)
-        printf("RCODE: 0x%.4x, %u\n", remote_code, remote_rpt);
+        printf("RCODE: 0x%.4lx, %d\n", remote_code, remote_rpt);
 
     if (btn_code_prev == 0 && btn_code != 0)
-        printf("BCODE: 0x%.2x\n", btn_code>>16);
+        printf("BCODE: 0x%.2lx\n", btn_code>>16);
 
     for (i = RC_BTN1; i < REMOTE_MAX_KEYS; i++) {
         if (remote_code == rc_keymap[i])

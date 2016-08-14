@@ -28,6 +28,7 @@
 #define I2CA_BASE I2C_OPENCORES_0_BASE
 
 #define DEFAULT_VSYNC_THOLD 0x44
+#define DEFAULT_SD_SYNC_WIN 0x88
 
 typedef enum {
     TVP_INPUT1 = 0,
@@ -91,7 +92,9 @@ void tvp_set_sog_thold(alt_u8 val);
 
 void tvp_set_alc(alt_u8 en_alc, video_type type);
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold);
+void tvp_setup_glitchstripper(video_type type, alt_u8 sd_winwidth);
+
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u8 en_alc, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold, alt_u8 sd_sync_win);
 
 void tvp_source_sel(tvp_input_t input, video_format fmt);
 

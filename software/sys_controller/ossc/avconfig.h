@@ -29,6 +29,7 @@
 #define SYNC_VTH_MAX        31
 #define VSYNC_THOLD_MIN     10
 #define VSYNC_THOLD_MAX     200
+#define SD_SYNC_WIN_MAX     255
 #define PLL_COAST_MAX       5
 
 #define SL_MODE_MAX         2
@@ -50,6 +51,7 @@ typedef struct {
     alt_u8 ypbpr_cs;
     alt_u8 sync_vth;
     alt_u8 vsync_thold;
+    alt_u8 sd_sync_win;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;
     alt_u8 en_alc;
@@ -57,6 +59,7 @@ typedef struct {
     alt_u8 post_coast;
     alt_u8 edtv_l2x;
     alt_u8 interlace_pt;
+    alt_u8 def_input;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();
