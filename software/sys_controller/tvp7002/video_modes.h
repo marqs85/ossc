@@ -23,6 +23,19 @@
 #include <alt_types.h>
 #include "sysconfig.h"
 
+#define H_ACTIVE_MIN 200
+#define H_ACTIVE_MAX 1920
+#define V_ACTIVE_MIN 200
+#define V_ACTIVE_MAX 1200
+#define H_TOTAL_MIN 300
+#define H_TOTAL_MAX 2300
+#define H_SYNCLEN_MIN 10
+#define H_SYNCLEN_MAX 200
+#define H_BPORCH_MIN 1
+#define H_BPORCH_MAX 255
+#define V_BPORCH_MIN 1
+#define V_BPORCH_MAX 255
+
 typedef enum {
     FORMAT_RGBS = 0,
     FORMAT_RGBHV = 1,

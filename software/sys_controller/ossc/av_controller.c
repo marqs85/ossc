@@ -57,10 +57,14 @@ extern alt_u32 remote_code;
 extern alt_u32 btn_code, btn_code_prev;
 extern alt_u8 remote_rpt, remote_rpt_prev;
 extern avconfig_t tc;
+extern alt_u8 video_mode_cnt;
 
 alt_u8 target_typemask;
 alt_u8 target_type;
 alt_u8 stable_frames;
+
+alt_u8 vm_sel, vm_edit;
+alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_active, tc_v_active, tc_h_bporch, tc_v_bporch;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
@@ -360,6 +364,7 @@ void program_mode()
         printf ("Error: no suitable mode found, defaulting to 240p\n");
         cm.id = 4;
     }
+    vm_sel = cm.id;
 
     target_type = target_typemask & video_modes[cm.id].type;
 
@@ -368,6 +373,61 @@ void program_mode()
     tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold, cm.cc.sd_sync_win);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
+}
+
+void vm_display(alt_u8 code) {
+    switch ((menucode_id)code) {
+        case VAL_MINUS:
+            vm_sel = (vm_sel > 0) ? vm_sel-1 : vm_sel;
+            break;
+        case VAL_PLUS:
+            vm_sel = (vm_sel < video_mode_cnt-1) ? vm_sel+1 : vm_sel;
+            break;
+        case OPT_SELECT:
+            vm_edit = vm_sel;
+            tc_h_samplerate = video_modes[vm_edit].h_total;
+            tc_h_synclen = (alt_u16)video_modes[vm_edit].h_synclen;
+            tc_h_active = video_modes[vm_edit].h_active;
+            tc_v_active = video_modes[vm_edit].v_active;
+            tc_h_bporch = (alt_u16)video_modes[vm_edit].h_backporch;
+            tc_v_bporch = (alt_u16)video_modes[vm_edit].v_backporch;
+            break;
+        case NO_ACTION:
+        default:
+            strncpy(menu_row2, video_modes[vm_sel].name, LCD_ROW_LEN+1);
+            break;
+    }
+}
+
+void vm_tweak(alt_u16 v) {
+    alt_u16 h_samplerate;
+
+    if (cm.id == vm_edit) {
+        if (video_modes[cm.id].h_total != tc_h_samplerate) {
+            if (video_modes[cm.id].flags & MODE_PLLDIVBY2)
+                h_samplerate = 2*video_modes[cm.id].h_total;
+            else
+                h_samplerate = video_modes[cm.id].h_total;
+
+            tvp_writereg(TVP_HPLLDIV_LSB, ((h_samplerate & 0xf) << 4));
+            tvp_writereg(TVP_HPLLDIV_MSB, (h_samplerate >> 4));
+        }
+        if (video_modes[cm.id].h_synclen != tc_h_synclen)
+            tvp_writereg(TVP_HSOUTWIDTH, video_modes[cm.id].h_synclen);
+        if ((video_modes[cm.id].h_active != tc_h_active) ||
+            (video_modes[cm.id].v_active != tc_v_active) ||
+            (video_modes[cm.id].h_backporch != (alt_u8)tc_h_bporch) ||
+            (video_modes[cm.id].v_backporch != (alt_u8)tc_v_bporch))
+            set_videoinfo();
+    }
+    video_modes[vm_edit].h_total = tc_h_samplerate;
+    video_modes[vm_edit].h_synclen = (alt_u8)tc_h_synclen;
+    video_modes[vm_edit].h_active = tc_h_active;
+    video_modes[vm_edit].v_active = tc_v_active;
+    video_modes[vm_edit].h_backporch = (alt_u8)tc_h_bporch;
+    video_modes[vm_edit].v_backporch = (alt_u8)tc_v_bporch;
+
+    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", v);
 }
 
 // Initialize hardware

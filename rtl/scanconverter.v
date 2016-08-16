@@ -120,7 +120,7 @@ reg h_enable_3x, h_enable_3x_h1x, v_enable_3x, v_enable_3x_h1x;
 reg prev_hs, prev_vs;
 reg [11:0] hmax[0:1];
 reg line_idx;
-reg [1:0] line_out_idx_2x, line_out_idx_3x;
+reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_3x_h1x;
 
 reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x, warn_pll_lock_lost_3x_lowfreq;
 
@@ -140,7 +140,6 @@ reg [5:0] H_MASK;
 reg [7:0] R_1x, G_1x, B_1x, R_pp1, G_pp1, B_pp1;
 wire [7:0] R_lbuf, G_lbuf, B_lbuf;
 wire [7:0] R_act, G_act, B_act;
-
 
 assign pclk_1x = PCLK_in;
 assign pclk_lock = {pclk_2x_lock, pclk_3x_lock, pclk_3x_lowfreq_lock};
@@ -246,7 +245,6 @@ begin
         G_act = G_lbuf;
         B_act = B_lbuf;
         VSYNC_act = VSYNC_1x;
-        slid_act = line_out_idx_3x;
         case (H_L3MODE)
         `LINETRIPLE_M0: begin
             DATA_enable_act = (h_enable_3x & v_enable_3x);
@@ -256,6 +254,7 @@ begin
             linebuf_rdclock = pclk_3x;
             linebuf_hoffset = hcnt_3x;
             pclk_act = pclk_3x;
+            slid_act = line_out_idx_3x;
             hcnt_act = hcnt_3x;
             vcnt_act = vcnt_3x/2'h3; //divider generated
         end
@@ -267,6 +266,7 @@ begin
             linebuf_rdclock = pclk_4x;
             linebuf_hoffset = hcnt_4x;
             pclk_act = pclk_4x;
+            slid_act = line_out_idx_3x;
             hcnt_act = hcnt_4x;
             vcnt_act = vcnt_3x/2'h3; //divider generated
         end
@@ -278,6 +278,7 @@ begin
             linebuf_rdclock = pclk_3x_h4x;
             linebuf_hoffset = hcnt_3x_h4x;
             pclk_act = pclk_3x_h4x;
+            slid_act = line_out_idx_3x_h1x;
             hcnt_act = hcnt_3x_h4x;
             vcnt_act = vcnt_3x_h1x/2'h3; //divider generated
         end
@@ -289,6 +290,7 @@ begin
             linebuf_rdclock = pclk_3x_h5x;
             linebuf_hoffset = hcnt_3x_h5x;
             pclk_act = pclk_3x_h5x;
+            slid_act = line_out_idx_3x_h1x;
             hcnt_act = hcnt_3x_h5x;
             vcnt_act = vcnt_3x_h1x/2'h3; //divider generated
         end
@@ -682,13 +684,20 @@ begin
             v_enable_3x_h1x <= 0;
             pclk_3x_h1x_cnt <= 0;
             pclk_1x_prev3x_h1x <= 0;
+            line_out_idx_3x_h1x <= 0;
         end
     else
         begin
             if ((pclk_3x_h1x_cnt == 0) & `HSYNC_TRAILING_EDGE)  //sync with posedge of pclk_1x
-                hcnt_3x_h1x <= 0;
+                begin
+                    hcnt_3x_h1x <= 0;
+                    line_out_idx_3x_h1x <= 0;
+                end
             else if (hcnt_3x_h1x == hmax[~line_idx]) //line_idx_prev?
-                hcnt_3x_h1x <= 0;
+                begin
+                    hcnt_3x_h1x <= 0;
+                    line_out_idx_3x_h1x <= line_out_idx_3x_h1x + 1'b1;
+                end
             else
                 hcnt_3x_h1x <= hcnt_3x_h1x + 1'b1;
 

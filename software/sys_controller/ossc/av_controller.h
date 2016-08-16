@@ -70,4 +70,7 @@ typedef struct {
 inline void lcd_write_menu();
 inline void lcd_write_status();
 
+void vm_display(alt_u8 code);
+void vm_tweak(alt_u16 v);
+
 #endif

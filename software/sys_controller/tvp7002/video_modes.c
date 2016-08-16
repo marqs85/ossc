@@ -24,7 +24,7 @@
 
 #define LINECNT_MAX_TOLERANCE   30
 
-const mode_data_t video_modes[] = {
+const mode_data_t video_modes_def[] = {
     { "240p_L3M0",  1280,  240, 6000, 1560,   262, 170, 16,  72,  3, (VIDEO_SDTV|VIDEO_PC),   (MODE_L3_MODE0|MODE_PLLDIVBY2) },
     { "240p_L3M1",   960,  240, 6000, 1170,   262, 128, 16,  54,  3, (VIDEO_SDTV|VIDEO_PC),   (MODE_L3_MODE1|MODE_PLLDIVBY2) },
     //{ "240p_L3M2",   384,  240, 6000,  512,   262,  66, 16,  31,  3, (VIDEO_LDTV|VIDEO_PC),   (MODE_L3_MODE2|MODE_PLLDIVBY2) },                 //CPS2
@@ -53,6 +53,11 @@ const mode_data_t video_modes[] = {
     { "1080p",      1920, 1080, 5994, 2200,  1125, 188, 36,  44,  5, VIDEO_HDTV,              0 },
     { "1920x1080",  1920, 1080, 6000, 2200,  1125, 148, 36,  44,  5, VIDEO_PC,                0 },
 };
+
+mode_data_t video_modes[sizeof(video_modes_def)/sizeof(mode_data_t)];
+
+const alt_u8 video_mode_cnt = sizeof(video_modes_def)/sizeof(mode_data_t);
+
 
 /* TODO: rewrite, check hz etc. */
 alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask, alt_u8 linemult_target, alt_u8 l3_mode, alt_u8 s480p_mode)

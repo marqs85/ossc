@@ -77,7 +77,7 @@ set_false_path -from pclk_3x_M1 -through $clkmuxnodes -to pclk_4x_M1
 set_false_path -from [get_cells {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter:scanconverter_inst|lines_*}]
 
 # Ignore paths from registers which are updated only at the end of hsync
-set_false_path -from [get_cells {scanconverter:scanconverter_inst|vcnt_* scanconverter:scanconverter_inst|line_idx}]
+set_false_path -from [get_cells {scanconverter:scanconverter_inst|vcnt_* scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx*}]
 
 # Ignore following clock transfers
 set_false_path -from [get_clocks pclk_2x] -to [get_clocks pclk_sdtv]

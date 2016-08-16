@@ -26,12 +26,14 @@
 typedef enum {
     OPT_AVCONFIG_SELECTION,
     OPT_AVCONFIG_NUMVALUE,
+    OPT_AVCONFIG_NUMVAL_U16,
     OPT_SUBMENU,
     OPT_FUNC_CALL,
 } menuitem_type;
 
 typedef int (*func_call)(void);
 typedef void (*disp_func)(alt_u8);
+typedef void (*disp_func_u16)(alt_u16);
 
 
 typedef struct {
@@ -47,8 +49,15 @@ typedef struct {
     alt_u8 wrap_cfg;
     alt_u8 min;
     alt_u8 max;
-    disp_func f;
+    disp_func df;
 } opt_avconfig_numvalue;
+
+typedef struct {
+    alt_u16 *data;
+    alt_u16 min;
+    alt_u16 max;
+    disp_func_u16 df;
+} opt_avconfig_numvalue_u16;
 
 typedef struct {
     func_call f;
@@ -58,12 +67,18 @@ typedef struct {
 typedef struct menustruct menu_t;
 
 typedef struct {
+    const menu_t *menu;
+    disp_func arg_f;
+} opt_submenu;
+
+typedef struct {
     char *name;
     menuitem_type type;
     union {
         opt_avconfig_selection sel;
         opt_avconfig_numvalue num;
-        const menu_t *sub;
+        opt_avconfig_numvalue_u16 num_u16;
+        opt_submenu sub;
         opt_func_call fun;
     };
 } menuitem_t;
@@ -72,10 +87,6 @@ struct menustruct {
     alt_u8 num_items;
     menuitem_t *items;
 };
-
-typedef struct {
-    menu_t *menu;
-} opt_submenu;
 
 #define SETTING_ITEM(x) 0, sizeof(x)/sizeof(char*)-1, x
 #define MENU(X, Y) menuitem_t X##_items[] = Y; const menu_t X = { sizeof(X##_items)/sizeof(menuitem_t), X##_items };

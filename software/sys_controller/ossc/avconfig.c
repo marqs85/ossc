@@ -29,6 +29,9 @@
 #define DEFAULT_SAMPLER_PHASE   16
 #define DEFAULT_SYNC_VTH        11
 
+extern mode_data_t video_modes[], video_modes_def[];
+extern alt_u8 video_mode_cnt;
+
 // Target configuration
 avconfig_t tc;
 
@@ -47,6 +50,8 @@ int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
     tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
+
+    memcpy(video_modes, video_modes_def, video_mode_cnt*sizeof(mode_data_t));
 
     return 0;
 }

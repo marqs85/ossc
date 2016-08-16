@@ -18,6 +18,7 @@
 //
 
 //`define DEBUG
+//`define INPUTLATCH
 `define VIDEOGEN
 
 module ossc (
@@ -82,6 +83,21 @@ wire [7:0] lcd_ctrl;
 
 reg [3:0] reset_n_ctr;
 reg reset_n_reg = 1'b1;
+
+`ifdef INPUTLATCH
+reg HSYNC_in_l, VSYNC_in_l, FID_in_l;
+reg [7:0] R_in_l, G_in_l, B_in_l;
+
+always @(posedge PCLK_in)
+begin
+    HSYNC_in_l <= HSYNC_in;
+    VSYNC_in_l <= VSYNC_in;
+    FID_in_l <= FID_in;
+    R_in_l <= R_in;
+    G_in_l <= G_in;
+    B_in_l <= B_in;
+end
+`endif
 
 `ifdef DEBUG
 assign LED_R = HSYNC_in;
@@ -149,13 +165,22 @@ sys sys_inst(
 
 scanconverter scanconverter_inst (
     .reset_n        (reset_n),
+    .PCLK_in        (PCLK_in),
+`ifdef INPUTLATCH
+    .HSYNC_in       (HSYNC_in_l),
+    .VSYNC_in       (VSYNC_in_l),
+    .FID_in         (FID_in_l),
+    .R_in           (R_in_l),
+    .G_in           (G_in_l),
+    .B_in           (B_in_l),
+`else
     .HSYNC_in       (HSYNC_in),
     .VSYNC_in       (VSYNC_in),
-    .PCLK_in        (PCLK_in),
     .FID_in         (FID_in),
     .R_in           (R_in),
     .G_in           (G_in),
     .B_in           (B_in),
+`endif
     .h_info         (h_info),
     .v_info         (v_info),
     .R_out          (R_out),
