@@ -28,6 +28,8 @@
 #define DEFAULT_POST_COAST      0
 #define DEFAULT_SAMPLER_PHASE   16
 #define DEFAULT_SYNC_VTH        11
+#define DEFAULT_FINE_GAIN       26
+#define DEFAULT_FINE_OFFSET     0x80
 
 extern mode_data_t video_modes[], video_modes_def[];
 extern alt_u8 video_mode_cnt;
@@ -37,13 +39,19 @@ avconfig_t tc;
 
 // Default configuration
 const avconfig_t tc_default = {
-  .sampler_phase = DEFAULT_SAMPLER_PHASE,
-  .sync_vth = DEFAULT_SYNC_VTH,
-  .vsync_thold = DEFAULT_VSYNC_THOLD,
-  .sd_sync_win = DEFAULT_SD_SYNC_WIN,
-  .en_alc = 1,
-  .pre_coast = DEFAULT_PRE_COAST,
-  .post_coast = DEFAULT_POST_COAST,
+    .sampler_phase = DEFAULT_SAMPLER_PHASE,
+    .sync_vth = DEFAULT_SYNC_VTH,
+    .vsync_thold = DEFAULT_VSYNC_THOLD,
+    .pre_coast = DEFAULT_PRE_COAST,
+    .post_coast = DEFAULT_POST_COAST,
+    .col = {
+        .r_f_gain = DEFAULT_FINE_GAIN,
+        .g_f_gain = DEFAULT_FINE_GAIN,
+        .b_f_gain = DEFAULT_FINE_GAIN,
+        .r_f_off = DEFAULT_FINE_OFFSET,
+        .g_f_off = DEFAULT_FINE_OFFSET,
+        .b_f_off = DEFAULT_FINE_OFFSET,
+    },
 };
 
 int set_default_avconfig()

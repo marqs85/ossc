@@ -55,6 +55,7 @@ static void extclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1,
 static void sl_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((v+1)*625)/100); }
 static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u lines", v); }
 static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", v); }
+static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "    %u", v); }
 
 MENU(menu_advtiming, P99_PROTECT({ \
     { "H. samplerate",      OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
@@ -67,21 +68,25 @@ MENU(menu_advtiming, P99_PROTECT({ \
 
 
 MENU(menu_vinputproc, P99_PROTECT({ \
-    { "Video LPF",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.video_lpf,   OPT_WRAP,   SETTING_ITEM(video_lpf_desc) } } },
-    { "YPbPr in ColSpa",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ypbpr_cs,    OPT_WRAP,   SETTING_ITEM(ypbpr_cs_desc) } } },
-    { "Auto lev. ctrl",     OPT_AVCONFIG_SELECTION, { .sel = { &tc.en_alc,      OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
+    { "Video LPF",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.video_lpf,     OPT_WRAP,   SETTING_ITEM(video_lpf_desc) } } },
+    { "YPbPr in ColSpa",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ypbpr_cs,      OPT_WRAP,   SETTING_ITEM(ypbpr_cs_desc) } } },
+    { "R. offset",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "G. offset",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "B. offset",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "R. gain",            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "G. gain",            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "B. gain",            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
 }))
 
 MENU(menu_sampling, P99_PROTECT({ \
     { "Sampling phase",     OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sampler_phase, OPT_NOWRAP, 0, SAMPLER_PHASE_MAX, sampler_phase_disp } } },
     { "480p in sampler",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
-    { "<Adv. timing   >",   OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } }, \
+    { "<Adv. timing   >",   OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } },
 }))
 
 MENU(menu_sync, P99_PROTECT({ \
     { "Analog sync LPF",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.sync_lpf,    OPT_WRAP,   SETTING_ITEM(sync_lpf_desc) } } },
     { "Analog sync Vth",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sync_vth,    OPT_NOWRAP, 0, SYNC_VTH_MAX, sync_vth_disp } } },
-    { "Hsync window len",   OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sd_sync_win, OPT_NOWRAP, 0, SD_SYNC_WIN_MAX, extclks_to_time_disp } } },
     { "Vsync threshold",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.vsync_thold, OPT_NOWRAP, VSYNC_THOLD_MIN, VSYNC_THOLD_MAX, intclks_to_time_disp } } },
     { "H-PLL Pre-Coast",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.pre_coast,   OPT_NOWRAP, 0, PLL_COAST_MAX, lines_disp } } },
     { "H-PLL Post-Coast",   OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.post_coast,  OPT_NOWRAP, 0, PLL_COAST_MAX, lines_disp } } },
@@ -107,14 +112,14 @@ MENU(menu_postproc, P99_PROTECT({ \
 
 
 MENU(menu_main, P99_PROTECT({ \
-    { "Video in proc  >",   OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } }, \
-    { "Sampling opt.  >",   OPT_SUBMENU,            { .sub = { &menu_sampling, NULL } } }, \
-    { "Sync opt.      >",   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } }, \
-    { "Output opt.    >",   OPT_SUBMENU,            { .sub = { &menu_output, NULL } } }, \
-    { "Post-proc.     >",   OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } }, \
-    { "<Fw. update    >",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - pls restart" } } }, \
-    { "<Reset settings>",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "Reset done" } } }, \
-    { "<Save settings >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "Saved" } } }, \
+    { "Video in proc  >",   OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } },
+    { "Sampling opt.  >",   OPT_SUBMENU,            { .sub = { &menu_sampling, NULL } } },
+    { "Sync opt.      >",   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
+    { "Output opt.    >",   OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
+    { "Post-proc.     >",   OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
+    { "<Fw. update    >",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - pls restart" } } },
+    { "<Reset settings>",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "Reset done" } } },
+    { "<Save settings >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "Saved" } } },
 }))
 
 // Max 3 levels currently

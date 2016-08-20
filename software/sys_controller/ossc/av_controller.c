@@ -120,10 +120,9 @@ void set_lpf(alt_u8 lpf)
             break;
         case VIDEO_SDTV:
         case VIDEO_LDTV:
+        default:
             tvp_set_lpf(0);
             ths_set_lpf(0);
-            break;
-        default:
             break;
         }
     } else {
@@ -255,9 +254,6 @@ status_t get_status(tvp_input_t input, video_format format)
     if (tc.vsync_thold != cm.cc.vsync_thold)
         tvp_set_ssthold(tc.vsync_thold);
 
-    if (tc.sd_sync_win != cm.cc.sd_sync_win)
-        tvp_setup_glitchstripper(target_type, tc.sd_sync_win);
-
     if ((tc.pre_coast != cm.cc.pre_coast) || (tc.post_coast != cm.cc.post_coast))
         tvp_set_hpllcoast(tc.pre_coast, tc.post_coast);
 
@@ -270,8 +266,8 @@ status_t get_status(tvp_input_t input, video_format format)
     if (tc.sync_lpf != cm.cc.sync_lpf)
         tvp_set_sync_lpf(tc.sync_lpf);
 
-    if (tc.en_alc != cm.cc.en_alc)
-        tvp_set_alc(tc.en_alc, target_type);
+    if (!memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
+        tvp_set_fine_gain_offset(&cm.cc.col);
 
     cm.cc = tc;
 
@@ -370,7 +366,7 @@ void program_mode()
 
     printf("Mode %s selected\n", video_modes[cm.id].name);
 
-    tvp_source_setup(cm.id, target_type, cm.cc.en_alc, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold, cm.cc.sd_sync_win);
+    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }
