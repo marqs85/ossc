@@ -100,9 +100,9 @@ void tvp_set_hpll_phase(alt_u8 val);
 
 void tvp_set_sog_thold(alt_u8 val);
 
-void tvp_set_alc(alt_u8 en_alc, video_type type);
+void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen);
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold);
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold);
 
 void tvp_source_sel(tvp_input_t input, video_format fmt);
 

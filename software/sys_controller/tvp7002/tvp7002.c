@@ -57,22 +57,22 @@ static void tvp_set_clamp(video_format fmt)
     }
 }
 
-static void tvp_set_clamp_position(video_type type)
+static void tvp_set_clamp_position(video_type type, alt_u8 h_syncinlen)
 {
     switch (type) {
     case VIDEO_LDTV:
-        tvp_writereg(TVP_CLAMPSTART, 0x2);
+        tvp_writereg(TVP_CLAMPSTART, h_syncinlen+0x2);
         tvp_writereg(TVP_CLAMPWIDTH, 0x6);
         break;
     case VIDEO_HDTV:
-        tvp_writereg(TVP_CLAMPSTART, 0x32);
+        tvp_writereg(TVP_CLAMPSTART, h_syncinlen+0x32);
         tvp_writereg(TVP_CLAMPWIDTH, 0x20);
         break;
     case VIDEO_SDTV:
     case VIDEO_EDTV:
     case VIDEO_PC:
     default:
-        tvp_writereg(TVP_CLAMPSTART, 0x6);
+        tvp_writereg(TVP_CLAMPSTART, h_syncinlen+0x6);
         tvp_writereg(TVP_CLAMPWIDTH, 0x10);
         break;
     }
@@ -165,6 +165,10 @@ void tvp_init()
     // Increase line length tolerance
     tvp_writereg(TVP_LINELENTOL, 0x06);
 
+    // Use HSYNC leading edge as fine clamp reference
+    // Allows minimizing HSYNC window
+    //tvp_writereg(TVP_OUTFORMAT, 0x0C);
+
     // Minimize HSYNC window for best sync stability
     tvp_writereg(TVP_MVSWIDTH, 0x03);
 
@@ -212,7 +216,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
 
     pclk_est = ((alt_u32)h_samplerate * v_lines * hz) / 1000; //in kHz
 
-    printf("Estimated PCLK: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
+    printf("Estimated PCLK_out: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
 
     if (pclk_est < 36000) {
         vco_range = 0;
@@ -300,7 +304,7 @@ void tvp_set_sog_thold(alt_u8 val)
     printf("SOG thold set to 0x%x\n", val);
 }
 
-void tvp_set_alc(alt_u8 en_alc, video_type type)
+void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
 {
     if (en_alc) {
         tvp_writereg(TVP_ALCEN, 0x80); //enable ALC
@@ -308,16 +312,16 @@ void tvp_set_alc(alt_u8 en_alc, video_type type)
         //select ALC placement
         switch (type) {
         case VIDEO_LDTV:
-            tvp_writereg(TVP_ALCPLACE, 0x9);
+            tvp_writereg(TVP_ALCPLACE, h_syncinlen+0x9);
             break;
         case VIDEO_HDTV:
-            tvp_writereg(TVP_ALCPLACE, 0x5A);
+            tvp_writereg(TVP_ALCPLACE, h_syncinlen+0x5A);
             break;
         case VIDEO_SDTV:
         case VIDEO_EDTV:
         case VIDEO_PC:
         default:
-            tvp_writereg(TVP_ALCPLACE, 0x18);
+            tvp_writereg(TVP_ALCPLACE, h_syncinlen+0x18);
             break;
         }
     } else {
@@ -325,11 +329,11 @@ void tvp_set_alc(alt_u8 en_alc, video_type type)
     }
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
 {
     // Clamp position and ALC
-    tvp_set_clamp_position(type);
-    tvp_set_alc(1, type);
+    tvp_set_clamp_position(type, h_syncinlen);
+    tvp_set_alc(1, type, h_syncinlen);
 
     tvp_set_ssthold(vsync_thold);
 

@@ -101,7 +101,7 @@ void set_lpf(alt_u8 lpf)
 {
     alt_u32 pclk;
     pclk = (clkrate[REFCLK_EXT27]/cm.clkcnt)*video_modes[cm.id].h_total;
-    printf("PCLK: %luHz\n", pclk);
+    printf("PCLK_in: %luHz\n", pclk);
 
     //Auto
     if (lpf == 0) {
@@ -327,8 +327,8 @@ void set_videoinfo()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u32 data1, data2;
-    alt_u32 h_hz, v_hz_x100;
+    alt_u8 h_syncinlen, v_syncinlen;
+    alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
     stable_frames = STABLE_THOLD;
@@ -344,9 +344,9 @@ void program_mode()
     printf("\nLines: %u %c\n", (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     printf("Clocks per line: %u : HS %u.%.3u kHz  VS %u.%.2u Hz\n", (unsigned)cm.clkcnt, (unsigned)(h_hz/1000), (unsigned)(h_hz%1000), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
 
-    data1 = tvp_readreg(TVP_HSINWIDTH);
-    data2 = tvp_readreg(TVP_VSINWIDTH);
-    printf("Hswidth: %u  Vswidth: %u  Macrovision: %u\n", (unsigned)data1, (unsigned)(data2 & 0x1F), (unsigned)cm.macrovis);
+    h_syncinlen = tvp_readreg(TVP_HSINWIDTH);
+    v_syncinlen = tvp_readreg(TVP_VSINWIDTH);
+    printf("Hswidth: %u  Vswidth: %u  Macrovision: %u\n", (unsigned)h_syncinlen, (unsigned)(v_syncinlen & 0x1F), (unsigned)cm.macrovis);
 
     sniprintf(row1, LCD_ROW_LEN+1, "%s %u%c", avinput_str[cm.avinput], (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
@@ -363,10 +363,11 @@ void program_mode()
     vm_sel = cm.id;
 
     target_type = target_typemask & video_modes[cm.id].type;
+    h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)video_modes[cm.id].h_total) / cm.clkcnt;
 
-    printf("Mode %s selected\n", video_modes[cm.id].name);
+    printf("Mode %s selected - hsync width: %upx\n", video_modes[cm.id].name, (unsigned)h_synclen_px);
 
-    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
+    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, (alt_u8)h_synclen_px, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
 }
