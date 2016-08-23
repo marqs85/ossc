@@ -167,6 +167,7 @@ void tvp_init()
 
     // Use HSYNC leading edge as fine clamp reference
     // Allows minimizing HSYNC window
+    // Does not work properly for some reason, but is not critical as reference is at most LEADEDGE+MVSWIDTH
     //tvp_writereg(TVP_OUTFORMAT, 0x0C);
 
     // Minimize HSYNC window for best sync stability
