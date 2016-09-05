@@ -62,6 +62,7 @@ extern alt_u8 video_mode_cnt;
 alt_u8 target_typemask;
 alt_u8 target_type;
 alt_u8 stable_frames;
+alt_u8 update_cur_vm;
 
 alt_u8 vm_sel, vm_edit;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_active, tc_v_active, tc_h_bporch, tc_v_bporch;
@@ -148,6 +149,7 @@ status_t get_status(tvp_input_t input, video_format format)
     alt_u8 sync_active;
     alt_u8 vsyncmode;
     alt_u16 fpga_totlines;
+    alt_u16 h_samplerate;
     status_t status;
     static alt_8 act_ctr;
     alt_u32 ctr;
@@ -230,6 +232,19 @@ status_t get_status(tvp_input_t input, video_format format)
         if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P)))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
+        if (update_cur_vm) {
+            if (video_modes[cm.id].flags & MODE_PLLDIVBY2)
+                h_samplerate = 2*video_modes[cm.id].h_total;
+            else
+                h_samplerate = video_modes[cm.id].h_total;
+
+            tvp_writereg(TVP_HPLLDIV_LSB, ((h_samplerate & 0xf) << 4));
+            tvp_writereg(TVP_HPLLDIV_MSB, (h_samplerate >> 4));
+            tvp_writereg(TVP_HSOUTWIDTH, video_modes[cm.id].h_synclen);
+
+            status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
+        }
+
         cm.totlines = totlines;
         cm.clkcnt = clkcnt;
         cm.progressive = progressive;
@@ -251,6 +266,9 @@ status_t get_status(tvp_input_t input, video_format format)
     if (tc.sync_vth != cm.cc.sync_vth)
         tvp_set_sog_thold(tc.sync_vth);
 
+    if (tc.linelen_tol != cm.cc.linelen_tol)
+        tvp_set_linelen_tol(tc.linelen_tol);
+
     if (tc.vsync_thold != cm.cc.vsync_thold)
         tvp_set_ssthold(tc.vsync_thold);
 
@@ -270,6 +288,7 @@ status_t get_status(tvp_input_t input, video_format format)
         tvp_set_fine_gain_offset(&cm.cc.col);
 
     cm.cc = tc;
+    update_cur_vm = 0;
 
     return status;
 }
@@ -397,25 +416,14 @@ void vm_display(alt_u8 code) {
 }
 
 void vm_tweak(alt_u16 v) {
-    alt_u16 h_samplerate;
-
-    if (cm.id == vm_edit) {
-        if (video_modes[cm.id].h_total != tc_h_samplerate) {
-            if (video_modes[cm.id].flags & MODE_PLLDIVBY2)
-                h_samplerate = 2*video_modes[cm.id].h_total;
-            else
-                h_samplerate = video_modes[cm.id].h_total;
-
-            tvp_writereg(TVP_HPLLDIV_LSB, ((h_samplerate & 0xf) << 4));
-            tvp_writereg(TVP_HPLLDIV_MSB, (h_samplerate >> 4));
-        }
-        if (video_modes[cm.id].h_synclen != tc_h_synclen)
-            tvp_writereg(TVP_HSOUTWIDTH, video_modes[cm.id].h_synclen);
-        if ((video_modes[cm.id].h_active != tc_h_active) ||
+    if (cm.sync_active && (cm.id == vm_edit)) {
+        if ((video_modes[cm.id].h_total != tc_h_samplerate) ||
+            (video_modes[cm.id].h_synclen != tc_h_synclen) ||
+            (video_modes[cm.id].h_active != tc_h_active) ||
             (video_modes[cm.id].v_active != tc_v_active) ||
             (video_modes[cm.id].h_backporch != (alt_u8)tc_h_bporch) ||
             (video_modes[cm.id].v_backporch != (alt_u8)tc_v_bporch))
-            set_videoinfo();
+            update_cur_vm = 1;
     }
     video_modes[vm_edit].h_total = tc_h_samplerate;
     video_modes[vm_edit].h_synclen = (alt_u8)tc_h_synclen;

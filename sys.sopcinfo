@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 15.1 185 (Future versions may contain additional information.) -->
- <!-- 2016.08.20.01:49:03 -->
+ <!-- 2016.09.04.02:58:13 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1471646943</value>
+  <value>1472947093</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -2904,7 +2904,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="useRegistersForReadBuffer">
    <type>boolean</type>
-   <value>false</value>
+   <value>true</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2912,7 +2912,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="useRegistersForWriteBuffer">
    <type>boolean</type>
-   <value>false</value>
+   <value>true</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>

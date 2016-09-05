@@ -51,6 +51,7 @@ typedef struct {
     alt_u8 sampler_phase;
     alt_u8 ypbpr_cs;
     alt_u8 sync_vth;
+    alt_u8 linelen_tol;
     alt_u8 vsync_thold;
     alt_u8 sync_lpf;
     alt_u8 video_lpf;

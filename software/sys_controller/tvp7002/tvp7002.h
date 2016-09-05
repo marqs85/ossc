@@ -28,6 +28,7 @@
 #define I2CA_BASE I2C_OPENCORES_0_BASE
 
 #define DEFAULT_VSYNC_THOLD 0x44
+#define DEFAULT_LINELEN_TOL 0x06
 
 typedef enum {
     TVP_INPUT1 = 0,
@@ -79,6 +80,8 @@ inline void tvp_disable_output();
 inline void tvp_enable_output();
 
 inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
+
+inline void tvp_set_linelen_tol(alt_u8 val);
 
 inline void tvp_set_ssthold(alt_u8 vsdetect_thold);
 

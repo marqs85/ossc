@@ -130,6 +130,10 @@ inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
     tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
+inline void tvp_set_linelen_tol(alt_u8 val) {
+    tvp_writereg(TVP_LINELENTOL, val);
+}
+
 inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
 {
     tvp_writereg(TVP_SSTHOLD, vsdetect_thold);
@@ -163,7 +167,7 @@ void tvp_init()
     tvp_set_sync_lpf(0);
 
     // Increase line length tolerance
-    tvp_writereg(TVP_LINELENTOL, 0x06);
+    tvp_set_linelen_tol(DEFAULT_LINELEN_TOL);
 
     // Use HSYNC leading edge as fine clamp reference
     // Allows minimizing HSYNC window
@@ -338,8 +342,8 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
 
     tvp_set_ssthold(vsync_thold);
 
-    // Setup Macrovision stripper and H-PLL coast.
-    // Coast needs to be enabled when HSYNC is missing during VSYNC. Disabled only for RGBHV.
+    // Setup Macrovision stripper and H-PLL coast signal.
+    // Coast needs to be enabled when HSYNC is missing during VSYNC. RGBHV mode cannot use it, so turn off the internal signal for this mode.
     // Macrovision stripper filters out glitches and serration pulses that may occur outside of sync window (HSYNC_lead +- TVP_MVSWIDTH*37ns). Enabled for all inputs.
     switch (type) {
     case VIDEO_PC:
