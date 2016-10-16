@@ -2,9 +2,9 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Sep 4, 2016 3:02:52 AM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1472947372974</BspGeneratedUnixTimeStamp>
-        <BspGeneratedLocation>./</BspGeneratedLocation>
+        <BspGeneratedTimeStamp>Oct 16, 2016 12:18:06 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1476609486611</BspGeneratedUnixTimeStamp>
+        <BspGeneratedLocation>/home/markus/Code/ossc/software/sys_controller_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>../../sys.sopcinfo</SopcDesignFile>
         <JdiFile>default</JdiFile>
@@ -894,67 +894,73 @@
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>onchip_memory2_0</slaveDescriptor>
-                <addressRange>0x00810000 - 0x00818FFF</addressRange>
-                <addressSpan>36864</addressSpan>
+                <addressRange>0x00810000 - 0x00819FFF</addressRange>
+                <addressSpan>40960</addressSpan>
                 <attributes>memory</attributes>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>Altera_UP_SD_Card_Avalon_Interface_0</slaveDescriptor>
-                <addressRange>0x00821000 - 0x008213FF</addressRange>
-                <addressSpan>1024</addressSpan>
+                <slaveDescriptor>spi_0</slaveDescriptor>
+                <addressRange>0x00821000 - 0x0082101F</addressRange>
+                <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
+                <slaveDescriptor>timer_0</slaveDescriptor>
+                <addressRange>0x00821020 - 0x0082103F</addressRange>
+                <addressSpan>32</addressSpan>
+                <attributes>timer</attributes>
+        </MemoryMap>
+        <MemoryMap>
                 <slaveDescriptor>epcq_controller_0_avl_csr</slaveDescriptor>
-                <addressRange>0x00821400 - 0x0082141F</addressRange>
+                <addressRange>0x00821040 - 0x0082105F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>i2c_opencores_0</slaveDescriptor>
-                <addressRange>0x00821420 - 0x0082143F</addressRange>
+                <addressRange>0x00821060 - 0x0082107F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_5</slaveDescriptor>
-                <addressRange>0x00821440 - 0x0082144F</addressRange>
+                <addressRange>0x00821080 - 0x0082108F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_4</slaveDescriptor>
-                <addressRange>0x00821450 - 0x0082145F</addressRange>
+                <addressRange>0x00821090 - 0x0082109F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_3</slaveDescriptor>
-                <addressRange>0x00821460 - 0x0082146F</addressRange>
+                <addressRange>0x008210A0 - 0x008210AF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_2</slaveDescriptor>
-                <addressRange>0x00821470 - 0x0082147F</addressRange>
+                <addressRange>0x008210B0 - 0x008210BF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_1</slaveDescriptor>
-                <addressRange>0x00821480 - 0x0082148F</addressRange>
+                <addressRange>0x008210C0 - 0x008210CF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_0</slaveDescriptor>
-                <addressRange>0x00821490 - 0x0082149F</addressRange>
+                <addressRange>0x008210D0 - 0x008210DF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>jtag_uart_0</slaveDescriptor>
-                <addressRange>0x008214A0 - 0x008214A7</addressRange>
+                <addressRange>0x008210E0 - 0x008210E7</addressRange>
                 <addressSpan>8</addressSpan>
                 <attributes>printable</attributes>
         </MemoryMap>

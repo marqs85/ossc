@@ -149,18 +149,18 @@ assign cpu_reset_n = reset_n_reg;
 sys sys_inst(
     .clk_clk                            (clk27),
     .reset_reset_n                      (cpu_reset_n),
+    .i2c_opencores_0_export_scl_pad_io  (scl),
+    .i2c_opencores_0_export_sda_pad_io  (sda),
+    .spi_0_external_MISO                (SD_DAT[0]),
+    .spi_0_external_MOSI                (SD_CMD),
+    .spi_0_external_SCLK                (SD_CLK),
+    .spi_0_external_SS_n                (SD_DAT[3]),
     .pio_0_sys_ctrl_out_export          (sys_ctrl),
     .pio_1_controls_in_export           ({ir_code_cnt, 5'b00000, HDMI_TX_MODE, btn, ir_code}),
     .pio_2_horizontal_info_out_export   (h_info),
     .pio_3_vertical_info_out_export     (v_info),
     .pio_4_linecount_in_export          ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out}),
-    .pio_5_lcd_ctrl_out_export          (lcd_ctrl),
-    .i2c_opencores_0_export_scl_pad_io  (scl),
-    .i2c_opencores_0_export_sda_pad_io  (sda),
-    .sdcard_0_b_SD_cmd                  (SD_CMD),
-    .sdcard_0_b_SD_dat                  (SD_DAT[0]),
-    .sdcard_0_b_SD_dat3                 (SD_DAT[3]),
-    .sdcard_0_o_SD_clock                (SD_CLK)
+    .pio_5_lcd_ctrl_out_export          (lcd_ctrl)
 );
 
 scanconverter scanconverter_inst (

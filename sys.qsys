@@ -9,22 +9,6 @@
    categories="System" />
  <parameter name="bonusData"><![CDATA[bonusData 
 {
-   element Altera_UP_SD_Card_Avalon_Interface_0
-   {
-      datum _sortIndex
-      {
-         value = "14";
-         type = "int";
-      }
-   }
-   element Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave
-   {
-      datum baseAddress
-      {
-         value = "8523776";
-         type = "String";
-      }
-   }
    element clk_27
    {
       datum _sortIndex
@@ -37,7 +21,7 @@
    {
       datum _sortIndex
       {
-         value = "15";
+         value = "8";
          type = "int";
       }
    }
@@ -45,7 +29,7 @@
    {
       datum baseAddress
       {
-         value = "8524800";
+         value = "8523840";
          type = "String";
       }
    }
@@ -61,7 +45,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "9";
          type = "int";
       }
    }
@@ -69,7 +53,7 @@
    {
       datum baseAddress
       {
-         value = "8524832";
+         value = "8523872";
          type = "String";
       }
    }
@@ -77,7 +61,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "7";
          type = "int";
       }
    }
@@ -85,7 +69,7 @@
    {
       datum baseAddress
       {
-         value = "8524960";
+         value = "8524000";
          type = "String";
       }
    }
@@ -149,7 +133,7 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "11";
          type = "int";
       }
    }
@@ -157,7 +141,7 @@
    {
       datum baseAddress
       {
-         value = "8524944";
+         value = "8523984";
          type = "String";
       }
    }
@@ -165,7 +149,7 @@
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "12";
          type = "int";
       }
    }
@@ -173,7 +157,7 @@
    {
       datum baseAddress
       {
-         value = "8524928";
+         value = "8523968";
          type = "String";
       }
    }
@@ -181,7 +165,7 @@
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "13";
          type = "int";
       }
    }
@@ -189,7 +173,7 @@
    {
       datum baseAddress
       {
-         value = "8524912";
+         value = "8523952";
          type = "String";
       }
    }
@@ -197,7 +181,7 @@
    {
       datum _sortIndex
       {
-         value = "11";
+         value = "14";
          type = "int";
       }
    }
@@ -205,7 +189,7 @@
    {
       datum baseAddress
       {
-         value = "8524896";
+         value = "8523936";
          type = "String";
       }
    }
@@ -213,7 +197,7 @@
    {
       datum _sortIndex
       {
-         value = "12";
+         value = "15";
          type = "int";
       }
    }
@@ -221,7 +205,7 @@
    {
       datum baseAddress
       {
-         value = "8524880";
+         value = "8523920";
          type = "String";
       }
    }
@@ -229,7 +213,7 @@
    {
       datum _sortIndex
       {
-         value = "13";
+         value = "16";
          type = "int";
       }
    }
@@ -237,7 +221,39 @@
    {
       datum baseAddress
       {
-         value = "8524864";
+         value = "8523904";
+         type = "String";
+      }
+   }
+   element spi_0
+   {
+      datum _sortIndex
+      {
+         value = "10";
+         type = "int";
+      }
+   }
+   element spi_0.spi_control_port
+   {
+      datum baseAddress
+      {
+         value = "8523776";
+         type = "String";
+      }
+   }
+   element timer_0
+   {
+      datum _sortIndex
+      {
+         value = "6";
+         type = "int";
+      }
+   }
+   element timer_0.s1
+   {
+      datum baseAddress
+      {
+         value = "8523808";
          type = "String";
       }
    }
@@ -300,18 +316,10 @@
    dir="end" />
  <interface name="reset" internal="clk_27.clk_in_reset" type="reset" dir="end" />
  <interface
-   name="sdcard_0"
-   internal="Altera_UP_SD_Card_Avalon_Interface_0.conduit_end"
+   name="spi_0_external"
+   internal="spi_0.external"
    type="conduit"
    dir="end" />
- <module
-   name="Altera_UP_SD_Card_Avalon_Interface_0"
-   kind="Altera_UP_SD_Card_Avalon_Interface_mod"
-   version="15.1"
-   enabled="1">
-  <parameter name="AUTO_CLK_CLOCK_RATE" value="27000000" />
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone IV E" />
- </module>
  <module name="clk_27" kind="clock_source" version="15.1" enabled="1">
   <parameter name="clockFrequency" value="27000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -391,7 +399,7 @@
   <parameter name="dataAddrWidth" value="24" />
   <parameter name="dataMasterHighPerformanceAddrWidth" value="1" />
   <parameter name="dataMasterHighPerformanceMapParam" value="" />
-  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='epcq_controller_0.avl_mem' start='0x0' end='0x800000' type='altera_epcq_controller_mod.avl_mem' /><slave name='onchip_memory2_0.s1' start='0x810000' end='0x819000' type='altera_avalon_onchip_memory2.s1' /><slave name='nios2_qsys_0.debug_mem_slave' start='0x820800' end='0x821000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave' start='0x821000' end='0x821400' type='Altera_UP_SD_Card_Avalon_Interface_mod.avalon_sdcard_slave' /><slave name='epcq_controller_0.avl_csr' start='0x821400' end='0x821420' type='altera_epcq_controller_mod.avl_csr' /><slave name='i2c_opencores_0.avalon_slave_0' start='0x821420' end='0x821440' type='i2c_opencores.avalon_slave_0' /><slave name='pio_5.s1' start='0x821440' end='0x821450' type='altera_avalon_pio.s1' /><slave name='pio_4.s1' start='0x821450' end='0x821460' type='altera_avalon_pio.s1' /><slave name='pio_3.s1' start='0x821460' end='0x821470' type='altera_avalon_pio.s1' /><slave name='pio_2.s1' start='0x821470' end='0x821480' type='altera_avalon_pio.s1' /><slave name='pio_1.s1' start='0x821480' end='0x821490' type='altera_avalon_pio.s1' /><slave name='pio_0.s1' start='0x821490' end='0x8214A0' type='altera_avalon_pio.s1' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x8214A0' end='0x8214A8' type='altera_avalon_jtag_uart.avalon_jtag_slave' /></address-map>]]></parameter>
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='epcq_controller_0.avl_mem' start='0x0' end='0x800000' type='altera_epcq_controller_mod.avl_mem' /><slave name='onchip_memory2_0.s1' start='0x810000' end='0x81A000' type='altera_avalon_onchip_memory2.s1' /><slave name='nios2_qsys_0.debug_mem_slave' start='0x820800' end='0x821000' type='altera_nios2_gen2.debug_mem_slave' /><slave name='spi_0.spi_control_port' start='0x821000' end='0x821020' type='altera_avalon_spi.spi_control_port' /><slave name='timer_0.s1' start='0x821020' end='0x821040' type='altera_avalon_timer.s1' /><slave name='epcq_controller_0.avl_csr' start='0x821040' end='0x821060' type='altera_epcq_controller_mod.avl_csr' /><slave name='i2c_opencores_0.avalon_slave_0' start='0x821060' end='0x821080' type='i2c_opencores.avalon_slave_0' /><slave name='pio_5.s1' start='0x821080' end='0x821090' type='altera_avalon_pio.s1' /><slave name='pio_4.s1' start='0x821090' end='0x8210A0' type='altera_avalon_pio.s1' /><slave name='pio_3.s1' start='0x8210A0' end='0x8210B0' type='altera_avalon_pio.s1' /><slave name='pio_2.s1' start='0x8210B0' end='0x8210C0' type='altera_avalon_pio.s1' /><slave name='pio_1.s1' start='0x8210C0' end='0x8210D0' type='altera_avalon_pio.s1' /><slave name='pio_0.s1' start='0x8210D0' end='0x8210E0' type='altera_avalon_pio.s1' /><slave name='jtag_uart_0.avalon_jtag_slave' start='0x8210E0' end='0x8210E8' type='altera_avalon_jtag_uart.avalon_jtag_slave' /></address-map>]]></parameter>
   <parameter name="data_master_high_performance_paddr_base" value="0" />
   <parameter name="data_master_high_performance_paddr_size" value="0" />
   <parameter name="data_master_paddr_base" value="0" />
@@ -430,14 +438,14 @@
   <parameter name="icache_tagramBlockType" value="Automatic" />
   <parameter name="impl" value="Tiny" />
   <parameter name="instAddrWidth" value="24" />
-  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x810000' end='0x819000' type='altera_avalon_onchip_memory2.s1' /><slave name='nios2_qsys_0.debug_mem_slave' start='0x820800' end='0x821000' type='altera_nios2_gen2.debug_mem_slave' /></address-map>]]></parameter>
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='onchip_memory2_0.s1' start='0x810000' end='0x81A000' type='altera_avalon_onchip_memory2.s1' /><slave name='nios2_qsys_0.debug_mem_slave' start='0x820800' end='0x821000' type='altera_nios2_gen2.debug_mem_slave' /></address-map>]]></parameter>
   <parameter name="instructionMasterHighPerformanceAddrWidth" value="1" />
   <parameter name="instructionMasterHighPerformanceMapParam" value="" />
   <parameter name="instruction_master_high_performance_paddr_base" value="0" />
   <parameter name="instruction_master_high_performance_paddr_size" value="0" />
   <parameter name="instruction_master_paddr_base" value="0" />
   <parameter name="instruction_master_paddr_size" value="0" />
-  <parameter name="internalIrqMaskSystemInfo" value="7" />
+  <parameter name="internalIrqMaskSystemInfo" value="31" />
   <parameter name="io_regionbase" value="0" />
   <parameter name="io_regionsize" value="0" />
   <parameter name="master_addr_map" value="false" />
@@ -578,7 +586,7 @@
   <parameter name="initMemContent" value="true" />
   <parameter name="initializationFileName" value="onchip_mem.hex" />
   <parameter name="instanceID" value="NONE" />
-  <parameter name="memorySize" value="36864" />
+  <parameter name="memorySize" value="40960" />
   <parameter name="readDuringWriteMode" value="DONT_CARE" />
   <parameter name="resetrequest_enabled" value="true" />
   <parameter name="simAllowMRAMContentsFile" value="false" />
@@ -674,22 +682,41 @@
   <parameter name="simDrivenValue" value="0" />
   <parameter name="width" value="8" />
  </module>
+ <module name="spi_0" kind="altera_avalon_spi" version="15.1" enabled="1">
+  <parameter name="avalonSpec" value="2.0" />
+  <parameter name="clockPhase" value="0" />
+  <parameter name="clockPolarity" value="0" />
+  <parameter name="dataWidth" value="8" />
+  <parameter name="disableAvalonFlowControl" value="false" />
+  <parameter name="inputClockRate" value="27000000" />
+  <parameter name="insertDelayBetweenSlaveSelectAndSClk" value="false" />
+  <parameter name="insertSync" value="false" />
+  <parameter name="lsbOrderedFirst" value="false" />
+  <parameter name="masterSPI" value="true" />
+  <parameter name="numberOfSlaves" value="1" />
+  <parameter name="syncRegDepth" value="2" />
+  <parameter name="targetClockRate" value="13500000" />
+  <parameter name="targetSlaveSelectToSClkDelay" value="0.0" />
+ </module>
+ <module name="timer_0" kind="altera_avalon_timer" version="15.1" enabled="1">
+  <parameter name="alwaysRun" value="false" />
+  <parameter name="counterSize" value="32" />
+  <parameter name="fixedPeriod" value="false" />
+  <parameter name="period" value="1" />
+  <parameter name="periodUnits" value="USEC" />
+  <parameter name="resetOutput" value="false" />
+  <parameter name="snapshot" value="true" />
+  <parameter name="systemFrequency" value="27000000" />
+  <parameter name="timeoutPulseOutput" value="false" />
+  <parameter name="watchdogPulse" value="2" />
+ </module>
  <connection
    kind="avalon"
    version="15.1"
    start="nios2_qsys_0.data_master"
    end="jtag_uart_0.avalon_jtag_slave">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x008214a0" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="15.1"
-   start="nios2_qsys_0.data_master"
-   end="Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821000" />
+  <parameter name="baseAddress" value="0x008210e0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -698,7 +725,7 @@
    start="nios2_qsys_0.data_master"
    end="i2c_opencores_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821420" />
+  <parameter name="baseAddress" value="0x00821060" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -707,7 +734,7 @@
    start="nios2_qsys_0.data_master"
    end="epcq_controller_0.avl_csr">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821400" />
+  <parameter name="baseAddress" value="0x00821040" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -743,7 +770,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_0.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821490" />
+  <parameter name="baseAddress" value="0x008210d0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -752,7 +779,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_1.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821480" />
+  <parameter name="baseAddress" value="0x008210c0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -761,7 +788,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_2.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821470" />
+  <parameter name="baseAddress" value="0x008210b0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -770,7 +797,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_3.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821460" />
+  <parameter name="baseAddress" value="0x008210a0" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -779,7 +806,7 @@
    start="nios2_qsys_0.data_master"
    end="pio_4.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821450" />
+  <parameter name="baseAddress" value="0x00821090" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -788,7 +815,25 @@
    start="nios2_qsys_0.data_master"
    end="pio_5.s1">
   <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00821440" />
+  <parameter name="baseAddress" value="0x00821080" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="15.1"
+   start="nios2_qsys_0.data_master"
+   end="timer_0.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00821020" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="15.1"
+   start="nios2_qsys_0.data_master"
+   end="spi_0.spi_control_port">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00821000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -816,12 +861,9 @@
  <connection kind="clock" version="15.1" start="clk_27.clk" end="pio_2.clk" />
  <connection kind="clock" version="15.1" start="clk_27.clk" end="pio_3.clk" />
  <connection kind="clock" version="15.1" start="clk_27.clk" end="pio_4.clk" />
- <connection
-   kind="clock"
-   version="15.1"
-   start="clk_27.clk"
-   end="Altera_UP_SD_Card_Avalon_Interface_0.clk" />
  <connection kind="clock" version="15.1" start="clk_27.clk" end="pio_5.clk" />
+ <connection kind="clock" version="15.1" start="clk_27.clk" end="timer_0.clk" />
+ <connection kind="clock" version="15.1" start="clk_27.clk" end="spi_0.clk" />
  <connection
    kind="clock"
    version="15.1"
@@ -842,21 +884,35 @@
    version="15.1"
    start="nios2_qsys_0.irq"
    end="i2c_opencores_0.interrupt_sender">
-  <parameter name="irqNumber" value="0" />
+  <parameter name="irqNumber" value="3" />
  </connection>
  <connection
    kind="interrupt"
    version="15.1"
    start="nios2_qsys_0.irq"
    end="epcq_controller_0.interrupt_sender">
-  <parameter name="irqNumber" value="1" />
+  <parameter name="irqNumber" value="2" />
  </connection>
  <connection
    kind="interrupt"
    version="15.1"
    start="nios2_qsys_0.irq"
    end="jtag_uart_0.irq">
-  <parameter name="irqNumber" value="2" />
+  <parameter name="irqNumber" value="1" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="15.1"
+   start="nios2_qsys_0.irq"
+   end="timer_0.irq">
+  <parameter name="irqNumber" value="0" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="15.1"
+   start="nios2_qsys_0.irq"
+   end="spi_0.irq">
+  <parameter name="irqNumber" value="4" />
  </connection>
  <connection
    kind="nios_custom_instruction"
@@ -929,17 +985,22 @@
    kind="reset"
    version="15.1"
    start="clk_27.clk_reset"
-   end="Altera_UP_SD_Card_Avalon_Interface_0.reset" />
- <connection
-   kind="reset"
-   version="15.1"
-   start="clk_27.clk_reset"
    end="epcq_controller_0.reset" />
  <connection
    kind="reset"
    version="15.1"
    start="clk_27.clk_reset"
    end="pio_5.reset" />
+ <connection
+   kind="reset"
+   version="15.1"
+   start="clk_27.clk_reset"
+   end="timer_0.reset" />
+ <connection
+   kind="reset"
+   version="15.1"
+   start="clk_27.clk_reset"
+   end="spi_0.reset" />
  <connection
    kind="reset"
    version="15.1"

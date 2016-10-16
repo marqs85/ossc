@@ -28,7 +28,7 @@ alt_up_sd_card_dev *sdcard_dev;
 
 int read_sd_block(alt_u32 offset, alt_u32 size, alt_u8 *dstbuf)
 {
-    int i;
+    /*int i;
     alt_u32 tmp;
 
     if ((offset % SD_BUFFER_SIZE) || (size > 512)) {
@@ -48,13 +48,13 @@ int read_sd_block(alt_u32 offset, alt_u32 size, alt_u8 *dstbuf)
         tmp = IORD_32DIRECT(sdcard_dev->base, i);
         *((alt_u32*)(dstbuf+i)) = tmp;
     }
-
+*/
     return 0;
 }
 
 int check_sdcard(alt_u8 *databuf)
 {
-    sdcard_dev = alt_up_sd_card_open_dev(ALTERA_UP_SD_CARD_AVALON_INTERFACE_0_NAME);
+  /*  sdcard_dev = alt_up_sd_card_open_dev(ALTERA_UP_SD_CARD_AVALON_INTERFACE_0_NAME);
 
     if ((sdcard_dev == NULL) || !alt_up_sd_card_is_Present()) {
         sniprintf(menu_row1, LCD_ROW_LEN+1, "No SD card det.");
@@ -62,5 +62,6 @@ int check_sdcard(alt_u8 *databuf)
         return 1;
     }
 
-    return read_sd_block(0, 512, databuf);
+    return read_sd_block(0, 512, databuf);*/
+    return 0;
 }

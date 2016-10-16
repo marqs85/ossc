@@ -79,6 +79,13 @@
       <File Name="sys_controller/ossc/userdata.h"/>
       <File Name="sys_controller/ossc/userdata.c"/>
     </VirtualDirectory>
+    <VirtualDirectory Name="ulibSD">
+      <File Name="sys_controller/ulibSD/integer.h"/>
+      <File Name="sys_controller/ulibSD/sd_io.c"/>
+      <File Name="sys_controller/ulibSD/sd_io.h"/>
+      <File Name="sys_controller/ulibSD/spi_io.h"/>
+      <File Name="sys_controller/ulibSD/spi_io.c"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Description/>
   <Dependencies/>
