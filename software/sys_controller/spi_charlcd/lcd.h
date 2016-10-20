@@ -26,12 +26,6 @@
 
 #define LCD_ROW_LEN 16
 
-//#define I2C_DEBUG
-#define I2CA_BASE I2C_OPENCORES_0_BASE
-
-#define LCD_CS_N    (1<<0)
-#define LCD_RS      (1<<1)
-
 void lcd_init();
 
 void lcd_write(char *row1, char *row2);

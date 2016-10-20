@@ -22,7 +22,6 @@
 #include "firmware.h"
 #include "sdcard.h"
 #include "flash.h"
-#include "sysconfig.h"
 #include "controls.h"
 #include "tvp7002.h"
 #include "av_controller.h"
@@ -32,6 +31,8 @@
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern SD_DEV sdcard_dev;
+extern alt_u8 sys_ctrl;
 
 static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
 {
@@ -81,9 +82,11 @@ static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_
     alt_u32 crcval=0, i, bytes_to_read;
     int retval;
 
-    for (i=0; i<size; i=i+SD_BUFFER_SIZE) {
-        bytes_to_read = ((size-i < SD_BUFFER_SIZE) ? (size-i) : SD_BUFFER_SIZE);
-        retval = read_sd_block(offset+i, bytes_to_read, tmpbuf);
+    for (i=0; i<size; i=i+SD_BLK_SIZE) {
+        bytes_to_read = ((size-i < SD_BLK_SIZE) ? (size-i) : SD_BLK_SIZE);
+        retval = SD_Read(&sdcard_dev, tmpbuf, (offset+i)/SD_BLK_SIZE, 0, bytes_to_read);
+        //retval = read_sd_block(offset+i, bytes_to_read, tmpbuf);
+
         if (retval != 0)
             return -2;
 
@@ -112,12 +115,13 @@ int fw_update()
 {
     int retval, i;
     int retries = FW_UPDATE_RETRIES;
-    alt_u8 databuf[SD_BUFFER_SIZE];
+    alt_u8 databuf[SD_BLK_SIZE];
     alt_u32 btn_vec;
     alt_u32 bytes_to_rw;
     fw_hdr fw_header;
 
     retval = check_sdcard(databuf);
+    SPI_CS_High();
     if (retval != 0)
         goto failure;
 
@@ -143,7 +147,8 @@ int fw_update()
             break;
         } else if (btn_vec == rc_keymap[RC_BTN2]) {
             retval = 2;
-            return 1;
+            strncpy(menu_row1, "Cancelled", LCD_ROW_LEN+1);
+            goto failure;
         }
 
         usleep(WAITLOOP_SLEEP_US);
@@ -151,7 +156,8 @@ int fw_update()
 
     //disable video output
     tvp_disable_output();
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) | (1<<2)));
+    sys_ctrl |= VIDGEN_OFF;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
     usleep(10000);
 
     strncpy(menu_row1, "Updating FW", LCD_ROW_LEN+1);
@@ -159,11 +165,11 @@ update_init:
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
     lcd_write_menu();
 
-    for (i=0; i<fw_header.data_len; i=i+SD_BUFFER_SIZE) {
-        bytes_to_rw = ((fw_header.data_len-i < SD_BUFFER_SIZE) ? (fw_header.data_len-i) : SD_BUFFER_SIZE);
-        retval = read_sd_block(512+i, bytes_to_rw, databuf);
+    for (i=0; i<fw_header.data_len; i=i+SD_BLK_SIZE) {
+        bytes_to_rw = ((fw_header.data_len-i < SD_BLK_SIZE) ? (fw_header.data_len-i) : SD_BLK_SIZE);
+        retval = SD_Read(&sdcard_dev, databuf, (512+i)/SD_BLK_SIZE, 0, bytes_to_rw);
         if (retval != 0)
-            return -200;
+            goto failure;
 
         retval = write_flash_page(databuf, ((bytes_to_rw < PAGESIZE) ? bytes_to_rw : PAGESIZE), (i/PAGESIZE));
         if (retval != 0)
@@ -183,10 +189,11 @@ update_init:
     if (retval != 0)
         goto failure;
 
+    SPI_CS_High();
     return 0;
 
-
 failure:
+    SPI_CS_High();
     lcd_write_menu();
     usleep(1000000);
 

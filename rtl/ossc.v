@@ -79,8 +79,6 @@ wire VSYNC_out_videogen;
 wire PCLK_out_videogen;
 wire DATA_enable_videogen;
 
-wire [7:0] lcd_ctrl;
-
 reg [3:0] reset_n_ctr;
 reg reset_n_reg = 1'b1;
 
@@ -107,15 +105,16 @@ assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 3'b000)|h_unstable);
 assign LED_G = (ir_code == 0);
 `endif
 
-assign LCD_CS_N = lcd_ctrl[0];
-assign LCD_RS = lcd_ctrl[1];
-assign LCD_BL = sys_ctrl[1];    //reset_n in v1.2 PCB
+assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
+assign LCD_CS_N = sys_ctrl[6];
+assign LCD_RS = sys_ctrl[5];
+assign LCD_BL = sys_ctrl[4];    //reset_n in v1.2 PCB
 
 assign reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 
 `ifdef VIDEOGEN
 wire videogen_sel;
-assign videogen_sel = ~sys_ctrl[2];
+assign videogen_sel = ~sys_ctrl[1];
 assign HDMI_TX_RD = videogen_sel ? R_out_videogen : R_out;
 assign HDMI_TX_GD = videogen_sel ? G_out_videogen : G_out;
 assign HDMI_TX_BD = videogen_sel ? B_out_videogen : B_out;
@@ -147,20 +146,19 @@ end
 assign cpu_reset_n = reset_n_reg;
 
 sys sys_inst(
-    .clk_clk                            (clk27),
-    .reset_reset_n                      (cpu_reset_n),
-    .i2c_opencores_0_export_scl_pad_io  (scl),
-    .i2c_opencores_0_export_sda_pad_io  (sda),
-    .spi_0_external_MISO                (SD_DAT[0]),
-    .spi_0_external_MOSI                (SD_CMD),
-    .spi_0_external_SCLK                (SD_CLK),
-    .spi_0_external_SS_n                (SD_DAT[3]),
-    .pio_0_sys_ctrl_out_export          (sys_ctrl),
-    .pio_1_controls_in_export           ({ir_code_cnt, 5'b00000, HDMI_TX_MODE, btn, ir_code}),
-    .pio_2_horizontal_info_out_export   (h_info),
-    .pio_3_vertical_info_out_export     (v_info),
-    .pio_4_linecount_in_export          ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out}),
-    .pio_5_lcd_ctrl_out_export          (lcd_ctrl)
+    .clk_clk                                (clk27),
+    .reset_reset_n                          (cpu_reset_n),
+    .i2c_opencores_0_export_scl_pad_io      (scl),
+    .i2c_opencores_0_export_sda_pad_io      (sda),
+    .i2c_opencores_0_export_spi_miso_pad_i  (1'b0),
+    .i2c_opencores_1_export_scl_pad_io      (SD_CLK),
+    .i2c_opencores_1_export_sda_pad_io      (SD_CMD),
+    .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
+    .pio_0_sys_ctrl_out_export              (sys_ctrl),
+    .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE, btn, ir_code}),
+    .pio_2_horizontal_info_out_export       (h_info),
+    .pio_3_vertical_info_out_export         (v_info),
+    .pio_4_linecount_in_export              ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out})
 );
 
 scanconverter scanconverter_inst (

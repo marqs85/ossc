@@ -8,6 +8,7 @@
 #ifndef _SPI_IO_H_
 #define _SPI_IO_H_
 
+#include "sysconfig.h"
 #include "integer.h"        /* Type redefinition for portability */
 
 
@@ -19,6 +20,20 @@
     \brief Initialize SPI hardware
  */
 void SPI_Init (void);
+
+/**
+    \brief Read sequence of bytes
+    \param *rd Pointer to array where read bytes are written.
+    \param len Length of the array.
+ */
+void SPI_R (BYTE *rd, int len);
+
+/**
+    \brief Write sequence of bytes
+    \param *wd Pointer to array which holds the bytes.
+    \param len Length of the array.
+ */
+void SPI_W (BYTE *wd, int len);
 
 /**
     \brief Read/Write a single byte.

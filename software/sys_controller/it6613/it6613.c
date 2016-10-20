@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "sysconfig.h"
 #include "system.h"
 #include "i2c_opencores.h"
 #include "it6613.h"

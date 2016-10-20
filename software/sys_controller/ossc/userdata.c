@@ -19,7 +19,6 @@
 
 #include <string.h>
 #include "userdata.h"
-#include "sysconfig.h"
 #include "flash.h"
 #include "firmware.h"
 #include "controls.h"

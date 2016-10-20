@@ -9,15 +9,15 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-
+#define SCL_MIN_CLKDIV 10
 
 
 void I2C_init(alt_u32 base,alt_u32 clk,alt_u32 speed);
 int I2C_start(alt_u32 base, alt_u32 add, alt_u32 read);
 alt_u32 I2C_read(alt_u32 base,alt_u32 last);
 alt_u32 I2C_write(alt_u32 base,alt_u8 data, alt_u32 last);
-alt_u32 SPI_read(alt_u32 base);
-void SPI_write(alt_u32 base,alt_u8 data);
+void SPI_read(alt_u32 base, alt_u8 *rdata, int len);
+void SPI_write(alt_u32 base, alt_u8 *wdata, int len);
 #define I2C_OK (0)
 #define I2C_ACK (0)
 #define I2C_NOACK (1)

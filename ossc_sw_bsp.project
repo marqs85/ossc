@@ -268,6 +268,7 @@
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -279,6 +280,7 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
+        <Target Name="nios2-bsp-editor">nios2-bsp-editor</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>nios2-bsp-generate-files --bsp-dir . --settings settings.bsp</BuildCommand>
@@ -306,6 +308,7 @@
       <Linker Options="-O2" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="" IntermediateDirectory="./Release" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -317,6 +320,7 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
+        <Target Name="nios2-bsp-editor">nios2-bsp-editor</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>nios2-bsp-generate-files --bsp-dir ./ --settings settings.bsp</BuildCommand>

@@ -13,7 +13,8 @@
 #define _INTEGER_H_
 
 #include <stdint.h>
-
+#include <typedef.h>
+#if 0
 /* 16-bit, 32-bit or larger integer */
 typedef int16_t         INT;
 typedef uint16_t        UINT;
@@ -37,8 +38,8 @@ typedef uint32_t        DWORD;
 
 /* Boolean type */
 typedef enum { FALSE = 0, TRUE } BOOLEAN;
+#endif
 typedef enum { LOW = 0, HIGH } THROTTLE;
-
 #endif
 
 // «integer.h» is part of:

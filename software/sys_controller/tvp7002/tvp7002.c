@@ -38,6 +38,9 @@ const ypbpr_to_rgb_csc_t csc_coeffs[] = {
     { "Rec. 709", 0x2000, 0x0000, 0x323E, 0x2000, 0xFA04, 0xF113, 0x2000, 0x3B61, 0x0000 },    // eq. 105
 };
 
+static const alt_u8 Kvco[] = {75, 85, 150, 200};
+static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
+
 extern mode_data_t video_modes[];
 
 static void tvp_set_clamp(video_format fmt)
@@ -95,11 +98,11 @@ inline void tvp_writereg(alt_u32 regaddr, alt_u8 data)
 
 inline void tvp_reset()
 {
-    usleep(10000);
+    /*usleep(10000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x00);
     usleep(10000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x01);
-    usleep(10000);
+    usleep(10000);*/
 }
 
 inline void tvp_disable_output()
@@ -241,7 +244,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
     tvp_writereg(TVP_HPLLCTRL, ((vco_range << 6) | (cp_current << 3)));
 }
 
-void tvp_sel_clk(alt_u8 refclk)
+void tvp_sel_clk(tvp_refclk_t refclk)
 {
     alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0xFA;
 

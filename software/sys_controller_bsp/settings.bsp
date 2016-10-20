@@ -2,9 +2,9 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Oct 16, 2016 12:18:06 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1476609486611</BspGeneratedUnixTimeStamp>
-        <BspGeneratedLocation>/home/markus/Code/ossc/software/sys_controller_bsp</BspGeneratedLocation>
+        <BspGeneratedTimeStamp>Oct 21, 2016 1:18:01 AM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1477001881487</BspGeneratedUnixTimeStamp>
+        <BspGeneratedLocation>./</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>../../sys.sopcinfo</SopcDesignFile>
         <JdiFile>default</JdiFile>
@@ -26,7 +26,7 @@
                 <SettingName>hal.timestamp_timer</SettingName>
                 <Identifier>ALT_TIMESTAMP_CLK</Identifier>
                 <Type>UnquotedString</Type>
-                <Value>none</Value>
+                <Value>timer_0</Value>
                 <DefaultValue>none</DefaultValue>
                 <DestinationFile>system_h_define</DestinationFile>
                 <Description>Slave descriptor of timestamp timer device. This device is used by Altera HAL timestamp drivers for high-resolution time measurement. This setting defines the value of ALT_TIMESTAMP_CLK in system.h.</Description>
@@ -899,7 +899,7 @@
                 <attributes>memory</attributes>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>spi_0</slaveDescriptor>
+                <slaveDescriptor>i2c_opencores_1</slaveDescriptor>
                 <addressRange>0x00821000 - 0x0082101F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
@@ -923,44 +923,38 @@
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_5</slaveDescriptor>
+                <slaveDescriptor>pio_4</slaveDescriptor>
                 <addressRange>0x00821080 - 0x0082108F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_4</slaveDescriptor>
+                <slaveDescriptor>pio_3</slaveDescriptor>
                 <addressRange>0x00821090 - 0x0082109F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_3</slaveDescriptor>
+                <slaveDescriptor>pio_2</slaveDescriptor>
                 <addressRange>0x008210A0 - 0x008210AF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_2</slaveDescriptor>
+                <slaveDescriptor>pio_1</slaveDescriptor>
                 <addressRange>0x008210B0 - 0x008210BF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_1</slaveDescriptor>
+                <slaveDescriptor>pio_0</slaveDescriptor>
                 <addressRange>0x008210C0 - 0x008210CF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>pio_0</slaveDescriptor>
-                <addressRange>0x008210D0 - 0x008210DF</addressRange>
-                <addressSpan>16</addressSpan>
-                <attributes/>
-        </MemoryMap>
-        <MemoryMap>
                 <slaveDescriptor>jtag_uart_0</slaveDescriptor>
-                <addressRange>0x008210E0 - 0x008210E7</addressRange>
+                <addressRange>0x008210D0 - 0x008210D7</addressRange>
                 <addressSpan>8</addressSpan>
                 <attributes>printable</attributes>
         </MemoryMap>

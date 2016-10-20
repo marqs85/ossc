@@ -20,7 +20,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "alt_types.h"
-#include "sysconfig.h"
 #include "controls.h"
 #include "menu.h"
 #include "av_controller.h"
@@ -37,6 +36,7 @@ extern avmode_t cm;
 extern avconfig_t tc;
 extern avinput_t target_mode;
 extern alt_u8 menu_active;
+extern alt_u8 sys_ctrl;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -71,7 +71,6 @@ void setup_rc()
                         confirm = 0;
                     }
                 }
-
             }
 
             remote_code_prev = remote_code;
@@ -128,7 +127,8 @@ void parse_control()
             printf("Lines: %u M: %u\n", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff, cm.macrovis);
             break;
         case RC_LCDBL:
-            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) ^ (1<<1)));
+            sys_ctrl ^= LCD_BL;
+            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
             break;
         case RC_SL_MODE: tc.sl_mode = (tc.sl_mode < SL_MODE_MAX) ? (tc.sl_mode + 1) : 0; break;
         case RC_SL_TYPE: tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0; break;

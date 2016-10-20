@@ -56,6 +56,8 @@ typedef struct _SD_DEV {
 
 #else // For use with uControllers
 
+#include "sysconfig.h"
+#include "stddef.h"
 #include "spi_io.h" /* Provide the low-level functions */
 
 /* Definitions of SD commands */

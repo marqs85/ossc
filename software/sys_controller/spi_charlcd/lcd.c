@@ -23,6 +23,7 @@
 #include "alt_types.h"
 #include "altera_avalon_pio_regs.h"
 #include "i2c_opencores.h"
+#include "av_controller.h"
 
 #define LCD_CMD     0x00
 #define LCD_DATA    0x40
@@ -30,50 +31,46 @@
 #define WRDELAY     20
 #define CLEARDELAY  800
 
+extern alt_u8 sys_ctrl;
+
+static void lcd_cmd(alt_u8 cmd, alt_u16 postdelay) {
+    SPI_write(I2CA_BASE, &cmd, 1);
+    usleep(postdelay);
+}
+
 void lcd_init()
 {
-    alt_u8 lcd_ctrl = 0x00;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl &= ~(LCD_CS_N|LCD_RS);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
     usleep(WRDELAY);
 
-    SPI_write(I2CA_BASE, 0x38);    // function set
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x39);    // function set, select extended table (IS=1)
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x14);    // osc freq
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x71);    // contrast set
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x5E);    // power/icon/cont
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x6D);    // follower control
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x0C);    // display on
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x01);    // clear display
-    usleep(CLEARDELAY);
-    SPI_write(I2CA_BASE, 0x06);    // entry mode set
-    usleep(WRDELAY);
-    SPI_write(I2CA_BASE, 0x02);    // return home
-    usleep(CLEARDELAY);
+    lcd_cmd(0x38,WRDELAY);    // function set
+    lcd_cmd(0x39,WRDELAY);    // function set, select extended table (IS=1)
+    lcd_cmd(0x14,WRDELAY);    // osc freq
+    lcd_cmd(0x71,WRDELAY);    // contrast set
+    lcd_cmd(0x5E,WRDELAY);    // power/icon/cont
+    lcd_cmd(0x6D,WRDELAY);    // follower control
+    lcd_cmd(0x0C,WRDELAY);    // display on
+    lcd_cmd(0x01,CLEARDELAY); // clear display
+    lcd_cmd(0x06,WRDELAY);    // entry mode set
+    lcd_cmd(0x02,CLEARDELAY); // return home
 
-    lcd_ctrl |= LCD_CS_N;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl |= LCD_CS_N;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }
 
 void lcd_write(char *row1, char *row2)
 {
     alt_u8 i, rowlen;
-    alt_u8 lcd_ctrl = 0x00;
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl &= ~(LCD_CS_N|LCD_RS);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
-    SPI_write(I2CA_BASE, 0x01);    // clear display
-    usleep(CLEARDELAY);
+    lcd_cmd(0x01,CLEARDELAY); // clear display
 
     // Set RS to enter data write mode
-    lcd_ctrl |= LCD_RS;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl |= LCD_RS;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     //ensure no empty row
     rowlen = strnlen(row1, LCD_ROW_LEN);
@@ -82,19 +79,16 @@ void lcd_write(char *row1, char *row2)
         rowlen++;
     }
 
-    for (i=0; i<rowlen; i++) {
-        SPI_write(I2CA_BASE, row1[i]);
-        usleep(WRDELAY);
-    }
+    for (i=0; i<rowlen; i++)
+        lcd_cmd(row1[i],WRDELAY);
 
     // second row
-    lcd_ctrl &= ~LCD_RS;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
-    SPI_write(I2CA_BASE, (1<<7)|0x40);
-    usleep(WRDELAY);
+    sys_ctrl &= ~LCD_RS;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+    lcd_cmd((1<<7)|0x40,WRDELAY);
 
-    lcd_ctrl |= LCD_RS;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl |= LCD_RS;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     //ensure no empty row
     rowlen = strnlen(row2, LCD_ROW_LEN);
@@ -103,11 +97,9 @@ void lcd_write(char *row1, char *row2)
         rowlen++;
     }
 
-    for (i=0; i<rowlen; i++) {
-        SPI_write(I2CA_BASE, row2[i]);
-        usleep(WRDELAY);
-    }
+    for (i=0; i<rowlen; i++)
+        lcd_cmd(row2[i],WRDELAY);
 
-    lcd_ctrl |= LCD_CS_N;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, lcd_ctrl);
+    sys_ctrl |= LCD_CS_N;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }

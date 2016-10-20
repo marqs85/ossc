@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: ../../sys.sopcinfo
  *
- * Generated: Sun Oct 16 12:18:06 EEST 2016
+ * Generated: Thu Oct 20 01:24:13 EEST 2016
  */
 
 /*
@@ -60,7 +60,6 @@
 
 #include "altera_nios2_gen2_irq.h"
 #include "altera_avalon_jtag_uart.h"
-#include "altera_avalon_spi.h"
 #include "altera_avalon_timer.h"
 #include "altera_epcq_controller_mod.h"
 #include "i2c_opencores.h"
@@ -71,10 +70,10 @@
 
 ALTERA_NIOS2_GEN2_IRQ_INSTANCE ( NIOS2_QSYS_0, nios2_qsys_0);
 ALTERA_AVALON_JTAG_UART_INSTANCE ( JTAG_UART_0, jtag_uart_0);
-ALTERA_AVALON_SPI_INSTANCE ( SPI_0, spi_0);
 ALTERA_AVALON_TIMER_INSTANCE ( TIMER_0, timer_0);
 ALTERA_EPCQ_CONTROLLER_MOD_AVL_MEM_AVL_CSR_INSTANCE ( EPCQ_CONTROLLER_0, EPCQ_CONTROLLER_0_AVL_MEM, EPCQ_CONTROLLER_0_AVL_CSR, epcq_controller_0);
 I2C_OPENCORES_INSTANCE ( I2C_OPENCORES_0, i2c_opencores_0);
+I2C_OPENCORES_INSTANCE ( I2C_OPENCORES_1, i2c_opencores_1);
 
 /*
  * Initialize the interrupt controller devices
@@ -99,7 +98,7 @@ void alt_sys_init( void )
 {
     ALTERA_AVALON_TIMER_INIT ( TIMER_0, timer_0);
     ALTERA_AVALON_JTAG_UART_INIT ( JTAG_UART_0, jtag_uart_0);
-    ALTERA_AVALON_SPI_INIT ( SPI_0, spi_0);
     ALTERA_EPCQ_CONTROLLER_MOD_INIT ( EPCQ_CONTROLLER_0, epcq_controller_0);
     I2C_OPENCORES_INIT ( I2C_OPENCORES_0, i2c_opencores_0);
+    I2C_OPENCORES_INIT ( I2C_OPENCORES_1, i2c_opencores_1);
 }

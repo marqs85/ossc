@@ -51,9 +51,6 @@ typedef enum {
 
 #define THS_LPF_BYPASS 0x03
 
-//#define I2C_DEBUG
-#define I2CA_BASE I2C_OPENCORES_0_BASE
-
 int ths_init();
 
 void ths_set_lpf(alt_u8 val);

@@ -21,6 +21,7 @@
 #define FIRMWARE_H_
 
 #include "alt_types.h"
+#include "sysconfig.h"
 
 #define FW_VER_MAJOR            0
 #define FW_VER_MINOR            74

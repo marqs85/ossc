@@ -23,45 +23,19 @@
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
-alt_up_sd_card_dev *sdcard_dev;
-
-
-int read_sd_block(alt_u32 offset, alt_u32 size, alt_u8 *dstbuf)
-{
-    /*int i;
-    alt_u32 tmp;
-
-    if ((offset % SD_BUFFER_SIZE) || (size > 512)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid read cmd");
-        menu_row2[0] = '\0';
-        return -1;
-    }
-
-    if (!Read_Sector_Data((offset/SD_BUFFER_SIZE), 0)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "SD read failure");
-        menu_row2[0] = '\0';
-        return -2;
-    }
-
-    // Copy buffer to SW
-    for (i=0; i<size; i=i+4) {
-        tmp = IORD_32DIRECT(sdcard_dev->base, i);
-        *((alt_u32*)(dstbuf+i)) = tmp;
-    }
-*/
-    return 0;
-}
+SD_DEV sdcard_dev;
 
 int check_sdcard(alt_u8 *databuf)
 {
-  /*  sdcard_dev = alt_up_sd_card_open_dev(ALTERA_UP_SD_CARD_AVALON_INTERFACE_0_NAME);
+    SDRESULTS res;
 
-    if ((sdcard_dev == NULL) || !alt_up_sd_card_is_Present()) {
+    res = SD_Init(&sdcard_dev);
+    printf("SD det status: %u\n", res);
+    if (res) {
         sniprintf(menu_row1, LCD_ROW_LEN+1, "No SD card det.");
         menu_row2[0] = '\0';
         return 1;
     }
 
-    return read_sd_block(0, 512, databuf);*/
-    return 0;
+    return SD_Read(&sdcard_dev, databuf, 0, 0, 512);
 }

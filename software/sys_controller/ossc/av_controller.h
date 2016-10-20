@@ -21,8 +21,17 @@
 #define AV_CONTROLLER_H_
 
 #include "avconfig.h"
+#include "sysconfig.h"
 
 #define HDMITX_MODE_MASK        0x00040000
+
+//sys_ctrl bits
+#define SD_SPI_SS_N (1<<7)
+#define LCD_CS_N    (1<<6)
+#define LCD_RS      (1<<5)
+#define LCD_BL      (1<<4)
+#define VIDGEN_OFF  (1<<1)
+#define AV_RESET_N  (1<<0)
 
 static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr" };
 

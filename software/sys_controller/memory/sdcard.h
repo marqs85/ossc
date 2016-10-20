@@ -22,12 +22,7 @@
 
 #include "alt_types.h"
 #include "sysconfig.h"
-#include "Altera_UP_SD_Card_Avalon_Interface_mod.h"
-
-// SD controller uses 512-byte chunks
-#define SD_BUFFER_SIZE 512
-
-int read_sd_block(alt_u32 offset, alt_u32 size, alt_u8 *dstbuf);
+#include "sd_io.h"
 
 int check_sdcard(alt_u8 *databuf);
 

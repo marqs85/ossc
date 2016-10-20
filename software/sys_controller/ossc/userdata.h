@@ -21,6 +21,7 @@
 #define USERDATA_H_
 
 #include "alt_types.h"
+#include "sysconfig.h"
 
 #define USERDATA_HDR_SIZE 11
 typedef struct {

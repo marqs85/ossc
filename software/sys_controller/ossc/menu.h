@@ -62,6 +62,7 @@ typedef struct {
 typedef struct {
     func_call f;
     char *text_success;
+    char *text_failure;
 } opt_func_call;
 
 typedef struct menustruct menu_t;

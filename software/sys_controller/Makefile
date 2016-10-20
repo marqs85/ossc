@@ -160,6 +160,8 @@ C_SRCS += ossc/controls.c
 C_SRCS += ossc/firmware.c
 C_SRCS += ossc/menu.c
 C_SRCS += ossc/userdata.c
+C_SRCS += ulibSD/sd_io.c
+C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
 ASM_SRCS :=
 
@@ -202,6 +204,7 @@ APP_INCLUDE_DIRS += tvp7002
 APP_INCLUDE_DIRS += ths7353
 APP_INCLUDE_DIRS += spi_charlcd
 APP_INCLUDE_DIRS += memory
+APP_INCLUDE_DIRS += ulibSD
 APP_INCLUDE_DIRS += ossc
 APP_LIBRARY_DIRS :=
 APP_LIBRARY_NAMES :=

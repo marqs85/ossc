@@ -50,8 +50,8 @@ static const char *sl_id_desc[] = { "Top", "Bottom" };
 
 static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg", (v*1125)/100); }
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
-static void intclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(clkrate[REFCLK_INTCLK]/1000))/1000), (unsigned)((((1000000U*v)/(clkrate[REFCLK_INTCLK]/1000))%1000)/10)); }
-static void extclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(clkrate[REFCLK_EXT27]/1000))/1000), (unsigned)((((1000000U*v)/(clkrate[REFCLK_EXT27]/1000))%1000)/10)); }
+static void intclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(TVP_INTCLK_HZ/1000))/1000), (unsigned)((((1000000U*v)/(TVP_INTCLK_HZ/1000))%1000)/10)); }
+static void extclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(TVP_EXTCLK_HZ/1000))/1000), (unsigned)((((1000000U*v)/(TVP_EXTCLK_HZ/1000))%1000)/10)); }
 static void sl_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((v+1)*625)/100); }
 static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u lines", v); }
 static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u pixels", v); }
@@ -118,9 +118,9 @@ MENU(menu_main, P99_PROTECT({ \
     { "Sync opt.      >",   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
     { "Output opt.    >",   OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
     { "Post-proc.     >",   OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
-    { "<Fw. update    >",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - pls restart" } } },
-    { "<Reset settings>",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "Reset done" } } },
-    { "<Save settings >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "Saved" } } },
+    { "<Fw. update    >",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - pls restart", "failed" } } },
+    { "<Reset settings>",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "Reset done", "" } } },
+    { "<Save settings >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "Saved", "failed" } } },
 }))
 
 // Max 3 levels currently
@@ -237,9 +237,9 @@ void display_menu(alt_u8 forcedisp)
             break;
         case OPT_FUNC_CALL:
             if (code == OPT_SELECT)
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : "failed");
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : navi[navlvl].m->items[navi[navlvl].mp].fun.text_failure);
             else
-                 menu_row2[0] = 0;
+                menu_row2[0] = 0;
             break;
         default:
             break;

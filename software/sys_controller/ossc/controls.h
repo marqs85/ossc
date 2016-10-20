@@ -20,6 +20,8 @@
 #ifndef CONTROLS_H_
 #define CONTROLS_H_
 
+#include "sysconfig.h"
+
 #define RC_MASK             0x0000ffff
 #define PB_MASK             0x00030000
 #define PB0_BIT             0x00010000

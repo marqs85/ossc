@@ -32,13 +32,13 @@
 #include "sdcard.h"
 #include "menu.h"
 #include "avconfig.h"
-#include "sysconfig.h"
 #include "firmware.h"
 #include "userdata.h"
 #include "it6613.h"
 #include "it6613_sys.h"
 #include "HDMI_TX.h"
 #include "hdmitx.h"
+#include "sd_io.h"
 
 #define STABLE_THOLD            1
 #define MIN_LINES_PROGRESSIVE   200
@@ -46,6 +46,8 @@
 #define SYNC_LOCK_THOLD         3
 #define SYNC_LOSS_THOLD         -5
 #define STATUS_TIMEOUT          10000
+
+alt_u8 sys_ctrl;
 
 // Current mode
 avmode_t cm;
@@ -101,7 +103,7 @@ inline void TX_enable(tx_mode_t mode)
 void set_lpf(alt_u8 lpf)
 {
     alt_u32 pclk;
-    pclk = (clkrate[REFCLK_EXT27]/cm.clkcnt)*video_modes[cm.id].h_total;
+    pclk = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total;
     printf("PCLK_in: %luHz\n", pclk);
 
     //Auto
@@ -353,8 +355,8 @@ void program_mode()
     stable_frames = STABLE_THOLD;
 
     if ((cm.clkcnt != 0) && (cm.totlines != 0)) { //prevent div by 0
-        h_hz = clkrate[REFCLK_EXT27]/cm.clkcnt;
-        v_hz_x100 = cm.progressive ? ((100*clkrate[REFCLK_EXT27])/cm.totlines)/cm.clkcnt : (2*((100*clkrate[REFCLK_EXT27])/cm.totlines))/cm.clkcnt;
+        h_hz = TVP_EXTCLK_HZ/cm.clkcnt;
+        v_hz_x100 = cm.progressive ? ((100*TVP_EXTCLK_HZ)/cm.totlines)/cm.clkcnt : (2*((100*TVP_EXTCLK_HZ)/cm.totlines))/cm.clkcnt;
     } else {
         h_hz = 15700;
         v_hz_x100 = 6000;
@@ -440,15 +442,16 @@ int init_hw()
 {
     alt_u32 chiprev;
 
-    // Reset error vector and scan converter
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x03);
+    // Reset hardware
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x00);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, 0x00000000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, 0x00000000);
     usleep(10000);
 
     // unreset hw
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x03);
+    sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     //wait >500ms for SD card interface to be stable
     //over 200ms and LCD may be buggy?
@@ -456,6 +459,7 @@ int init_hw()
 
     // IT6613 officially supports only 100kHz, but 400kHz seems to work
     I2C_init(I2CA_BASE,ALT_CPU_FREQ,400000);
+    //I2C_init(I2C_OPENCORES_1_BASE,ALT_CPU_FREQ,400000);
 
     /* Initialize the character display */
     lcd_init();
@@ -657,7 +661,8 @@ int main()
             case ACTIVITY_CHANGE:
                 if (cm.sync_active) {
                     printf("Sync up\n");
-                    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, (IORD_ALTERA_AVALON_PIO_DATA(PIO_0_BASE) | (1<<2)));  //disable videogen
+                    sys_ctrl |= VIDGEN_OFF;
+                    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
                     enable_outputs();
                 } else {
                     printf("Sync lost\n");

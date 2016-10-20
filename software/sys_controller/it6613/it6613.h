@@ -1,9 +1,7 @@
 #ifndef IT6613_H_
 #define IT6613_H_
 
-//#define I2C_DEBUG
-//#define I2CA_HDMI_BASE I2C_OPENCORES_1_BASE
-#define I2CA_BASE I2C_OPENCORES_0_BASE
+#include "sysconfig.h"
 
 #define IT6613_VENDORID		0xCA
 #define IT6613_DEVICEID		0x13

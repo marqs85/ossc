@@ -59,7 +59,13 @@ add_fileset_file timescale.v VERILOG PATH timescale.v
 # 
 # parameters
 # 
-
+add_parameter drive_scl_high INTEGER 1
+set_parameter_property drive_scl_high DEFAULT_VALUE 0
+set_parameter_property drive_scl_high DISPLAY_NAME "Drive SCL high instead of tristate"
+set_parameter_property drive_scl_high DISPLAY_HINT boolean
+set_parameter_property drive_scl_high TYPE INTEGER
+set_parameter_property drive_scl_high UNITS None
+set_parameter_property drive_scl_high HDL_PARAMETER true
 
 # 
 # display items
@@ -109,6 +115,7 @@ set_interface_property export SVD_ADDRESS_GROUP ""
 
 add_interface_port export scl_pad_io export Bidir 1
 add_interface_port export sda_pad_io export Bidir 1
+add_interface_port export spi_miso_pad_i export Input 1
 
 
 # 
