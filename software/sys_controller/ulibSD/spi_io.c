@@ -54,9 +54,13 @@ inline void SPI_Freq_Low (void) {
     I2C_init(SD_SPI_BASE,ALT_CPU_FREQ,400000);
 }
 
-void SPI_Timer_On (WORD ms) {
-    sd_timer_ts = ms*(ALT_CPU_FREQ/1000);
-    alt_timestamp_start();
+int SPI_Timer_On (WORD ms) {
+    if (!sd_timer_ts) {
+        sd_timer_ts = ms*(ALT_CPU_FREQ/1000);
+        alt_timestamp_start();
+        return 0;
+    }
+    return 1;
 }
 
 inline BOOL SPI_Timer_Status (void) {
@@ -64,5 +68,6 @@ inline BOOL SPI_Timer_Status (void) {
 }
 
 inline void SPI_Timer_Off (void) {
+    sd_timer_ts = 0;
     return;
 }

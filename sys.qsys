@@ -323,14 +323,14 @@
    kind="i2c_opencores"
    version="13.0"
    enabled="1">
-  <parameter name="drive_scl_high" value="0" />
+  <parameter name="always_drive_io" value="0" />
  </module>
  <module
    name="i2c_opencores_1"
    kind="i2c_opencores"
    version="13.0"
    enabled="1">
-  <parameter name="drive_scl_high" value="1" />
+  <parameter name="always_drive_io" value="1" />
  </module>
  <module
    name="jtag_uart_0"

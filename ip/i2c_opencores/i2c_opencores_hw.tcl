@@ -59,13 +59,13 @@ add_fileset_file timescale.v VERILOG PATH timescale.v
 # 
 # parameters
 # 
-add_parameter drive_scl_high INTEGER 1
-set_parameter_property drive_scl_high DEFAULT_VALUE 0
-set_parameter_property drive_scl_high DISPLAY_NAME "Drive SCL high instead of tristate"
-set_parameter_property drive_scl_high DISPLAY_HINT boolean
-set_parameter_property drive_scl_high TYPE INTEGER
-set_parameter_property drive_scl_high UNITS None
-set_parameter_property drive_scl_high HDL_PARAMETER true
+add_parameter always_drive_io INTEGER 1
+set_parameter_property always_drive_io DEFAULT_VALUE 0
+set_parameter_property always_drive_io DISPLAY_NAME "Always drive IO lines (no tristate)"
+set_parameter_property always_drive_io DISPLAY_HINT boolean
+set_parameter_property always_drive_io TYPE INTEGER
+set_parameter_property always_drive_io UNITS None
+set_parameter_property always_drive_io HDL_PARAMETER true
 
 # 
 # display items

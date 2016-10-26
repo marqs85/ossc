@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 15.1 185 (Future versions may contain additional information.) -->
- <!-- 2016.10.21.01:04:02 -->
+ <!-- 2016.10.27.00:58:01 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1477001042</value>
+  <value>1477519081</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -1613,7 +1613,7 @@ parameters are a RESULT of the module parameters. -->
    path="i2c_opencores_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
-  <parameter name="drive_scl_high">
+  <parameter name="always_drive_io">
    <type>int</type>
    <value>0</value>
    <derived>false</derived>
@@ -2240,7 +2240,7 @@ parameters are a RESULT of the module parameters. -->
    path="i2c_opencores_1">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
-  <parameter name="drive_scl_high">
+  <parameter name="always_drive_io">
    <type>int</type>
    <value>1</value>
    <derived>false</derived>

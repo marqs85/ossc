@@ -71,7 +71,7 @@ void SPI_Freq_Low (void);
     \brief Start a non-blocking timer.
     \param ms Milliseconds.
  */
-void SPI_Timer_On (WORD ms);
+int SPI_Timer_On (WORD ms);
 
 /**
     \brief Check the status of non-blocking timer.

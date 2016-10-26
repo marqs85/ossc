@@ -111,6 +111,10 @@ BYTE __SD_Send_Cmd(BYTE cmd, DWORD arg)
 {
     BYTE wiredata[10];
     BYTE crc, res;
+    int timer_set;
+
+    //printf("Sending SD CMD 0x%x with arg 0x%x\n", cmd, arg);
+
     // ACMD«n» is the command sequense of CMD55-CMD«n»
     if(cmd & 0x80) {
         cmd &= 0x7F;
@@ -119,8 +123,9 @@ BYTE __SD_Send_Cmd(BYTE cmd, DWORD arg)
     }
 
     // Select the card
+    __SD_Deassert();
+    SPI_R(NULL, 4);
     __SD_Assert();
-
 
     // Send complete command set
     wiredata[0] = cmd;                  // Start and command index
@@ -139,12 +144,14 @@ BYTE __SD_Send_Cmd(BYTE cmd, DWORD arg)
 
     // Receive command response
     // Wait for a valid response in timeout of 5 milliseconds
-    SPI_Timer_On(5);
+    timer_set = SPI_Timer_On(5);
     do {
         SPI_R(&res, 1);
     } while((res & 0x80)&&(SPI_Timer_Status()==TRUE));
-    SPI_Timer_Off();
+    if (timer_set == 0)
+        SPI_Timer_Off();
     // Return with the response value
+    //printf("CMD_res: %u\n", res);
     return(res);
 }
 
@@ -192,14 +199,17 @@ DWORD __SD_Sectors (SD_DEV *dev)
     WORD C_SIZE = 0;
     BYTE C_SIZE_MULT = 0;
     BYTE READ_BL_LEN = 0;
+    int timer_set;
+
     if(__SD_Send_Cmd(CMD9, 0)==0) 
     {
         // Wait for response
-        SPI_Timer_On(5);  // Wait for data packet (timeout of 5ms)
+        timer_set = SPI_Timer_On(5);  // Wait for data packet (timeout of 5ms)
         do {
             SPI_R(&tkn, 1);
         } while((tkn==0xFF)&&(SPI_Timer_Status()==TRUE));
-        SPI_Timer_Off();
+        if (timer_set == 0)
+            SPI_Timer_Off();
 
         if(tkn!=0xFE)
             return 0;
@@ -240,7 +250,6 @@ DWORD __SD_Sectors (SD_DEV *dev)
         //ss *= __SD_Power_Of_Two(C_SIZE_MULT + 2 + READ_BL_LEN - 9);
         ss *= 1 << (C_SIZE_MULT + 2 + READ_BL_LEN - 9);
         //ss /= SD_BLK_SIZE;
-        printf("ss: %u\n", ss);
         return (ss);
     } else return (0); // Error
 }
@@ -283,9 +292,9 @@ SDRESULTS SD_Init(SD_DEV *dev)
         //for(idx = 0; idx != 10; idx++) SPI_RW(0xFF);
         SPI_W(initdata, sizeof(initdata));
 
-        /*SPI_Timer_On(500);
+        SPI_Timer_On(500);
         while(SPI_Timer_Status()==TRUE);
-        SPI_Timer_Off();*/
+        SPI_Timer_Off();
 
         dev->mount = FALSE;
         SPI_Timer_On(500);
@@ -303,7 +312,6 @@ SDRESULTS SD_Init(SD_DEV *dev)
                 // Wait for leaving idle state (ACMD41 with HCS bit)...
                 SPI_Timer_On(1000);
                 while ((SPI_Timer_Status()==TRUE)&&(__SD_Send_Cmd(ACMD41, 1UL << 30)));
-                SPI_Timer_Off();
                 // CCS in the OCR?
                 if ((SPI_Timer_Status()==TRUE)&&(__SD_Send_Cmd(CMD58, 0) == 0))
                 {
@@ -311,6 +319,7 @@ SDRESULTS SD_Init(SD_DEV *dev)
                     // SD version 2?
                     ct = (ocr[0] & 0x40) ? SDCT_SD2 | SDCT_BLOCK : SDCT_SD2;
                 }
+                SPI_Timer_Off();
             }
         } else {
             // SD version 1 or MMC?
@@ -327,8 +336,9 @@ SDRESULTS SD_Init(SD_DEV *dev)
             // Wait for leaving idle state
             SPI_Timer_On(250);
             while((SPI_Timer_Status()==TRUE)&&(__SD_Send_Cmd(cmd, 0)));
-            SPI_Timer_Off();
+
             if(SPI_Timer_Status()==FALSE) ct = 0;
+            SPI_Timer_Off();
             if(__SD_Send_Cmd(CMD59, 0))   ct = 0;   // Deactivate CRC check (default)
             if(__SD_Send_Cmd(CMD16, 512)) ct = 0;   // Set R/W block length to 512 bytes
         }
@@ -337,7 +347,7 @@ SDRESULTS SD_Init(SD_DEV *dev)
         dev->cardtype = ct;
         dev->mount = TRUE;
         dev->last_sector = __SD_Sectors(dev) - 1;
-        printf("lastsec %u\n", dev->last_sector);
+        printf("lastsec %lu\n", dev->last_sector);
 #ifdef SD_IO_DBG_COUNT
         dev->debug.read = 0;
         dev->debug.write = 0;

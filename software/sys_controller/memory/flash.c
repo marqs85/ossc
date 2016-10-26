@@ -36,7 +36,7 @@ int check_flash()
     if ((epcq_controller_dev == NULL) || !(epcq_controller_dev->is_epcs && (epcq_controller_dev->page_size == PAGESIZE)))
         return -1;
 
-    printf("Flash size in bytes: %d\nSector size: %d (%d pages)\nPage size: %d\n",
+    printf("Flash size in bytes: %lu\nSector size: %lu (%lu pages)\nPage size: %lu\n",
             epcq_controller_dev->size_in_bytes, epcq_controller_dev->sector_size, epcq_controller_dev->sector_size/epcq_controller_dev->page_size, epcq_controller_dev->page_size);
 
     return 0;
