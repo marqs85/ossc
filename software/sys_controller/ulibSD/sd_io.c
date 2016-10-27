@@ -292,14 +292,16 @@ SDRESULTS SD_Init(SD_DEV *dev)
         //for(idx = 0; idx != 10; idx++) SPI_RW(0xFF);
         SPI_W(initdata, sizeof(initdata));
 
-        SPI_Timer_On(500);
+        /*SPI_Timer_On(500);
         while(SPI_Timer_Status()==TRUE);
-        SPI_Timer_Off();
+        SPI_Timer_Off();*/
 
         dev->mount = FALSE;
-        SPI_Timer_On(500);
+        /*SPI_Timer_On(500);
         while ((__SD_Send_Cmd(CMD0, 0) != 1)&&(SPI_Timer_Status()==TRUE));
-        SPI_Timer_Off();
+        SPI_Timer_Off();*/
+        if (__SD_Send_Cmd(CMD0, 0) != 1)
+            continue;
         // Idle state
 
         // SD version 2?
