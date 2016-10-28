@@ -37,90 +37,90 @@ extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 
 alt_u8 menu_active;
 
-static const char *off_on_desc[] = { "オフ", "オン" };
-static const char *video_lpf_desc[] = { "自動", "オフ", "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
+static const char *off_on_desc[] = { "ｵﾌ", "ｵﾝ" };
+static const char *video_lpf_desc[] = { "ｼﾞﾄﾞｳ", "ｵﾌ", "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
 static const char *ypbpr_cs_desc[] = { "Rec. 601", "Rec. 709" };
-static const char *s480p_mode_desc[] = { "自動", "DTV 480p", "VESA 640x480@60" };
-static const char *sync_lpf_desc[] = { "オフ", "33MHz (最小)", "10MHz (中位)", "2.5MHz (最大)" };
-static const char *l3_mode_desc[] = { "汎用 16:9", "汎用 4:3", "320x240 最適.", "256x240 最適." };
+static const char *s480p_mode_desc[] = { "ｼﾞﾄﾞｳ", "DTV 480p", "VESA 640x480@60" };
+static const char *sync_lpf_desc[] = { "ｵﾌ", "33MHz (ｻｲｼｮｳ)", "10MHz (ﾁｭｳｲ)", "2.5MHz (ｻｲﾀﾞｲ)" };
+static const char *l3_mode_desc[] = { "ﾊﾝﾖｳ 16:9", "ﾊﾝﾖｳ 4:3", "320x240 ｻｲﾃｷ.", "256x240 ｻｲﾃｷ." };
 static const char *tx_mode_desc[] = { "HDMI", "DVI" };
-static const char *sl_mode_desc[] = { "オフ", "自動", "手動" };
-static const char *sl_type_desc[] = { "水平", "垂直", "交互" };
-static const char *sl_id_desc[] = { "上", "下" };
+static const char *sl_mode_desc[] = { "ｵﾌ", "ｼﾞﾄﾞｳ", "ｼｭﾄﾞｳ" };
+static const char *sl_type_desc[] = { "ｽｲﾍｲ", "ｽｲﾁｮｸ", "ｺｳｺﾞ" };
+static const char *sl_id_desc[] = { "ｳｴ", "ｼﾀ" };
 
-static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d 度", (v*1125)/100); }
+static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d ﾄﾞ", (v*1125)/100); }
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
 static void intclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(clkrate[REFCLK_INTCLK]/1000))/1000), (unsigned)((((1000000U*v)/(clkrate[REFCLK_INTCLK]/1000))%1000)/10)); }
 static void extclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(clkrate[REFCLK_EXT27]/1000))/1000), (unsigned)((((1000000U*v)/(clkrate[REFCLK_EXT27]/1000))%1000)/10)); }
 static void sl_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((v+1)*625)/100); }
-static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u ライン", v); }
-static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u ドット", v); }
+static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u ﾗｲﾝ", v); }
+static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u ﾄﾞｯﾄ, v); }
 static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "    %u", v); }
 
 MENU(menu_advtiming, P99_PROTECT({ \
-    { "水平サンプルレート",      OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
-    { "水平ライン同期信号",         OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_synclen,    H_SYNCLEN_MIN, H_SYNCLEN_MAX, vm_tweak } } },
-    { "水平アクティブ",          OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_MAX, vm_tweak } } },
-    { "垂直アクティブ",          OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_active,     V_ACTIVE_MIN,  V_ACTIVE_MAX, vm_tweak } } },
-    { "水平バックポーチ",       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_bporch,     H_BPORCH_MIN,  H_BPORCH_MAX, vm_tweak } } },
-    { "垂直バックポーチ",       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_bporch,     V_BPORCH_MIN,  V_BPORCH_MAX, vm_tweak } } },
+    { "ｽｲﾍｲｻﾝﾌﾟﾙﾚﾄ",      OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
+    { "ｽｲﾍｲﾗｲﾝﾄﾞｳｷｼﾝｺﾞ",         OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_synclen,    H_SYNCLEN_MIN, H_SYNCLEN_MAX, vm_tweak } } },
+    { "ｽｲﾍｲｱｸﾃｨﾌﾞ",          OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_MAX, vm_tweak } } },
+    { "ｽｲﾁｮｸｱｸﾃｨﾌﾞ",          OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_active,     V_ACTIVE_MIN,  V_ACTIVE_MAX, vm_tweak } } },
+    { "ｽｲﾍｲﾊﾞｯｸﾎﾟｰﾁ",       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_bporch,     H_BPORCH_MIN,  H_BPORCH_MAX, vm_tweak } } },
+    { "ｽｲﾁｮｸﾊﾞｯｸﾎﾟｰﾁ",       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_bporch,     V_BPORCH_MIN,  V_BPORCH_MAX, vm_tweak } } },
 }))
 
 
 MENU(menu_vinputproc, P99_PROTECT({ \
-    { "ビデオ LPF",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.video_lpf,     OPT_WRAP,   SETTING_ITEM(video_lpf_desc) } } },
-    { "色空間にYPbPr",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ypbpr_cs,      OPT_WRAP,   SETTING_ITEM(ypbpr_cs_desc) } } },
-    { "R/Pr オフセット",        OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
-    { "G/Y オフセット",         OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
-    { "B/Pb オフセット",        OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
-    { "R/Pr ゲイン",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
-    { "G/Y ゲイン",           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
-    { "B/Pb ゲイン",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "ﾋﾞﾃﾞｵ LPF",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.video_lpf,     OPT_WRAP,   SETTING_ITEM(video_lpf_desc) } } },
+    { "ｲﾛｸｳｶﾝﾆYPbPr",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ypbpr_cs,      OPT_WRAP,   SETTING_ITEM(ypbpr_cs_desc) } } },
+    { "R/Pr ｵﾌｾｯﾄ",        OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "G/Y ｵﾌｾｯﾄ",         OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "B/Pb ｵﾌｾｯﾄ",        OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_off,   OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "R/Pr ｹﾞｲﾝ",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.r_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "G/Y ｹﾞｲﾝ",           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.g_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
+    { "B/Pb ｹﾞｲﾝ",          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.col.b_f_gain,  OPT_NOWRAP, 0, 0xFF, value_disp } } },
 }))
 
 MENU(menu_sampling, P99_PROTECT({ \
-    { "サンプリングフェーズ",     OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sampler_phase, OPT_NOWRAP, 0, SAMPLER_PHASE_MAX, sampler_phase_disp } } },
-    { "サンプラーに480p",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
-    { "<各種タイミング>",   OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } },
+    { "ｻﾝﾋﾌﾟﾘﾝｸﾞﾌｪｰｽﾞ",     OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sampler_phase, OPT_NOWRAP, 0, SAMPLER_PHASE_MAX, sampler_phase_disp } } },
+    { "ｻﾝﾌﾟﾗｰﾆ480p",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
+    { "<ｶｸｼｭﾀｲﾐﾝｸﾞ>",   OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } },
 }))
 
 MENU(menu_sync, P99_PROTECT({ \
-    { "アナログ同期 LPF",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.sync_lpf,    OPT_WRAP,   SETTING_ITEM(sync_lpf_desc) } } },
-    { "アナログ同期 Vth",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sync_vth,    OPT_NOWRAP, 0, SYNC_VTH_MAX, sync_vth_disp } } },
-    { "水平同期公差",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.linelen_tol, OPT_NOWRAP, 0, 0xFF, intclks_to_time_disp } } },
-    { "垂直同期限界点",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.vsync_thold, OPT_NOWRAP, VSYNC_THOLD_MIN, VSYNC_THOLD_MAX, intclks_to_time_disp } } },
+    { "ｱﾅﾛｸﾞﾄﾞｳｷ LPF",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.sync_lpf,    OPT_WRAP,   SETTING_ITEM(sync_lpf_desc) } } },
+    { "ｱﾅﾛｸﾞﾄﾞｳｷ Vth",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sync_vth,    OPT_NOWRAP, 0, SYNC_VTH_MAX, sync_vth_disp } } },
+    { "ｽｲﾍｲﾄﾞｳｷｺｳｻ",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.linelen_tol, OPT_NOWRAP, 0, 0xFF, intclks_to_time_disp } } },
+    { "ｽｲﾁｮｸﾄﾞｳｷｹﾞﾝｶｲﾃﾝ",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.vsync_thold, OPT_NOWRAP, VSYNC_THOLD_MIN, VSYNC_THOLD_MAX, intclks_to_time_disp } } },
     { "H-PLL Pre-Coast",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.pre_coast,   OPT_NOWRAP, 0, PLL_COAST_MAX, lines_disp } } },
     { "H-PLL Post-Coast",   OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.post_coast,  OPT_NOWRAP, 0, PLL_COAST_MAX, lines_disp } } },
 }))
 
 MENU(menu_output, P99_PROTECT({ \
-    { "240p/288pラインX3",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.linemult_target, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { "ライントリプルモード",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.l3_mode,         OPT_WRAP, SETTING_ITEM(l3_mode_desc) } } },
-    { "480p/576pラインX2",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.edtv_l2x,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { "480i/576iパススルー",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.interlace_pt,    OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { "TXモード",            OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
-    { "初期入力",      OPT_AVCONFIG_SELECTION, { .sel = { &tc.def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
+    { "240p/288pﾗｲﾝX3",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.linemult_target, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "ﾗｲﾝﾄﾘﾌﾟﾙﾓｰﾄﾞ",    OPT_AVCONFIG_SELECTION, { .sel = { &tc.l3_mode,         OPT_WRAP, SETTING_ITEM(l3_mode_desc) } } },
+    { "480p/576pﾗｲﾝX2",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.edtv_l2x,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "480i/576iﾊﾟｽｽﾙｰ",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.interlace_pt,    OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "TXﾓｰﾄﾞ",            OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
+    { "ｼｮｷﾆｭｳﾘｮｸ",      OPT_AVCONFIG_SELECTION, { .sel = { &tc.def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
 }))
 
 MENU(menu_postproc, P99_PROTECT({ \
-    { "走査線",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_mode,     OPT_WRAP,   SETTING_ITEM(sl_mode_desc) } } },
-    { "走査線強さ",      OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_str,      OPT_NOWRAP, 0, SCANLINESTR_MAX, sl_str_disp } } },
-    { "走査線種",      OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_type,     OPT_WRAP,   SETTING_ITEM(sl_type_desc) } } },
-    { "走査線ポジション",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_id,       OPT_WRAP,   SETTING_ITEM(sl_id_desc) } } },
-    { "水平マスク",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
-    { "垂直マスク",      OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
+    { "ｿｳｻｾﾝ",          OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_mode,     OPT_WRAP,   SETTING_ITEM(sl_mode_desc) } } },
+    { "ｿｳｻｾﾝﾂﾖｻ",      OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_str,      OPT_NOWRAP, 0, SCANLINESTR_MAX, sl_str_disp } } },
+    { "ｿｳｻｾﾝｼｭ",      OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_type,     OPT_WRAP,   SETTING_ITEM(sl_type_desc) } } },
+    { "ｿｳｻｾﾝﾎﾟｼﾞｼｮﾝ",   OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_id,       OPT_WRAP,   SETTING_ITEM(sl_id_desc) } } },
+    { "ｽｲﾍｲﾏｽｸ",    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
+    { "ｽｲﾁｮｸﾏｽｸ",      OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
 }))
 
 
 MENU(menu_main, P99_PROTECT({ \
-    { "対応映像       >",   OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } },
-    { "サンプリングオプション>",   OPT_SUBMENU,            { .sub = { &menu_sampling, NULL } } },
-    { "同期オプション    >",   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
-    { "出力オプション    >",   OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
-    { "後処理         >",   OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
-    { "<ファームウェアアップ>",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - 再起動してください" } } },
-    { "<設定を初期化   >",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "初期化済み" } } },
-    { "<設定を保存     >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "保存済み" } } },
+    { "ﾀｲｵｳｴｲｿﾞｳ     >",   OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } },
+    { "ｻﾝﾌﾟﾘﾝｸﾞｵﾌﾟｼｮﾝ>",   OPT_SUBMENU,            { .sub = { &menu_sampling, NULL } } },
+    { "ﾄﾞｳｷｵﾌﾟｼｮﾝ    >",   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
+    { "ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >",   OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
+    { "ｱﾄｼｮﾘ         >",   OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
+    { "<ﾌｧｰﾑｳｪｱｱｯﾌﾟ  >",   OPT_FUNC_CALL,          { .fun = { fw_update, "OK - ｻｲｷﾄﾞｳｼﾃｸﾀﾞｻｲ" } } },
+    { "<ｾｯﾃｲｵｼｮｷｶ    >",   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, "ｼｮｷｶｽﾐ" } } },
+    { "<ｾｯﾃｲｵﾎｿﾞﾝ    >",   OPT_FUNC_CALL,          { .fun = { write_userdata, "ﾎｿﾞﾝｽﾐ" } } },
 }))
 
 // Max 3 levels currently
@@ -237,7 +237,7 @@ void display_menu(alt_u8 forcedisp)
             break;
         case OPT_FUNC_CALL:
             if (code == OPT_SELECT)
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : "失敗");
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : "ｼｯﾊﾟｲ");
             else
                  menu_row2[0] = 0;
             break;
