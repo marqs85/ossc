@@ -11,7 +11,7 @@ module i2c_opencores
 	scl_pad_io, sda_pad_io, spi_miso_pad_i
 );
 
-parameter always_drive_io = 0;
+parameter dedicated_spi = 0;
 
 // Common bus signals
 input        wb_clk_i;		// WISHBONE clock
@@ -43,7 +43,7 @@ wire scl_padoen_o;
 
 assign wb_cyc_i = wb_stb_i;
 assign scl_pad_i = scl_pad_io;
-assign scl_pad_io = scl_padoen_o ? (always_drive_io ? 1'b1 : 1'bZ) : scl_pad_o;
+assign scl_pad_io = scl_padoen_o ? (dedicated_spi ? 1'b1 : 1'bZ) : scl_pad_o;
 
 wire sda_pad_i;
 wire sda_pad_o;
@@ -51,7 +51,7 @@ wire sda_pad_io;
 wire sda_padoen_o;
 
 assign sda_pad_i = sda_pad_io;
-assign sda_pad_io = sda_padoen_o ? (always_drive_io ? 1'b1 : 1'bZ) : sda_pad_o;
+assign sda_pad_io = sda_padoen_o ? (dedicated_spi ? 1'b1 : 1'bZ) : sda_pad_o;
 
 // Avalon doesn't have an asynchronous reset
 //  set it to be inactive and just use synchronous reset
@@ -61,7 +61,7 @@ wire arst_i;
 assign arst_i = 1'b1;
 
 // Connect the top level I2C core
-i2c_master_top i2c_master_top_inst
+i2c_master_top #(.dedicated_spi(dedicated_spi)) i2c_master_top_inst
 (
 	.wb_clk_i(wb_clk_i), .wb_rst_i(wb_rst_i), .arst_i(arst_i),
 	

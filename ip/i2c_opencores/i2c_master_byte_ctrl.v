@@ -76,6 +76,9 @@ module i2c_master_byte_ctrl (
 	clk, rst, nReset, ena, clk_cnt, start, stop, read, write, ack_in, spi_mode, din,
 	cmd_ack, ack_out, dout, i2c_busy, i2c_al, scl_i, scl_o, scl_oen, sda_i, sda_o, sda_oen, spi_miso );
 
+	// parameters
+	parameter dedicated_spi = 0;
+
 	//
 	// inputs & outputs
 	//
@@ -149,7 +152,7 @@ module i2c_master_byte_ctrl (
 	//
 
 	// hookup bit_controller
-	i2c_master_bit_ctrl bit_controller (
+	i2c_master_bit_ctrl #(.dedicated_spi(dedicated_spi)) bit_controller (
 		.clk     ( clk      ),
 		.rst     ( rst      ),
 		.nReset  ( nReset   ),

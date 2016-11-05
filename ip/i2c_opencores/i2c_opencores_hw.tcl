@@ -18,7 +18,7 @@ package require -exact qsys 13.1
 # 
 # module i2c_opencores
 # 
-set_module_property DESCRIPTION "I2C Master Peripheral from opencores.org"
+set_module_property DESCRIPTION "I2C Master Peripheral from opencores.org, plus SPI master (CPOL=1, CPHA=1) functionality using the same bus."
 set_module_property NAME i2c_opencores
 set_module_property VERSION 13.0
 set_module_property INTERNAL false
@@ -59,13 +59,14 @@ add_fileset_file timescale.v VERILOG PATH timescale.v
 # 
 # parameters
 # 
-add_parameter always_drive_io INTEGER 1
-set_parameter_property always_drive_io DEFAULT_VALUE 0
-set_parameter_property always_drive_io DISPLAY_NAME "Always drive IO lines (no tristate)"
-set_parameter_property always_drive_io DISPLAY_HINT boolean
-set_parameter_property always_drive_io TYPE INTEGER
-set_parameter_property always_drive_io UNITS None
-set_parameter_property always_drive_io HDL_PARAMETER true
+add_parameter dedicated_spi INTEGER 1
+set_parameter_property dedicated_spi DEFAULT_VALUE 0
+set_parameter_property dedicated_spi DISPLAY_NAME "Dedicated SPI mode"
+set_parameter_property dedicated_spi DISPLAY_HINT boolean
+set_parameter_property dedicated_spi TYPE INTEGER
+set_parameter_property dedicated_spi UNITS None
+set_parameter_property dedicated_spi HDL_PARAMETER true
+set_parameter_property dedicated_spi DESCRIPTION "Enables higher speed by always driving clock&data lines (no tristate) and by outputting data on falling clk edge without delay."
 
 # 
 # display items

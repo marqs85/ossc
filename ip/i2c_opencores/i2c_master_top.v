@@ -79,6 +79,7 @@ module i2c_master_top(
 
 	// parameters
 	parameter ARST_LVL = 1'b0; // asynchronous reset level
+	parameter dedicated_spi = 0;
 
 	//
 	// inputs & outputs
@@ -232,7 +233,7 @@ module i2c_master_top(
 	assign ien = ctr[6];
 
 	// hookup byte controller block
-	i2c_master_byte_ctrl byte_controller (
+	i2c_master_byte_ctrl #(.dedicated_spi(dedicated_spi)) byte_controller (
 		.clk      ( wb_clk_i     ),
 		.rst      ( wb_rst_i     ),
 		.nReset   ( rst_i        ),

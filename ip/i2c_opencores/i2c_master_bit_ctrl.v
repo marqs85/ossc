@@ -132,6 +132,9 @@ module i2c_master_bit_ctrl(
 	scl_i, scl_o, scl_oen, sda_i, sda_o, sda_oen, spi_miso
 	);
 
+	// parameters
+	parameter dedicated_spi = 0;
+
 	//
 	// inputs & outputs
 	//
@@ -587,7 +590,7 @@ module i2c_master_bit_ctrl(
 	            begin
 	                c_state <= #1 spi_wr_b;
 	                scl_oen <= #1 1'b0; // set SCL low
-	                sda_oen <= #1 din;  // set SDA
+	                sda_oen <= #1 dedicated_spi ? din : 1'b1;  // keep SDA tri-stated by default to avoid generating I2C start condition
 	                sda_chk <= #1 1'b0; // don't check SDA output
 	            end
 
@@ -595,7 +598,7 @@ module i2c_master_bit_ctrl(
 	            begin
 	                c_state <= #1 spi_wr_c;
 	                scl_oen <= #1 1'b0; // keep SCL low
-	                sda_oen <= #1 din;  // keep SDA
+	                sda_oen <= #1 din;  // set/keep SDA
 	                sda_chk <= #1 1'b0; // don't check SDA output
 	            end
 
@@ -612,7 +615,7 @@ module i2c_master_bit_ctrl(
 	                c_state <= #1 idle;
 	                cmd_ack <= #1 1'b1;
 	                scl_oen <= #1 1'b1; // tri-state SCL
-	                sda_oen <= #1 din;  // keep SDA
+	                sda_oen <= #1 dedicated_spi ? din : 1'b1;  // tri-state SDA by default to release bus for I2C mode
 	                sda_chk <= #1 1'b0; // don't check SDA output
 	            end
 
