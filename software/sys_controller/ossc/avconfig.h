@@ -57,6 +57,11 @@ typedef struct {
     alt_u8 video_lpf;
     alt_u8 pre_coast;
     alt_u8 post_coast;
+#ifdef DIY_AUDIO
+    alt_u8 audio_dw_sampl;
+    alt_u8 audio_swap_lr;
+    alt_u8 audio_ext_mclk;
+#endif
     alt_u8 edtv_l2x;
     alt_u8 interlace_pt;
     alt_u8 def_input;

@@ -32,6 +32,7 @@
 #include "sdcard.h"
 #include "menu.h"
 #include "avconfig.h"
+#include "sysconfig.h"
 #include "firmware.h"
 #include "userdata.h"
 #include "it6613.h"
@@ -83,6 +84,37 @@ inline void lcd_write_status() {
     lcd_write((char*)&row1, (char*)&row2);
 }
 
+#ifdef DIY_AUDIO
+inline void SetupAudio(tx_mode_t mode)
+{
+    // shut down audio-tx before setting new config (recommended for changing audio-tx config)
+    DisableAudioOutput();
+    EnableAudioInfoFrame(FALSE, NULL);
+
+    if (tc.tx_mode == TX_HDMI) {
+        alt_u32 pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total;
+        // TODO: check pixel repetition
+        if (video_modes[cm.id].flags & MODE_L2ENABLE)
+            pclk_out *= 2;
+        else if (video_modes[cm.id].flags & (MODE_L3_MODE0|MODE_L3_MODE1|MODE_L3_MODE2|MODE_L3_MODE3))
+            pclk_out *= 3;
+
+        printf("PCLK_out: %luHz\n", pclk_out);
+        EnableAudioOutput4OSSC(pclk_out,tc.audio_ext_mclk,tc.audio_dw_sampl,tc.audio_swap_lr);
+        HDMITX_SetAudioInfoFrame((BYTE)tc.audio_dw_sampl);
+#ifdef DEBUG
+        Switch_HDMITX_Bank(1);
+        usleep(1000);
+        alt_u32 cts = 0;
+        cts |= read_it2(0x35) >> 4;
+        cts |= read_it2(0x36) << 4;
+        cts |= read_it2(0x37) << 12;
+        printf("CTS: %lu\n", cts);
+#endif
+    }
+}
+#endif
+
 inline void TX_enable(tx_mode_t mode)
 {
     // shut down TX before setting new config
@@ -93,8 +125,12 @@ inline void TX_enable(tx_mode_t mode)
     // re-setup
     EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
     //TODO: set correct VID based on mode
-    if (mode == TX_HDMI)
+    if (mode == TX_HDMI) {
         HDMITX_SetAVIInfoFrame(HDMI_480p60, F_MODE_RGB444, 0, 0);
+#ifdef DIY_AUDIO
+        SetupAudio(mode);
+#endif
+    }
 
     // start TX
     SetAVMute(FALSE);
@@ -289,6 +325,18 @@ status_t get_status(tvp_input_t input, video_format format)
     if (!memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
         tvp_set_fine_gain_offset(&cm.cc.col);
 
+#ifdef DIY_AUDIO
+    if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
+        (tc.audio_swap_lr != cm.cc.audio_swap_lr) ||
+#ifdef MANUAL_CTS
+        (tc.edtv_l2x != cm.cc.edtv_l2x) ||
+        (tc.interlace_pt != cm.cc.interlace_pt) ||
+        update_cur_vm ||
+#endif
+        (tc.audio_ext_mclk != cm.cc.audio_ext_mclk))
+        SetupAudio(tc.tx_mode);
+#endif
+
     cm.cc = tc;
     update_cur_vm = 0;
 
@@ -391,6 +439,12 @@ void program_mode()
     tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, (alt_u8)h_synclen_px, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
     set_lpf(cm.cc.video_lpf);
     set_videoinfo();
+
+#ifdef DIY_AUDIO
+#ifdef MANUAL_CTS
+    SetupAudio(cm.cc.tx_mode);
+#endif
+#endif
 }
 
 void vm_display(alt_u8 code) {
@@ -538,7 +592,7 @@ int main()
 
     if (init_stat >= 0) {
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
-        sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u", FW_VER_MAJOR, FW_VER_MINOR);
+        sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
         strncpy(row2, "2014-2016  marqs", LCD_ROW_LEN+1);
 #else
@@ -639,6 +693,9 @@ int main()
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
             tvp_disable_output();
+#ifdef DIY_AUDIO
+            DisableAudioOutput();
+#endif
             tvp_source_sel(target_input, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate
             strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);

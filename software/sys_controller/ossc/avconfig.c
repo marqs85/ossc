@@ -24,6 +24,7 @@
 #include "altera_avalon_pio_regs.h"
 #include "tvp7002.h"
 
+#define DEFAULT_ON              1
 #define DEFAULT_PRE_COAST       1
 #define DEFAULT_POST_COAST      0
 #define DEFAULT_SAMPLER_PHASE   16
@@ -46,6 +47,9 @@ const avconfig_t tc_default = {
     .vsync_thold = DEFAULT_VSYNC_THOLD,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
+#ifdef DIY_AUDIO
+    .audio_dw_sampl = DEFAULT_ON,
+#endif
     .col = {
         .r_f_gain = DEFAULT_FINE_GAIN,
         .g_f_gain = DEFAULT_FINE_GAIN,

@@ -224,7 +224,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
 
     pclk_est = ((alt_u32)h_samplerate * v_lines * hz) / 1000; //in kHz
 
-    printf("Estimated PCLK_out: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
+    printf("Estimated PCLK_HPLL: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
 
     if (pclk_est < 36000) {
         vco_range = 0;

@@ -26,6 +26,18 @@
 #define FW_VER_MAJOR            0
 #define FW_VER_MINOR            74
 
+#ifdef DIY_AUDIO
+#define FW_SUFFIX1              "a"
+#else
+#define FW_SUFFIX1              ""
+#endif
+
+#ifdef OSDLANG_JP
+#define FW_SUFFIX2              "j"
+#else
+#define FW_SUFFIX2              ""
+#endif
+
 #define FW_UPDATE_RETRIES       3
 
 typedef struct {

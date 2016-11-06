@@ -53,6 +53,7 @@ static const char *tx_mode_desc[] = { "HDMI", "DVI" };
 static const char *sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｼﾞﾄﾞｳ"), LNG("Manual","ｼｭﾄﾞｳ") };
 static const char *sl_type_desc[] = { LNG("Horizontal","ｽｲﾍｲ"), LNG("Vertical","ｽｲﾁｮｸ"), LNG("Alternating","ｺｳｺﾞ") };
 static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
+static const char *audio_dw_sampl_desc[] = { "Off (fs = 96kHz)", "2x  (fs = 48kHz)" };
 
 static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), (v*1125)/100); }
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
@@ -117,6 +118,17 @@ MENU(menu_postproc, P99_PROTECT({ \
     { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
 }))
 
+#ifdef DIY_AUDIO
+MENU(menu_audio, P99_PROTECT({ \
+    { "Down-sampling",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_dw_sampl, OPT_WRAP, SETTING_ITEM(audio_dw_sampl_desc) } } },
+    { "Swap left/right",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_swap_lr,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "Use ext. MCLK",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_ext_mclk, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+}))
+#define AUDIO_MENU { "Audio options  >",                       OPT_SUBMENU,            { .sub = { &menu_audio, NULL } } },
+#else
+#define AUDIO_MENU
+#endif
+
 
 MENU(menu_main, P99_PROTECT({ \
     { LNG("Video in proc  >","ﾀｲｵｳｴｲｿﾞｳ     >"),   OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } },
@@ -124,6 +136,7 @@ MENU(menu_main, P99_PROTECT({ \
     { LNG("Sync opt.      >","ﾄﾞｳｷｵﾌﾟｼｮﾝ    >"),   OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
     { LNG("Output opt.    >","ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >"),  OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
     { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),     OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
+    AUDIO_MENU
     { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟ  >"),  OPT_FUNC_CALL,          { .fun = { fw_update, LNG("OK - pls restart","OK - ｻｲｷﾄﾞｳｼﾃｸﾀﾞｻｲ"), LNG("failed","ｼｯﾊﾟｲ") } } },
     { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, LNG("Reset done","ｼｮｷｶｽﾐ"), "" } } },
     { LNG("<Save settings >","<ｾｯﾃｲｵﾎｿﾞﾝ    >"),   OPT_FUNC_CALL,          { .fun = { write_userdata, LNG("Saved","ﾎｿﾞﾝｽﾐ"), LNG("failed","ｼｯﾊﾟｲ") } } },

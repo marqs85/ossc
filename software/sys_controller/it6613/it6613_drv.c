@@ -523,6 +523,73 @@ BOOL EnableAudioOutput(ULONG VideoPixelClock,BYTE bAudioSampleFreq,BYTE ChannelN
     return TRUE ;
 }
 
+BOOL EnableAudioOutput4OSSC(ULONG VideoPixelClock,BYTE bExtMCLK,BYTE bAudioDwSampl,BYTE bAudioSwapLR)
+{
+    // set N and CTS
+    ULONG n = 12288;
+    ULONG cts = VideoPixelClock/1000;
+
+    if (bAudioDwSampl == 0x1)
+        n = n>>1;
+
+    //program N
+    Switch_HDMITX_Bank(1);
+    HDMITX_WriteI2C_Byte(REGPktAudN0,(BYTE)((n)&0xFF));
+    HDMITX_WriteI2C_Byte(REGPktAudN1,(BYTE)((n>>8)&0xFF));
+    HDMITX_WriteI2C_Byte(REGPktAudN2,(BYTE)((n>>16)&0xF));
+    //program CTS
+    HDMITX_WriteI2C_Byte(REGPktAudCTS0, cts & 0xff);
+    HDMITX_WriteI2C_Byte(REGPktAudCTS1,(cts>>8) & 0xff);
+    HDMITX_WriteI2C_Byte(REGPktAudCTS2,(cts>>16) & 0xff);
+    Switch_HDMITX_Bank(0);
+
+#ifdef MANUAL_CTS
+    HDMITX_WriteI2C_Byte(0xF8, 0xC3);
+    HDMITX_WriteI2C_Byte(0xF8, 0xA5);
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_SINGLE_CTRL,B_SW_CTS);
+    HDMITX_WriteI2C_Byte(0xF8, 0xFF);
+#else
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_SINGLE_CTRL,0); // D[1] = 0,HW auto count CTS
+#endif
+
+    // define internal/external MCLK and audio down-sampling
+    HDMITX_SetREG_Byte(REG_TX_CLK_CTRL0,~(M_EXT_MCLK_SEL|B_EXT_MCLK_SAMP|B_EXT_MCLK4CTS),((bExtMCLK&0x1)<<O_MCLK_SAMP) | B_EXT_256FS | ((bExtMCLK&0x1)<<O_MCLK4CTS));
+    //HDMITX_AndREG_Byte(REG_TX_SW_RST,~M_AUD_DIV);
+    if (bAudioDwSampl == 0x1)
+        HDMITX_OrREG_Byte(REG_TX_CLK_CTRL1,B_AUD_DIV2);
+
+    // set audio format
+    Instance[0].TMDSClock = VideoPixelClock;
+    BYTE fs = bAudioDwSampl == 0x1 ? AUDFS_48KHz : AUDFS_96KHz;
+    Instance[0].bAudFs = fs;
+    Instance[0].bOutputAudioMode = B_AUDFMT_32BIT_I2S;
+    Instance[0].bAudioChannelSwap = bAudioSwapLR == 0x1 ? 0xf : 0x0; // swap channels
+    BYTE AudioEnable = (0x1 & ~(M_AUD_SWL|B_SPDIFTC)) | M_AUD_24BIT;
+
+    HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL0,AudioEnable & 0xF0);
+
+    HDMITX_AndREG_Byte(REG_TX_SW_RST,~(B_AUD_RST|B_AREF_RST));
+    HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL1,Instance[0].bOutputAudioMode);
+    HDMITX_WriteI2C_Byte(REG_TX_AUDIO_FIFOMAP,0xE4); // default mapping.
+    HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL3,(Instance[0].bAudioChannelSwap&0xF)|(AudioEnable&B_AUD_SPDIF));
+    HDMITX_WriteI2C_Byte(REG_TX_AUD_SRCVALID_FLAT,B_AUD_SPXFLAT_SRC3|B_AUD_SPXFLAT_SRC2|B_AUD_SPXFLAT_SRC1|B_AUD_ERR2FLAT); // only two channels
+
+    Switch_HDMITX_Bank(1) ;
+    HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_MODE,0); // 2 audio channel without pre-emphasis
+    HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_CAT,0);
+    HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_SRCNUM,1);
+    HDMITX_WriteI2C_Byte(REG_TX_AUD0CHST_CHTNUM,0);
+    HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_CA_FS,0xC0|fs); // choose clock
+    fs = ~fs; // OFS is the one's complement of FS
+    HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_OFS_WL,(fs<<4)|AUD_SWL_24); // 24 bit Audio
+
+    Switch_HDMITX_Bank(0);
+    HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL0,AudioEnable);
+
+    Instance[0].bAudioChannelEnable = AudioEnable;
+
+    return TRUE;
+}
 
 BOOL
 GetEDIDData(int EDIDBlockID,BYTE *pEDIDData)

@@ -120,6 +120,7 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
+        <Target Name="diy-audio-debug">make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG -DDIY_AUDIO"</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG"</BuildCommand>
@@ -159,6 +160,7 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
+        <Target Name="diy-audio">make APP_CFLAGS_DEFINED_SYMBOLS="-DDIY_AUDIO"</Target>
         <Target Name="compile_image">make mem_init_generate</Target>
         <Target Name="Build_jp">iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c; make OSDLANG=JP</Target>
         <RebuildCommand/>
