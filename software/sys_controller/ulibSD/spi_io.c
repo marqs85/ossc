@@ -1,6 +1,4 @@
 #include <alt_types.h>
-#include <altera_avalon_spi.h>
-#include <altera_avalon_spi_regs.h>
 #include <altera_avalon_pio_regs.h>
 #include <sys/alt_timestamp.h>
 #include <system.h>
