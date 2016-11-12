@@ -160,9 +160,12 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="diy-audio">make APP_CFLAGS_DEFINED_SYMBOLS="-DDIY_AUDIO"</Target>
-        <Target Name="compile_image">make mem_init_generate</Target>
-        <Target Name="Build_jp">iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c; make OSDLANG=JP</Target>
+        <Target Name="compile_image_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP mem_init_generate</Target>
+        <Target Name="compile_image_aud_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make DIY_AUDIO=y OSDLANG=JP mem_init_generate</Target>
+        <Target Name="compile_image_aud">make clean &amp;&amp; make DIY_AUDIO=y mem_init_generate</Target>
+        <Target Name="compile_image">make clean &amp;&amp; make mem_init_generate</Target>
+        <Target Name="Build_jp">iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP</Target>
+        <Target Name="Build_diy-audio">make DIY_AUDIO=y</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make</BuildCommand>
