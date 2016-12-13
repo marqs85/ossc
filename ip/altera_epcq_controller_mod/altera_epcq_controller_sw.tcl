@@ -22,7 +22,7 @@ create_driver altera_epcq_controller_mod_driver
 set_sw_property hw_class_name altera_epcq_controller_mod
 
 # The version of this driver
-set_sw_property version 15.1
+set_sw_property version 14.1
 
 # This driver may be incompatible with versions of hardware less
 # than specified below. Updates to hardware and device drivers

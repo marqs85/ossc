@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE15E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY ossc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:27:03  MAY 17, 2014"
-set_global_assignment -name LAST_QUARTUS_VERSION 15.1.0
+set_global_assignment -name LAST_QUARTUS_VERSION "16.1.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -186,7 +186,7 @@ set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name SMART_RECOMPILE OFF
+set_global_assignment -name SMART_RECOMPILE ON
 
 set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT NORMAL
 
@@ -217,6 +217,9 @@ set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE 50%
 #set_location_assignment PLL_1 -to "scanconverter:scanconverter_inst|pll_2x:pll_linedouble|altpll:altpll_component|pll_2x_altpll:auto_generated|pll1"
 
 
+
+
+
 set_global_assignment -name VERILOG_FILE rtl/videogen.v
 set_global_assignment -name QIP_FILE software/sys_controller/mem_init/meminit.qip
 set_global_assignment -name VERILOG_FILE rtl/ir_rcv.v
@@ -229,7 +232,4 @@ set_global_assignment -name QIP_FILE rtl/pll_2x.qip
 set_global_assignment -name QIP_FILE rtl/pll_3x.qip
 set_global_assignment -name QIP_FILE rtl/pll_3x_lowfreq.qip
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
-
-
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -137,9 +137,10 @@ static __inline__ int __attribute__ ((always_inline)) alt_erase_flash_block(
   int ret_code;
   ret_code = fd->erase_block( fd, offset );
   
+/* remove dcache_flush call for FB330552  
   if(!ret_code)
       alt_dcache_flush((alt_u8*)fd->base_addr + offset, length);
-
+*/
   return ret_code;
 }
 
@@ -166,9 +167,10 @@ static __inline__ int __attribute__ ((always_inline)) alt_write_flash_block(
   int ret_code;
   ret_code = fd->write_block( fd, block_offset, data_offset, data, length );
 
+/* remove dcache_flush call for FB330552  
   if(!ret_code)
       alt_dcache_flush((alt_u8*)fd->base_addr + data_offset, length);
-
+*/
   return ret_code;
 }
 

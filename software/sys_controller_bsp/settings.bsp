@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Oct 30, 2016 9:24:15 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1477855455847</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>Dec 13, 2016 8:52:43 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1481655163358</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>./</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>../../sys.sopcinfo</SopcDesignFile>
@@ -77,7 +77,7 @@
                 <Value>1</Value>
                 <DefaultValue>0</DefaultValue>
                 <DestinationFile>none</DestinationFile>
-                <Description>Enables the alt_load() facility. The alt_load() facility copies sections from the .text memory into RAM. If true, this setting sets up the VMA/LMA of sections in linker.x to allow them to be loaded into the .text memory.</Description>
+                <Description>Enables the alt_load() facility. The alt_load() facility copies data sections (.rodata, .rwdata, or .exceptions) from boot memory to RAM. If true, this setting sets up the VMA/LMA of sections in linker.x to allow them to be loaded into the .text memory.</Description>
                 <Restrictions>This setting is typically false if an external bootloader (e.g. flash bootloader) is present.</Restrictions>
                 <Enabled>false</Enabled>
                 <Group xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
@@ -537,6 +537,18 @@
                 <Restrictions>none</Restrictions>
                 <Enabled>false</Enabled>
                 <Group>none</Group>
+        </Setting>
+        <Setting>
+                <SettingName>hal.make.cflags_mgpopt</SettingName>
+                <Identifier>CFLAGS_MGPOPT</Identifier>
+                <Type>UnquotedString</Type>
+                <Value>-mgpopt=global</Value>
+                <DefaultValue>-mgpopt=global</DefaultValue>
+                <DestinationFile>public_mk_define</DestinationFile>
+                <Description>C/C++ compiler to generate (do not generate) GP-relative accesses. 'none' tells the compilter not to generate GP-relative accesses. 'local' will generate GP-relative accesses for small data objects that are not external, weak, or uninitialized common symbols. Also use GP-relative addressing for objects that have been explicitly placed in a small data section via a section attribute. provides the default set of debug symbols typically required to debug a typical application. 'global' is same as 'local' but also generate GP-relative accesses for small data objects that are external, weak, or common.</Description>
+                <Restrictions>none</Restrictions>
+                <Enabled>false</Enabled>
+                <Group>common</Group>
         </Setting>
         <Setting>
                 <SettingName>hal.make.ignore_system_derived.sopc_system_id</SettingName>

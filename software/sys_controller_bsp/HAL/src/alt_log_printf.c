@@ -52,13 +52,13 @@ char alt_log_write_buf[ALT_LOG_WRITE_ECHO_LEN+2];
 /* global variables for all 'on' flags */
 
 /* 
- * The boot message flag is linked into the data (rwdata) section
+ * CASE:368514 - The boot message flag is linked into the sdata section
  * because if it is zero, it would otherwise be placed in the bss section.
  * alt_log examines this variable before the BSS is cleared in the boot-up
  * process.
  */
 volatile alt_u32 alt_log_boot_on_flag \
-  __attribute__ ((section (".data"))) = ALT_LOG_BOOT_ON_FLAG_SETTING;
+  __attribute__ ((section (".sdata"))) = ALT_LOG_BOOT_ON_FLAG_SETTING;
 
 volatile alt_u8 alt_log_write_on_flag = ALT_LOG_WRITE_ON_FLAG_SETTING;
 

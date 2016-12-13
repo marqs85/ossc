@@ -35,17 +35,28 @@
 
 /*
  * Linker defined symbols.
+   These used to be
+ *    extern alt_u32 __flash_rwdata_start;
+ *    extern alt_u32 __ram_rwdata_start;
+ *    extern alt_u32 __ram_rwdata_end;
+ * but that results in a fatal error when compiling -mgpopt=global
+ * because gcc assumes they are normal C variables in .sdata
+ * and therefore addressable from gp using a 16-bit offset,
+ * when in fact they are special values defined by linker.x
+ * and located nowhere near .sdata. 
+ * Specifying __attribute__((section(".data"))) will force these
+ * in .data. (CASE:258384.)
  */
 
-extern alt_u32 __flash_rwdata_start; 
-extern alt_u32 __ram_rwdata_start;
-extern alt_u32 __ram_rwdata_end;
-extern alt_u32 __flash_rodata_start; 
-extern alt_u32 __ram_rodata_start;
-extern alt_u32 __ram_rodata_end;
-extern alt_u32 __flash_exceptions_start; 
-extern alt_u32 __ram_exceptions_start;
-extern alt_u32 __ram_exceptions_end;
+extern alt_u32 __flash_rwdata_start __attribute__((section(".data")));
+extern alt_u32 __ram_rwdata_start __attribute__((section(".data")));
+extern alt_u32 __ram_rwdata_end __attribute__((section(".data")));
+extern alt_u32 __flash_rodata_start __attribute__((section(".data")));
+extern alt_u32 __ram_rodata_start __attribute__((section(".data")));
+extern alt_u32 __ram_rodata_end __attribute__((section(".data")));
+extern alt_u32 __flash_exceptions_start __attribute__((section(".data")));  
+extern alt_u32 __ram_exceptions_start __attribute__((section(".data")));
+extern alt_u32 __ram_exceptions_end __attribute__((section(".data")));
 
 /*
  * alt_load() is called when the code is executing from flash. In this case

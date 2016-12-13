@@ -20,7 +20,7 @@ package require -exact qsys 13.1
 # 
 set_module_property DESCRIPTION "I2C Master Peripheral from opencores.org, plus SPI master (CPOL=1, CPHA=1) functionality using the same bus."
 set_module_property NAME i2c_opencores
-set_module_property VERSION 13.0
+set_module_property VERSION 16.1
 set_module_property INTERNAL false
 set_module_property OPAQUE_ADDRESS_MAP true
 set_module_property GROUP "Interface Protocols/Serial"

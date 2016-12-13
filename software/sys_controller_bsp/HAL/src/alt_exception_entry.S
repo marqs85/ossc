@@ -193,18 +193,44 @@ alt_exception:
          * instruction that caused the exception is written in r2, which these
          * handlers will utilize.
          */
-        stw   ea,  72(sp)  /* Don't re-issue */
-        
+        stw ea, 72(sp) /* EA is PC+4 so will skip over instruction causing exception */
+
 #ifdef NIOS2_CDX_PRESENT
-        mov.n   r4, ea
-        subi.n   r4, r4, 4 
-        ldhu.n  r2, 0(r4)
-        ldhu.n  r3, 2(r4)
-        slli.n  r3, r3, 16
-        or.n    r2, r2, r3 /* Instruction that caused exception */
-#else
-        ldw   r2, -4(ea)   /* Instruction that caused exception */
+        mov.n r4, ea            /* EA contains PC+4 of instruction that caused the exception */
+        subi.n r4, r4, 4        /* Calculate PC */
+        ldhu.n r2, 0(r4)        /* Load least-significant 16 bits of instruction */
+        andi r5, r2, 0x7        /* Mask off all bits except the 3 most-significant bits of OP field */
+
+        /*
+         * These instructions compare the MSB 3 bits of OP to 0x1, 0x3, and 0x5
+         * which is where all the 16-bit instructions live.
+         */
+        subi.n r5, r5, 1
+        beqz.n r5, .Lunknown_16bit
+        subi.n r5, r5, 2
+        beqz.n r5, .Lunknown_16bit
+        subi.n r5, r5, 2
+        beqz.n r5, .Lunknown_16bit
+
+.Lunknown_32bit:
+        stw ea, 72(sp) /* EA is PC+4 so will skip over instruction causing exception */
+
+        /* Load most-significant 16 bits of instruction */
+        ldhu.n r3, 2(r4)
+        slli.n r3, r3, 16
+        or.n r2, r2, r3 /* 32-bit instruction value that caused exception */
+        br.n .Lunknown_inst_loaded
+
+.Lunknown_16bit:
+        addi.n r4, r4, 2 /* Need PC+2 to skip over instruction causing exception */
+        stw r4, 72(sp)
+
+#else /* CDX is not Enabled and all instructions are 32bits */
+        ldw r2, -4(ea) /* Instruction value that caused exception */
 #endif
+
+.Lunknown_inst_loaded:
+
         /*
          * Other exception handling code, if enabled, will be linked here.
          * This includes unimplemted (multiply/divide) instruction support
