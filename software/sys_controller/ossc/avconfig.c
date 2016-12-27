@@ -28,6 +28,7 @@
 #define DEFAULT_PRE_COAST       1
 #define DEFAULT_POST_COAST      0
 #define DEFAULT_SAMPLER_PHASE   16
+#define DEFAULT_SYNC_LPF        3
 #define DEFAULT_SYNC_VTH        11
 #define DEFAULT_FINE_GAIN       26
 #define DEFAULT_FINE_OFFSET     0x80
@@ -45,10 +46,12 @@ const avconfig_t tc_default = {
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,
     .vsync_thold = DEFAULT_VSYNC_THOLD,
+    .sync_lpf = DEFAULT_SYNC_LPF,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
 #ifdef DIY_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
+    .tx_mode = TX_HDMI,
 #endif
     .col = {
         .r_f_gain = DEFAULT_FINE_GAIN,
@@ -63,7 +66,9 @@ const avconfig_t tc_default = {
 int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
+#ifndef DIY_AUDIO
     tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
+#endif
 
     memcpy(video_modes, video_modes_def, video_mode_cnt*sizeof(mode_data_t));
     update_cur_vm = 1;

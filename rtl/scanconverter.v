@@ -153,10 +153,10 @@ assign pclk_out_3x_h4x = pclk_3x_h4x;
 assign pclk_out_3x_h5x = pclk_3x_h5x;
 
 //Scanline generation
-function [8:0] apply_scanlines;
+function [7:0] apply_scanlines;
     input [1:0] mode;
-    input [8:0] data;
-    input [8:0] str;
+    input [7:0] data;
+    input [7:0] str;
     input [1:0] actid;
     input [1:0] lineid;
     input pixid;
@@ -174,9 +174,9 @@ function [8:0] apply_scanlines;
     endfunction
 
 //Border masking
-function [8:0] apply_mask;
+function [7:0] apply_mask;
     input enable;
-    input [8:0] data;
+    input [7:0] data;
     input [11:0] hoffset;
     input [11:0] hstart;
     input [11:0] hend;
