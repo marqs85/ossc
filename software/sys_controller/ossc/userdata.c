@@ -26,104 +26,146 @@
 
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern avconfig_t tc;
+extern mode_data_t video_modes[];
+extern alt_u8 update_cur_vm;
 
-int write_userdata()
+int write_userdata(alt_u8 entry)
 {
     alt_u8 databuf[PAGESIZE];
+    alt_u16 vm_to_write;
+    alt_u16 pageoffset, srcoffset;
+    alt_u8 pageno;
     int retval;
 
-    strncpy((char*)databuf, "USRDATA", 8);
-    databuf[8] = FW_VER_MAJOR;
-    databuf[9] = FW_VER_MINOR;
-    databuf[10] = 2;
-
-    retval = write_flash_page(databuf, USERDATA_HDR_SIZE, (USERDATA_OFFSET/PAGESIZE));
-    if (retval != 0) {
+    if (entry > MAX_USERDATA_ENTRY) {
+        printf("invalid entry\n");
         return -1;
     }
 
-    databuf[0] = UDE_REMOTE_MAP;
-    databuf[1] = 4+sizeof(rc_keymap);
-    databuf[2] = databuf[3] = 0;    //padding
-    memcpy(databuf+4, rc_keymap, sizeof(rc_keymap));
+    strncpy(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8);
+    ((ude_hdr*)databuf)->version_major = FW_VER_MAJOR;
+    ((ude_hdr*)databuf)->version_minor = FW_VER_MINOR;
+    ((ude_hdr*)databuf)->type = (entry > MAX_PROFILE) ? UDE_REMOTE_MAP : UDE_PROFILE;
 
-    retval = write_flash_page(databuf, databuf[1], (USERDATA_OFFSET/PAGESIZE)+1);
-    if (retval != 0) {
-        return -1;
-    }
+    switch (((ude_hdr*)databuf)->type) {
+    case UDE_REMOTE_MAP:
+        ((ude_remote_map*)databuf)->data_len = sizeof(rc_keymap);
+        memcpy(((ude_remote_map*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
+        retval = write_flash_page(databuf, sizeof(ude_remote_map), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
+        if (retval != 0) {
+            return -1;
+        }
+        break;
+    case UDE_PROFILE:
+        vm_to_write = VIDEO_MODES_SIZE;
+        ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
+        ((ude_profile*)databuf)->vm_data_len = vm_to_write;
 
-    databuf[0] = UDE_AVCONFIG;
-    databuf[1] = 4+sizeof(avconfig_t);
-    databuf[2] = databuf[3] = 0;    //padding
-    memcpy(databuf+4, &tc, sizeof(avconfig_t));
+        pageno = 0;
+        pageoffset = offsetof(ude_profile, avc);
 
-    retval = write_flash_page(databuf, databuf[1], (USERDATA_OFFSET/PAGESIZE)+2);
-    if (retval != 0) {
-        return -1;
+        // assume that sizeof(avconfig_t) << PAGESIZE
+        memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
+        pageoffset += sizeof(avconfig_t);
+
+        srcoffset = 0;
+        while (vm_to_write > 0) {
+            if (vm_to_write >= PAGESIZE-pageoffset) {
+                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, PAGESIZE-pageoffset);
+                srcoffset += PAGESIZE-pageoffset;
+                pageoffset = 0;
+                vm_to_write -= PAGESIZE-pageoffset;
+                // check
+                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
+                pageno++;
+            } else {
+                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, vm_to_write);
+                pageoffset += vm_to_write;
+                vm_to_write = 0;
+                // check
+                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
+            }
+        }
+        printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
+        break;
+    default:
+        break;
     }
 
     return 0;
 }
 
-int read_userdata()
+int read_userdata(alt_u8 entry)
 {
     int retval, i;
     alt_u8 databuf[PAGESIZE];
-    userdata_hdr udhdr;
-    userdata_entry udentry;
+    alt_u16 vm_to_read;
+    alt_u16 pageoffset, dstoffset;
+    alt_u8 pageno;
 
-    retval = read_flash(USERDATA_OFFSET, USERDATA_HDR_SIZE, databuf);
+    if (entry > MAX_USERDATA_ENTRY) {
+        printf("invalid entry\n");
+        return -1;
+    }
+
+    retval = read_flash(USERDATA_OFFSET+(entry*SECTORSIZE), PAGESIZE, databuf);
     if (retval != 0) {
         printf("Flash read error\n");
         return -1;
     }
 
-    strncpy(udhdr.userdata_key, (char*)databuf, 8);
-    if (strncmp(udhdr.userdata_key, "USRDATA", 8)) {
-        printf("No userdata found on flash\n");
+    if (strncmp(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8)) {
+        printf("No userdata found on entry %u\n", entry);
         return 1;
     }
 
-    udhdr.version_major = databuf[8];
-    udhdr.version_minor = databuf[9];
-    udhdr.num_entries = databuf[10];
+    if ((((ude_hdr*)databuf)->version_major != FW_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != FW_VER_MINOR)) {
+        printf("Data version %u.%u does not match fw\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
+        return 2;
+    }
 
-    //TODO: check version compatibility
-    printf("Userdata: v%u.%.2u, %u entries\n", udhdr.version_major, udhdr.version_minor, udhdr.num_entries);
-
-    for (i=0; i<udhdr.num_entries; i++) {
-        retval = read_flash(USERDATA_OFFSET+((i+1)*PAGESIZE), USERDATA_ENTRY_HDR_SIZE, databuf);
-        if (retval != 0) {
-            printf("Flash read error\n");
-            return -1;
+    switch (((ude_hdr*)databuf)->type) {
+    case UDE_REMOTE_MAP:
+        if (((ude_remote_map*)databuf)->data_len == sizeof(rc_keymap)) {
+            memcpy(rc_keymap, ((ude_remote_map*)databuf)->keys, sizeof(rc_keymap));
+            printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }
+        break;
+    case UDE_PROFILE:
+        if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == VIDEO_MODES_SIZE)) {
+            vm_to_read = ((ude_profile*)databuf)->vm_data_len;
 
-        udentry.type = databuf[0];
-        udentry.entry_len = databuf[1];
+            pageno = 0;
+            pageoffset = offsetof(ude_profile, avc);
 
-        retval = read_flash(USERDATA_OFFSET+((i+1)*PAGESIZE), udentry.entry_len, databuf);
-        if (retval != 0) {
-            printf("Flash read error\n");
-            return -1;
-        }
+            // assume that sizeof(avconfig_t) << PAGESIZE
+            memcpy(&tc, databuf+pageoffset, sizeof(avconfig_t));
+            pageoffset += sizeof(avconfig_t);
 
-        switch (udentry.type) {
-        case UDE_REMOTE_MAP:
-            if ((udentry.entry_len-4) == sizeof(rc_keymap)) {
-                memcpy(rc_keymap, databuf+4, sizeof(rc_keymap));
-                printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
+            dstoffset = 0;
+            while (vm_to_read > 0) {
+                if (vm_to_read >= PAGESIZE-pageoffset) {
+                    memcpy((char*)video_modes+dstoffset, databuf+pageoffset, PAGESIZE-pageoffset);
+                    dstoffset += PAGESIZE-pageoffset;
+                    pageoffset = 0;
+                    vm_to_read -= PAGESIZE-pageoffset;
+                    pageno++;
+                    // check
+                    read_flash(USERDATA_OFFSET+(entry*SECTORSIZE)+pageno*PAGESIZE, PAGESIZE, databuf);
+                } else {
+                    memcpy((char*)video_modes+dstoffset, databuf+pageoffset, vm_to_read);
+                    pageoffset += vm_to_read;
+                    vm_to_read = 0;
+                }
             }
-            break;
-        case UDE_AVCONFIG:
-            if ((udentry.entry_len-4) == sizeof(avconfig_t)) {
-                memcpy(&tc, databuf+4, sizeof(avconfig_t));
-                printf("Avconfig data read (%u bytes)\n", sizeof(avconfig_t));
-            }
-            break;
-        default:
-            printf("Unknown userdata entry\n");
-            break;
+            update_cur_vm = 1;
+
+            printf("Profile %u data read (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         }
+        break;
+    default:
+        printf("Unknown userdata entry\n");
+        break;
     }
 
     return 0;

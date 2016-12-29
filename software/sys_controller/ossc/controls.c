@@ -24,11 +24,17 @@
 #include "menu.h"
 #include "av_controller.h"
 #include "video_modes.h"
+#include "userdata.h"
 #include "lcd.h"
 #include "altera_avalon_pio_regs.h"
 
-static const char *rc_keydesc[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MENU", "OK", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "SCANLINE_MODE", "SCANLINE_TYPE", "SCANLINE_INT+", "SCANLINE_INT-", "LINEMULT_MODE"};
-alt_u16 rc_keymap[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3EE9, 0x3E19, 0x3E99, 0x3E59, 0x3ED9, 0x3E39, 0x3EC9, 0x3E4D, 0x3E1D, 0x3EED, 0x3E2D, 0x3ECD, 0x3EAD, 0x3E6D, 0x3E65, 0x3E01, 0x1C48, 0x1C18, 0x1C50, 0x1CD0, 0x1CC8};
+static const char *rc_keydesc[REMOTE_MAX_KEYS] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", \
+                                                   "MENU", "OK", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "SCANLINE_MODE", \
+                                                   "SCANLINE_TYPE", "SCANLINE_INT+", "SCANLINE_INT-", "LINEMULT_MODE", "PHASE+", "PHASE-", "PROFILE_HOTKEY"};
+const alt_u16 rc_keymap_default[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3EE9, 0x3E19, 0x3E99, 0x3E59, 0x3ED9, 0x3E39, 0x3EC9, \
+                                              0x3E4D, 0x3E1D, 0x3EED, 0x3E2D, 0x3ECD, 0x3EAD, 0x3E6D, 0x3E65, 0x3E01, 0x1C48, \
+                                              0x1C18, 0x1C50, 0x1CD0, 0x1CC8, 0x5E58, 0x5ED8, 0x3EB9};
+alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern const mode_data_t video_modes[];
@@ -37,6 +43,7 @@ extern avconfig_t tc;
 extern avinput_t target_mode;
 extern alt_u8 menu_active;
 extern alt_u8 sys_ctrl;
+extern alt_u8 profile_sel;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -55,6 +62,7 @@ void setup_rc()
 
         while (1) {
             remote_code = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+            btn_code = ~IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB_MASK;
 
             if (remote_code && (remote_code != remote_code_prev)) {
                 if (confirm == 0) {
@@ -73,7 +81,18 @@ void setup_rc()
                 }
             }
 
+            if ((btn_code_prev == 0) && (btn_code == PB0_BIT)) {
+                if (i == 0) {
+                    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
+                    i=REMOTE_MAX_KEYS;
+                } else {
+                    i-=2;
+                }
+                confirm = 2;
+            }
+
             remote_code_prev = remote_code;
+            btn_code_prev = btn_code;
 
             if (confirm == 2)
                 break;
@@ -81,11 +100,13 @@ void setup_rc()
             usleep(WAITLOOP_SLEEP_US);
         }
     }
+    write_userdata(RC_CONFIG_SLOT);
 }
 
 void parse_control()
 {
     int i;
+    alt_u32 btn_vec;
 
     if (remote_code)
         printf("RCODE: 0x%.4lx, %d\n", remote_code, remote_rpt);
@@ -135,6 +156,33 @@ void parse_control()
         case RC_SL_MINUS: tc.sl_str = tc.sl_str ? (tc.sl_str - 1) : 0; break;
         case RC_SL_PLUS: tc.sl_str = (tc.sl_str < SCANLINESTR_MAX) ? (tc.sl_str + 1) : SCANLINESTR_MAX; break;
         case RC_LM_MODE: tc.linemult_target = (tc.linemult_target < LM_MODE_MAX) ? (tc.linemult_target + 1) : 0; break;
+        case RC_PHASE_PLUS: tc.sampler_phase = (tc.sampler_phase < SAMPLER_PHASE_MAX) ? (tc.sampler_phase + 1) : SAMPLER_PHASE_MAX; break;
+        case RC_PHASE_MINUS: tc.sampler_phase = tc.sampler_phase ? (tc.sampler_phase - 1) : 0; break;
+        case RC_PROF_HOTKEY:
+            strncpy(menu_row1, "Profile load:", LCD_ROW_LEN+1);
+            strncpy(menu_row2, "press 0-9", LCD_ROW_LEN+1);
+            lcd_write_menu();
+
+            while (1) {
+                btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+                for (i = RC_BTN1; i < REMOTE_MAX_KEYS; i++) {
+                    if (btn_vec == rc_keymap[i])
+                        break;
+                }
+
+                if (i <= RC_BTN0) {
+                    profile_sel = (i+1)%10;
+                    load_profile_disp(OPT_SELECT);
+                    break;
+                } else if (i == rc_keymap[RC_BACK]) {
+                    break;
+                }
+
+                usleep(WAITLOOP_SLEEP_US);
+            }
+            lcd_write_status();
+            menu_active = 0;
+            break;
         default: break;
     }
 

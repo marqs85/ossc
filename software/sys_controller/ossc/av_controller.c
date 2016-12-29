@@ -56,18 +56,18 @@ avmode_t cm;
 extern mode_data_t video_modes[];
 extern ypbpr_to_rgb_csc_t csc_coeffs[];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern alt_u16 rc_keymap_default[REMOTE_MAX_KEYS];
 extern alt_u32 remote_code;
 extern alt_u32 btn_code, btn_code_prev;
 extern alt_u8 remote_rpt, remote_rpt_prev;
 extern avconfig_t tc;
-extern alt_u8 video_mode_cnt;
 
 alt_u8 target_typemask;
 alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit;
+alt_u8 vm_sel, vm_edit, profile_sel;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_active, tc_v_active, tc_h_bporch, tc_v_bporch;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -100,7 +100,7 @@ inline void SetupAudio(tx_mode_t mode)
             pclk_out *= 3;
 
         printf("PCLK_out: %luHz\n", pclk_out);
-        EnableAudioOutput4OSSC(pclk_out,tc.audio_ext_mclk,tc.audio_dw_sampl,tc.audio_swap_lr);
+        EnableAudioOutput4OSSC(pclk_out, tc.audio_dw_sampl, tc.audio_swap_lr);
         HDMITX_SetAudioInfoFrame((BYTE)tc.audio_dw_sampl);
 #ifdef DEBUG
         Switch_HDMITX_Bank(1);
@@ -327,13 +327,12 @@ status_t get_status(tvp_input_t input, video_format format)
 
 #ifdef DIY_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
-        (tc.audio_swap_lr != cm.cc.audio_swap_lr) ||
 #ifdef MANUAL_CTS
         (tc.edtv_l2x != cm.cc.edtv_l2x) ||
         (tc.interlace_pt != cm.cc.interlace_pt) ||
         update_cur_vm ||
 #endif
-        (tc.audio_ext_mclk != cm.cc.audio_ext_mclk))
+        (tc.audio_swap_lr != cm.cc.audio_swap_lr))
         SetupAudio(tc.tx_mode);
 #endif
 
@@ -447,13 +446,59 @@ void program_mode()
 #endif
 }
 
+void load_profile_disp(alt_u8 code) {
+    int retval;
+
+    switch ((menucode_id)code) {
+        case VAL_MINUS:
+            profile_sel = (profile_sel > 0) ? profile_sel-1 : profile_sel;
+            break;
+        case VAL_PLUS:
+            profile_sel = (profile_sel < MAX_PROFILE) ? profile_sel+1 : profile_sel;
+            break;
+        case OPT_SELECT:
+            retval = read_userdata(profile_sel);
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Loaded" : "Load failed");
+            lcd_write_menu();
+            usleep(500000);
+            break;
+        case NO_ACTION:
+        default:
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "Slot %u", profile_sel);
+            break;
+    }
+}
+
+void save_profile_disp(alt_u8 code) {
+    int retval;
+
+    switch ((menucode_id)code) {
+        case VAL_MINUS:
+            profile_sel = (profile_sel > 0) ? profile_sel-1 : profile_sel;
+            break;
+        case VAL_PLUS:
+            profile_sel = (profile_sel < MAX_PROFILE) ? profile_sel+1 : profile_sel;
+            break;
+        case OPT_SELECT:
+            retval = write_userdata(profile_sel);
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Saved" : "Save failed");
+            lcd_write_menu();
+            usleep(500000);
+            break;
+        case NO_ACTION:
+        default:
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "Slot %u", profile_sel);
+            break;
+    }
+}
+
 void vm_display(alt_u8 code) {
     switch ((menucode_id)code) {
         case VAL_MINUS:
             vm_sel = (vm_sel > 0) ? vm_sel-1 : vm_sel;
             break;
         case VAL_PLUS:
-            vm_sel = (vm_sel < video_mode_cnt-1) ? vm_sel+1 : vm_sel;
+            vm_sel = (vm_sel < VIDEO_MODES_CNT-1) ? vm_sel+1 : vm_sel;
             break;
         case OPT_SELECT:
             vm_edit = vm_sel;
@@ -550,11 +595,15 @@ int init_hw()
 
     set_default_avconfig();
 
-    // safe?
-    read_userdata();
+    // Load default profile
+    read_userdata(0);
 
+    // Load / setup remote keymap
+    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
+    else
+        read_userdata(RC_CONFIG_SLOT);
 
     // init always in HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI);

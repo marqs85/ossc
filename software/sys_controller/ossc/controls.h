@@ -52,9 +52,12 @@ typedef enum {
     RC_SL_PLUS,
     RC_SL_MINUS,
     RC_LM_MODE,
+    RC_PHASE_PLUS,
+    RC_PHASE_MINUS,
+    RC_PROF_HOTKEY,
 } rc_code_t;
 
-#define REMOTE_MAX_KEYS RC_LM_MODE-RC_BTN1+1
+#define REMOTE_MAX_KEYS (RC_PROF_HOTKEY-RC_BTN1+1)
 
 void setup_rc();
 void parse_control();

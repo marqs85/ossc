@@ -122,7 +122,6 @@ MENU(menu_postproc, P99_PROTECT({ \
 MENU(menu_audio, P99_PROTECT({ \
     { "Down-sampling",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_dw_sampl, OPT_WRAP, SETTING_ITEM(audio_dw_sampl_desc) } } },
     { "Swap left/right",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_swap_lr,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { "Use ext. MCLK",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_ext_mclk, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 #define AUDIO_MENU { "Audio options  >",                       OPT_SUBMENU,            { .sub = { &menu_audio, NULL } } },
 #else
@@ -137,9 +136,10 @@ MENU(menu_main, P99_PROTECT({ \
     { LNG("Output opt.    >","ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >"),  OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
     { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),     OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
     AUDIO_MENU
-    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟ  >"),  OPT_FUNC_CALL,          { .fun = { fw_update, LNG("OK - pls restart","OK - ｻｲｷﾄﾞｳｼﾃｸﾀﾞｻｲ"), LNG("failed","ｼｯﾊﾟｲ") } } },
+    { "<Load profile >",                       OPT_SUBMENU,            { .sub = { NULL, load_profile_disp } } },
+    { LNG("<Save profile >","<ｾｯﾃｲｵﾎｿﾞﾝ    >"),    OPT_SUBMENU,            { .sub = { NULL, save_profile_disp } } },
     { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),   OPT_FUNC_CALL,          { .fun = { set_default_avconfig, LNG("Reset done","ｼｮｷｶｽﾐ"), "" } } },
-    { LNG("<Save settings >","<ｾｯﾃｲｵﾎｿﾞﾝ    >"),   OPT_FUNC_CALL,          { .fun = { write_userdata, LNG("Saved","ﾎｿﾞﾝｽﾐ"), LNG("failed","ｼｯﾊﾟｲ") } } },
+    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟ  >"),  OPT_FUNC_CALL,          { .fun = { fw_update, LNG("OK - pls restart","OK - ｻｲｷﾄﾞｳｼﾃｸﾀﾞｻｲ"), LNG("failed","ｼｯﾊﾟｲ") } } },
 }))
 
 // Max 3 levels currently
@@ -187,12 +187,14 @@ void display_menu(alt_u8 forcedisp)
     case OPT_SELECT:
         switch (navi[navlvl].m->items[navi[navlvl].mp].type) {
             case OPT_SUBMENU:
-                if (navi[navlvl+1].m != navi[navlvl].m->items[navi[navlvl].mp].sub.menu)
-                    navi[navlvl+1].mp = 0;
-                navi[navlvl+1].m = navi[navlvl].m->items[navi[navlvl].mp].sub.menu;
                 if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f)
                     navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f(code);
-                navlvl++;
+                if (navi[navlvl].m->items[navi[navlvl].mp].sub.menu) {
+                    if (navi[navlvl+1].m != navi[navlvl].m->items[navi[navlvl].mp].sub.menu)
+                        navi[navlvl+1].mp = 0;
+                    navi[navlvl+1].m = navi[navlvl].m->items[navi[navlvl].mp].sub.menu;
+                    navlvl++;
+                }
                 break;
             case OPT_FUNC_CALL:
                 retval = navi[navlvl].m->items[navi[navlvl].mp].fun.f();

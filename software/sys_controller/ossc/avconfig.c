@@ -33,8 +33,7 @@
 #define DEFAULT_FINE_GAIN       26
 #define DEFAULT_FINE_OFFSET     0x80
 
-extern mode_data_t video_modes[], video_modes_def[];
-extern alt_u8 video_mode_cnt;
+extern mode_data_t video_modes[], video_modes_default[];
 extern alt_u8 update_cur_vm;
 
 // Target configuration
@@ -70,7 +69,7 @@ int set_default_avconfig()
     tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
 #endif
 
-    memcpy(video_modes, video_modes_def, video_mode_cnt*sizeof(mode_data_t));
+    memcpy(video_modes, video_modes_default, VIDEO_MODES_SIZE);
     update_cur_vm = 1;
 
     return 0;

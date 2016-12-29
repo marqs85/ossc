@@ -60,7 +60,6 @@ typedef struct {
 #ifdef DIY_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
-    alt_u8 audio_ext_mclk;
 #endif
     alt_u8 edtv_l2x;
     alt_u8 interlace_pt;

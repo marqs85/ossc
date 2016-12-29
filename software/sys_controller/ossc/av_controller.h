@@ -81,5 +81,7 @@ inline void lcd_write_status();
 
 void vm_display(alt_u8 code);
 void vm_tweak(alt_u16 v);
+void load_profile_disp(alt_u8 code);
+void save_profile_disp(alt_u8 code);
 
 #endif

@@ -27,9 +27,10 @@
 // EPCS16 pagesize is 256 bytes
 // Flash is split 50-50 to FW and userdata, 1MB each
 #define PAGESIZE 256
-#define PAGES_PER_SECTOR 256
+#define PAGES_PER_SECTOR 256        //EPCS "sector" corresponds to "block" on Spansion flash
+#define SECTORSIZE (PAGESIZE*PAGES_PER_SECTOR)
 #define USERDATA_OFFSET 0x100000
-#define USERDATA_MAX_SIZE 0x1000    //4KB should be enough
+#define MAX_USERDATA_ENTRY 15    // 16 sectors for userdata
 
 int check_flash();
 

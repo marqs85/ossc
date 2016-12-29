@@ -22,27 +22,41 @@
 
 #include "alt_types.h"
 #include "sysconfig.h"
+#include "controls.h"
+#include "avconfig.h"
+#include "video_modes.h"
+#include "flash.h"
 
-#define USERDATA_HDR_SIZE 11
+#define MAX_PROFILE 9
+#define RC_CONFIG_SLOT MAX_USERDATA_ENTRY
+
+typedef enum {
+    UDE_REMOTE_MAP  = 0,
+    UDE_PROFILE,
+} ude_type;
+
 typedef struct {
     char userdata_key[8];
     alt_u8 version_major;
     alt_u8 version_minor;
-    alt_u8 num_entries;
-} userdata_hdr;
+    ude_type type;
+} __attribute__((packed, __may_alias__)) ude_hdr;
 
-#define USERDATA_ENTRY_HDR_SIZE 2
 typedef struct {
-    alt_u8 type;
-    alt_u8 entry_len;
-} userdata_entry;
+    ude_hdr hdr;
+    alt_u16 data_len;
+    alt_u16 keys[REMOTE_MAX_KEYS];
+} __attribute__((packed, __may_alias__)) ude_remote_map;
 
-typedef enum {
-    UDE_REMOTE_MAP  = 0,
-    UDE_AVCONFIG,
-} userdata_entry_type;
+typedef struct {
+    ude_hdr hdr;
+    alt_u16 avc_data_len;
+    alt_u16 vm_data_len;
+    avconfig_t avc;
+    mode_data_t vm[VIDEO_MODES_CNT];
+} __attribute__((packed, __may_alias__)) ude_profile;
+
+int write_userdata(alt_u8 entry);
+int read_userdata(alt_u8 entry);
 
 #endif
-
-int write_userdata();
-int read_userdata();
