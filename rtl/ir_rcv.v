@@ -49,8 +49,6 @@ reg [17:0] leadvrf_cnt;     // max. 9.7ms
 reg [17:0] datarcv_cnt;     // max. 9.7ms
 reg [21:0] rpt_cnt;         // max. 155ms
 
-reg ir_rx_r;
-
 // activity when signal is low
 always @(posedge clk27 or negedge reset_n)
 begin
@@ -58,7 +56,7 @@ begin
         act_cnt <= 0;
     else
         begin
-            if ((state == `STATE_IDLE) & (~ir_rx_r))
+            if ((state == `STATE_IDLE) & (~ir_rx))
                 act_cnt <= act_cnt + 1'b1;
             else
                 act_cnt <= 0;
@@ -72,7 +70,7 @@ begin
         leadvrf_cnt <= 0;
     else
         begin
-            if ((state == `STATE_LEADVERIFY) & ir_rx_r)
+            if ((state == `STATE_LEADVERIFY) & ir_rx)
                 leadvrf_cnt <= leadvrf_cnt + 1'b1;
             else
                 leadvrf_cnt <= 0;
@@ -93,7 +91,7 @@ begin
         begin
             if (state == `STATE_DATARCV)
                 begin
-                    if (ir_rx_r)
+                    if (ir_rx)
                         datarcv_cnt <= datarcv_cnt + 1'b1;
                     else
                         datarcv_cnt <= 0;
@@ -145,17 +143,15 @@ begin
             state <= `STATE_IDLE;
             rpt_cnt <= 0;
             ir_code_cnt <= 0;
-            ir_rx_r <= 0;
         end
     else
         begin
             rpt_cnt <= rpt_cnt + 1'b1;
-            ir_rx_r <= ir_rx;
         
             case (state)
                 `STATE_IDLE:
                     begin
-                        if ((act_cnt >= LEADCODE_LO_THOLD) & ir_rx_r)
+                        if ((act_cnt >= LEADCODE_LO_THOLD) & ir_rx)
                             state <= `STATE_LEADVERIFY;
                         if (rpt_cnt >= RPT_RELEASE_THOLD)
                             ir_code_cnt <= 0;
@@ -165,10 +161,10 @@ begin
                         if (leadvrf_cnt == LEADCODE_HI_RPT_THOLD)
                             begin
                                 if (ir_code != 0)
-                                    ir_code_cnt <= ir_code_cnt + 1;
+                                    ir_code_cnt <= ir_code_cnt + 1'b1;
                                 rpt_cnt <= 0;
                             end
-                        if (!ir_rx_r)
+                        if (!ir_rx)
                             state <= (leadvrf_cnt >= LEADCODE_HI_THOLD) ? `STATE_DATARCV : `STATE_IDLE;
                         else if (leadvrf_cnt >= LEADCODE_HI_TIMEOUT)
                             state <= `STATE_IDLE;

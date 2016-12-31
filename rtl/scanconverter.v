@@ -341,7 +341,7 @@ pll_3x_lowfreq pll_linetriple_lowfreq (
 
 //TODO: add secondary buffers for interlaced signals with alternative field order
 linebuf linebuf_rgb (
-    .data ( {R_1x, G_1x, B_1x} ), //or *_in?
+    .data ( {R_1x, G_1x, B_1x} ),
     .rdaddress ( linebuf_hoffset + (~line_idx << 11) ),
     .rdclock ( linebuf_rdclock ),
     .wraddress ( hcnt_1x + (line_idx << 11) ),
@@ -469,7 +469,7 @@ begin
                     line_idx <= line_idx ^ 1'b1;
                     vcnt_1x <= vcnt_1x + 1'b1;
                     vcnt_1x_tvp <= vcnt_1x_tvp + 1'b1;
-                    FID_1x <= fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] ? 0 : (fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] ? (vcnt_1x > (V_BACKPORCH + V_ACTIVE)) : FID_in);
+                    FID_1x <= fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] ? 1'b0 : (fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] ? (vcnt_1x > (V_BACKPORCH + V_ACTIVE)) : FID_in);
                 end
             else
                 begin

@@ -81,12 +81,12 @@ begin
         begin
             //Hsync counter
             if (h_cnt < H_TOTAL-1 )
-                h_cnt <= h_cnt + 1;
+                h_cnt <= h_cnt + 1'b1;
             else
                 h_cnt <= 0;
             
             //Hsync signal
-            HSYNC_out <= (h_cnt < H_SYNCLEN) ? 0 : 1;
+            HSYNC_out <= (h_cnt < H_SYNCLEN) ? 1'b0 : 1'b1;
         end
 end
 
@@ -104,12 +104,12 @@ begin
                 begin
                     //Vsync counter
                     if (v_cnt < V_TOTAL-1 )
-                        v_cnt <= v_cnt + 1;
+                        v_cnt <= v_cnt + 1'b1;
                     else
                         v_cnt <= 0;
                     
                     //Vsync signal
-                    VSYNC_out <= (v_cnt < V_SYNCLEN) ? 0 : 1;
+                    VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
                 end
         end
 end
@@ -139,7 +139,7 @@ always @(posedge clk27 or negedge reset_n)
 begin
     if (!reset_n)
         begin
-            ENABLE_out <= 8'h00;
+            ENABLE_out <= 1'b0;
         end
     else
         begin

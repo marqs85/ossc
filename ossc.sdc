@@ -2,8 +2,10 @@
 
 create_clock -period 27MHz -name clk27 [get_ports clk27]
 
-set_input_delay -clock clk27 0 [get_ports {sda scl ir_rx HDMI_TX_INT_N SD_CMD SD_DAT* btn* *ALTERA_DATA0}]
+set_input_delay -clock clk27 0 [get_ports {sda scl SD_CMD SD_DAT* *ALTERA_DATA0}]
+set_false_path -from [get_ports {btn* ir_rx HDMI_TX_INT_N HDMI_TX_MODE}]
 set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
+
 
 ### Scanconverter clock constraints ###
 
@@ -27,7 +29,7 @@ create_generated_clock -master_clock pclk_ldtv_M3 -source {scanconverter_inst|pl
 derive_clock_uncertainty
 
 # input delay constraints
-set critinputs [get_ports {R_in* G_in* B_in* FID_in HSYNC_in VSYNC_in}]
+set critinputs [get_ports {R_in* G_in* B_in* HSYNC_in VSYNC_in FID_in}]
 set_input_delay -clock pclk_sdtv -min 0 $critinputs
 set_input_delay -clock pclk_sdtv -max 1.5 $critinputs
 set_input_delay -clock pclk_hdtv -min 0 $critinputs -add_delay

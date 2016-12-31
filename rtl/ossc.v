@@ -18,7 +18,6 @@
 //
 
 //`define DEBUG
-//`define INPUTLATCH
 `define VIDEOGEN
 
 module ossc (
@@ -54,7 +53,6 @@ module ossc (
     inout [3:0] SD_DAT
 );
 
-wire cpu_reset_n;
 wire [7:0] sys_ctrl;
 wire h_unstable;
 wire [2:0] pclk_lock;
@@ -79,27 +77,84 @@ wire VSYNC_out_videogen;
 wire PCLK_out_videogen;
 wire DATA_enable_videogen;
 
-reg [3:0] reset_n_ctr;
-reg reset_n_reg = 1'b1;
 
-`ifdef INPUTLATCH
-reg HSYNC_in_l, VSYNC_in_l, FID_in_l;
-reg [7:0] R_in_l, G_in_l, B_in_l;
+reg [3:0] cpu_reset_ctr;
+reg cpu_reset_n = 1'b1;
 
-always @(posedge PCLK_in)
+reg [7:0] R_in_L, G_in_L, B_in_L;
+reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
+
+reg [1:0] btn_L, btn_LL;
+reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL, HDMI_TX_MODE_L, HDMI_TX_MODE_LL;
+
+// Latch inputs from TVP7002 (synchronized to PCLK_in)
+always @(posedge PCLK_in or negedge reset_n)
 begin
-    HSYNC_in_l <= HSYNC_in;
-    VSYNC_in_l <= VSYNC_in;
-    FID_in_l <= FID_in;
-    R_in_l <= R_in;
-    G_in_l <= G_in;
-    B_in_l <= B_in;
+    if (!reset_n)
+        begin
+            R_in_L <= 8'h00;
+            G_in_L <= 8'h00;
+            B_in_L <= 8'h00;
+            HSYNC_in_L <= 1'b0;
+            VSYNC_in_L <= 1'b0;
+            FID_in_L <= 1'b0;
+        end
+    else
+        begin
+            R_in_L <= R_in;
+            G_in_L <= G_in;
+            B_in_L <= B_in;
+            HSYNC_in_L <= HSYNC_in;
+            VSYNC_in_L <= VSYNC_in;
+            FID_in_L <= FID_in;
+        end
 end
-`endif
+
+// Insert synchronizers to async inputs (synchronize to CPU clock)
+always @(posedge clk27 or negedge cpu_reset_n)
+begin
+    if (!cpu_reset_n)
+        begin
+            btn_L <= 2'b00;
+            btn_LL <= 2'b00;
+            ir_rx_L <= 1'b0;
+            ir_rx_LL <= 1'b0;
+            HDMI_TX_INT_N_L <= 1'b0;
+            HDMI_TX_INT_N_LL <= 1'b0;
+            HDMI_TX_MODE_L <= 1'b0;
+            HDMI_TX_MODE_LL <= 1'b0;
+        end
+    else
+        begin
+            btn_L <= btn;
+            btn_LL <= btn_L;
+            ir_rx_L <= ir_rx;
+            ir_rx_LL <= ir_rx_L;
+            HDMI_TX_INT_N_L <= HDMI_TX_INT_N;
+            HDMI_TX_INT_N_LL <= HDMI_TX_INT_N_L;
+            HDMI_TX_MODE_L <= HDMI_TX_MODE;
+            HDMI_TX_MODE_LL <= HDMI_TX_MODE_L;
+        end
+end
+
+// CPU reset pulse generation (is this really necessary?)
+always @(posedge clk27)
+begin
+    if (cpu_reset_ctr == 4'b1000)
+        cpu_reset_n <= 1'b1;
+    else
+        begin
+            cpu_reset_ctr <= cpu_reset_ctr + 1'b1;
+            cpu_reset_n <= 1'b0;
+        end
+end
+
+assign reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
+
 
 `ifdef DEBUG
-assign LED_R = HSYNC_in;
-assign LED_G = VSYNC_in;
+assign LED_R = HSYNC_in_L;
+assign LED_G = VSYNC_in_L;
 `else
 assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 3'b000)|h_unstable);
 assign LED_G = (ir_code == 0);
@@ -109,8 +164,6 @@ assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
 assign LCD_CS_N = sys_ctrl[6];
 assign LCD_RS = sys_ctrl[5];
 assign LCD_BL = sys_ctrl[4];    //reset_n in v1.2 PCB
-
-assign reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 
 `ifdef VIDEOGEN
 wire videogen_sel;
@@ -132,19 +185,6 @@ assign HDMI_TX_PCLK = PCLK_out;
 assign HDMI_TX_DE = DATA_enable;
 `endif
 
-always @(posedge clk27)
-begin
-    if (reset_n_ctr == 4'b1000)
-        reset_n_reg <= 1'b1;
-    else
-        begin
-            reset_n_ctr <= reset_n_ctr + 1'b1;
-            reset_n_reg <= 1'b0;
-        end
-end
-
-assign cpu_reset_n = reset_n_reg;
-
 sys sys_inst(
     .clk_clk                                (clk27),
     .reset_reset_n                          (cpu_reset_n),
@@ -155,7 +195,7 @@ sys sys_inst(
     .i2c_opencores_1_export_sda_pad_io      (SD_CMD),
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
-    .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE, btn, ir_code}),
+    .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
     .pio_2_horizontal_info_out_export       (h_info),
     .pio_3_vertical_info_out_export         (v_info),
     .pio_4_linecount_in_export              ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out})
@@ -164,21 +204,12 @@ sys sys_inst(
 scanconverter scanconverter_inst (
     .reset_n        (reset_n),
     .PCLK_in        (PCLK_in),
-`ifdef INPUTLATCH
-    .HSYNC_in       (HSYNC_in_l),
-    .VSYNC_in       (VSYNC_in_l),
-    .FID_in         (FID_in_l),
-    .R_in           (R_in_l),
-    .G_in           (G_in_l),
-    .B_in           (B_in_l),
-`else
-    .HSYNC_in       (HSYNC_in),
-    .VSYNC_in       (VSYNC_in),
-    .FID_in         (FID_in),
-    .R_in           (R_in),
-    .G_in           (G_in),
-    .B_in           (B_in),
-`endif
+    .HSYNC_in       (HSYNC_in_L),
+    .VSYNC_in       (VSYNC_in_L),
+    .FID_in         (FID_in_L),
+    .R_in           (R_in_L),
+    .G_in           (G_in_L),
+    .B_in           (B_in_L),
     .h_info         (h_info),
     .v_info         (v_info),
     .R_out          (R_out),
@@ -197,8 +228,8 @@ scanconverter scanconverter_inst (
 
 ir_rcv ir0 (
     .clk27          (clk27),
-    .reset_n        (reset_n_reg),
-    .ir_rx          (ir_rx),
+    .reset_n        (cpu_reset_n),
+    .ir_rx          (ir_rx_LL),
     .ir_code        (ir_code),
     .ir_code_ack    (),
     .ir_code_cnt    (ir_code_cnt)
@@ -207,7 +238,7 @@ ir_rcv ir0 (
 `ifdef VIDEOGEN
 videogen vg0 (
     .clk27          (clk27),
-    .reset_n        (reset_n_reg & videogen_sel),
+    .reset_n        (cpu_reset_n & videogen_sel),
     .R_out          (R_out_videogen),
     .G_out          (G_out_videogen),
     .B_out          (B_out_videogen),
