@@ -100,7 +100,7 @@ void setup_rc()
             usleep(WAITLOOP_SLEEP_US);
         }
     }
-    write_userdata(RC_CONFIG_SLOT);
+    write_userdata(INIT_CONFIG_SLOT);
 }
 
 void parse_control()

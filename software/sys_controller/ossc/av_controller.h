@@ -33,7 +33,7 @@
 #define VIDGEN_OFF  (1<<1)
 #define AV_RESET_N  (1<<0)
 
-static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr" };
+static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
 
 typedef enum {
     AV_KEEP         = 0,
@@ -45,7 +45,8 @@ typedef enum {
     AV3_RGBHV       = 6,
     AV3_RGBs        = 7,
     AV3_RGsB        = 8,
-    AV3_YPBPR       = 9
+    AV3_YPBPR       = 9,
+    AV_LAST         = 10
 } avinput_t;
 
 // In reverse order of importance

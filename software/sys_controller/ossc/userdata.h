@@ -23,15 +23,16 @@
 #include "alt_types.h"
 #include "sysconfig.h"
 #include "controls.h"
+#include "av_controller.h"
 #include "avconfig.h"
 #include "video_modes.h"
 #include "flash.h"
 
 #define MAX_PROFILE 9
-#define RC_CONFIG_SLOT MAX_USERDATA_ENTRY
+#define INIT_CONFIG_SLOT MAX_USERDATA_ENTRY
 
 typedef enum {
-    UDE_REMOTE_MAP  = 0,
+    UDE_INITCFG  = 0,
     UDE_PROFILE,
 } ude_type;
 
@@ -45,8 +46,10 @@ typedef struct {
 typedef struct {
     ude_hdr hdr;
     alt_u16 data_len;
+    alt_u8 last_profile;
+    avinput_t last_input;
     alt_u16 keys[REMOTE_MAX_KEYS];
-} __attribute__((packed, __may_alias__)) ude_remote_map;
+} __attribute__((packed, __may_alias__)) ude_initcfg;
 
 typedef struct {
     ude_hdr hdr;

@@ -25,9 +25,12 @@
 #include "av_controller.h"
 
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern avmode_t cm;
 extern avconfig_t tc;
 extern mode_data_t video_modes[];
+extern avinput_t target_mode;
 extern alt_u8 update_cur_vm;
+extern alt_u8 profile_sel;
 
 int write_userdata(alt_u8 entry)
 {
@@ -45,16 +48,19 @@ int write_userdata(alt_u8 entry)
     strncpy(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8);
     ((ude_hdr*)databuf)->version_major = FW_VER_MAJOR;
     ((ude_hdr*)databuf)->version_minor = FW_VER_MINOR;
-    ((ude_hdr*)databuf)->type = (entry > MAX_PROFILE) ? UDE_REMOTE_MAP : UDE_PROFILE;
+    ((ude_hdr*)databuf)->type = (entry > MAX_PROFILE) ? UDE_INITCFG : UDE_PROFILE;
 
     switch (((ude_hdr*)databuf)->type) {
-    case UDE_REMOTE_MAP:
-        ((ude_remote_map*)databuf)->data_len = sizeof(rc_keymap);
-        memcpy(((ude_remote_map*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
-        retval = write_flash_page(databuf, sizeof(ude_remote_map), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
-        if (retval != 0) {
+    case UDE_INITCFG:
+        ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
+        ((ude_initcfg*)databuf)->last_profile = profile_sel;
+        ((ude_initcfg*)databuf)->last_input = cm.avinput;
+        memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
+        retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
+        if (retval != 0)
             return -1;
-        }
+
+        printf("Initconfig data written (%u bytes)\n", sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile));
         break;
     case UDE_PROFILE:
         vm_to_write = VIDEO_MODES_SIZE;
@@ -125,9 +131,13 @@ int read_userdata(alt_u8 entry)
     }
 
     switch (((ude_hdr*)databuf)->type) {
-    case UDE_REMOTE_MAP:
-        if (((ude_remote_map*)databuf)->data_len == sizeof(rc_keymap)) {
-            memcpy(rc_keymap, ((ude_remote_map*)databuf)->keys, sizeof(rc_keymap));
+    case UDE_INITCFG:
+        if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
+            if (((ude_initcfg*)databuf)->last_profile <= MAX_PROFILE)
+                profile_sel = ((ude_initcfg*)databuf)->last_profile;
+            if (((ude_initcfg*)databuf)->last_input < AV_LAST)
+                target_mode = ((ude_initcfg*)databuf)->last_input;
+            memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }
         break;

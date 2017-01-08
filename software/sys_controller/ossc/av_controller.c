@@ -460,6 +460,8 @@ void load_profile_disp(alt_u8 code) {
             retval = read_userdata(profile_sel);
             sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Loaded" : "Load failed");
             lcd_write_menu();
+            if (retval == 0)
+                write_userdata(INIT_CONFIG_SLOT);
             usleep(500000);
             break;
         case NO_ACTION:
@@ -483,6 +485,8 @@ void save_profile_disp(alt_u8 code) {
             retval = write_userdata(profile_sel);
             sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Saved" : "Save failed");
             lcd_write_menu();
+            if (retval == 0)
+                write_userdata(INIT_CONFIG_SLOT);
             usleep(500000);
             break;
         case NO_ACTION:
@@ -593,17 +597,17 @@ int init_hw()
         return -1;
     }
 
+    // Set defaults
     set_default_avconfig();
-
-    // Load default profile
-    read_userdata(0);
-
-    // Load / setup remote keymap
     memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
+
+    // Load initconfig and profile
+    read_userdata(INIT_CONFIG_SLOT);
+    read_userdata(profile_sel);
+
+    // Setup remote keymap
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
-    else
-        read_userdata(RC_CONFIG_SLOT);
 
     // init always in HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI);
@@ -643,11 +647,12 @@ int main()
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
-        strncpy(row2, "2014-2016  marqs", LCD_ROW_LEN+1);
+        strncpy(row2, "2014-2017  marqs", LCD_ROW_LEN+1);
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif
         lcd_write_status();
+        usleep(500000);
     } else {
         sniprintf(row1, LCD_ROW_LEN+1, "Init error  %d", init_stat);
         strncpy(row2, "", LCD_ROW_LEN+1);
@@ -655,7 +660,8 @@ int main()
         while (1) {}
     }
 
-    target_mode = tc.def_input;
+    if (tc.def_input < AV_LAST)
+        target_mode = tc.def_input;
 
     // Mainloop
     while(1) {
@@ -737,7 +743,6 @@ int main()
 
         if (target_mode != AV_KEEP) {
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_mode]);
-            av_init = 1;
             cm.avinput = target_mode;
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
@@ -751,6 +756,9 @@ int main()
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
             if (!menu_active)
                 lcd_write_status();
+            if (av_init && (tc.def_input == AV_LAST))
+                write_userdata(INIT_CONFIG_SLOT);
+            av_init = 1;
         }
 
         // Check here to enable regardless of av_init
