@@ -163,7 +163,7 @@ void tvp_init()
     tvp_sel_csc(&csc_coeffs[0]);
 
     // Set default phase
-    tvp_set_hpll_phase(0x10);
+    tvp_set_hpll_phase(0x10, 1);
 
     // Set min LPF
     tvp_set_lpf(0);
@@ -298,11 +298,17 @@ void tvp_set_sync_lpf(alt_u8 val)
     printf("Sync LPF value set to 0x%x\n", (3-val));
 }
 
-void tvp_set_hpll_phase(alt_u8 val)
+alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult)
 {
+    alt_u8 sample_sel;
     alt_u8 status = tvp_readreg(TVP_HPLLPHASE) & 0x07;
+
+    sample_sel = (val*sample_mult)/32;
+    val = val*sample_mult % 32;
     tvp_writereg(TVP_HPLLPHASE, (val<<3)|status);
-    printf("Phase value set to 0x%x\n", val);
+    printf("Phase selection: %u/%u (FPGA), %u/32 (TVP)\n", sample_sel+1, sample_mult, val+1);
+
+    return sample_sel;
 }
 
 void tvp_set_sog_thold(alt_u8 val)
@@ -337,7 +343,7 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
     }
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold, alt_u8 sample_mult)
 {
     // Clamp position and ALC
     tvp_set_clamp_position(type, h_syncinlen);
@@ -367,7 +373,7 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
     tvp_set_hpllcoast(pre_coast, post_coast);
 
     // Hsync output width
-    tvp_writereg(TVP_HSOUTWIDTH, video_modes[modeid].h_synclen);
+    tvp_writereg(TVP_HSOUTWIDTH, sample_mult*video_modes[modeid].h_synclen);
 }
 
 void tvp_source_sel(tvp_input_t input, video_format fmt)

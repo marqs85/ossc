@@ -35,7 +35,6 @@
 
 #define SL_MODE_MAX         2
 #define SL_TYPE_MAX         2
-#define LM_MODE_MAX         1
 
 typedef struct {
     alt_u8 sl_mode;
@@ -44,6 +43,13 @@ typedef struct {
     alt_u8 sl_id;
     alt_u8 linemult_target;
     alt_u8 l3_mode;
+    alt_u8 l4_mode;
+    alt_u8 l5_mode;
+    alt_u8 pm_240p;
+    alt_u8 pm_384p;
+    alt_u8 pm_480i;
+    alt_u8 pm_480p;
+    alt_u8 l3m3_hmult;
     alt_u8 h_mask;
     alt_u8 v_mask;
     alt_u8 tx_mode;
@@ -61,8 +67,6 @@ typedef struct {
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
 #endif
-    alt_u8 edtv_l2x;
-    alt_u8 interlace_pt;
     alt_u8 def_input;
     color_setup_t col;
 } __attribute__((packed)) avconfig_t;

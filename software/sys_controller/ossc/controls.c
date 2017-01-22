@@ -155,7 +155,7 @@ void parse_control()
         case RC_SL_TYPE: tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0; break;
         case RC_SL_MINUS: tc.sl_str = tc.sl_str ? (tc.sl_str - 1) : 0; break;
         case RC_SL_PLUS: tc.sl_str = (tc.sl_str < SCANLINESTR_MAX) ? (tc.sl_str + 1) : SCANLINESTR_MAX; break;
-        case RC_LM_MODE: tc.linemult_target = (tc.linemult_target < LM_MODE_MAX) ? (tc.linemult_target + 1) : 0; break;
+        //case RC_LM_MODE: tc.linemult_target = (tc.linemult_target < LM_MODE_MAX) ? (tc.linemult_target + 1) : 0; break;
         case RC_PHASE_PLUS: tc.sampler_phase = (tc.sampler_phase < SAMPLER_PHASE_MAX) ? (tc.sampler_phase + 1) : 0; break;
         case RC_PHASE_MINUS: tc.sampler_phase = tc.sampler_phase ? (tc.sampler_phase - 1) : SAMPLER_PHASE_MAX; break;
         case RC_PROF_HOTKEY:

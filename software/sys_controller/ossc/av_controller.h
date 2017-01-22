@@ -23,15 +23,36 @@
 #include "avconfig.h"
 #include "sysconfig.h"
 
-#define HDMITX_MODE_MASK        0x00040000
-
-//sys_ctrl bits
+// sys_ctrl bits
 #define SD_SPI_SS_N (1<<7)
 #define LCD_CS_N    (1<<6)
 #define LCD_RS      (1<<5)
 #define LCD_BL      (1<<4)
 #define VIDGEN_OFF  (1<<1)
 #define AV_RESET_N  (1<<0)
+
+// HDMI_TX definitions
+#define HDMITX_MODE_MASK            0x00040000
+
+#define HDMITX_PIXELREP_DISABLE     0
+#define HDMITX_PIXELREP_2X          1
+#define HDMITX_PIXELREP_4X          2
+
+// FPGA macros
+#define FPGA_V_MULTMODE_1X          0
+#define FPGA_V_MULTMODE_2X          1
+#define FPGA_V_MULTMODE_3X          2
+#define FPGA_V_MULTMODE_4X          3
+#define FPGA_V_MULTMODE_5X          4
+
+#define FPGA_H_MULTMODE_FULLWIDTH   0
+#define FPGA_H_MULTMODE_ASPECTFIX   1
+#define FPGA_H_MULTMODE_OPTIMIZED   2
+
+#define FPGA_SCANLINEMODE_OFF       0
+#define FPGA_SCANLINEMODE_H         1
+#define FPGA_SCANLINEMODE_V         2
+#define FPGA_SCANLINEMODE_ALT       3
 
 static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
 
@@ -71,7 +92,13 @@ typedef struct {
     alt_u8 macrovis;
     alt_8 id;
     alt_u8 sync_active;
-    alt_u8 linemult;
+    alt_u8 fpga_vmultmode;
+    alt_u8 fpga_hmultmode;
+    alt_u8 hdmitx_pixelrep;
+    alt_u8 hdmitx_pixr_ifr;
+    alt_u8 sample_mult;
+    alt_u8 sample_sel;
+    mode_flags target_lm;
     avinput_t avinput;
     // Current configuration
     avconfig_t cc;

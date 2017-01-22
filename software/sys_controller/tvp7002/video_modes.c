@@ -20,43 +20,131 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "system.h"
+#include "av_controller.h"
 #include "video_modes.h"
 
 #define LINECNT_MAX_TOLERANCE   30
+
+extern avmode_t cm;
 
 const mode_data_t video_modes_default[] = VIDEO_MODES_DEF;
 mode_data_t video_modes[VIDEO_MODES_CNT];
 
 /* TODO: rewrite, check hz etc. */
-alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask, alt_u8 linemult_target, alt_u8 l3_mode, alt_u8 s480p_mode)
+alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask)
 {
     alt_8 i;
     alt_u8 num_modes = sizeof(video_modes)/sizeof(mode_data_t);
     video_type mode_type;
+    mode_flags valid_lm[] = { MODE_PT, MODE_L2, (MODE_L3_GEN_16_9<<cm.cc.l3_mode), (MODE_L4_GEN_4_3<<cm.cc.l4_mode), (MODE_L5_GEN_16_9<<cm.cc.l5_mode) };
+    mode_flags target_lm;
+    alt_u8 pt_only = 0;
 
-    // TODO: a better check
+    // one for each video_group
+    alt_u8* group_ptr[] = { &pt_only, &cm.cc.pm_240p, &cm.cc.pm_384p, &cm.cc.pm_480i, &cm.cc.pm_480p, &cm.cc.pm_480p };
+
     for (i=0; i<num_modes; i++) {
         mode_type = video_modes[i].type;
 
-        // disable particular 480p mode based on input and user preference
-        if (video_modes[i].flags & MODE_DTV480P) {
-            if (s480p_mode == 0)  // auto
+        // disable particular mode based on input and user preference
+        if (video_modes[i].group == GROUP_DTV480P) {
+            if (cm.cc.s480p_mode == 0)  // auto
                 mode_type &= ~VIDEO_PC;
-            else if (s480p_mode == 2)  // VGA 640x480
-                mode_type = 0;
-        } else if (video_modes[i].flags & MODE_VGA480P) {
-            if (s480p_mode == 0)  // auto
+            else if (cm.cc.s480p_mode == 2)  // VGA 640x480
+                continue;
+        } else if (video_modes[i].group == GROUP_VGA480P) {
+            if (cm.cc.s480p_mode == 0)  // auto
                 mode_type &= ~VIDEO_EDTV;
-            else if (s480p_mode == 1) // DTV 480P
-                mode_type = 0;
+            else if (cm.cc.s480p_mode == 1) // DTV 480P
+                continue;
+        } else if (video_modes[i].group > GROUP_VGA480P) {
+            printf("WARNING: Corrupted mode (id %d)\n", i);
+            continue;
         }
 
-        if ((typemask & mode_type) && (progressive == !(video_modes[i].flags & MODE_INTERLACED)) && (totlines <= (video_modes[i].v_total+LINECNT_MAX_TOLERANCE))) {
-            if (linemult_target && (video_modes[i].flags & MODE_L3ENABLE_MASK) && ((video_modes[i].flags & MODE_L3ENABLE_MASK) == (1<<l3_mode))) {
-                return i;
-            } else if (!(video_modes[i].flags & MODE_L3ENABLE_MASK)) {
-                return i;
+        target_lm = valid_lm[*group_ptr[video_modes[i].group]];
+
+        if ((typemask & mode_type) && (target_lm & video_modes[i].flags) && (progressive == !(video_modes[i].flags & MODE_INTERLACED)) && (totlines <= (video_modes[i].v_total+LINECNT_MAX_TOLERANCE))) {
+
+            // defaults
+            cm.hdmitx_pixelrep = HDMITX_PIXELREP_DISABLE;
+            cm.hdmitx_pixr_ifr = HDMITX_PIXELREP_2X;
+            cm.sample_mult = 1;
+            cm.target_lm = target_lm;
+
+            switch (target_lm) {
+                case MODE_PT:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_1X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
+                    cm.hdmitx_pixelrep = ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_480I)) ? HDMITX_PIXELREP_2X : HDMITX_PIXELREP_DISABLE;
+                    cm.hdmitx_pixr_ifr = cm.hdmitx_pixelrep;
+                    break;
+                case MODE_L2:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
+                    cm.hdmitx_pixelrep = ((video_modes[i].group == GROUP_DTV480P) || (video_modes[i].group == GROUP_VGA480P)) ? HDMITX_PIXELREP_2X : HDMITX_PIXELREP_DISABLE;
+                    break;
+                case MODE_L3_GEN_16_9:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
+                    break;
+                case MODE_L3_GEN_4_3:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_ASPECTFIX;
+                    break;
+                case MODE_L3_320_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 4;
+                    break;
+                case MODE_L3_256_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 5;
+                    break;
+                case MODE_L4_GEN_4_3:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
+                    break;
+                case MODE_L4_320_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 4;
+                    break;
+                case MODE_L4_256_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 5;
+                    break;
+                case MODE_L5_GEN_16_9:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
+                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                    break;
+                case MODE_L5_GEN_4_3:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_ASPECTFIX;
+                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                    break;
+                case MODE_L5_320_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                    cm.sample_mult = 3;
+                    break;
+                case MODE_L5_256_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                    cm.sample_mult = 3;
+                    break;
+                default:
+                    printf("WARNING: invalid target_lm\n");
+                    continue;
+                    break;
             }
+
+            return i;
         }
     }
 

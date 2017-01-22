@@ -41,6 +41,12 @@ avconfig_t tc;
 
 // Default configuration
 const avconfig_t tc_default = {
+    .l3_mode = 1,
+    .l5_mode = 1,
+    .pm_240p = 1,
+    .pm_384p = 1,
+    .pm_480i = 1,
+    .l3m3_hmult = 4,
     .sampler_phase = DEFAULT_SAMPLER_PHASE,
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,

@@ -192,6 +192,7 @@ status_t get_status(tvp_input_t input, video_format format)
     static alt_8 act_ctr;
     alt_u32 ctr;
     int valid_linecnt;
+    alt_u8 h_mult;
 
     status = NO_CHANGE;
 
@@ -264,10 +265,16 @@ status_t get_status(tvp_input_t input, video_format format)
                 status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
         }
 
-        if ((tc.linemult_target != cm.cc.linemult_target) || (tc.l3_mode != cm.cc.l3_mode))
+        if ((tc.pm_240p != cm.cc.pm_240p) ||
+            (tc.pm_384p != cm.cc.pm_384p) ||
+            (tc.pm_480i != cm.cc.pm_480i) ||
+            (tc.pm_480p != cm.cc.pm_480p) ||
+            (tc.l3_mode != cm.cc.l3_mode) ||
+            (tc.l4_mode != cm.cc.l4_mode) ||
+            (tc.l5_mode != cm.cc.l5_mode))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
-        if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].flags & (MODE_DTV480P|MODE_VGA480P)))
+        if ((tc.s480p_mode != cm.cc.s480p_mode) && ((video_modes[cm.id].group == GROUP_DTV480P) || (video_modes[cm.id].group == GROUP_VGA480P)))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
@@ -278,7 +285,7 @@ status_t get_status(tvp_input_t input, video_format format)
 
             tvp_writereg(TVP_HPLLDIV_LSB, ((h_samplerate & 0xf) << 4));
             tvp_writereg(TVP_HPLLDIV_MSB, (h_samplerate >> 4));
-            tvp_writereg(TVP_HSOUTWIDTH, video_modes[cm.id].h_synclen);
+            tvp_writereg(TVP_HSOUTWIDTH, cm.sample_mult*video_modes[cm.id].h_synclen);
 
             status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
         }
@@ -294,12 +301,13 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
         (tc.v_mask != cm.cc.v_mask) ||
-        (tc.edtv_l2x != cm.cc.edtv_l2x) ||
-        (tc.interlace_pt != cm.cc.interlace_pt))
+        (tc.l3m3_hmult != cm.cc.l3m3_hmult))
         status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
 
-    if (tc.sampler_phase != cm.cc.sampler_phase)
-        tvp_set_hpll_phase(tc.sampler_phase);
+    if (tc.sampler_phase != cm.cc.sampler_phase) {
+        cm.sample_sel = tvp_set_hpll_phase(tc.sampler_phase, cm.sample_mult);
+        status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
+    }
 
     if (tc.sync_vth != cm.cc.sync_vth)
         tvp_set_sog_thold(tc.sync_vth);
@@ -342,54 +350,58 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:30]           [29:28]         [27:22]      [21]  [20:10]         [9:8]  [7:0]
-//           | H_LINEMULT[1:0] | H_L3MODE[1:0] | H_MASK[5:0] |    | H_ACTIVE[10:0] |     | H_BACKPORCH[7:0] |
+// h_info:     [31:28]                [27:26]           [25:20]       [19:9]         [8]       [7:0]
+//           | H_SCANLINESTR[3:0] | H_MULTMODE[1:0] | H_MASK[5:0] | H_ACTIVE[10:0] |     | H_BACKPORCH[7:0] |
 //
-// v_info:     [31]          [30]            [29:28]        [27:24]              [23:18]       [17:7]          [6]  [5:0]
-//           | V_SCANLINES | V_SCANLINEDIR | V_SCANLINEID | V_SCANLINESTR[3:0] | V_MASK[5:0] | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
+// v_info:     [31:30]                 [29:28]     [27]   [26:24]            [23:18]       [17:7]        [6]    [5:0]
+//           | V_SCANLINEMODE[1:0] | V_SCANLINEID |    | V_MULTMODE[2:0] | V_MASK[5:0] | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
+//
+// hscale_info: [31:19]      [18:16]                [15:13]                   [12:10]                 [9:0]
+//           |          | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0]
+//
 void set_videoinfo()
 {
     alt_u8 slid_target;
     alt_u8 sl_mode_fpga;
+    alt_u8 h_opt_scale = 0;
+    alt_u16 h_opt_startoffs = 0;
 
-    if (video_modes[cm.id].flags & MODE_L3ENABLE_MASK) {
-        cm.linemult = 2;
+    if (cm.fpga_vmultmode == FPGA_V_MULTMODE_3X)
         slid_target = cm.cc.sl_id ? (cm.cc.sl_type == 1 ? 1 : 2) : 0;
-    } else if ((video_modes[cm.id].flags & MODE_L2ENABLE) || (cm.cc.edtv_l2x && (video_modes[cm.id].type & VIDEO_EDTV))) {
-        cm.linemult = 1;
+    else
         slid_target = cm.cc.sl_id;
-    } else {
-        cm.linemult = 0;
-        slid_target = cm.cc.sl_id;
-    }
 
     if (cm.cc.sl_mode == 2) {    //manual
         sl_mode_fpga = 1+cm.cc.sl_type;
     } else if (cm.cc.sl_mode == 1) {   //auto
         if (video_modes[cm.id].flags & MODE_INTERLACED)
-            sl_mode_fpga = 3;
-        else if (video_modes[cm.id].flags & (MODE_L2ENABLE|MODE_L3ENABLE_MASK))
-            sl_mode_fpga = 1;
+            sl_mode_fpga = cm.fpga_vmultmode ? FPGA_SCANLINEMODE_ALT : FPGA_SCANLINEMODE_OFF;
+        else if (cm.fpga_vmultmode)
+            sl_mode_fpga = FPGA_SCANLINEMODE_H;
         else
-            sl_mode_fpga = 0;
+            sl_mode_fpga = FPGA_SCANLINEMODE_OFF;
     } else {
-        sl_mode_fpga = 0;
+        sl_mode_fpga = FPGA_SCANLINEMODE_OFF;
     }
 
-    if ((cm.cc.interlace_pt) && (video_modes[cm.id].flags & MODE_INTERLACED)) {
-        cm.linemult = 0;
-        sl_mode_fpga = 0;
+    switch (cm.target_lm) {
+        case MODE_L3_320_COL:
+            h_opt_scale = 3;
+            break;
+        case MODE_L3_256_COL:
+            h_opt_scale = cm.cc.l3m3_hmult;
+            break;
+        default:
+            break;
     }
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.linemult<<30) | (cm.cc.l3_mode<<28) | (cm.cc.h_mask)<<22 | (video_modes[cm.id].h_active<<10) | video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (slid_target<<28) | (cm.cc.sl_str<<24) | (cm.cc.v_mask<<18) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    h_opt_startoffs = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2) + ((cm.sample_mult-h_opt_scale)*(cm.sample_mult*video_modes[cm.id].h_backporch) / cm.sample_mult);
+    h_opt_startoffs = (h_opt_startoffs/cm.sample_mult)*cm.sample_mult;
+    printf("h_opt_startoffs: %u\n", h_opt_startoffs);
 
-    if (video_modes[cm.id].type & VIDEO_EDTV)
-        HDMITX_SetPixelRepetition(cm.cc.edtv_l2x, 0);
-    else if (video_modes[cm.id].flags & MODE_INTERLACED)
-        HDMITX_SetPixelRepetition(cm.cc.interlace_pt, (cm.cc.tx_mode==TX_HDMI));
-    else
-        HDMITX_SetPixelRepetition(0, 0);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.cc.sl_str<<28) | (cm.fpga_hmultmode<<26) | (cm.cc.h_mask<<20) | ((cm.sample_mult*video_modes[cm.id].h_active)<<9) | cm.sample_mult*video_modes[cm.id].h_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (slid_target<<28) | (cm.fpga_vmultmode<<24) | (cm.cc.v_mask<<18) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, (h_opt_scale<<16) | (cm.sample_sel<<13) | (cm.sample_mult<<10) | h_opt_startoffs);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -422,7 +434,7 @@ void program_mode()
         lcd_write_status();
 
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
-    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, target_typemask, cm.cc.linemult_target, cm.cc.l3_mode, cm.cc.s480p_mode);
+    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, target_typemask);
 
     if (cm.id == -1) {
         printf ("Error: no suitable mode found, defaulting to 240p\n");
@@ -435,8 +447,12 @@ void program_mode()
 
     printf("Mode %s selected - hsync width: %upx\n", video_modes[cm.id].name, (unsigned)h_synclen_px);
 
-    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, (alt_u8)h_synclen_px, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold);
+    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, (alt_u8)h_synclen_px, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold, cm.sample_mult);
     set_lpf(cm.cc.video_lpf);
+    cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
+
+    HDMITX_SetPixelRepetition(cm.hdmitx_pixelrep, (cm.cc.tx_mode==TX_HDMI) ? cm.hdmitx_pixr_ifr : 0);
+
     set_videoinfo();
 
 #ifdef DIY_AUDIO
