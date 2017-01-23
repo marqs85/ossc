@@ -315,7 +315,7 @@
    type="conduit"
    dir="end" />
  <interface
-   name="pio_5_hscale_info_out"
+   name="pio_5_horizontal_info2_out"
    internal="pio_5.external_connection"
    type="conduit"
    dir="end" />

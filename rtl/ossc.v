@@ -57,9 +57,7 @@ wire [7:0] sys_ctrl;
 wire h_unstable;
 wire [2:0] pclk_lock;
 wire [2:0] pll_lock_lost;
-wire [31:0] h_info;
-wire [31:0] hscale_info;
-wire [31:0] v_info;
+wire [31:0] h_info, h_info2, v_info;
 wire [10:0] lines_out;
 wire [1:0] fpga_vsyncgen;
 
@@ -200,7 +198,7 @@ sys sys_inst(
     .pio_2_horizontal_info_out_export       (h_info),
     .pio_3_vertical_info_out_export         (v_info),
     .pio_4_linecount_in_export              ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out}),
-    .pio_5_hscale_info_out_export           (hscale_info),
+    .pio_5_horizontal_info2_out_export      (h_info2),
 );
 
 scanconverter scanconverter_inst (
@@ -213,8 +211,8 @@ scanconverter scanconverter_inst (
     .G_in           (G_in_L),
     .B_in           (B_in_L),
     .h_info         (h_info),
+    .h_info2        (h_info2),
     .v_info         (v_info),
-    .hscale_info    (hscale_info),
     .R_out          (R_out),
     .G_out          (G_out),
     .B_out          (B_out),

@@ -25,6 +25,7 @@
 
 #define SCANLINESTR_MAX     15
 #define HV_MASK_MAX         63
+#define HV_MASK_MAX_BR      15
 #define VIDEO_LPF_MAX       5
 #define SAMPLER_PHASE_MAX   31
 #define SYNC_VTH_MAX        31
@@ -52,6 +53,7 @@ typedef struct {
     alt_u8 l3m3_hmult;
     alt_u8 h_mask;
     alt_u8 v_mask;
+    alt_u8 mask_br;
     alt_u8 tx_mode;
     alt_u8 s480p_mode;
     alt_u8 sampler_phase;

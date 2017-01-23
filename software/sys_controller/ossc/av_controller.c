@@ -301,6 +301,7 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
         (tc.v_mask != cm.cc.v_mask) ||
+        (tc.mask_br != cm.cc.mask_br) ||
         (tc.l3m3_hmult != cm.cc.l3m3_hmult))
         status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
 
@@ -350,21 +351,22 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:28]                [27:26]           [25:20]       [19:9]         [8]       [7:0]
-//           | H_SCANLINESTR[3:0] | H_MULTMODE[1:0] | H_MASK[5:0] | H_ACTIVE[10:0] |     | H_BACKPORCH[7:0] |
+// h_info:     [31:30]             [29:20]       [19:9]        [8]       [7:0]
+//           | H_MULTMODE[1:0] | H_MASK[9:0] | H_ACTIVE[10:0] |   | H_BACKPORCH[7:0] |
+//
+// h_info2:    [31:27]       [26:23]            [22:19]             [18:16]              [15:13]                 [12:10]                 [9:0]
+//           |         | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
 //
 // v_info:     [31:30]                 [29:28]     [27]   [26:24]            [23:18]       [17:7]        [6]    [5:0]
 //           | V_SCANLINEMODE[1:0] | V_SCANLINEID |    | V_MULTMODE[2:0] | V_MASK[5:0] | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
-//
-// hscale_info: [31:19]      [18:16]                [15:13]                   [12:10]                 [9:0]
-//           |          | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0]
 //
 void set_videoinfo()
 {
     alt_u8 slid_target;
     alt_u8 sl_mode_fpga;
-    alt_u8 h_opt_scale = 0;
+    alt_u8 h_opt_scale = 1;
     alt_u16 h_opt_startoffs = 0;
+    alt_u16 h_border, h_mask;
 
     if (cm.fpga_vmultmode == FPGA_V_MULTMODE_3X)
         slid_target = cm.cc.sl_id ? (cm.cc.sl_type == 1 ? 1 : 2) : 0;
@@ -391,17 +393,25 @@ void set_videoinfo()
         case MODE_L3_256_COL:
             h_opt_scale = cm.cc.l3m3_hmult;
             break;
+        case MODE_L4_320_COL:
+            h_opt_scale = 4;
+            break;
+        case MODE_L4_256_COL:
+            h_opt_scale = 5;
+            break;
         default:
             break;
     }
 
-    h_opt_startoffs = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2) + ((cm.sample_mult-h_opt_scale)*(cm.sample_mult*video_modes[cm.id].h_backporch) / cm.sample_mult);
+    h_border = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2);
+    h_mask = h_border + h_opt_scale*cm.cc.h_mask;
+    h_opt_startoffs = h_border + ((cm.sample_mult-h_opt_scale)*(cm.sample_mult*video_modes[cm.id].h_backporch) / cm.sample_mult);
     h_opt_startoffs = (h_opt_startoffs/cm.sample_mult)*cm.sample_mult;
     printf("h_opt_startoffs: %u\n", h_opt_startoffs);
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.cc.sl_str<<28) | (cm.fpga_hmultmode<<26) | (cm.cc.h_mask<<20) | ((cm.sample_mult*video_modes[cm.id].h_active)<<9) | cm.sample_mult*video_modes[cm.id].h_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.fpga_hmultmode<<30) | (h_mask<<20) | ((cm.sample_mult*video_modes[cm.id].h_active)<<9) | cm.sample_mult*video_modes[cm.id].h_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, (cm.cc.mask_br<<23) | (cm.cc.sl_str<<19) | (h_opt_scale<<16) | (cm.sample_sel<<13) | (cm.sample_mult<<10) | h_opt_startoffs);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (slid_target<<28) | (cm.fpga_vmultmode<<24) | (cm.cc.v_mask<<18) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, (h_opt_scale<<16) | (cm.sample_sel<<13) | (cm.sample_mult<<10) | h_opt_startoffs);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
