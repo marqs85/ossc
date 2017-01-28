@@ -388,6 +388,7 @@ void set_videoinfo()
 
     switch (cm.target_lm) {
         case MODE_L3_320_COL:
+        case MODE_L5_256_COL:
             h_opt_scale = 3;
             break;
         case MODE_L3_256_COL:

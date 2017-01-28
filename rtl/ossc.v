@@ -55,8 +55,8 @@ module ossc (
 
 wire [7:0] sys_ctrl;
 wire h_unstable;
-wire [2:0] pclk_lock;
-wire [2:0] pll_lock_lost;
+wire [1:0] pclk_lock;
+wire [1:0] pll_lock_lost;
 wire [31:0] h_info, h_info2, v_info;
 wire [10:0] lines_out;
 wire [1:0] fpga_vsyncgen;
@@ -68,13 +68,13 @@ wire [7:0] R_out, G_out, B_out;
 wire HSYNC_out;
 wire VSYNC_out;
 wire PCLK_out;
-wire DATA_enable;
+wire DE_out;
 
 wire [7:0] R_out_videogen, G_out_videogen, B_out_videogen;
 wire HSYNC_out_videogen;
 wire VSYNC_out_videogen;
 wire PCLK_out_videogen;
-wire DATA_enable_videogen;
+wire DE_out_videogen;
 
 
 reg [3:0] cpu_reset_ctr;
@@ -155,7 +155,7 @@ assign reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 assign LED_R = HSYNC_in_L;
 assign LED_G = VSYNC_in_L;
 `else
-assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 3'b000)|h_unstable);
+assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 2'h0)|h_unstable);
 assign LED_G = (ir_code == 0);
 `endif
 
@@ -173,15 +173,17 @@ assign HDMI_TX_BD = videogen_sel ? B_out_videogen : B_out;
 assign HDMI_TX_HS = videogen_sel ? HSYNC_out_videogen : HSYNC_out;
 assign HDMI_TX_VS = videogen_sel ? VSYNC_out_videogen : VSYNC_out;
 assign HDMI_TX_PCLK = videogen_sel ? PCLK_out_videogen : PCLK_out;
-assign HDMI_TX_DE = videogen_sel ? DATA_enable_videogen : DATA_enable;
+assign HDMI_TX_DE = videogen_sel ? DE_out_videogen : DE_out;
 `else
+wire videogen_sel;
+assign videogen_sel = 1'b0;
 assign HDMI_TX_RD = R_out;
 assign HDMI_TX_GD = G_out;
 assign HDMI_TX_BD = B_out;
 assign HDMI_TX_HS = HSYNC_out;
 assign HDMI_TX_VS = VSYNC_out;
 assign HDMI_TX_PCLK = PCLK_out;
-assign HDMI_TX_DE = DATA_enable;
+assign HDMI_TX_DE = DE_out;
 `endif
 
 sys sys_inst(
@@ -219,7 +221,7 @@ scanconverter scanconverter_inst (
     .HSYNC_out      (HSYNC_out),
     .VSYNC_out      (VSYNC_out),
     .PCLK_out       (PCLK_out),
-    .DATA_enable    (DATA_enable),
+    .DE_out         (DE_out),
     .h_unstable     (h_unstable),
     .fpga_vsyncgen  (fpga_vsyncgen),
     .pclk_lock      (pclk_lock),
@@ -246,7 +248,7 @@ videogen vg0 (
     .HSYNC_out      (HSYNC_out_videogen),
     .VSYNC_out      (VSYNC_out_videogen),
     .PCLK_out       (PCLK_out_videogen),
-    .ENABLE_out     (DATA_enable_videogen)
+    .ENABLE_out     (DE_out_videogen)
 );
 `endif
 

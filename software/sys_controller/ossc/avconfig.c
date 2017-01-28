@@ -42,7 +42,6 @@ avconfig_t tc;
 // Default configuration
 const avconfig_t tc_default = {
     .l3_mode = 1,
-    .l5_mode = 1,
     .pm_240p = 1,
     .pm_384p = 1,
     .pm_480i = 1,

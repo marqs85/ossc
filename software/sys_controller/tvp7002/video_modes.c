@@ -36,7 +36,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
     alt_8 i;
     alt_u8 num_modes = sizeof(video_modes)/sizeof(mode_data_t);
     video_type mode_type;
-    mode_flags valid_lm[] = { MODE_PT, MODE_L2, (MODE_L3_GEN_16_9<<cm.cc.l3_mode), (MODE_L4_GEN_4_3<<cm.cc.l4_mode), (MODE_L5_GEN_16_9<<cm.cc.l5_mode) };
+    mode_flags valid_lm[] = { MODE_PT, MODE_L2, (MODE_L3_GEN_16_9<<cm.cc.l3_mode), (MODE_L4_GEN_4_3<<cm.cc.l4_mode), (MODE_L5_GEN_4_3<<cm.cc.l5_mode) };
     mode_flags target_lm;
     alt_u8 pt_only = 0;
 
@@ -68,7 +68,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
 
             // defaults
             cm.hdmitx_pixelrep = HDMITX_PIXELREP_DISABLE;
-            cm.hdmitx_pixr_ifr = HDMITX_PIXELREP_2X;
+            cm.hdmitx_pixr_ifr = 0;
             cm.sample_mult = 1;
             cm.target_lm = target_lm;
 
@@ -116,21 +116,10 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 5;
                     break;
-                case MODE_L5_GEN_16_9:
+                case MODE_L5_GEN_4_3:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
                     cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
-                    break;
-                case MODE_L5_GEN_4_3:
-                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
-                    cm.fpga_hmultmode = FPGA_H_MULTMODE_ASPECTFIX;
-                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
-                    break;
-                case MODE_L5_320_COL:
-                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
-                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
-                    cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
-                    cm.sample_mult = 3;
                     break;
                 case MODE_L5_256_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;

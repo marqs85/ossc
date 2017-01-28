@@ -5,6 +5,7 @@
 <pin name="areset" direction="input" scope="external"  />
 <pin name="inclk0" direction="input" scope="external" source="clock"  />
 <pin name="c0" direction="output" scope="external" source="clock"  />
+<pin name="c1" direction="output" scope="external" source="clock"  />
 <pin name="locked" direction="output" scope="external"  />
 
 </global>
