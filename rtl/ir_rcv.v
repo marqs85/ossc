@@ -38,7 +38,7 @@ parameter LEADCODE_HI_TIMEOUT   = 160000;  //5.9ms
 parameter LEADCODE_HI_RPT_THOLD = 54000;   //2.0ms
 parameter RPT_RELEASE_THOLD     = 3240000; //120ms
 parameter BIT_ONE_THOLD         = 27000;   //1.0ms
-parameter BIT_DETECT_THOLD      = 10800;   //0.4ms
+parameter BIT_DETECT_THOLD      = 7628;    //0.28ms
 parameter IDLE_THOLD            = 141480;  //5.24ms
 
 reg [1:0] state;            // 3 states
