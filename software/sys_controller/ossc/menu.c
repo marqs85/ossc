@@ -49,12 +49,12 @@ static const char *ypbpr_cs_desc[] = { "Rec. 601", "Rec. 709" };
 static const char *s480p_mode_desc[] = { LNG("Auto","ｼﾞﾄﾞｳ"), "DTV 480p", "VESA 640x480@60" };
 static const char *sync_lpf_desc[] = { LNG("Off","ｵﾌ"), LNG("33MHz (min)","33MHz (ｻｲｼｮｳ)"), LNG("10MHz (med)","10MHz (ﾁｭｳｲ)"), LNG("2.5MHz (max)","2.5MHz (ｻｲﾀﾞｲ)") };
 static const char *l3_mode_desc[] = { LNG("Generic 16:9","ﾊﾝﾖｳ 16:9"), LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
-static const char *l4_mode_desc[] = { LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
-static const char *l5_mode_desc[] = { LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
+static const char *l4l5_mode_desc[] = { LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
+static const char *l5_fmt_desc[] = { "1920x1080", "1600x1200", "1920x1200" };
 static const char *pm_240p_desc[] = { "Passthru", "Line2x", "Line3x", "Line4x", "Line5x" };
-static const char *pm_384p_desc[] = { "Passthru", "Line2x" };
-static const char *pm_480i_desc[] = { "Passthru", "Line2x" };
-static const char *pm_480p_desc[] = { "Passthru", "Line2x" };
+static const char *pm_480i_desc[] = { "Passthru", "Line2x (bob)" };
+static const char *pm_384p_480p_desc[] = { "Passthru", "Line2x" };
+static const char *ar_256col_desc[] = { "4:3", "8:7" };
 static const char *tx_mode_desc[] = { "HDMI", "DVI" };
 static const char *sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｼﾞﾄﾞｳ"), LNG("Manual","ｼｭﾄﾞｳ") };
 static const char *sl_type_desc[] = { LNG("Horizontal","ｽｲﾍｲ"), LNG("Vertical","ｽｲﾁｮｸ"), LNG("Alternating","ｺｳｺﾞ") };
@@ -94,6 +94,7 @@ MENU(menu_vinputproc, P99_PROTECT({ \
 MENU(menu_sampling, P99_PROTECT({ \
     { LNG("Sampling phase","ｻﾝﾋﾌﾟﾘﾝｸﾞﾌｪｰｽﾞ"),    OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sampler_phase, OPT_WRAP, 0, SAMPLER_PHASE_MAX, sampler_phase_disp } } },
     { LNG("480p in sampler","ｻﾝﾌﾟﾗｰﾆ480p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
+    { "Allow TVP HPLL2x",                      OPT_AVCONFIG_SELECTION, { .sel = { &tc.tvp_hpll2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("<Adv. timing   >","<ｶｸｼｭﾀｲﾐﾝｸﾞ>"),    OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } },
 }))
 
@@ -108,13 +109,15 @@ MENU(menu_sync, P99_PROTECT({ \
 
 MENU(menu_output, P99_PROTECT({ \
     { "240p/288p proc",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_240p,         OPT_WRAP, SETTING_ITEM(pm_240p_desc) } } },
-    { "384p proc",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_384p,         OPT_WRAP, SETTING_ITEM(pm_384p_desc) } } },
+    { "384p proc",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_384p,         OPT_WRAP, SETTING_ITEM(pm_384p_480p_desc) } } },
     { "480i/576i proc",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_480i,         OPT_WRAP, SETTING_ITEM(pm_480i_desc) } } },
-    { "480p/576p proc",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_480p,         OPT_WRAP, SETTING_ITEM(pm_480p_desc) } } },
+    { "480p/576p proc",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_480p,         OPT_WRAP, SETTING_ITEM(pm_384p_480p_desc) } } },
+    { "960i/1080i proc",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_1080i,        OPT_WRAP, SETTING_ITEM(pm_480i_desc) } } },
     { "Line3x mode",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.l3_mode,         OPT_WRAP, SETTING_ITEM(l3_mode_desc) } } },
-    { "Line4x mode",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.l4_mode,         OPT_WRAP, SETTING_ITEM(l4_mode_desc) } } },
-    { "Line5x mode",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.l5_mode,         OPT_WRAP, SETTING_ITEM(l5_mode_desc) } } },
-    { "256x240 L3_Hmult",                       OPT_AVCONFIG_NUMVALUE, { .num =  { &tc.l3m3_hmult,      OPT_NOWRAP, 1, 5, value_disp } } },
+    { "Line4x mode",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.l4_mode,         OPT_WRAP, SETTING_ITEM(l4l5_mode_desc) } } },
+    { "Line5x mode",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.l5_mode,         OPT_WRAP, SETTING_ITEM(l4l5_mode_desc) } } },
+    { "Line5x format",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.l5_fmt,          OPT_WRAP, SETTING_ITEM(l5_fmt_desc) } } },
+    { "256x240 aspect",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.ar_256col,       OPT_WRAP, SETTING_ITEM(ar_256col_desc) } } },
     { LNG("TX mode","TXﾓｰﾄﾞ"),                  OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
     { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &tc.def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
 }))

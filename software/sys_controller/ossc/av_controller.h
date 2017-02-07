@@ -98,6 +98,7 @@ typedef struct {
     alt_u8 hdmitx_pixr_ifr;
     alt_u8 sample_mult;
     alt_u8 sample_sel;
+    alt_u8 hsync_cut;
     mode_flags target_lm;
     avinput_t avinput;
     // Current configuration

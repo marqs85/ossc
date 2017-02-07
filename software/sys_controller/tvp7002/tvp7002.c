@@ -41,8 +41,6 @@ const ypbpr_to_rgb_csc_t csc_coeffs[] = {
 static const alt_u8 Kvco[] = {75, 85, 150, 200};
 static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
 
-extern mode_data_t video_modes[];
-
 static void tvp_set_clamp(video_format fmt)
 {
     switch (fmt) {
@@ -201,7 +199,7 @@ void tvp_set_fine_gain_offset(color_setup_t *col) {
 }
 
 // Configure H-PLL (sampling rate, VCO gain and charge pump current)
-void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 plldivby2)
+void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2)
 {
     alt_u32 pclk_est;
     alt_u8 vco_range;
@@ -210,7 +208,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
     alt_u8 status = tvp_readreg(TVP_HPLLPHASE) & 0xF8;
 
     // Enable PLL post-div-by-2 with double samplerate
-    if (plldivby2) {
+    if (plldivby2 && (h_samplerate < 2048)) {
         tvp_writereg(TVP_HPLLPHASE, status|1);
         h_samplerate = 2*h_samplerate;
     } else {
@@ -222,7 +220,7 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 v_lines, alt_u8 hz, alt_u8 pll
 
     printf("Horizontal samplerate set to %u\n", h_samplerate);
 
-    pclk_est = ((alt_u32)h_samplerate * v_lines * hz) / 1000; //in kHz
+    pclk_est = ((alt_u32)h_samplerate * (TVP_EXTCLK_HZ/(alt_u32)refclks_per_line)) / 1000; //in kHz
 
     printf("Estimated PCLK_HPLL: %lu.%.3lu MHz\n", pclk_est/1000, pclk_est%1000);
 
@@ -343,7 +341,7 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
     }
 }
 
-void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold, alt_u8 sample_mult)
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_u16 h_syncoutlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
 {
     // Clamp position and ALC
     tvp_set_clamp_position(type, h_syncinlen);
@@ -367,13 +365,13 @@ void tvp_source_setup(alt_8 modeid, video_type type, alt_u32 vlines, alt_u8 hz, 
         break;
     }
 
-    tvp_setup_hpll(video_modes[modeid].h_total, vlines, hz, !!(video_modes[modeid].flags & MODE_PLLDIVBY2));
+    tvp_setup_hpll(h_samplerate, refclks_per_line, plldivby2);
 
     // Default (3,3) coast may lead to PLL jitter and sync loss (e.g. SNES)
     tvp_set_hpllcoast(pre_coast, post_coast);
 
     // Hsync output width
-    tvp_writereg(TVP_HSOUTWIDTH, sample_mult*video_modes[modeid].h_synclen);
+    tvp_writereg(TVP_HSOUTWIDTH, h_syncoutlen);
 }
 
 void tvp_source_sel(tvp_input_t input, video_format fmt)

@@ -13,11 +13,11 @@
 			<sof_filename>output_files/ossc.sof</sof_filename> 
 		</bit0>
 	</sof_data>
-	<version>9</version>
+	<version>10</version>
 	<create_cvp_file>0</create_cvp_file>
 	<create_hps_iocsr>0</create_hps_iocsr>
 	<auto_create_rpd>0</auto_create_rpd>
-	<create_fif_file>0</create_fif_file>
+	<rpd_little_endian>1</rpd_little_endian>
 	<options>
 		<map_file>1</map_file>
 	</options>

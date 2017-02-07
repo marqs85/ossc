@@ -10,10 +10,10 @@ set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
 ### Scanconverter clock constraints ###
 
 create_clock -period 108MHz -name pclk_hdtv [get_ports PCLK_in]
-create_clock -period 13.5MHz -name pclk_sdtv_L2 [get_ports PCLK_in] -add
+create_clock -period 27MHz -name pclk_sdtv_L2 [get_ports PCLK_in] -add
 create_clock -period 27MHz -name pclk_sdtv_L3 [get_ports PCLK_in] -add
 create_clock -period 27MHz -name pclk_sdtv_L4 [get_ports PCLK_in] -add
-create_clock -period 16MHz -name pclk_sdtv_L5 [get_ports PCLK_in] -add
+create_clock -period 27MHz -name pclk_sdtv_L5 [get_ports PCLK_in] -add
 
 #derive_pll_clocks
 create_generated_clock -master_clock pclk_sdtv_L2 -source {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 2 -duty_cycle 50.00 -name pclk_2x {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[0]}

@@ -92,12 +92,10 @@ inline void SetupAudio(tx_mode_t mode)
     EnableAudioInfoFrame(FALSE, NULL);
 
     if (tc.tx_mode == TX_HDMI) {
-        alt_u32 pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total;
-        // TODO: check pixel repetition
-        if (video_modes[cm.id].flags & MODE_L2ENABLE)
+        alt_u32 pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total*cm.sample_mult*(cm.fpga_vmultmode+1);
+
+        if (cm.hdmitx_pixelrep == HDMITX_PIXELREP_2X)
             pclk_out *= 2;
-        else if (video_modes[cm.id].flags & (MODE_L3_MODE0|MODE_L3_MODE1|MODE_L3_MODE2|MODE_L3_MODE3))
-            pclk_out *= 3;
 
         printf("PCLK_out: %luHz\n", pclk_out);
         EnableAudioOutput4OSSC(pclk_out, tc.audio_dw_sampl, tc.audio_swap_lr);
@@ -269,23 +267,20 @@ status_t get_status(tvp_input_t input, video_format format)
             (tc.pm_384p != cm.cc.pm_384p) ||
             (tc.pm_480i != cm.cc.pm_480i) ||
             (tc.pm_480p != cm.cc.pm_480p) ||
+            (tc.pm_1080i != cm.cc.pm_1080i) ||
             (tc.l3_mode != cm.cc.l3_mode) ||
             (tc.l4_mode != cm.cc.l4_mode) ||
-            (tc.l5_mode != cm.cc.l5_mode))
+            (tc.l5_mode != cm.cc.l5_mode) ||
+            (tc.l5_fmt != cm.cc.l5_fmt) ||
+            (tc.tvp_hpll2x != cm.cc.tvp_hpll2x))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((tc.s480p_mode != cm.cc.s480p_mode) && ((video_modes[cm.id].group == GROUP_DTV480P) || (video_modes[cm.id].group == GROUP_VGA480P)))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
-            if (video_modes[cm.id].flags & MODE_PLLDIVBY2)
-                h_samplerate = 2*video_modes[cm.id].h_total;
-            else
-                h_samplerate = video_modes[cm.id].h_total;
-
-            tvp_writereg(TVP_HPLLDIV_LSB, ((h_samplerate & 0xf) << 4));
-            tvp_writereg(TVP_HPLLDIV_MSB, (h_samplerate >> 4));
-            tvp_writereg(TVP_HSOUTWIDTH, cm.sample_mult*video_modes[cm.id].h_synclen);
+            tvp_setup_hpll(cm.sample_mult*video_modes[cm.id].h_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
+            tvp_writereg(TVP_HSOUTWIDTH, cm.sample_mult*video_modes[cm.id].h_synclen-cm.hsync_cut);
 
             status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
         }
@@ -302,7 +297,7 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.h_mask != cm.cc.h_mask) ||
         (tc.v_mask != cm.cc.v_mask) ||
         (tc.mask_br != cm.cc.mask_br) ||
-        (tc.l3m3_hmult != cm.cc.l3m3_hmult))
+        (tc.ar_256col != cm.cc.ar_256col))
         status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
 
     if (tc.sampler_phase != cm.cc.sampler_phase) {
@@ -351,27 +346,23 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:30]             [29:20]       [19:9]        [8]       [7:0]
-//           | H_MULTMODE[1:0] | H_MASK[9:0] | H_ACTIVE[10:0] |   | H_BACKPORCH[7:0] |
+// h_info:     [31:30]             [29:20]       [19:9]              [8:0]
+//           | H_MULTMODE[1:0] | H_MASK[9:0] | H_ACTIVE[10:0] | H_BACKPORCH[8:0] |
 //
-// h_info2:    [31:27]       [26:23]            [22:19]             [18:16]              [15:13]                 [12:10]                 [9:0]
-//           |         | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
+// h_info2:    [31:28]    [27]        [26:23]            [22:19]             [18:16]              [15:13]                 [12:10]                 [9:0]
+//           |         | H_L5FMT | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
 //
 // v_info:     [31:30]                 [29:28]     [27]   [26:24]            [23:18]       [17:7]        [6]    [5:0]
 //           | V_SCANLINEMODE[1:0] | V_SCANLINEID |    | V_MULTMODE[2:0] | V_MASK[5:0] | V_ACTIVE[10:0] |   | V_BACKPORCH[5:0] |
 //
 void set_videoinfo()
 {
-    alt_u8 slid_target;
     alt_u8 sl_mode_fpga;
     alt_u8 h_opt_scale = 1;
     alt_u16 h_opt_startoffs = 0;
     alt_u16 h_border, h_mask;
-
-    if (cm.fpga_vmultmode == FPGA_V_MULTMODE_3X)
-        slid_target = cm.cc.sl_id ? (cm.cc.sl_type == 1 ? 1 : 2) : 0;
-    else
-        slid_target = cm.cc.sl_id;
+    alt_u16 v_active = video_modes[cm.id].v_active;
+    alt_u16 v_backporch = video_modes[cm.id].v_backporch;
 
     if (cm.cc.sl_mode == 2) {    //manual
         sl_mode_fpga = 1+cm.cc.sl_type;
@@ -387,18 +378,40 @@ void set_videoinfo()
     }
 
     switch (cm.target_lm) {
+        case MODE_L2:
+            h_opt_scale = cm.sample_mult;
+            break;
         case MODE_L3_320_COL:
-        case MODE_L5_256_COL:
             h_opt_scale = 3;
             break;
         case MODE_L3_256_COL:
-            h_opt_scale = cm.cc.l3m3_hmult;
+            h_opt_scale = 4-cm.cc.ar_256col;
             break;
         case MODE_L4_320_COL:
             h_opt_scale = 4;
             break;
         case MODE_L4_256_COL:
+            h_opt_scale = 5-cm.cc.ar_256col;
+            break;
+        case MODE_L5_GEN_4_3:
+            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
+                v_active -= 24;
+                v_backporch += 12;
+            }
+            break;
+        case MODE_L5_320_COL:
             h_opt_scale = 5;
+            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
+                v_active -= 24;
+                v_backporch += 12;
+            }
+            break;
+        case MODE_L5_256_COL:
+            h_opt_scale = 6-cm.cc.ar_256col;
+            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
+                v_active -= 24;
+                v_backporch += 12;
+            }
             break;
         default:
             break;
@@ -406,13 +419,13 @@ void set_videoinfo()
 
     h_border = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2);
     h_mask = h_border + h_opt_scale*cm.cc.h_mask;
-    h_opt_startoffs = h_border + ((cm.sample_mult-h_opt_scale)*(cm.sample_mult*video_modes[cm.id].h_backporch) / cm.sample_mult);
+    h_opt_startoffs = h_border + ((cm.sample_mult-h_opt_scale)*(cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch) / cm.sample_mult);
     h_opt_startoffs = (h_opt_startoffs/cm.sample_mult)*cm.sample_mult;
     printf("h_opt_startoffs: %u\n", h_opt_startoffs);
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.fpga_hmultmode<<30) | (h_mask<<20) | ((cm.sample_mult*video_modes[cm.id].h_active)<<9) | cm.sample_mult*video_modes[cm.id].h_backporch);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, (cm.cc.mask_br<<23) | (cm.cc.sl_str<<19) | (h_opt_scale<<16) | (cm.sample_sel<<13) | (cm.sample_mult<<10) | h_opt_startoffs);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (slid_target<<28) | (cm.fpga_vmultmode<<24) | (cm.cc.v_mask<<18) | (video_modes[cm.id].v_active<<7) | video_modes[cm.id].v_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_2_BASE, (cm.fpga_hmultmode<<30) | (h_mask<<20) | ((cm.sample_mult*video_modes[cm.id].h_active)<<9) | cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, ((cm.cc.l5_fmt!=L5FMT_1600x1200)<<27) | (cm.cc.mask_br<<23) | (cm.cc.sl_str<<19) | (h_opt_scale<<16) | (cm.sample_sel<<13) | (cm.sample_mult<<10) | h_opt_startoffs);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (sl_mode_fpga<<30) | (cm.cc.sl_id<<28) | (cm.fpga_vmultmode<<24) | (cm.cc.v_mask<<18) | (v_active<<7) | v_backporch);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -454,17 +467,28 @@ void program_mode()
     vm_sel = cm.id;
 
     target_type = target_typemask & video_modes[cm.id].type;
-    h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)video_modes[cm.id].h_total) / cm.clkcnt;
+    h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)video_modes[cm.id].h_total*cm.sample_mult) / cm.clkcnt;
 
     printf("Mode %s selected - hsync width: %upx\n", video_modes[cm.id].name, (unsigned)h_synclen_px);
 
-    tvp_source_setup(cm.id, target_type, (cm.progressive ? cm.totlines : cm.totlines/2), v_hz_x100/100, (alt_u8)h_synclen_px, cm.cc.pre_coast, cm.cc.post_coast, cm.cc.vsync_thold, cm.sample_mult);
+    tvp_source_setup(target_type,
+                     cm.sample_mult*video_modes[cm.id].h_total,
+                     cm.clkcnt,
+                     cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
+                     (alt_u8)h_synclen_px,
+                     cm.sample_mult*video_modes[cm.id].h_synclen-cm.hsync_cut,
+                     cm.cc.pre_coast,
+                     cm.cc.post_coast,
+                     cm.cc.vsync_thold);
     set_lpf(cm.cc.video_lpf);
     cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
 
     HDMITX_SetPixelRepetition(cm.hdmitx_pixelrep, (cm.cc.tx_mode==TX_HDMI) ? cm.hdmitx_pixr_ifr : 0);
 
     set_videoinfo();
+
+    // TX re-init skipped to minimize mode switch delay
+    //TX_enable(cm.cc.tx_mode);
 
 #ifdef DIY_AUDIO
 #ifdef MANUAL_CTS
