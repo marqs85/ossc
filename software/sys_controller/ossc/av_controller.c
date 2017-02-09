@@ -203,7 +203,7 @@ status_t get_status(tvp_input_t input, video_format format)
     }
 
     sync_active = tvp_check_sync(input, format);
-    vsyncmode = cm.sync_active ? (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) : 0;
+    vsyncmode = cm.sync_active ? ((IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3) : 0;
 
     data1 = tvp_readreg(TVP_LINECNT1);
     data2 = tvp_readreg(TVP_LINECNT2);
@@ -211,14 +211,14 @@ status_t get_status(tvp_input_t input, video_format format)
     progressive = !!(data2 & (1<<5));
     cm.macrovis = !!(data2 & (1<<6));
 
-    fpga_totlines = IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0xffff;
+    fpga_totlines = (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 17) & 0x7ff;
 
     // NOTE: "progressive" may not have correct value if H-PLL is not locked (!cm.sync_active)
     if ((vsyncmode == 0x2) || (!cm.sync_active && (totlines < MIN_LINES_INTERLACED))) {
         progressive = 1;
-    } else if ((vsyncmode == 0x1) && fpga_totlines > ((totlines-1)*2)) {
+    } else if ((vsyncmode == 0x1) && (fpga_totlines > 2*(totlines-1))) {
         progressive = 0;
-        totlines = fpga_totlines; //ugly hack
+        totlines = fpga_totlines/2; //compensate skipped vsync
     }
 
     valid_linecnt = check_linecnt(progressive, totlines);

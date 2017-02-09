@@ -76,7 +76,8 @@ module scanconverter (
     output reg [1:0] fpga_vsyncgen,
     output [1:0] pclk_lock,
     output [1:0] pll_lock_lost,
-    output [10:0] lines_out
+    output [10:0] lines_out,
+    output reg [10:0] tvp_lines
 );
 
 wire pclk_1x, pclk_2x, pclk_3x, pclk_4x, pclk_5x;
@@ -256,9 +257,6 @@ begin
         vcnt_act = vcnt_2x_ref;
     end
     `V_MULTMODE_3X: begin
-        R_act = R_3x;
-        G_act = G_3x;
-        B_act = B_3x;
         HSYNC_act = HSYNC_3x;
         VSYNC_act = VSYNC_1x;
         DE_act = DE_3x;
@@ -267,6 +265,9 @@ begin
         vcnt_act = vcnt_3x_ref;
         case (H_MULTMODE)
         `H_MULTMODE_FULLWIDTH: begin
+            R_act = R_3x;
+            G_act = G_3x;
+            B_act = B_3x;
             linebuf_rdclock = pclk_3x;
             linebuf_hoffset = hcnt_3x;
             pclk_act = pclk_3x;
@@ -274,6 +275,9 @@ begin
             col_id_act = {2'b00, hcnt_3x[0]};
         end
         `H_MULTMODE_ASPECTFIX: begin
+            R_act = R_4x;
+            G_act = G_4x;
+            B_act = B_4x;
             linebuf_rdclock = pclk_4x;
             linebuf_hoffset = hcnt_4x_aspfix;
             pclk_act = pclk_4x;
@@ -281,6 +285,9 @@ begin
             col_id_act = {2'b00, hcnt_4x[0]};
         end
         `H_MULTMODE_OPTIMIZED: begin
+            R_act = R_3x;
+            G_act = G_3x;
+            B_act = B_3x;
             linebuf_rdclock = pclk_3x;
             linebuf_hoffset = hcnt_3x_opt;
             pclk_act = pclk_3x;
@@ -288,6 +295,9 @@ begin
             col_id_act = hcnt_3x_opt_ctr;
         end
         default: begin
+            R_act = R_3x;
+            G_act = G_3x;
+            B_act = B_3x;
             linebuf_rdclock = pclk_3x;
             linebuf_hoffset = hcnt_3x;
             pclk_act = pclk_3x;
@@ -527,6 +537,7 @@ begin
             if (`VSYNC_TRAILING_EDGE) //should be checked at every pclk_1x?
                 begin
                     vcnt_1x_tvp <= 0;
+                    tvp_lines <= vcnt_1x_tvp;
                     FID_prev <= FID_in;
                     
                     // detect non-interlaced signal with odd-odd field signaling (TVP7002 detects it as interlaced with analog sync inputs).
@@ -671,7 +682,7 @@ begin
                 begin
                     if (fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] == 1'b1)
                         VSYNC_2x <= (vcnt_2x >= lines_1x - `VSYNCGEN_LEN) ? 1'b0 : 1'b1;
-                    else if (vcnt_1x > V_ACTIVE)
+                    else if (vcnt_2x_ref > V_ACTIVE)
                         VSYNC_2x <= VSYNC_in;
                 end
 

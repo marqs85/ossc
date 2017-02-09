@@ -58,7 +58,7 @@ wire h_unstable;
 wire [1:0] pclk_lock;
 wire [1:0] pll_lock_lost;
 wire [31:0] h_info, h_info2, v_info;
-wire [10:0] lines_out;
+wire [10:0] lines_out, tvp_lines;
 wire [1:0] fpga_vsyncgen;
 
 wire [15:0] ir_code;
@@ -199,7 +199,7 @@ sys sys_inst(
     .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
     .pio_2_horizontal_info_out_export       (h_info),
     .pio_3_vertical_info_out_export         (v_info),
-    .pio_4_linecount_in_export              ({VSYNC_out, 13'h0000, fpga_vsyncgen, 5'h00, lines_out}),
+    .pio_4_linecount_in_export              ({VSYNC_out, 2'b00, tvp_lines, fpga_vsyncgen, 5'h00, lines_out}),
     .pio_5_horizontal_info2_out_export      (h_info2),
 );
 
@@ -226,7 +226,8 @@ scanconverter scanconverter_inst (
     .fpga_vsyncgen  (fpga_vsyncgen),
     .pclk_lock      (pclk_lock),
     .pll_lock_lost  (pll_lock_lost),
-    .lines_out      (lines_out)
+    .lines_out      (lines_out),
+    .tvp_lines      (tvp_lines)
 );
 
 ir_rcv ir0 (
