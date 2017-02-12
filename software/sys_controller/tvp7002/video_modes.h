@@ -102,12 +102,13 @@ typedef struct {
     { "320x240",     320,  240, 6000,  426,   262,  49, 16,  31,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL | MODE_PLLDIVBY2) },               \
     { "256x240",     256,  240, 6000,  341,   262,  39, 16,  25,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL | MODE_PLLDIVBY2) },               \
     { "240p",        720,  240, 6000,  858,   262,  65, 16,  60,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                 \
-    { "1536*240",   1536,  240, 6000, 2046,   262, 234, 16, 150,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                   \
+    { "1536x240",   1536,  240, 6000, 2046,   262, 234, 16, 150,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                   \
     { "1280x288",   1280,  288, 5000, 1560,   312, 170, 16,  72,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                \
     { "960x288",     960,  288, 5000, 1170,   312, 128, 16,  54,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                   \
-    { "320x240LB",   320,  240, 5000,  426,   312,  49, 41,  31,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_320_COL | MODE_L4_320_COL | MODE_PLLDIVBY2) },                                 \
-    { "256x240LB",   256,  240, 5000,  341,   312,  39, 41,  25,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_256_COL | MODE_L4_256_COL | MODE_PLLDIVBY2) },                                 \
+    { "320x240LB",   320,  240, 5000,  426,   312,  49, 41,  31,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL | MODE_PLLDIVBY2) },               \
+    { "256x240LB",   256,  240, 5000,  341,   312,  39, 41,  25,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL | MODE_PLLDIVBY2) },               \
     { "288p",        720,  288, 5000,  864,   312,  65, 16,  60,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                 \
+    { "1536x240L",  1536,  240, 5000, 2046,   312, 234, 41, 150,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                   \
     { "384p",        496,  384, 5766,  640,   423,  50, 29,  62,  3, (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                 /* Sega Model 2 */              \
     { "640x384",     640,  384, 5500,  800,   492,  48, 63,  96,  2, VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                 /* X68k @ 24kHz */              \
     { "480i",        720,  240, 5994,  858,   525,  65, 16,  60,  3, (VIDEO_SDTV | VIDEO_PC),   GROUP_480I,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2 | MODE_INTERLACED) },                               \

@@ -107,6 +107,11 @@ void parse_control()
 {
     int i;
     alt_u32 btn_vec;
+    alt_u8 pt_only = 0;
+
+    // one for each video_group
+    alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
+    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x3, 0x3, 0x3, 0x3, 0x3 };
 
     if (remote_code)
         printf("RCODE: 0x%.4lx, %d\n", remote_code, remote_rpt);
@@ -155,7 +160,41 @@ void parse_control()
         case RC_SL_TYPE: tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0; break;
         case RC_SL_MINUS: tc.sl_str = tc.sl_str ? (tc.sl_str - 1) : 0; break;
         case RC_SL_PLUS: tc.sl_str = (tc.sl_str < SCANLINESTR_MAX) ? (tc.sl_str + 1) : SCANLINESTR_MAX; break;
-        //case RC_LM_MODE: tc.linemult_target = (tc.linemult_target < LM_MODE_MAX) ? (tc.linemult_target + 1) : 0; break;
+        case RC_LM_MODE:
+            strncpy(menu_row1, "Linemult mode:", LCD_ROW_LEN+1);
+            strncpy(menu_row2, "press 1-5", LCD_ROW_LEN+1);
+            lcd_write_menu();
+
+            while (1) {
+                btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+                for (i = RC_BTN1; i < REMOTE_MAX_KEYS; i++) {
+                    if (btn_vec == rc_keymap[i])
+                        break;
+                }
+
+                if (video_modes[cm.id].group > GROUP_1080I) {
+                    printf("WARNING: Corrupted mode (id %d)\n", cm.id);
+                    break;
+                }
+
+                if (i <= RC_BTN5) {
+                    if ((1<<i) & valid_pm[video_modes[cm.id].group]) {
+                        *pmcfg_ptr[video_modes[cm.id].group] = i;
+                    } else {
+                        sniprintf(menu_row2, LCD_ROW_LEN+1, "%ux unsupported", i+1);
+                        lcd_write_menu();
+                        usleep(500000);
+                    }
+                    break;
+                } else if (i == RC_BACK) {
+                    break;
+                }
+
+                usleep(WAITLOOP_SLEEP_US);
+            }
+            lcd_write_status();
+            menu_active = 0;
+            break;
         case RC_PHASE_PLUS: tc.sampler_phase = (tc.sampler_phase < SAMPLER_PHASE_MAX) ? (tc.sampler_phase + 1) : 0; break;
         case RC_PHASE_MINUS: tc.sampler_phase = tc.sampler_phase ? (tc.sampler_phase - 1) : SAMPLER_PHASE_MAX; break;
         case RC_PROF_HOTKEY:
@@ -174,7 +213,7 @@ void parse_control()
                     profile_sel = (i+1)%10;
                     load_profile_disp(OPT_SELECT);
                     break;
-                } else if (i == rc_keymap[RC_BACK]) {
+                } else if (i == RC_BACK) {
                     break;
                 }
 
