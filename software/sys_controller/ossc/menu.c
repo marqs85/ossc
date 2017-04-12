@@ -44,11 +44,11 @@ extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 alt_u8 menu_active;
 
 static const char *off_on_desc[] = { LNG("Off","ｵﾌ"), LNG("On","ｵﾝ") };
-static const char *video_lpf_desc[] = { LNG("Auto","ｼﾞﾄﾞｳ"), LNG("Off","ｵﾌ"), "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
+static const char *video_lpf_desc[] = { LNG("Auto","ｵｰﾄ"), LNG("Off","ｵﾌ"), "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
 static const char *ypbpr_cs_desc[] = { "Rec. 601", "Rec. 709" };
-static const char *s480p_mode_desc[] = { LNG("Auto","ｼﾞﾄﾞｳ"), "DTV 480p", "VESA 640x480@60" };
+static const char *s480p_mode_desc[] = { LNG("Auto","ｵｰﾄ"), "DTV 480p", "VESA 640x480@60" };
 static const char *sync_lpf_desc[] = { LNG("Off","ｵﾌ"), LNG("33MHz (min)","33MHz (ｻｲｼｮｳ)"), LNG("10MHz (med)","10MHz (ﾁｭｳｲ)"), LNG("2.5MHz (max)","2.5MHz (ｻｲﾀﾞｲ)") };
-static const char *l3_mode_desc[] = { LNG("Generic 16:9","ﾊﾝﾖｳ 16:9"), LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
+static const char *l3_mode_desc[] = { LNG("Generic 16:9","ｼﾞｪﾈﾘｯｸ 16:9"), LNG("Generic 4:3","ｼﾞｪﾈﾘｯｸ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
 static const char *l4l5_mode_desc[] = { LNG("Generic 4:3","ﾊﾝﾖｳ 4:3"), LNG("320x240 optim.","320x240 ｻｲﾃｷ."), LNG("256x240 optim.","256x240 ｻｲﾃｷ.") };
 static const char *l5_fmt_desc[] = { "1920x1080", "1600x1200", "1920x1200" };
 static const char *pm_240p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x", "Line4x", "Line5x" };
@@ -57,7 +57,7 @@ static const char *pm_384p_480p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"),
 static const char *ar_256col_desc[] = { "4:3", "8:7" };
 static const char *tx_mode_desc[] = { "HDMI", "DVI" };
 static const char *sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｼﾞﾄﾞｳ"), LNG("Manual","ｼｭﾄﾞｳ") };
-static const char *sl_type_desc[] = { LNG("Horizontal","ｽｲﾍｲ"), LNG("Vertical","ｽｲﾁｮｸ"), LNG("Alternating","ｺｳｺﾞ") };
+static const char *sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical","ﾀﾃ"), LNG("Alternating","ｺｳｺﾞ") };
 static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
 static const char *audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
 
