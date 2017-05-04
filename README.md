@@ -1,7 +1,7 @@
 Open Source Scan Converter
 ==============
 
-Open Source Scan Converter is a low-latency video digitizer and scan convesion board designed mainly for connecting retro video game consoles and home computers into modern displays. Please check the [wikipage](http://junkerhq.net/xrgb/index.php?title=OSSC) for more detailed description and latest features.
+Open Source Scan Converter is a low-latency video digitizer and scan conversion board designed mainly for connecting retro video game consoles and home computers into modern displays. Please check the [wikipage](http://junkerhq.net/xrgb/index.php?title=OSSC) for more detailed description and latest features.
 
 Requirements for building and debugging firmware
 ---------------------------------------------------
