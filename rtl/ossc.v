@@ -199,13 +199,14 @@ sys sys_inst(
     .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
     .pio_2_horizontal_info_out_export       (h_info),
     .pio_3_vertical_info_out_export         (v_info),
-    .pio_4_linecount_in_export              ({VSYNC_out, 2'b00, tvp_lines, fpga_vsyncgen, 5'h00, lines_out}),
+    .pio_4_linecount_in_export              ({VSYNC_out, 2'b00, tvp_lines, fpga_vsyncgen, 5'h0, lines_out}),
     .pio_5_horizontal_info2_out_export      (h_info2),
 );
 
 scanconverter scanconverter_inst (
     .reset_n        (reset_n),
     .PCLK_in        (PCLK_in),
+    .clk27          (clk27),
     .HSYNC_in       (HSYNC_in_L),
     .VSYNC_in       (VSYNC_in_L),
     .FID_in         (FID_in_L),

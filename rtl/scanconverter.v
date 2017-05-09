@@ -45,6 +45,7 @@
 `define FID_ODD                 1'b1
 
 `define MIN_VALID_LINES         256     //power of 2 optimization -> ignore lower bits with comparison
+`define DBLFRAME_THOLD          5
 `define FALSE_FIELD             (fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] & (FID_in == `FID_ODD))
 
 `define VSYNC_LEADING_EDGE      ((prev_vs == `HI) & (VSYNC_in == `LO))
@@ -62,6 +63,7 @@ module scanconverter (
     input VSYNC_in,
     input HSYNC_in,
     input PCLK_in,
+    input clk27,
     input [31:0] h_info,
     input [31:0] h_info2,
     input [31:0] v_info,
@@ -151,6 +153,11 @@ reg [2:0] H_OPT_SAMPLE_MULT;
 reg [2:0] H_OPT_SAMPLE_SEL;
 reg [9:0] H_L5BORDER;
 
+// clk27 related registers
+reg VSYNC_in_L, VSYNC_in_LL, VSYNC_in_LLL;
+reg [21:0] clk27_ctr;   // min. 6.5Hz
+reg [2:0] dbl_frame_ctr;
+
 //8 bits per component -> 16.7M colors
 reg [7:0] R_1x, G_1x, B_1x, R_2x, G_2x, B_2x, R_3x, G_3x, B_3x, R_4x, G_4x, B_4x, R_5x, G_5x, B_5x, R_pp1, G_pp1, B_pp1;
 wire [7:0] R_lbuf, G_lbuf, B_lbuf;
@@ -194,7 +201,7 @@ function [7:0] apply_mask;
     input [10:0] vend;
     begin
         if (enable & ((hoffset < hstart) | (hoffset >= hend) | (voffset < vstart) | (voffset >= vend)))
-            apply_mask = {2'h0, brightness, 2'h0};
+            apply_mask = {brightness, 4'h0};
         else
             apply_mask = data;
     end
@@ -208,9 +215,8 @@ function [7:0] apply_mask;
 //
 //Non-critical signals and inactive clock combinations filtered out in SDC
 always @(*)
-begin
-    case (V_MULTMODE)
-    `V_MULTMODE_1X: begin
+case (V_MULTMODE)
+    default: begin //`V_MULTMODE_1X
         R_act = R_1x;
         G_act = G_1x;
         B_act = B_1x;
@@ -236,21 +242,16 @@ begin
         lines_out = lines_2x;
         linebuf_rdclock = pclk_2x;
         case (H_MULTMODE)
-        `H_MULTMODE_FULLWIDTH: begin
-            linebuf_hoffset = hcnt_2x;
-            pclk_act = pclk_2x;
-            col_id_act = {2'b00, hcnt_2x[0]};
-        end
-        `H_MULTMODE_OPTIMIZED: begin
-            linebuf_hoffset = hcnt_2x_opt;
-            pclk_act = pclk_1x;
-            col_id_act = {2'b00, hcnt_2x[1]};;
-        end
-        default: begin
-            linebuf_hoffset = hcnt_2x;
-            pclk_act = pclk_2x;
-            col_id_act = {2'b00, hcnt_2x[0]};
-        end
+            default: begin //`H_MULTMODE_FULLWIDTH
+                linebuf_hoffset = hcnt_2x;
+                pclk_act = pclk_2x;
+                col_id_act = {2'b00, hcnt_2x[0]};
+            end
+            `H_MULTMODE_OPTIMIZED: begin
+                linebuf_hoffset = hcnt_2x_opt;
+                pclk_act = pclk_1x;
+                col_id_act = {2'b00, hcnt_2x[1]};;
+            end
         endcase
         line_id_act = {1'b0, line_out_idx_2x[1], line_out_idx_2x[0]^FID_1x};
         hcnt_act = hcnt_2x;
@@ -264,46 +265,36 @@ begin
         line_id_act = {1'b0, line_out_idx_3x};
         vcnt_act = vcnt_3x_ref;
         case (H_MULTMODE)
-        `H_MULTMODE_FULLWIDTH: begin
-            R_act = R_3x;
-            G_act = G_3x;
-            B_act = B_3x;
-            linebuf_rdclock = pclk_3x;
-            linebuf_hoffset = hcnt_3x;
-            pclk_act = pclk_3x;
-            hcnt_act = hcnt_3x;
-            col_id_act = {2'b00, hcnt_3x[0]};
-        end
-        `H_MULTMODE_ASPECTFIX: begin
-            R_act = R_4x;
-            G_act = G_4x;
-            B_act = B_4x;
-            linebuf_rdclock = pclk_4x;
-            linebuf_hoffset = hcnt_4x_aspfix;
-            pclk_act = pclk_4x;
-            hcnt_act = hcnt_4x_aspfix;
-            col_id_act = {2'b00, hcnt_4x[0]};
-        end
-        `H_MULTMODE_OPTIMIZED: begin
-            R_act = R_3x;
-            G_act = G_3x;
-            B_act = B_3x;
-            linebuf_rdclock = pclk_3x;
-            linebuf_hoffset = hcnt_3x_opt;
-            pclk_act = pclk_3x;
-            hcnt_act = hcnt_3x;
-            col_id_act = hcnt_3x_opt_ctr;
-        end
-        default: begin
-            R_act = R_3x;
-            G_act = G_3x;
-            B_act = B_3x;
-            linebuf_rdclock = pclk_3x;
-            linebuf_hoffset = hcnt_3x;
-            pclk_act = pclk_3x;
-            hcnt_act = hcnt_3x;
-            col_id_act = {2'b00, hcnt_3x[0]};
-        end
+            default: begin //`H_MULTMODE_FULLWIDTH
+                R_act = R_3x;
+                G_act = G_3x;
+                B_act = B_3x;
+                linebuf_rdclock = pclk_3x;
+                linebuf_hoffset = hcnt_3x;
+                pclk_act = pclk_3x;
+                hcnt_act = hcnt_3x;
+                col_id_act = {2'b00, hcnt_3x[0]};
+            end
+            `H_MULTMODE_ASPECTFIX: begin
+                R_act = R_4x;
+                G_act = G_4x;
+                B_act = B_4x;
+                linebuf_rdclock = pclk_4x;
+                linebuf_hoffset = hcnt_4x_aspfix;
+                pclk_act = pclk_4x;
+                hcnt_act = hcnt_4x_aspfix;
+                col_id_act = {2'b00, hcnt_4x[0]};
+            end
+            `H_MULTMODE_OPTIMIZED: begin
+                R_act = R_3x;
+                G_act = G_3x;
+                B_act = B_3x;
+                linebuf_rdclock = pclk_3x;
+                linebuf_hoffset = hcnt_3x_opt;
+                pclk_act = pclk_3x;
+                hcnt_act = hcnt_3x;
+                col_id_act = hcnt_3x_opt_ctr;
+            end
         endcase
     end
     `V_MULTMODE_4X: begin
@@ -320,18 +311,14 @@ begin
         pclk_act = pclk_4x;
         hcnt_act = hcnt_4x;
         case (H_MULTMODE)
-        `H_MULTMODE_FULLWIDTH: begin
-            linebuf_hoffset = hcnt_4x;
-            col_id_act = {2'b00, hcnt_4x[0]};
-        end
-        `H_MULTMODE_OPTIMIZED: begin
-            linebuf_hoffset = hcnt_4x_opt;
-            col_id_act = hcnt_4x_opt_ctr;
-        end
-        default: begin
-            linebuf_hoffset = hcnt_4x;
-            col_id_act = {2'b00, hcnt_4x[0]};
-        end
+            default: begin //`H_MULTMODE_FULLWIDTH
+                linebuf_hoffset = hcnt_4x;
+                col_id_act = {2'b00, hcnt_4x[0]};
+            end
+            `H_MULTMODE_OPTIMIZED: begin
+                linebuf_hoffset = hcnt_4x_opt;
+                col_id_act = hcnt_4x_opt_ctr;
+            end
         endcase
     end
     `V_MULTMODE_5X: begin
@@ -348,38 +335,17 @@ begin
         pclk_act = pclk_5x;
         hcnt_act = hcnt_5x;
         case (H_MULTMODE)
-        `H_MULTMODE_FULLWIDTH: begin
-            linebuf_hoffset = hcnt_5x_hscomp;
-            col_id_act = {2'b00, hcnt_5x[0]};
-        end
-        `H_MULTMODE_OPTIMIZED: begin
-            linebuf_hoffset = hcnt_5x_opt;
-            col_id_act = hcnt_5x_opt_ctr;
-        end
-        default: begin
-            linebuf_hoffset = hcnt_5x_hscomp;
-            col_id_act = {2'b00, hcnt_5x[0]};
-        end
+            default: begin //`H_MULTMODE_FULLWIDTH
+                linebuf_hoffset = hcnt_5x_hscomp;
+                col_id_act = {2'b00, hcnt_5x[0]};
+            end
+            `H_MULTMODE_OPTIMIZED: begin
+                linebuf_hoffset = hcnt_5x_opt;
+                col_id_act = hcnt_5x_opt_ctr;
+            end
         endcase
     end
-    default: begin
-        R_act = R_1x;
-        G_act = G_1x;
-        B_act = B_1x;
-        DE_act = DE_1x;
-        HSYNC_act = HSYNC_1x;
-        VSYNC_act = VSYNC_1x;
-        lines_out = lines_1x;
-        linebuf_rdclock = 0;
-        linebuf_hoffset = 0;
-        pclk_act = pclk_1x;
-        line_id_act = {2'b00, vcnt_1x[0]};
-        col_id_act = {2'b00, hcnt_1x[0]};
-        hcnt_act = hcnt_1x;
-        vcnt_act = vcnt_1x;
-    end
-    endcase
-end
+endcase
 
 //TODO: use single PLL and ALTPLL_RECONFIG
 pll_2x pll_linedouble (
@@ -401,9 +367,9 @@ pll_3x pll_linetriple (
 //TODO: add secondary buffers for interlaced signals with alternative field order
 linebuf linebuf_rgb (
     .data ( {R_1x, G_1x, B_1x} ),
-    .rdaddress ( linebuf_hoffset + (~line_idx << 11) ),
+    .rdaddress ( linebuf_hoffset + (~line_idx << 10) ),
     .rdclock ( linebuf_rdclock ),
-    .wraddress ( hcnt_1x + (line_idx << 11) ),
+    .wraddress ( hcnt_1x + (line_idx << 10) ),
     .wrclock ( pclk_1x ),
     .wren ( 1'b1 ),
     .q ( {R_lbuf, G_lbuf, B_lbuf} )
@@ -476,6 +442,40 @@ end
 assign h_unstable = (warn_h_unstable != 0);
 assign pll_lock_lost = {(warn_pll_lock_lost != 0), (warn_pll_lock_lost_3x != 0)};
 
+//Check if TVP7002 is skipping VSYNCs (occurs with interlace on TTL sync). 
+always @(posedge clk27 or negedge reset_n)
+begin
+    if (!reset_n) begin
+        fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] <= 1'b0;
+        VSYNC_in_L <= 1'b0;
+        VSYNC_in_LL <= 1'b0;
+        VSYNC_in_LLL <= 1'b0;
+        clk27_ctr <= 0;
+        dbl_frame_ctr <= 0;
+    end else begin
+        if ((VSYNC_in_LLL == `HI) && (VSYNC_in_LL == `LO)) begin
+            // If calculated refresh rate is between 22Hz and 44Hz, assume TVP7002 has skipped a vsync
+            if ((clk27_ctr >= (27000000/44)) && (clk27_ctr <= (27000000/22)) && (dbl_frame_ctr < `DBLFRAME_THOLD))
+                dbl_frame_ctr <= dbl_frame_ctr + 1'b1;
+            else if ((clk27_ctr < (27000000/44)) && (dbl_frame_ctr > 0))
+                dbl_frame_ctr <= dbl_frame_ctr - 1'b1;
+
+            clk27_ctr <= 0;
+        end else if (clk27_ctr < (27000000/10)) begin   //prevent overflow
+            clk27_ctr <= clk27_ctr + 1'b1;
+        end
+
+        if (dbl_frame_ctr == 0)
+            fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] <= 1'b0;
+        else if (dbl_frame_ctr == `DBLFRAME_THOLD)
+            fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] <= 1'b1;
+
+        VSYNC_in_L <= VSYNC_in;
+        VSYNC_in_LL <= VSYNC_in_L;
+        VSYNC_in_LLL <= VSYNC_in_LL;
+    end
+end
+
 //Buffer the inputs using input pixel clock and generate 1x signals
 always @(posedge pclk_1x or negedge reset_n)
 begin
@@ -488,7 +488,7 @@ begin
             vcnt_1x <= 0;
             vcnt_1x_tvp <= 0;
             FID_prev <= 0;
-            fpga_vsyncgen <= 0;
+            fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] <= 1'b0;
             lines_1x <= 0;
             H_MULTMODE <= 0;
             V_MULTMODE <= 0;
@@ -587,11 +587,7 @@ begin
             // record start position of HSYNC
             if (`HSYNC_LEADING_EDGE)
                 HSYNC_start <= hcnt_1x;
-                
-            // Check if extra vsync needed
-            fpga_vsyncgen[`VSYNCGEN_GENMID_BIT] <= (lines_1x > ({1'b0, V_ACTIVE} << 1)) ? 1'b1 : 1'b0;
-                
-                
+
             R_1x <= R_in;
             G_1x <= G_in;
             B_1x <= B_in;

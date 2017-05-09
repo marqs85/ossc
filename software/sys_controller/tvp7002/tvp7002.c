@@ -155,7 +155,8 @@ void tvp_init()
     //tvp_writereg(TVP_HSOUTSTART, 0);
 
     // Hsync edge->Vsync edge delay
-    tvp_writereg(TVP_VSOUTALIGN, 0);
+    // NOTE: Value 1 syncs the edges!
+    tvp_writereg(TVP_VSOUTALIGN, 1);
 
     // Set default CSC coeffs.
     tvp_sel_csc(&csc_coeffs[0]);

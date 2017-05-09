@@ -47,6 +47,7 @@ typedef struct {
     alt_u8 sl_str;
     alt_u8 sl_id;
     alt_u8 linemult_target;
+    alt_u8 l2_mode;
     alt_u8 l3_mode;
     alt_u8 l4_mode;
     alt_u8 l5_mode;

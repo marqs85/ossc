@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Workspace Name="ossc" Database="">
+<CodeLite_Workspace Name="ossc" Database="" Version="10.0.0">
   <Project Name="ossc_rtl" Path="ossc_rtl.project" Active="No"/>
   <Project Name="ossc_sw_bsp" Path="ossc_sw_bsp.project" Active="No"/>
   <Project Name="ossc_sw" Path="software/ossc_sw.project" Active="Yes"/>

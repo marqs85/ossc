@@ -205,20 +205,25 @@ status_t get_status(tvp_input_t input, video_format format)
     sync_active = tvp_check_sync(input, format);
     vsyncmode = cm.sync_active ? ((IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3) : 0;
 
+    // Read sync information from TVP7002 status registers
     data1 = tvp_readreg(TVP_LINECNT1);
     data2 = tvp_readreg(TVP_LINECNT2);
     totlines = ((data2 & 0x0f) << 8) | data1;
     progressive = !!(data2 & (1<<5));
     cm.macrovis = !!(data2 & (1<<6));
+    data1 = tvp_readreg(TVP_CLKCNT1);
+    data2 = tvp_readreg(TVP_CLKCNT2);
+    clkcnt = ((data2 & 0x0f) << 8) | data1;
 
-    fpga_totlines = (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 17) & 0x7ff;
+    // Read how many lines FPGA actually receives from TVP7002
+    fpga_totlines = (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 18) & 0x7ff;
 
     // NOTE: "progressive" may not have correct value if H-PLL is not locked (!cm.sync_active)
     if ((vsyncmode == 0x2) || (!cm.sync_active && (totlines < MIN_LINES_INTERLACED))) {
         progressive = 1;
-    } else if ((vsyncmode == 0x1) && (fpga_totlines > 2*(totlines-1))) {
+    } else if (vsyncmode == 0x1) {
         progressive = 0;
-        totlines = fpga_totlines/2; //compensate skipped vsync
+        totlines = fpga_totlines; //compensate skipped vsync
     }
 
     valid_linecnt = check_linecnt(progressive, totlines);
@@ -247,13 +252,9 @@ status_t get_status(tvp_input_t input, video_format format)
         act_ctr = 0;
     }
 
-    data1 = tvp_readreg(TVP_CLKCNT1);
-    data2 = tvp_readreg(TVP_CLKCNT2);
-    clkcnt = ((data2 & 0x0f) << 8) | data1;
-
     if (valid_linecnt) {
         if ((totlines != cm.totlines) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
-            printf("totlines: %lu (cur) / %lu (prev), clkcnt: %lu (cur) / %lu (prev). Data1: 0x%.2x, Data2: 0x%.2x\n", totlines, cm.totlines, clkcnt, cm.clkcnt, (unsigned)data1, (unsigned)data2);
+            printf("totlines: %lu (cur) / %lu (prev), clkcnt: %lu (cur) / %lu (prev). FPGA_totlines: %u, VSM: %u\n", totlines, cm.totlines, clkcnt, cm.clkcnt, fpga_totlines, vsyncmode);
             /*if (!cm.sync_active)
                 act_ctr = 0;*/
             stable_frames = 0;
@@ -268,6 +269,7 @@ status_t get_status(tvp_input_t input, video_format format)
             (tc.pm_480i != cm.cc.pm_480i) ||
             (tc.pm_480p != cm.cc.pm_480p) ||
             (tc.pm_1080i != cm.cc.pm_1080i) ||
+            (tc.l2_mode != cm.cc.l2_mode) ||
             (tc.l3_mode != cm.cc.l3_mode) ||
             (tc.l4_mode != cm.cc.l4_mode) ||
             (tc.l5_mode != cm.cc.l5_mode) ||
@@ -380,6 +382,12 @@ void set_videoinfo()
     switch (cm.target_lm) {
         case MODE_L2:
             h_opt_scale = cm.sample_mult;
+            break;
+        case MODE_L2_320_COL:
+            h_opt_scale = 4;
+            break;
+        case MODE_L2_256_COL:
+            h_opt_scale = 6-2*cm.cc.ar_256col;
             break;
         case MODE_L3_320_COL:
             h_opt_scale = 3;
