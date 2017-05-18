@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: ../../sys.sopcinfo
  *
- * Generated: Sat Jan 21 12:40:58 EET 2017
+ * Generated: Tue May 16 19:45:17 EEST 2017
  */
 
 /*
@@ -175,19 +175,19 @@
 #define ALT_NUM_INTERNAL_INTERRUPT_CONTROLLERS 1
 #define ALT_NUM_INTERRUPT_CONTROLLERS 1
 #define ALT_STDERR "/dev/jtag_uart_0"
-#define ALT_STDERR_BASE 0x8210e0
+#define ALT_STDERR_BASE 0x8210f0
 #define ALT_STDERR_DEV jtag_uart_0
 #define ALT_STDERR_IS_JTAG_UART
 #define ALT_STDERR_PRESENT
 #define ALT_STDERR_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDIN "/dev/jtag_uart_0"
-#define ALT_STDIN_BASE 0x8210e0
+#define ALT_STDIN_BASE 0x8210f0
 #define ALT_STDIN_DEV jtag_uart_0
 #define ALT_STDIN_IS_JTAG_UART
 #define ALT_STDIN_PRESENT
 #define ALT_STDIN_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDOUT "/dev/jtag_uart_0"
-#define ALT_STDOUT_BASE 0x8210e0
+#define ALT_STDOUT_BASE 0x8210f0
 #define ALT_STDOUT_DEV jtag_uart_0
 #define ALT_STDOUT_IS_JTAG_UART
 #define ALT_STDOUT_PRESENT
@@ -279,7 +279,7 @@
  */
 
 #define ALT_MODULE_CLASS_jtag_uart_0 altera_avalon_jtag_uart
-#define JTAG_UART_0_BASE 0x8210e0
+#define JTAG_UART_0_BASE 0x8210f0
 #define JTAG_UART_0_IRQ 1
 #define JTAG_UART_0_IRQ_INTERRUPT_CONTROLLER_ID 0
 #define JTAG_UART_0_NAME "/dev/jtag_uart_0"
@@ -326,7 +326,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_0 altera_avalon_pio
-#define PIO_0_BASE 0x8210d0
+#define PIO_0_BASE 0x8210e0
 #define PIO_0_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_0_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_0_CAPTURE 0
@@ -353,7 +353,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_1 altera_avalon_pio
-#define PIO_1_BASE 0x8210c0
+#define PIO_1_BASE 0x8210d0
 #define PIO_1_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_1_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_1_CAPTURE 0
@@ -380,7 +380,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_2 altera_avalon_pio
-#define PIO_2_BASE 0x8210b0
+#define PIO_2_BASE 0x8210c0
 #define PIO_2_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_2_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_2_CAPTURE 0
@@ -389,8 +389,8 @@
 #define PIO_2_DRIVEN_SIM_VALUE 0
 #define PIO_2_EDGE_TYPE "NONE"
 #define PIO_2_FREQ 27000000
-#define PIO_2_HAS_IN 0
-#define PIO_2_HAS_OUT 1
+#define PIO_2_HAS_IN 1
+#define PIO_2_HAS_OUT 0
 #define PIO_2_HAS_TRI 0
 #define PIO_2_IRQ -1
 #define PIO_2_IRQ_INTERRUPT_CONTROLLER_ID -1
@@ -407,7 +407,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_3 altera_avalon_pio
-#define PIO_3_BASE 0x8210a0
+#define PIO_3_BASE 0x8210b0
 #define PIO_3_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_3_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_3_CAPTURE 0
@@ -434,7 +434,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_4 altera_avalon_pio
-#define PIO_4_BASE 0x821090
+#define PIO_4_BASE 0x8210a0
 #define PIO_4_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_4_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_4_CAPTURE 0
@@ -443,8 +443,8 @@
 #define PIO_4_DRIVEN_SIM_VALUE 0
 #define PIO_4_EDGE_TYPE "NONE"
 #define PIO_4_FREQ 27000000
-#define PIO_4_HAS_IN 1
-#define PIO_4_HAS_OUT 0
+#define PIO_4_HAS_IN 0
+#define PIO_4_HAS_OUT 1
 #define PIO_4_HAS_TRI 0
 #define PIO_4_IRQ -1
 #define PIO_4_IRQ_INTERRUPT_CONTROLLER_ID -1
@@ -461,7 +461,7 @@
  */
 
 #define ALT_MODULE_CLASS_pio_5 altera_avalon_pio
-#define PIO_5_BASE 0x821080
+#define PIO_5_BASE 0x821090
 #define PIO_5_BIT_CLEARING_EDGE_REGISTER 0
 #define PIO_5_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define PIO_5_CAPTURE 0
@@ -480,6 +480,33 @@
 #define PIO_5_RESET_VALUE 0
 #define PIO_5_SPAN 16
 #define PIO_5_TYPE "altera_avalon_pio"
+
+
+/*
+ * pio_6 configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_pio_6 altera_avalon_pio
+#define PIO_6_BASE 0x821080
+#define PIO_6_BIT_CLEARING_EDGE_REGISTER 0
+#define PIO_6_BIT_MODIFYING_OUTPUT_REGISTER 0
+#define PIO_6_CAPTURE 0
+#define PIO_6_DATA_WIDTH 32
+#define PIO_6_DO_TEST_BENCH_WIRING 0
+#define PIO_6_DRIVEN_SIM_VALUE 0
+#define PIO_6_EDGE_TYPE "NONE"
+#define PIO_6_FREQ 27000000
+#define PIO_6_HAS_IN 0
+#define PIO_6_HAS_OUT 1
+#define PIO_6_HAS_TRI 0
+#define PIO_6_IRQ -1
+#define PIO_6_IRQ_INTERRUPT_CONTROLLER_ID -1
+#define PIO_6_IRQ_TYPE "NONE"
+#define PIO_6_NAME "/dev/pio_6"
+#define PIO_6_RESET_VALUE 0
+#define PIO_6_SPAN 16
+#define PIO_6_TYPE "altera_avalon_pio"
 
 
 /*

@@ -111,7 +111,7 @@ void parse_control()
 
     // one for each video_group
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
-    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x3, 0x3, 0x3, 0x3, 0x3 };
+    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x3, 0xf, 0x3, 0x3, 0x3 };
 
     if (remote_code)
         printf("RCODE: 0x%.4lx, %d\n", remote_code, remote_rpt);
@@ -147,10 +147,10 @@ void parse_control()
             break;
         case RC_INFO:
             sniprintf(menu_row1, LCD_ROW_LEN+1, "VMod: %s", video_modes[cm.id].name);
-            sniprintf(menu_row2, LCD_ROW_LEN+1, "LO: %u VSM: %u", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0x7ff, (IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) >> 16) & 0x3);
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "LC: %u VSM: %u", (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) & 0x7ff)+1, (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) >> 16) & 0x3);
             lcd_write_menu();
             printf("Mod: %s\n", video_modes[cm.id].name);
-            printf("Lines: %u M: %u\n", IORD_ALTERA_AVALON_PIO_DATA(PIO_4_BASE) & 0x7ff, cm.macrovis);
+            printf("Lines: %u M: %u\n", (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) & 0x7ff)+1, cm.macrovis);
             break;
         case RC_LCDBL:
             sys_ctrl ^= LCD_BL;

@@ -78,19 +78,18 @@ bool HDMITX_HPD(void){
 }
 
 
-void HDMITX_SetAVIInfoFrame(alt_u8 VIC, alt_u8 OutputColorMode, bool b16x9, bool ITU709)
+void HDMITX_SetAVIInfoFrame(alt_u8 VIC, bool b16x9, bool ITU709, bool ITC, alt_u8 pixelrep)
 {
-     AVI_InfoFrame AviInfo;
-    alt_u8 pixelrep = 0;
-    
-    OS_PRINTF("HDMITX_SetAVIInfoFrame, VIC=%d, ColorMode=%d, Aspect-Ratio=%s, ITU709=%s\n",
-        VIC, OutputColorMode, b16x9?"16:9":"4:3", ITU709?"Yes":"No");
+    AVI_InfoFrame AviInfo;
+
+    OS_PRINTF("HDMITX_SetAVIInfoFrame, VIC=%d, Aspect-Ratio=%s, ITU709=%s, ITC=%s, pixelrep=%u\n",
+        VIC, b16x9?"16:9":"4:3", ITU709?"Yes":"No", ITC?"Yes":"No", pixelrep);
 
     AviInfo.pktbyte.AVI_HB[0] = AVI_INFOFRAME_TYPE|0x80 ; 
     AviInfo.pktbyte.AVI_HB[1] = AVI_INFOFRAME_VER ; 
     AviInfo.pktbyte.AVI_HB[2] = AVI_INFOFRAME_LEN ; 
     
-    switch(OutputColorMode)
+    /*switch(OutputColorMode)
     {
     case F_MODE_YUV444:
         // AviInfo.info.ColorMode = 2 ;
@@ -105,14 +104,15 @@ void HDMITX_SetAVIInfoFrame(alt_u8 VIC, alt_u8 OutputColorMode, bool b16x9, bool
         // AviInfo.info.ColorMode = 0 ;
         AviInfo.pktbyte.AVI_DB[0] = (0<<5)|(1<<4) ;
         break ;
-    }
+    }*/
+    AviInfo.pktbyte.AVI_DB[0] = (0<<5)|(1<<4) ;
     AviInfo.pktbyte.AVI_DB[0] |= 2; // indicate "no overscan"
     AviInfo.pktbyte.AVI_DB[1] = 8 ;
-    AviInfo.pktbyte.AVI_DB[1] |= (!b16x9)?(1<<4):(2<<4) ; // 4:3 or 16:9
+    //AviInfo.pktbyte.AVI_DB[1] |= (!b16x9)?(1<<4):(2<<4) ; // 4:3 or 16:9
     AviInfo.pktbyte.AVI_DB[1] |= (!ITU709)?(1<<6):(2<<6) ; // ITU709 or ITU601
-    AviInfo.pktbyte.AVI_DB[2] = (1<<3) ; // indicate "full-range RGB"
+    AviInfo.pktbyte.AVI_DB[2] = ((1<<3) | (ITC<<7)) ; // indicate "full-range RGB", setup ITC bit
     AviInfo.pktbyte.AVI_DB[3] = VIC ;
-    AviInfo.pktbyte.AVI_DB[4] =  pixelrep & 3 ;
+    AviInfo.pktbyte.AVI_DB[4] = pixelrep & 3 ;
     AviInfo.pktbyte.AVI_DB[5] = 0 ;
     AviInfo.pktbyte.AVI_DB[6] = 0 ;
     AviInfo.pktbyte.AVI_DB[7] = 0 ;

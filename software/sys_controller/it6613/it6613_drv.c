@@ -3274,25 +3274,16 @@ DISABLE_MPG_INFOFRM_PKT()
     HDMITX_WriteI2C_Byte(REG_TX_MPG_INFOFRM_CTRL,0);
 }
 
-void HDMITX_SetPixelRepetition(int pixelrep, int set_infoframe) {
+void HDMITX_SetPixelRepetition(BYTE pixelrep, BYTE set_infoframe) {
     BYTE pllpr;
 
-    //Switch_HDMITX_Bank(0);
-    pllpr = HDMITX_ReadI2C_Byte(REG_TX_CLK_CTRL1) & 0x2F;
-    pixelrep &= 0x3;
-
-    if (set_infoframe) {
-        HDMITX_WriteI2C_Byte(REG_TX_CLK_CTRL1, pllpr);
-        Switch_HDMITX_Bank(1);
-        HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB5, pixelrep);
-    } else {
-        pllpr |= (1<<4)|(pixelrep<<6);
-        HDMITX_WriteI2C_Byte(REG_TX_CLK_CTRL1, pllpr);
-        Switch_HDMITX_Bank(1);
-        HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB5, 0);
-    }
-
     Switch_HDMITX_Bank(0);
+    pllpr = HDMITX_ReadI2C_Byte(REG_TX_CLK_CTRL1) & 0x2F;
+
+    if (!set_infoframe)
+        pllpr |= (1<<4)|((pixelrep&0x3)<<6);
+
+    HDMITX_WriteI2C_Byte(REG_TX_CLK_CTRL1, pllpr);
 }
 
 //////////////////////////////////////////////////////////////////////

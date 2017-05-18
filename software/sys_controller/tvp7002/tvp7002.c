@@ -342,7 +342,7 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
     }
 }
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_u16 h_syncoutlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
 {
     // Clamp position and ALC
     tvp_set_clamp_position(type, h_syncinlen);
@@ -370,9 +370,6 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per
 
     // Default (3,3) coast may lead to PLL jitter and sync loss (e.g. SNES)
     tvp_set_hpllcoast(pre_coast, post_coast);
-
-    // Hsync output width
-    tvp_writereg(TVP_HSOUTWIDTH, h_syncoutlen);
 }
 
 void tvp_source_sel(tvp_input_t input, video_format fmt)

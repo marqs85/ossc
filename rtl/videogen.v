@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -72,79 +72,57 @@ reg [7:0] V_gen;
 //HSYNC gen (negative polarity)
 always @(posedge clk27 or negedge reset_n)
 begin
-    if (!reset_n)
-        begin
+    if (!reset_n) begin
+        h_cnt <= 0;
+        HSYNC_out <= 0;
+    end else begin
+        //Hsync counter
+        if (h_cnt < H_TOTAL-1)
+            h_cnt <= h_cnt + 1'b1;
+        else
             h_cnt <= 0;
-            HSYNC_out <= 0;
-        end
-    else
-        begin
-            //Hsync counter
-            if (h_cnt < H_TOTAL-1 )
-                h_cnt <= h_cnt + 1'b1;
-            else
-                h_cnt <= 0;
-            
-            //Hsync signal
-            HSYNC_out <= (h_cnt < H_SYNCLEN) ? 1'b0 : 1'b1;
-        end
+
+        //Hsync signal
+        HSYNC_out <= (h_cnt < H_SYNCLEN) ? 1'b0 : 1'b1;
+    end
 end
 
 //VSYNC gen (negative polarity)
 always @(posedge clk27 or negedge reset_n)
 begin
-    if (!reset_n)
-        begin
-            v_cnt <= 0;
-            VSYNC_out <= 0;
-        end
-    else
-        begin
-            if (h_cnt == 0)
-                begin
-                    //Vsync counter
-                    if (v_cnt < V_TOTAL-1 )
-                        v_cnt <= v_cnt + 1'b1;
-                    else
-                        v_cnt <= 0;
-                    
-                    //Vsync signal
-                    VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
-                end
-        end
-end
-
-//Data gen
-always @(posedge clk27 or negedge reset_n)
-begin
-    if (!reset_n)
-        begin
-            V_gen <= 8'h00;
-        end
-    else
-        begin
-            if ((h_cnt < X_START+H_OVERSCAN) || (h_cnt >= X_START+H_OVERSCAN+H_AREA) || (v_cnt < Y_START+V_OVERSCAN) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA))
-                V_gen <= (h_cnt[0] ^ v_cnt[0]) ? 8'hff : 8'h00;
-            else if ((h_cnt < X_START+H_OVERSCAN+H_BORDER) || (h_cnt >= X_START+H_OVERSCAN+H_AREA-H_BORDER) || (v_cnt < Y_START+V_OVERSCAN+V_BORDER) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA-V_BORDER))
-                V_gen <= 8'h50;
+    if (!reset_n) begin
+        v_cnt <= 0;
+        VSYNC_out <= 0;
+    end else begin
+        //Vsync counter
+        if (h_cnt == H_TOTAL-1) begin
+            if (v_cnt < V_TOTAL-1)
+                v_cnt <= v_cnt + 1'b1;
             else
-                V_gen <= (h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 1;
-            /*else
-                V_gen <= 8'h00;*/
+                v_cnt <= 0;
         end
+
+        //Vsync signal
+        VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
+    end
 end
 
-//Enable gen
+//Data and ENABLE gen
 always @(posedge clk27 or negedge reset_n)
 begin
-    if (!reset_n)
-        begin
-            ENABLE_out <= 1'b0;
-        end
-    else
-        begin
-            ENABLE_out <= (h_cnt >= X_START && h_cnt < X_START + H_ACTIVE && v_cnt >= Y_START && v_cnt < Y_START + V_ACTIVE);
-        end
+    if (!reset_n) begin
+        V_gen <= 8'h00;
+        ENABLE_out <= 1'b0;
+    end else begin
+        if ((h_cnt < X_START+H_OVERSCAN) || (h_cnt >= X_START+H_OVERSCAN+H_AREA) || (v_cnt < Y_START+V_OVERSCAN) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA))
+            V_gen <= (h_cnt[0] ^ v_cnt[0]) ? 8'hff : 8'h00;
+        else if ((h_cnt < X_START+H_OVERSCAN+H_BORDER) || (h_cnt >= X_START+H_OVERSCAN+H_AREA-H_BORDER) || (v_cnt < Y_START+V_OVERSCAN+V_BORDER) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA-V_BORDER))
+            V_gen <= 8'h50;
+        else
+            V_gen <= (h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 1;
+
+        ENABLE_out <= (h_cnt >= X_START && h_cnt < X_START + H_ACTIVE && v_cnt >= Y_START && v_cnt < Y_START + V_ACTIVE);
+    end
 end
 
 endmodule
