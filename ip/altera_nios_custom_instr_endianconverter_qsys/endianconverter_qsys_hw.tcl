@@ -34,7 +34,7 @@ package require -exact sopc 10.1
 # | module altera_nios_custom_instr_endian_converter
 # | 
 set_module_property NAME altera_nios_custom_instr_endianconverter
-set_module_property VERSION 16.1
+set_module_property VERSION 17.0
 set_module_property INTERNAL false
 set_module_property GROUP "Custom Instruction Modules"
 set_module_property AUTHOR "Altera Corporation"
