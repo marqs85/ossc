@@ -415,7 +415,13 @@ end
 assign h_unstable = (warn_h_unstable != 0);
 assign pll_lock_lost = {(warn_pll_lock_lost != 0), (warn_pll_lock_lost_3x != 0)};
 
-//Check if TVP7002 is skipping VSYNCs (occurs with interlace on TTL sync). 
+//Detect if TVP7002 is skipping VSYNCs. This occurs for interlaced signals fed via digital sync inputs,
+//causing TVP7002 not to regenerate VSYNC for field 1. Moreover, if leading edges of HSYNC and VSYNC are
+//too far from each other for field 0, no VSYNC is regenerated at all. This can be avoided by disabling
+//doubled sampling rates ("AV3 interlacefix") and/or minimizing VSYNC delay induced by RC filter on PCB.
+//However, TVP7002 datasheet warns that HSYNC/VSYNC should not change simultaneously, so leaving out the
+//filter may lead to stability issues and is not recommended. A combination of 220ohm resistor and 1nF
+//capacitor seems to be optimal for 480i/576i, including doubled sampling rates.
 always @(posedge clk27 or negedge reset_n)
 begin
     if (!reset_n) begin

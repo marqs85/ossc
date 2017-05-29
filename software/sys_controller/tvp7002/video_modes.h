@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -138,7 +138,7 @@ typedef struct {
     /* PS2 GSM 960i mode */ \
     { "640x960i",    640,  480, 5994,  800,  1050,  48, 33,  96,  2, (VIDEO_EDTV | VIDEO_PC),   GROUP_1080I,    (MODE_PT | MODE_L2 | MODE_INTERLACED) },                                                \
     /* 1080i/p HDTV modes */ \
-    { "1080i",      1920,  540, 5994, 2200,  1125, 188, 16,  44,  5, VIDEO_HDTV,                GROUP_1080I,    (MODE_PT | MODE_L2 | MODE_INTERLACED) },                                                \
+    { "1080i",      1920,  540, 5994, 2200,  1125, 188, 16,  44,  5, (VIDEO_HDTV | VIDEO_PC),   GROUP_1080I,    (MODE_PT | MODE_L2 | MODE_INTERLACED) },                                                \
     { "1080p",      1920, 1080, 5994, 2200,  1125, 188, 36,  44,  5, VIDEO_HDTV,                GROUP_NONE,     MODE_PT },                                                                              \
     { "1920x1080",  1920, 1080, 6000, 2200,  1125, 148, 36,  44,  5, VIDEO_PC,                  GROUP_NONE,     MODE_PT },                                                                              \
     /* VESA UXGA with reduced h.backporch */ \

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -80,7 +80,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
         if ((typemask & mode_type) && (target_lm & video_modes[i].flags) && (progressive == !(video_modes[i].flags & MODE_INTERLACED)) && (totlines <= (video_modes[i].v_total+LINECNT_MAX_TOLERANCE))) {
 
             // defaults
-            cm.hdmitx_pixelrep = HDMITX_PIXELREP_DISABLE;
+            cm.tx_pixelrep = TX_PIXELREP_DISABLE;
             cm.hdmitx_pixr_ifr = 0;
             cm.sample_mult = 1;
             cm.hsync_cut = 0;
@@ -90,21 +90,21 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                 case MODE_PT:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_1X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
-                    cm.hdmitx_pixelrep = ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_480I)) ? HDMITX_PIXELREP_2X : HDMITX_PIXELREP_DISABLE;
-                    cm.hdmitx_pixr_ifr = cm.hdmitx_pixelrep;
+                    cm.tx_pixelrep = ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_480I)) ? TX_PIXELREP_2X : TX_PIXELREP_DISABLE;
+                    cm.hdmitx_pixr_ifr = cm.tx_pixelrep;
                     break;
                 case MODE_L2:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
-                    if ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_384P) || (video_modes[i].group == GROUP_480I)) {
+                    if ((!cm.cc.vga_ilace_fix) && ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_384P) || (video_modes[i].group == GROUP_480I))) {
                         cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                         cm.sample_mult = 2;
                     } else {
                         cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
                     }
-                    cm.hdmitx_pixelrep = ((video_modes[i].group == GROUP_384P) ||
+                    cm.tx_pixelrep = ((video_modes[i].group == GROUP_384P) ||
                                           (video_modes[i].group == GROUP_DTV480P) ||
                                           (video_modes[i].group == GROUP_VGA480P) ||
-                                          ((video_modes[i].group == GROUP_1080I) && (video_modes[i].h_total < 1200))) ? HDMITX_PIXELREP_2X : HDMITX_PIXELREP_DISABLE;
+                                          ((video_modes[i].group == GROUP_1080I) && (video_modes[i].h_total < 1200))) ? TX_PIXELREP_2X : TX_PIXELREP_DISABLE;
                     break;
                 case MODE_L2_256_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
@@ -120,7 +120,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
                     if (video_modes[i].group == GROUP_480I)
-                        cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                        cm.tx_pixelrep = TX_PIXELREP_2X;
                     break;
                 case MODE_L3_GEN_4_3:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
@@ -140,7 +140,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
                     if (video_modes[i].group == GROUP_480I)
-                        cm.hdmitx_pixelrep = HDMITX_PIXELREP_2X;
+                        cm.tx_pixelrep = TX_PIXELREP_2X;
                     break;
                 case MODE_L4_320_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;

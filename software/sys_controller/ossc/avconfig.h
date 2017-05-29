@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -74,6 +74,8 @@ typedef struct {
     alt_u8 video_lpf;
     alt_u8 pre_coast;
     alt_u8 post_coast;
+    alt_u8 full_tx_setup;
+    alt_u8 vga_ilace_fix;
 #ifdef DIY_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;

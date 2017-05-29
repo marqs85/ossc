@@ -34,9 +34,9 @@
 // HDMI_TX definitions
 #define HDMITX_MODE_MASK            0x00040000
 
-#define HDMITX_PIXELREP_DISABLE     0
-#define HDMITX_PIXELREP_2X          1
-#define HDMITX_PIXELREP_4X          2
+#define TX_PIXELREP_DISABLE         0
+#define TX_PIXELREP_2X              1
+#define TX_PIXELREP_4X              3
 
 // FPGA macros
 #define FPGA_V_MULTMODE_1X          0
@@ -94,7 +94,7 @@ typedef struct {
     alt_u8 sync_active;
     alt_u8 fpga_vmultmode;
     alt_u8 fpga_hmultmode;
-    alt_u8 hdmitx_pixelrep;
+    alt_u8 tx_pixelrep;
     alt_u8 hdmitx_pixr_ifr;
     alt_u8 sample_mult;
     alt_u8 sample_sel;

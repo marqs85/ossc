@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -47,7 +47,6 @@ const avconfig_t tc_default = {
     .pm_480i = 1,
     .pm_1080i = 1,
     .tvp_hpll2x = 1,
-    .hdmi_itc = 1,
     .sampler_phase = DEFAULT_SAMPLER_PHASE,
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,

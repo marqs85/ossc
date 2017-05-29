@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -91,10 +91,10 @@ inline void SetupAudio(tx_mode_t mode)
     DisableAudioOutput();
     EnableAudioInfoFrame(FALSE, NULL);
 
-    if (tc.tx_mode == TX_HDMI) {
+    if (mode == TX_HDMI) {
         alt_u32 pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total*cm.sample_mult*(cm.fpga_vmultmode+1);
 
-        pclk_out *= 1+cm.hdmitx_pixelrep;
+        pclk_out *= 1+cm.tx_pixelrep;
 
         printf("PCLK_out: %luHz\n", pclk_out);
         EnableAudioOutput4OSSC(pclk_out, tc.audio_dw_sampl, tc.audio_swap_lr);
@@ -119,16 +119,18 @@ inline void TX_enable(tx_mode_t mode)
     DisableVideoOutput();
     EnableAVIInfoFrame(FALSE, NULL);
 
-    // re-setup
+    //Setup TX configuration
+    //TODO: set pclk target and VIC dynamically
     EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
-    //TODO: set VIC based on mode
+
     if (mode == TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixelrep);
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
         cm.cc.hdmi_itc = tc.hdmi_itc;
-#ifdef DIY_AUDIO
-        SetupAudio(mode);
-#endif
     }
+
+#ifdef DIY_AUDIO
+    SetupAudio(mode);
+#endif
 
     // start TX
     SetAVMute(FALSE);
@@ -215,7 +217,7 @@ status_t get_status(tvp_input_t input, video_format format)
     data2 = tvp_readreg(TVP_CLKCNT2);
     clkcnt = ((data2 & 0x0f) << 8) | data1;
 
-    // Read how many lines TVP7002 outputs in reality
+    // Read how many lines TVP7002 outputs in reality (valid only if output enabled)
     totlines_tvp = ((IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) >> 18) & 0x7ff)+1;
 
     // NOTE: "progressive" may not have correct value if H-PLL is not locked (!cm.sync_active)
@@ -253,7 +255,8 @@ status_t get_status(tvp_input_t input, video_format format)
     }
 
     if (valid_linecnt) {
-        if ((totlines != cm.totlines) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
+        // Line count reported in TVP7002 status registers is sometimes +-1 line off and may alternate with correct value. Ignore these events
+        if ((totlines > cm.totlines+1) || (totlines+1 < cm.totlines) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
             printf("totlines: %lu (cur) / %lu (prev), clkcnt: %lu (cur) / %lu (prev). totlines_tvp: %u, VSM: %u\n", totlines, cm.totlines, clkcnt, cm.clkcnt, totlines_tvp, vsyncmode);
             /*if (!cm.sync_active)
                 act_ctr = 0;*/
@@ -274,7 +277,8 @@ status_t get_status(tvp_input_t input, video_format format)
             (tc.l4_mode != cm.cc.l4_mode) ||
             (tc.l5_mode != cm.cc.l5_mode) ||
             (tc.l5_fmt != cm.cc.l5_fmt) ||
-            (tc.tvp_hpll2x != cm.cc.tvp_hpll2x))
+            (tc.tvp_hpll2x != cm.cc.tvp_hpll2x) ||
+            (tc.vga_ilace_fix != cm.cc.vga_ilace_fix))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((tc.s480p_mode != cm.cc.s480p_mode) && ((video_modes[cm.id].group == GROUP_DTV480P) || (video_modes[cm.id].group == GROUP_VGA480P)))
@@ -507,20 +511,21 @@ void program_mode()
     set_lpf(cm.cc.video_lpf);
     cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
 
-    HDMITX_SetPixelRepetition(cm.hdmitx_pixelrep, (cm.cc.tx_mode==TX_HDMI) ? cm.hdmitx_pixr_ifr : 0);
-    if (cm.cc.tx_mode==TX_HDMI)
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.hdmitx_pixelrep : 0);
-
     set_videoinfo();
 
-    // TX re-init skipped to minimize mode switch delay
-    //TX_enable(cm.cc.tx_mode);
+    TX_SetPixelRepetition(cm.tx_pixelrep, (cm.cc.tx_mode==TX_HDMI) ? cm.hdmitx_pixr_ifr : 0);
 
+    // Full TX initialization increases mode switch delay, use only for compatibility
+    if (cm.cc.full_tx_setup) {
+        TX_enable(cm.cc.tx_mode);
+    } else if (cm.cc.tx_mode==TX_HDMI) {
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
 #ifdef DIY_AUDIO
 #ifdef MANUAL_CTS
-    SetupAudio(cm.cc.tx_mode);
+        SetupAudio(cm.cc.tx_mode);
 #endif
 #endif
+    }
 }
 
 void load_profile_disp(alt_u8 code) {
@@ -703,8 +708,7 @@ void enable_outputs()
     // enable TVP output
     tvp_enable_output();
 
-    // enable and unmute HDMITX
-    // TODO: check pclk
+    // enable and unmute TX
     TX_enable(tc.tx_mode);
 }
 
@@ -850,7 +854,7 @@ int main()
         if ((tc.tx_mode == TX_HDMI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(0, 0, 0, tc.hdmi_itc, cm.hdmitx_pixelrep);
+            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
 

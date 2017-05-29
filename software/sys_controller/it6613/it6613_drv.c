@@ -3274,13 +3274,13 @@ DISABLE_MPG_INFOFRM_PKT()
     HDMITX_WriteI2C_Byte(REG_TX_MPG_INFOFRM_CTRL,0);
 }
 
-void HDMITX_SetPixelRepetition(BYTE pixelrep, BYTE set_infoframe) {
+void TX_SetPixelRepetition(BYTE pixelrep, BYTE via_infoframe) {
     BYTE pllpr;
 
     Switch_HDMITX_Bank(0);
     pllpr = HDMITX_ReadI2C_Byte(REG_TX_CLK_CTRL1) & 0x2F;
 
-    if (!set_infoframe)
+    if (!via_infoframe)
         pllpr |= (1<<4)|((pixelrep&0x3)<<6);
 
     HDMITX_WriteI2C_Byte(REG_TX_CLK_CTRL1, pllpr);
