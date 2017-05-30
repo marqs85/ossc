@@ -29,10 +29,10 @@ set_input_delay -clock pclk_hdtv -max $TVP_dmax $critinputs
 set_input_delay -clock pclk_sdtv -min $TVP_dmin $critinputs -add_delay
 set_input_delay -clock pclk_sdtv -max $TVP_dmax $critinputs -add_delay
 
-# output delay constraints (TODO: investigate why adding vsync upsets timing analyzer)
+# output delay constraints
 set IT_Tsu 1.0
 set IT_Th -0.5
-set critoutputs_hdmi [get_ports {HDMI_TX_RD* HDMI_TX_GD* HDMI_TX_BD* HDMI_TX_DE HDMI_TX_HS}]
+set critoutputs_hdmi [get_ports {HDMI_TX_RD* HDMI_TX_GD* HDMI_TX_BD* HDMI_TX_DE HDMI_TX_HS HDMI_TX_VS}]
 set_output_delay -reference_pin HDMI_TX_PCLK -clock pclk_hdtv -min $IT_Th $critoutputs_hdmi
 set_output_delay -reference_pin HDMI_TX_PCLK -clock pclk_hdtv -max $IT_Tsu $critoutputs_hdmi
 set_output_delay -reference_pin HDMI_TX_PCLK -clock pclk_2x -min $IT_Th $critoutputs_hdmi -add_delay

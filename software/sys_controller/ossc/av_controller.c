@@ -367,6 +367,7 @@ void set_videoinfo()
     alt_u8 sl_mode_fpga;
     alt_u8 h_opt_scale = 1;
     alt_u16 h_opt_startoffs = 0;
+    alt_u16 h_synclen = video_modes[cm.id].h_synclen;
     alt_u16 h_border, h_mask;
     alt_u16 v_active = video_modes[cm.id].v_active;
     alt_u16 v_backporch = video_modes[cm.id].v_backporch;
@@ -430,15 +431,19 @@ void set_videoinfo()
             break;
     }
 
+    // CEA-770.3 HDTV modes use tri-level syncs which have twice the width of bi-level syncs of corresponding CEA-861 modes
+    if (target_type == VIDEO_HDTV)
+        h_synclen *= 2;
+
     h_border = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2);
     h_mask = h_border + h_opt_scale*cm.cc.h_mask;
-    h_opt_startoffs = h_border + (cm.sample_mult-h_opt_scale)*((alt_u16)video_modes[cm.id].h_synclen+(alt_u16)video_modes[cm.id].h_backporch);
+    h_opt_startoffs = h_border + (cm.sample_mult-h_opt_scale)*(h_synclen+(alt_u16)video_modes[cm.id].h_backporch);
     h_opt_startoffs = (h_opt_startoffs/cm.sample_mult)*cm.sample_mult;
     printf("h_border: %u, h_opt_startoffs: %u\n", h_border, h_opt_startoffs);
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (cm.fpga_hmultmode<<30) |
                                             ((cm.cc.l5_fmt!=L5FMT_1600x1200)<<29) |
-                                            ((((cm.sample_mult*video_modes[cm.id].h_synclen)-cm.hsync_cut)&0xff)<<20) |
+                                            ((((cm.sample_mult*h_synclen)-cm.hsync_cut)&0xff)<<20) |
                                             (((cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch)&0x1ff)<<11) |
                                             ((cm.sample_mult*video_modes[cm.id].h_active)&0x7ff));
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_4_BASE, (h_mask<<19) |
