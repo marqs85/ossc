@@ -563,9 +563,6 @@ BOOL EnableAudioOutput4OSSC(ULONG VideoPixelClock,BYTE bAudioDwSampl,BYTE bAudio
 
     HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL0,AudioEnable & 0xF0);
 
-    // define internal/external MCLK and audio down-sampling
-    HDMITX_SetREG_Byte(REG_TX_CLK_CTRL0,~(M_EXT_MCLK_SEL|B_EXT_MCLK_SAMP|B_EXT_MCLK4CTS),(B_INT_MCLK_SAMP|B_EXT_256FS|B_INT_MCLK4CTS));
-
     if (bAudioDwSampl == 0x1)
         HDMITX_SetREG_Byte(REG_TX_CLK_CTRL1,~M_AUD_DIV,B_AUD_DIV2);
     else
