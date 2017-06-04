@@ -242,12 +242,10 @@
     #define B_AUTO_OVER_SAMPLING_CLOCK (1<<4)
     #define O_EXT_MCLK_SEL  2
     #define M_EXT_MCLK_SEL  (3<<O_EXT_MCLK_SEL)
-    #define O_EXT_MULTFS 0
-    #define M_EXT_MULTFS (3<<O_EXT_MULTFS)
-    #define B_EXT_128FS (0<<O_EXT_MULTFS)
-    #define B_EXT_256FS (1<<O_EXT_MULTFS)
-    #define B_EXT_512FS (2<<O_EXT_MULTFS)
-    #define B_EXT_1024FS (3<<O_EXT_MULTFS)
+    #define B_EXT_128FS (0<<O_EXT_MCLK_SEL)
+    #define B_EXT_256FS (1<<O_EXT_MCLK_SEL)
+    #define B_EXT_512FS (2<<O_EXT_MCLK_SEL)
+    #define B_EXT_1024FS (3<<O_EXT_MCLK_SEL)
 
 #define REG_TX_SHA_SEL       0x50
 #define REG_TX_SHA_RD_BYTE1  0x51
