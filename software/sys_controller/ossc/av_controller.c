@@ -26,6 +26,7 @@
 #include "av_controller.h"
 #include "tvp7002.h"
 #include "ths7353.h"
+#include "pcm1862.h"
 #include "video_modes.h"
 #include "lcd.h"
 #include "flash.h"
@@ -75,6 +76,11 @@ char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_ro
 extern alt_u8 menu_active;
 avinput_t target_mode;
 
+#ifdef ENABLE_AUDIO
+alt_u8 pcm1862_active;
+#endif
+
+
 inline void lcd_write_menu()
 {
     lcd_write((char*)&menu_row1, (char*)&menu_row2);
@@ -84,7 +90,7 @@ inline void lcd_write_status() {
     lcd_write((char*)&row1, (char*)&row2);
 }
 
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
 inline void SetupAudio(tx_mode_t mode)
 {
     // shut down audio-tx before setting new config (recommended for changing audio-tx config)
@@ -128,7 +134,7 @@ inline void TX_enable(tx_mode_t mode)
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
     SetupAudio(mode);
 #endif
 
@@ -333,7 +339,7 @@ status_t get_status(tvp_input_t input, video_format format)
     if (!memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
         tvp_set_fine_gain_offset(&cm.cc.col);
 
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
 #ifdef MANUAL_CTS
         (tc.edtv_l2x != cm.cc.edtv_l2x) ||
@@ -525,7 +531,7 @@ void program_mode()
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode==TX_HDMI) {
         HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
 #endif
@@ -682,6 +688,13 @@ int init_hw()
 
     InitIT6613();
 
+#ifdef ENABLE_AUDIO
+    if (pcm1862_init()) {
+        printf("PCM1862 found\n");
+        pcm1862_active = 1;
+    }
+#endif
+
     if (check_flash() != 0) {
         printf("Error: incorrect flash type detected\n");
         return -1;
@@ -836,8 +849,10 @@ int main()
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
             tvp_disable_output();
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
             DisableAudioOutput();
+            if (pcm1862_active)
+                pcm_source_sel(target_input);
 #endif
             tvp_source_sel(target_input, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate

@@ -54,7 +54,7 @@ const avconfig_t tc_default = {
     .sync_lpf = DEFAULT_SYNC_LPF,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
     .tx_mode = TX_HDMI,
 #endif
@@ -71,7 +71,7 @@ const avconfig_t tc_default = {
 int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
-#ifndef DIY_AUDIO
+#ifndef ENABLE_AUDIO
     tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
 #endif
 

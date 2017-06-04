@@ -76,7 +76,7 @@ typedef struct {
     alt_u8 post_coast;
     alt_u8 full_tx_setup;
     alt_u8 vga_ilace_fix;
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
 #endif

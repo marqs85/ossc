@@ -140,7 +140,7 @@ MENU(menu_compatibility, P99_PROTECT({ \
     { "AV3 interlacefix",                       OPT_AVCONFIG_SELECTION, { .sel = { &tc.vga_ilace_fix,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 
-#ifdef DIY_AUDIO
+#ifdef ENABLE_AUDIO
 MENU(menu_audio, P99_PROTECT({ \
     { LNG("Down-sampling","ﾀﾞｳﾝｻﾝﾌﾟﾘﾝｸﾞ"),       OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_dw_sampl, OPT_WRAP, SETTING_ITEM(audio_dw_sampl_desc) } } },
     { LNG("Swap left/right","ﾋﾀﾞﾘ/ﾐｷﾞｽﾜｯﾌﾟ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_swap_lr,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },

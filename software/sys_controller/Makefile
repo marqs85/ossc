@@ -151,6 +151,7 @@ C_SRCS += it6613/it6613_sys.c
 C_SRCS += tvp7002/tvp7002.c
 C_SRCS += tvp7002/video_modes.c
 C_SRCS += ths7353/ths7353.c
+C_SRCS += pcm1862/pcm1862.c
 C_SRCS += spi_charlcd/lcd.c
 C_SRCS += memory/flash.c
 C_SRCS += memory/sdcard.c
@@ -184,8 +185,8 @@ CREATE_LINKER_MAP := 1
 
 # Common arguments for ALT_CFLAGSs
 APP_CFLAGS_DEFINED_SYMBOLS := -DNO_I2C_DEBUG -DNO_DEBUG
-ifeq ($(DIY_AUDIO),y)
-APP_CFLAGS_DEFINED_SYMBOLS += -DDIY_AUDIO
+ifeq ($(ENABLE_AUDIO),y)
+APP_CFLAGS_DEFINED_SYMBOLS += -DENABLE_AUDIO
 endif
 ifeq ($(OSDLANG),JP)
 APP_CFLAGS_DEFINED_SYMBOLS += -DOSDLANG_JP
@@ -212,6 +213,7 @@ BSP_ROOT_DIR := ../sys_controller_bsp/
 APP_INCLUDE_DIRS += it6613
 APP_INCLUDE_DIRS += tvp7002
 APP_INCLUDE_DIRS += ths7353
+APP_INCLUDE_DIRS += pcm1862
 APP_INCLUDE_DIRS += spi_charlcd
 APP_INCLUDE_DIRS += memory
 APP_INCLUDE_DIRS += ulibSD

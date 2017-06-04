@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="ossc_sw" InternalType="">
+<CodeLite_Project Name="ossc_sw" InternalType="" Version="10.0.0">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -26,6 +26,15 @@
  }]]]>
     </Plugin>
   </Plugins>
+  <Reconciliation>
+    <Regexes/>
+    <Excludepaths/>
+    <Ignorefiles/>
+    <Extensions>
+      <![CDATA[cpp;c;h;hpp;xrc;wxcp;fbp]]>
+    </Extensions>
+    <Topleveldir>../software</Topleveldir>
+  </Reconciliation>
   <VirtualDirectory Name="sys_controller">
     <VirtualDirectory Name="ths7353">
       <File Name="sys_controller/ths7353/ths7353.h"/>
@@ -85,6 +94,11 @@
       <File Name="sys_controller/ulibSD/sd_io.h"/>
       <File Name="sys_controller/ulibSD/spi_io.h"/>
       <File Name="sys_controller/ulibSD/spi_io.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="pcm1862">
+      <File Name="sys_controller/pcm1862/pcm1862.c"/>
+      <File Name="sys_controller/pcm1862/pcm1862.h"/>
+      <File Name="sys_controller/pcm1862/pcm1862_regs.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
   <Description/>
@@ -161,11 +175,11 @@
       <PostBuild/>
       <CustomBuild Enabled="yes">
         <Target Name="compile_image_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP mem_init_generate</Target>
-        <Target Name="compile_image_aud_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make DIY_AUDIO=y OSDLANG=JP mem_init_generate</Target>
-        <Target Name="compile_image_aud">make clean &amp;&amp; make DIY_AUDIO=y mem_init_generate</Target>
+        <Target Name="compile_image_aud_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make ENABLE_AUDIO=y OSDLANG=JP mem_init_generate</Target>
+        <Target Name="compile_image_aud">make clean &amp;&amp; make ENABLE_AUDIO=y mem_init_generate</Target>
         <Target Name="compile_image">make clean &amp;&amp; make mem_init_generate</Target>
         <Target Name="Build_jp">iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP</Target>
-        <Target Name="Build_diy-audio">make DIY_AUDIO=y</Target>
+        <Target Name="Build_audio">make ENABLE_AUDIO=y</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make</BuildCommand>
