@@ -234,10 +234,11 @@
 #define B_T_AUTH_DONE (1<<7)
 #define REG_TX_CLK_CTRL0 0x58
     #define O_MCLK_SAMP 7
+    #define M_MCLK_SAMP (1<<O_MCLK_SAMP)
     #define B_EXT_MCLK_SAMP (1<<O_MCLK_SAMP)
     #define B_INT_MCLK_SAMP (0<<O_MCLK_SAMP)
     #define O_OSCLK_SEL 5
-    #define M_OSCLK_SEL 3
+    #define M_OSCLK_SEL (3<<O_OSCLK_SEL)
     #define B_AUTO_OVER_SAMPLING_CLOCK (1<<4)
     #define O_EXT_MCLK_SEL  2
     #define M_EXT_MCLK_SEL  (3<<O_EXT_MCLK_SEL)
@@ -245,9 +246,6 @@
     #define B_EXT_256FS (1<<O_EXT_MCLK_SEL)
     #define B_EXT_512FS (2<<O_EXT_MCLK_SEL)
     #define B_EXT_1024FS (3<<O_EXT_MCLK_SEL)
-    #define O_MCLK4CTS 1
-    #define B_EXT_MCLK4CTS (1<<O_MCLK4CTS)
-    #define B_INT_MCLK4CTS (0<<O_MCLK4CTS)
 
 #define REG_TX_SHA_SEL       0x50
 #define REG_TX_SHA_RD_BYTE1  0x51

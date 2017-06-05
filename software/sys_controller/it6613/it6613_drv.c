@@ -552,11 +552,6 @@ BOOL EnableAudioOutput4OSSC(ULONG VideoPixelClock,BYTE bAudioDwSampl,BYTE bAudio
     HDMITX_WriteI2C_Byte(REG_TX_PKT_SINGLE_CTRL,0); // D[1] = 0,HW auto count CTS
 #endif
 
-    // define internal/external MCLK and audio down-sampling
-    HDMITX_SetREG_Byte(REG_TX_CLK_CTRL0,~(M_EXT_MCLK_SEL|B_EXT_MCLK_SAMP|B_EXT_MCLK4CTS),B_EXT_256FS);
-    //HDMITX_AndREG_Byte(REG_TX_SW_RST,~M_AUD_DIV);
-    if (bAudioDwSampl == 0x1)
-        HDMITX_OrREG_Byte(REG_TX_CLK_CTRL1,B_AUD_DIV2);
 
     // set audio format
     Instance[0].TMDSClock = VideoPixelClock;
@@ -567,6 +562,11 @@ BOOL EnableAudioOutput4OSSC(ULONG VideoPixelClock,BYTE bAudioDwSampl,BYTE bAudio
     BYTE AudioEnable = (0x1 & ~(M_AUD_SWL|B_SPDIFTC)) | M_AUD_24BIT;
 
     HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL0,AudioEnable & 0xF0);
+
+    if (bAudioDwSampl == 0x1)
+        HDMITX_SetREG_Byte(REG_TX_CLK_CTRL1,~M_AUD_DIV,B_AUD_DIV2);
+    else
+        HDMITX_SetREG_Byte(REG_TX_CLK_CTRL1,~M_AUD_DIV,B_AUD_NODIV);
 
     HDMITX_AndREG_Byte(REG_TX_SW_RST,~(B_AUD_RST|B_AREF_RST));
     HDMITX_WriteI2C_Byte(REG_TX_AUDIO_CTRL1,Instance[0].bOutputAudioMode);
