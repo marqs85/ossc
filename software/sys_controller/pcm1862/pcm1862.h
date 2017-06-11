@@ -22,9 +22,15 @@
 
 #include "pcm1862_regs.h"
 #include "sysconfig.h"
-#include "tvp7002.h"
 
-void pcm_source_sel(tvp_input_t input) ;
+typedef enum {
+    PCM_INPUT1 = 0,
+    PCM_INPUT2 = 1,
+    PCM_INPUT3 = 2,
+    PCM_INPUT4 = 3
+} pcm_input_t;
+
+void pcm_source_sel(pcm_input_t input) ;
 
 int pcm1862_init();
 

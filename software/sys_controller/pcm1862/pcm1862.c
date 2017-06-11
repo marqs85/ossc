@@ -41,8 +41,8 @@ inline void pcm1862_writereg(alt_u8 regaddr, alt_u8 data)
     I2C_write(I2CA_BASE, data, 1);
 }
 
-void pcm_source_sel(tvp_input_t input) {
-    alt_u8 adc_ch = 1<<(3-input);
+void pcm_source_sel(pcm_input_t input) {
+    alt_u8 adc_ch = 1<<input;
 
     pcm1862_writereg(PCM1862_ADC1L, adc_ch);
     pcm1862_writereg(PCM1862_ADC1R, adc_ch);

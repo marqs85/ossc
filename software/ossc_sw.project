@@ -134,7 +134,7 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="diy-audio-debug">make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG -DDIY_AUDIO"</Target>
+        <Target Name="diy-audio-debug">make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG -DENABLE_AUDIO"</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG"</BuildCommand>

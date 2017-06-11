@@ -76,9 +76,7 @@ char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_ro
 extern alt_u8 menu_active;
 avinput_t target_mode;
 
-#ifdef ENABLE_AUDIO
 alt_u8 pcm1862_active;
-#endif
 
 
 inline void lcd_write_menu()
@@ -734,6 +732,7 @@ int main()
 {
     tvp_input_t target_input = 0;
     ths_input_t target_ths = 0;
+    pcm_input_t target_pcm = 0;
     video_format target_format = 0;
 
     alt_u8 av_init = 0;
@@ -790,54 +789,63 @@ int main()
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_INPUT_B;
+            target_pcm = PCM_INPUT4;
             break;
         case AV1_RGsB:
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_INPUT_B;
+            target_pcm = PCM_INPUT4;
             break;
         case AV1_YPBPR:
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_INPUT_B;
+            target_pcm = PCM_INPUT4;
             break;
         case AV2_YPBPR:
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_INPUT_A;
+            target_pcm = PCM_INPUT3;
             break;
         case AV2_RGsB:
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_INPUT_A;
+            target_pcm = PCM_INPUT3;
             break;
         case AV3_RGBHV:
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBHV;
             target_typemask = VIDEO_PC;
             target_ths = THS_STANDBY;
+            target_pcm = PCM_INPUT2;
             break;
         case AV3_RGBs:
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_STANDBY;
+            target_pcm = PCM_INPUT2;
             break;
         case AV3_RGsB:
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_STANDBY;
+            target_pcm = PCM_INPUT2;
             break;
         case AV3_YPBPR:
             target_input = TVP_INPUT3;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
             target_ths = THS_STANDBY;
+            target_pcm = PCM_INPUT2;
             break;
         default:
             break;
@@ -852,7 +860,7 @@ int main()
 #ifdef ENABLE_AUDIO
             DisableAudioOutput();
             if (pcm1862_active)
-                pcm_source_sel(target_input);
+                pcm_source_sel(target_pcm);
 #endif
             tvp_source_sel(target_input, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate
