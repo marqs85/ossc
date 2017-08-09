@@ -66,6 +66,7 @@ typedef struct {
     alt_u8 s480p_mode;
     alt_u8 sampler_phase;
     alt_u8 tvp_hpll2x;
+    alt_u8 upsample2x;
     alt_u8 ypbpr_cs;
     alt_u8 sync_vth;
     alt_u8 linelen_tol;

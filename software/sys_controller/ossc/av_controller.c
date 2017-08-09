@@ -128,7 +128,7 @@ inline void TX_enable(tx_mode_t mode)
     EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
 
     if (mode == TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
@@ -282,10 +282,11 @@ status_t get_status(tvp_input_t input, video_format format)
             (tc.l5_mode != cm.cc.l5_mode) ||
             (tc.l5_fmt != cm.cc.l5_fmt) ||
             (tc.tvp_hpll2x != cm.cc.tvp_hpll2x) ||
+            (tc.upsample2x != cm.cc.upsample2x) ||
             (tc.vga_ilace_fix != cm.cc.vga_ilace_fix))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
-        if ((tc.s480p_mode != cm.cc.s480p_mode) && ((video_modes[cm.id].group == GROUP_DTV480P) || (video_modes[cm.id].group == GROUP_VGA480P)))
+        if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].v_total == 525))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
@@ -369,7 +370,7 @@ status_t get_status(tvp_input_t input, video_format format)
 void set_videoinfo()
 {
     alt_u8 sl_mode_fpga;
-    alt_u8 h_opt_scale = 1;
+    alt_u8 h_opt_scale = cm.sample_mult;
     alt_u16 h_opt_startoffs = 0;
     alt_u16 h_synclen = video_modes[cm.id].h_synclen;
     alt_u16 h_border, h_mask;
@@ -381,7 +382,7 @@ void set_videoinfo()
     } else if (cm.cc.sl_mode == 1) {   //auto
         if (video_modes[cm.id].flags & MODE_INTERLACED)
             sl_mode_fpga = cm.fpga_vmultmode ? FPGA_SCANLINEMODE_ALT : FPGA_SCANLINEMODE_OFF;
-        else if (cm.fpga_vmultmode)
+        else if ((cm.fpga_vmultmode) && (video_modes[cm.id].group != GROUP_480P))
             sl_mode_fpga = FPGA_SCANLINEMODE_H;
         else
             sl_mode_fpga = FPGA_SCANLINEMODE_OFF;
@@ -390,9 +391,6 @@ void set_videoinfo()
     }
 
     switch (cm.target_lm) {
-        case MODE_L2:
-            h_opt_scale = cm.sample_mult;
-            break;
         case MODE_L2_320_COL:
             h_opt_scale = 4;
             break;
@@ -522,13 +520,13 @@ void program_mode()
 
     set_videoinfo();
 
-    TX_SetPixelRepetition(cm.tx_pixelrep, (cm.cc.tx_mode==TX_HDMI) ? cm.hdmitx_pixr_ifr : 0);
+    TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode==TX_HDMI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
 
     // Full TX initialization increases mode switch delay, use only for compatibility
     if (cm.cc.full_tx_setup) {
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode==TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
 #ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
@@ -875,6 +873,7 @@ int main()
 
         // Check here to enable regardless of av_init
         if (tc.tx_mode != cm.cc.tx_mode) {
+            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, 0, 0);
             TX_enable(tc.tx_mode);
             cm.cc.tx_mode = tc.tx_mode;
             cm.clkcnt = 0; //TODO: proper invalidate
@@ -882,7 +881,7 @@ int main()
         if ((tc.tx_mode == TX_HDMI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr ? cm.tx_pixelrep : 0);
+            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
 

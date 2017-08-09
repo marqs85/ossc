@@ -58,9 +58,8 @@ typedef enum {
     GROUP_240P      = 1,
     GROUP_384P      = 2,
     GROUP_480I      = 3,
-    GROUP_DTV480P   = 4,
-    GROUP_VGA480P   = 5,
-    GROUP_1080I     = 6,
+    GROUP_480P      = 4,
+    GROUP_1080I     = 5,
 } video_group;
 
 typedef enum {
@@ -120,13 +119,13 @@ typedef struct {
     { "640x384",     640,  384,   800,  492,   48, 63,   96, 2,  VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* ~525-line modes */ \
     { "480i",        720,  240,   858,  525,   57, 15,   62, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_480I,     (MODE_PT | MODE_L2 | MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2 | MODE_INTERLACED) },  \
-    { "480p",        720,  480,   858,  525,   60, 30,   62, 6,  (VIDEO_EDTV | VIDEO_PC),   GROUP_DTV480P,  (MODE_PT | MODE_L2) },                                                                          \
-    { "640x480",     640,  480,   800,  525,   48, 33,   96, 2,  (VIDEO_PC | VIDEO_EDTV),   GROUP_VGA480P,  (MODE_PT | MODE_L2) },                                                                          \
+    { "480p",        720,  480,   858,  525,   60, 30,   62, 6,  (VIDEO_EDTV | VIDEO_PC),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
+    { "640x480",     640,  480,   800,  525,   48, 33,   96, 2,  (VIDEO_PC | VIDEO_EDTV),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     /* X68k @ 31kHz */ \
-    { "640x512",     640,  512,   800,  568,   48, 28,   96, 2,  VIDEO_PC,                  GROUP_NONE,     MODE_PT },                                                                                      \
+    { "640x512",     640,  512,   800,  568,   48, 28,   96, 2,  (VIDEO_PC | VIDEO_EDTV),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     /* ~625-line modes */ \
     { "576i",        720,  288,   864,  625,   69, 19,   63, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_480I,     (MODE_PT | MODE_L2 | MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2 | MODE_INTERLACED) },  \
-    { "576p",        720,  576,   864,  625,   68, 39,   64, 5,  VIDEO_EDTV,                GROUP_DTV480P,  (MODE_PT | MODE_L2) },                                                                          \
+    { "576p",        720,  576,   864,  625,   68, 39,   64, 5,  VIDEO_EDTV,                GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     { "800x600",     800,  600,  1056,  628,   88, 23,  128, 4,  VIDEO_PC,                  GROUP_NONE,     MODE_PT },                                                                                      \
     /* 720p modes */ \
     { "720p",       1280,  720,  1650,  750,  220, 20,   40, 5,  (VIDEO_HDTV | VIDEO_PC),   GROUP_NONE,     MODE_PT },                                                                                      \

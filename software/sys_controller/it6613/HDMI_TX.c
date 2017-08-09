@@ -82,7 +82,7 @@ void HDMITX_SetAVIInfoFrame(alt_u8 VIC, bool b16x9, bool ITU709, bool ITC, alt_u
 {
     AVI_InfoFrame AviInfo;
 
-    OS_PRINTF("HDMITX_SetAVIInfoFrame, VIC=%d, Aspect-Ratio=%s, ITU709=%s, ITC=%s, pixelrep=%u\n",
+    OS_PRINTF("HDMITX_SetAVIInfoFrame: VIC=%d, Aspect-Ratio=%s, ITU709=%s, ITC=%s, pixelrep=%u\n",
         VIC, b16x9?"16:9":"4:3", ITU709?"Yes":"No", ITC?"Yes":"No", pixelrep);
 
     AviInfo.pktbyte.AVI_HB[0] = AVI_INFOFRAME_TYPE|0x80 ; 

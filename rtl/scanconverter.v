@@ -239,9 +239,9 @@ case (V_MULTMODE)
                 col_id_act = {2'b00, hcnt_2x[0]};
             end
             `H_MULTMODE_OPTIMIZED: begin
-                pclk_act = pclk_1x;
+                pclk_act = pclk_1x;     //special case: pclk bypass to enable 2x native sampling
                 linebuf_hoffset = hcnt_2x_opt;
-                col_id_act = {2'b00, hcnt_2x[1]};;
+                col_id_act = {2'b00, hcnt_2x[1]};
             end
         endcase
     end
@@ -358,9 +358,11 @@ linebuf linebuf_rgb (
 );
 
 //Postprocess pipeline
-// h_cnt, v_cnt, line_id, col_id:   0
-// HSYNC, VSYNC, DE:                1
-// RGB:                             2
+//
+// Latency with respect to h_cnt/v_cnt before 1st stage:
+// line_id, col_id:                 0 cycles
+// HSYNC, VSYNC, DE:                1 cycle
+// RGB:                             2 cycles
 always @(posedge pclk_act)
 begin
     line_id_pp1 <= line_id_act;
