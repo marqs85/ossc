@@ -61,7 +61,7 @@ set_false_path -from [get_clocks pclk_4x] -to [get_clocks {pclk_sdtv pclk_2x pcl
 set_false_path -from [get_clocks pclk_5x] -to [get_clocks {pclk_sdtv pclk_2x pclk_3x pclk_4x}]
 
 # Ignore paths which would result from pclk_act switchover during postprocess chain
-set pclk_act_regs [get_cells {scanconverter:scanconverter_inst|R_out* \
+set pclk_act_regs [get_registers {scanconverter:scanconverter_inst|R_out* \
                             scanconverter:scanconverter_inst|G_out* \
                             scanconverter:scanconverter_inst|B_out* \
                             scanconverter:scanconverter_inst|HSYNC_out* \
@@ -69,7 +69,10 @@ set pclk_act_regs [get_cells {scanconverter:scanconverter_inst|R_out* \
                             scanconverter:scanconverter_inst|DE_out* \
                             scanconverter:scanconverter_inst|*_pp1* \
                             scanconverter:scanconverter_inst|*_pp2* \
-                            scanconverter:scanconverter_inst|*_pp3*}]
+                            scanconverter:scanconverter_inst|*_pp3* \
+                            scanconverter:scanconverter_inst|*_pp4* \
+                            scanconverter:scanconverter_inst|*_pp5* \
+                            scanconverter:scanconverter_inst|*_pp6*}]
 set_false_path -from [get_clocks {pclk_sdtv}] -to $pclk_act_regs
 set_false_path -from [get_clocks {pclk_sdtv}] -to [get_ports HDMI_TX_*]
 
