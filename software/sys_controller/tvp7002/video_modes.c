@@ -106,7 +106,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                 case MODE_L2:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
                     // Use native 2x sampling with low-res modes when possible to minimize jitter and generate min. 25MHz input pclk for FPGA PLL
-                    if ((!cm.cc.vga_ilace_fix) && ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_384P) || (video_modes[i].group == GROUP_480I))) {
+                    if ((!cm.cc.vga_ilace_fix) && (video_modes[i].h_total < 1400) && ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_384P) || (video_modes[i].group == GROUP_480I))) {
                         cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                         cm.sample_mult = 2;
                     } else {
