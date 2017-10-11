@@ -33,6 +33,7 @@
 #define VSYNC_THOLD_MAX     200
 #define SD_SYNC_WIN_MAX     255
 #define PLL_COAST_MAX       5
+#define REVERSE_LPF_MAX     31
 
 #define SL_MODE_MAX         2
 #define SL_TYPE_MAX         2
@@ -77,6 +78,7 @@ typedef struct {
     alt_u8 post_coast;
     alt_u8 full_tx_setup;
     alt_u8 vga_ilace_fix;
+    alt_u8 reverse_lpf;
 #ifdef ENABLE_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
