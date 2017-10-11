@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            0
-#define FW_VER_MINOR            78
+#define FW_VER_MINOR            79
 
 #ifdef ENABLE_AUDIO
 #define FW_SUFFIX1              "a"

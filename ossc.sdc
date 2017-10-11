@@ -64,23 +64,18 @@ set_false_path -from [get_clocks pclk_5x] -to [get_clocks {pclk_sdtv pclk_2x pcl
 set pclk_act_regs [get_registers {scanconverter:scanconverter_inst|R_out* \
                             scanconverter:scanconverter_inst|G_out* \
                             scanconverter:scanconverter_inst|B_out* \
-                            scanconverter:scanconverter_inst|HSYNC_out* \
-                            scanconverter:scanconverter_inst|VSYNC_out* \
-                            scanconverter:scanconverter_inst|DE_out* \
-                            scanconverter:scanconverter_inst|*_pp1* \
-                            scanconverter:scanconverter_inst|*_pp2* \
-                            scanconverter:scanconverter_inst|*_pp3* \
-                            scanconverter:scanconverter_inst|*_pp4* \
-                            scanconverter:scanconverter_inst|*_pp5* \
-                            scanconverter:scanconverter_inst|*_pp6*}]
+                            scanconverter:scanconverter_inst|HSYNC_out \
+                            scanconverter:scanconverter_inst|VSYNC_out \
+                            scanconverter:scanconverter_inst|DE_out \
+                            scanconverter:scanconverter_inst|*_pp*}]
 set_false_path -from [get_clocks {pclk_sdtv}] -to $pclk_act_regs
 set_false_path -from [get_clocks {pclk_sdtv}] -to [get_ports HDMI_TX_*]
 
 # Ignore paths from registers which are updated only at leading edge of vsync
-set_false_path -from [get_cells {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|FID_1x}]
+set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|FID_1x}]
 
 # Ignore paths from registers which are updated only at leading edge of hsync
-#set_false_path -from [get_cells {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
+#set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
 
 
 ### JTAG Signal Constraints ###

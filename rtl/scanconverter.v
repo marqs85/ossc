@@ -115,8 +115,6 @@ reg [11:0] hcnt_1x, hcnt_2x, hcnt_3x, hcnt_4x, hcnt_5x, hcnt_4x_aspfix, hcnt_2x_
 reg [2:0] hcnt_2x_opt_ctr, hcnt_3x_opt_ctr, hcnt_4x_opt_ctr, hcnt_5x_opt_ctr;
 wire [10:0] vcnt_act;
 reg [10:0] vcnt_tvp, vcnt_1x, vcnt_2x, vcnt_3x, vcnt_4x, vcnt_5x;       //max. 2047
-reg [11:0] linebuf_hoffset_pp1;
-reg hoffset_changed_pp1;
 
 //other counters
 wire [2:0] line_id_act, col_id_act;
@@ -127,6 +125,8 @@ reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_4x;
 reg [2:0] line_out_idx_5x;
 reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x;
 reg mask_enable_pp1, mask_enable_pp2, mask_enable_pp3, mask_enable_pp4, mask_enable_pp5, mask_enable_pp6;
+wire rlpf_trigger_act;
+reg rlpf_trigger_pp1;
 
 //helper registers for sampling at synchronized clock edges
 reg pclk_1x_prev3x;
@@ -245,6 +245,7 @@ case (V_MULTMODE)
         linebuf_rdclock = 0;
         linebuf_hoffset = 0;
         col_id_act = {2'b00, hcnt_1x[0]};
+        rlpf_trigger_act = 1'b1;
     end
     `V_MULTMODE_2X: begin
         R_act = R_lbuf;
@@ -262,11 +263,13 @@ case (V_MULTMODE)
                 pclk_act = pclk_2x;
                 linebuf_hoffset = hcnt_2x;
                 col_id_act = {2'b00, hcnt_2x[0]};
+                rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
                 pclk_act = pclk_1x;     //special case: pclk bypass to enable 2x native sampling
                 linebuf_hoffset = hcnt_2x_opt;
                 col_id_act = {2'b00, hcnt_2x[1]};
+                rlpf_trigger_act = (hcnt_2x_opt_ctr < 2);
             end
         endcase
     end
@@ -286,6 +289,7 @@ case (V_MULTMODE)
                 linebuf_hoffset = hcnt_3x;
                 hcnt_act = hcnt_3x;
                 col_id_act = {2'b00, hcnt_3x[0]};
+                rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_ASPECTFIX: begin
                 pclk_act = pclk_4x;
@@ -293,6 +297,7 @@ case (V_MULTMODE)
                 linebuf_hoffset = hcnt_4x_aspfix;
                 hcnt_act = hcnt_4x_aspfix;
                 col_id_act = {2'b00, hcnt_4x[0]};
+                rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
                 pclk_act = pclk_3x;
@@ -300,6 +305,7 @@ case (V_MULTMODE)
                 linebuf_hoffset = hcnt_3x_opt;
                 hcnt_act = hcnt_3x;
                 col_id_act = hcnt_3x_opt_ctr;
+                rlpf_trigger_act = (hcnt_3x_opt_ctr == 0);
             end
         endcase
     end
@@ -319,10 +325,12 @@ case (V_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
                 linebuf_hoffset = hcnt_4x;
                 col_id_act = {2'b00, hcnt_4x[0]};
+                rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
                 linebuf_hoffset = hcnt_4x_opt;
                 col_id_act = hcnt_4x_opt_ctr;
+                rlpf_trigger_act = (hcnt_4x_opt_ctr == 0);
             end
         endcase
     end
@@ -342,10 +350,12 @@ case (V_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
                 linebuf_hoffset = hcnt_5x_hscomp;
                 col_id_act = {2'b00, hcnt_5x[0]};
+                rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
                 linebuf_hoffset = hcnt_5x_opt;
                 col_id_act = hcnt_5x_opt_ctr;
+                rlpf_trigger_act = (hcnt_5x_opt_ctr == 0);
             end
         endcase
     end
@@ -393,8 +403,7 @@ begin
     line_id_pp1 <= line_id_act;
     col_id_pp1 <= col_id_act;
     mask_enable_pp1 <= ((hcnt_act < H_AVIDSTART+H_MASK) | (hcnt_act >= H_AVIDSTART+H_ACTIVE-H_MASK) | (vcnt_act < V_AVIDSTART+V_MASK) | (vcnt_act >= V_AVIDSTART+V_ACTIVE-V_MASK));
-    linebuf_hoffset_pp1 <= linebuf_hoffset;
-    hoffset_changed_pp1 <= (linebuf_hoffset_pp1 != linebuf_hoffset);
+    rlpf_trigger_pp1 <= rlpf_trigger_act;
 
     HSYNC_pp2 <= HSYNC_act;
     VSYNC_pp2 <= VSYNC_act;
@@ -403,7 +412,7 @@ begin
     col_id_pp2 <= col_id_pp1;
     mask_enable_pp2 <= mask_enable_pp1;
     // Optimized modes repeat pixels. Save previous pixel only when linebuffer offset changes.
-    if (hoffset_changed_pp1) begin
+    if (rlpf_trigger_pp1) begin
         R_prev_pp2 <= R_act;
         G_prev_pp2 <= G_act;
         B_prev_pp2 <= B_act;
