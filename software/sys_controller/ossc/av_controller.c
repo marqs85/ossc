@@ -306,7 +306,8 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.h_mask != cm.cc.h_mask) ||
         (tc.v_mask != cm.cc.v_mask) ||
         (tc.mask_br != cm.cc.mask_br) ||
-        (tc.ar_256col != cm.cc.ar_256col))
+        (tc.ar_256col != cm.cc.ar_256col) ||
+        (tc.reverse_lpf != cm.cc.reverse_lpf))
         status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
 
     if (tc.sampler_phase != cm.cc.sampler_phase) {
@@ -364,8 +365,8 @@ status_t get_status(tvp_input_t input, video_format format)
 // v_info:     [31:29]           [28:27]               [26]           [25:20]       [19:17]          [16:11]            [10:0]
 //           | V_MULTMODE[2:0] | V_SCANLINEMODE[1:0] | V_SCANLINEID | V_MASK[5:0] | V_SYNCLEN[2:0] | V_BACKPORCH[5:0] | V_ACTIVE[10:0] |
 //
-// extra:      [31:8]   [7:4]            [3:0]
-//           |        | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] |
+// extra:      [31:13]  [12:8]          [7:4]            [3:0]
+//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] |
 //
 void set_videoinfo()
 {
@@ -460,7 +461,8 @@ void set_videoinfo()
                                             (video_modes[cm.id].v_synclen<<17) |
                                             (v_backporch<<11) |
                                             v_active);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.mask_br<<4) |
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<8) |
+                                            (cm.cc.mask_br<<4) |
                                             cm.cc.sl_str);
 }
 
