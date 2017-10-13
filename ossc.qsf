@@ -211,13 +211,9 @@ set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE 50%
 
 
-
 #set_location_assignment PLL_4 -to "scanconverter:scanconverter_inst|pll_3x:pll_linetriple|altpll:altpll_component|pll_3x_altpll:auto_generated|pll1"
 #set_location_assignment PLL_3 -to "scanconverter:scanconverter_inst|pll_3x_lowfreq:pll_linetriple_lowfreq|altpll:altpll_component|pll_3x_lowfreq_altpll:auto_generated|pll1"
 #set_location_assignment PLL_1 -to "scanconverter:scanconverter_inst|pll_2x:pll_linedouble|altpll:altpll_component|pll_2x_altpll:auto_generated|pll1"
-
-
-
 
 
 set_global_assignment -name ROUTER_CLOCKING_TOPOLOGY_ANALYSIS ON
@@ -263,14 +259,14 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[5]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[6]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[7]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[0]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[0]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[1]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[3]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[3]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[4]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[5]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[7]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_DE
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[0]
@@ -280,20 +276,20 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[3]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[4]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[5]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_GD[7]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_HS
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_INT_N
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_MODE
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_PCLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_PCLK
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[1]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[1]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[2]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[3]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[5]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[5]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[7]
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[7]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_VS
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HSYNC_in
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to ir_rx
@@ -323,5 +319,8 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT[3]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VSYNC_in
 
 
-set_global_assignment -name SEED 3
+set_global_assignment -name FITTER_EFFORT "AUTO FIT"
+set_global_assignment -name SEED 6
+
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

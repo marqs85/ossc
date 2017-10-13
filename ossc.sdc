@@ -75,7 +75,7 @@ set_false_path -from [get_clocks {pclk_sdtv}] -to [get_ports HDMI_TX_*]
 set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|FID_1x}]
 
 # Ignore paths from registers which are updated only at leading edge of hsync
-#set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
+set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
 
 
 ### JTAG Signal Constraints ###
