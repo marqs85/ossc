@@ -211,7 +211,7 @@ void parse_control()
 
                 if (i <= RC_BTN0) {
                     profile_sel = (i+1)%10;
-                    load_profile_disp(OPT_SELECT);
+                    load_profile();
                     break;
                 } else if (i == RC_BACK) {
                     break;

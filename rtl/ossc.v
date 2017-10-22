@@ -87,6 +87,12 @@ reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
 reg [1:0] btn_L, btn_LL;
 reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL, HDMI_TX_MODE_L, HDMI_TX_MODE_LL;
 
+wire lt_active = extra_info[31];
+wire lt_armed = extra_info[30];
+wire [1:0] lt_mode = extra_info[29:28];
+wire [1:0] lt_mode_synced;
+wire [15:0] lt_result;
+
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
 always @(posedge PCLK_in or negedge reset_n)
 begin
@@ -193,7 +199,8 @@ sys sys_inst(
     .pio_3_h_info_out_export                (h_info),
     .pio_4_h_info2_out_export               (h_info2),
     .pio_5_v_info_out_export                (v_info),
-    .pio_6_extra_info_out_export            (extra_info)
+    .pio_6_extra_info_out_export            (extra_info),
+    .pio_7_lt_results_in_export             ({16'h0000, lt_result})
 );
 
 scanconverter scanconverter_inst (
@@ -234,10 +241,24 @@ ir_rcv ir0 (
     .ir_code_cnt    (ir_code_cnt)
 );
 
+lat_tester lt0 (
+    .clk27          (clk27),
+    .active         (lt_active),
+    .armed          (lt_armed),
+    .sensor         (btn_LL[1]),
+    .trigger        (HDMI_TX_DE & HDMI_TX_RD[0]),
+    .VSYNC_in       (HDMI_TX_VS),
+    .mode_in        (extra_info[29:28]),
+    .mode_synced    (lt_mode_synced),
+    .result         (lt_result)
+);
+
 `ifdef VIDEOGEN
 videogen vg0 (
     .clk27          (clk27),
     .reset_n        (cpu_reset_n & videogen_sel),
+    .lt_active      (lt_active),
+    .lt_mode        (lt_mode_synced),
     .R_out          (R_out_videogen),
     .G_out          (G_out_videogen),
     .B_out          (B_out_videogen),

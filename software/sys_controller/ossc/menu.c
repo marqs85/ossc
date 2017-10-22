@@ -37,9 +37,11 @@
 
 extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern avconfig_t tc;
+extern mode_data_t video_modes[];
 extern alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern alt_u8 vm_sel, profile_sel, lt_sel;
 
 alt_u8 menu_active;
 
@@ -61,6 +63,7 @@ static const char *sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｵｰﾄ
 static const char *sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical","ﾀﾃ"), LNG("Alternating","ｺｳｺﾞ") };
 static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
 static const char *audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
+static const char *lt_desc[] = { "Top-left", "Center", "Bottom-right" };
 
 static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), (v*1125)/100); }
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
@@ -70,6 +73,13 @@ static void sl_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", 
 static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u lines","%u ﾗｲﾝ"), v); }
 static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u pixels","%u ﾄﾞｯﾄ"), v); }
 static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "    %u", v); }
+static void lt_disp(alt_u8 v) { strncpy(menu_row2, lt_desc[v], LCD_ROW_LEN+1); }
+static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes[v].name, LCD_ROW_LEN+1); }
+
+static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
+static const arg_info_t profile_arg_info = {&profile_sel, MAX_PROFILE, value_disp};
+static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-1, lt_disp};
+
 
 MENU(menu_advtiming, P99_PROTECT({ \
     { LNG("H. samplerate","H. ｻﾝﾌﾟﾙﾚｰﾄ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
@@ -98,7 +108,7 @@ MENU(menu_sampling, P99_PROTECT({ \
     { LNG("480p in sampler","ｻﾝﾌﾟﾗｰﾃﾞ480p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
     { LNG("Allow TVP HPLL2x","TVP HPLL2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.tvp_hpll2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Allow upsample2x","ｱｯﾌﾟｻﾝﾌﾟﾙ2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.upsample2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { LNG("<Adv. timing   >","<ｶｸｼｭﾀｲﾐﾝｸﾞ>"),    OPT_SUBMENU,            { .sub = { &menu_advtiming, vm_display } } },
+    { LNG("<Adv. timing   >","<ｶｸｼｭﾀｲﾐﾝｸﾞ>"),    OPT_SUBMENU,            { .sub = { &menu_advtiming, &vm_arg_info, vm_select } } },
 }))
 
 MENU(menu_sync, P99_PROTECT({ \
@@ -132,10 +142,11 @@ MENU(menu_postproc, P99_PROTECT({ \
     { LNG("Scanline str.","ｽｷｬﾝﾗｲﾝﾂﾖｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_str,      OPT_NOWRAP, 0, SCANLINESTR_MAX, sl_str_disp } } },
     { LNG("Scanline type","ｽｷｬﾝﾗｲﾝﾙｲ"),            OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_type,     OPT_WRAP,   SETTING_ITEM(sl_type_desc) } } },
     { LNG("Scanline alignm.","ｽｷｬﾝﾗｲﾝﾎﾟｼﾞｼｮﾝ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_id,       OPT_WRAP,   SETTING_ITEM(sl_id_desc) } } },
-    { LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
-    { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
-    { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
-    { "Reverse LPF",                              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
+    { LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
+    { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
+    { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
+    { "Reverse LPF",                             OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
+    { "<DIY lat. test>",                         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
 }))
 
 MENU(menu_compatibility, P99_PROTECT({ \
@@ -148,24 +159,24 @@ MENU(menu_audio, P99_PROTECT({ \
     { LNG("Down-sampling","ﾀﾞｳﾝｻﾝﾌﾟﾘﾝｸﾞ"),       OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_dw_sampl, OPT_WRAP, SETTING_ITEM(audio_dw_sampl_desc) } } },
     { LNG("Swap left/right","ﾋﾀﾞﾘ/ﾐｷﾞｽﾜｯﾌﾟ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_swap_lr,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
-#define AUDIO_MENU { LNG("Audio options  >","ｵｰﾃﾞｨｵｵﾌﾟｼｮﾝ     >"),                  OPT_SUBMENU,            { .sub = { &menu_audio, NULL } } },
+#define AUDIO_MENU { LNG("Audio options  >","ｵｰﾃﾞｨｵｵﾌﾟｼｮﾝ     >"),                  OPT_SUBMENU,            { .sub = { &menu_audio, NULL, NULL } } },
 #else
 #define AUDIO_MENU
 #endif
 
 
 MENU(menu_main, P99_PROTECT({ \
-    { LNG("Video in proc  >","ﾀｲｵｳｴｲｿﾞｳ     >"),  OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL } } },
-    { LNG("Sampling opt.  >","ｻﾝﾌﾟﾘﾝｸﾞｵﾌﾟｼｮﾝ>"),  OPT_SUBMENU,            { .sub = { &menu_sampling, NULL } } },
-    { LNG("Sync opt.      >","ﾄﾞｳｷｵﾌﾟｼｮﾝ    >"),  OPT_SUBMENU,            { .sub = { &menu_sync, NULL } } },
-    { LNG("Output opt.    >","ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >"),  OPT_SUBMENU,            { .sub = { &menu_output, NULL } } },
-    { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),  OPT_SUBMENU,            { .sub = { &menu_postproc, NULL } } },
-    { LNG("Compatibility  >","ｺﾞｶﾝｾｲ        >"), OPT_SUBMENU,            { .sub = { &menu_compatibility, NULL } } },
+    { LNG("Video in proc  >","ﾀｲｵｳｴｲｿﾞｳ     >"),  OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL, NULL } } },
+    { LNG("Sampling opt.  >","ｻﾝﾌﾟﾘﾝｸﾞｵﾌﾟｼｮﾝ>"),  OPT_SUBMENU,            { .sub = { &menu_sampling, NULL, NULL } } },
+    { LNG("Sync opt.      >","ﾄﾞｳｷｵﾌﾟｼｮﾝ    >"),  OPT_SUBMENU,            { .sub = { &menu_sync, NULL, NULL } } },
+    { LNG("Output opt.    >","ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >"),  OPT_SUBMENU,            { .sub = { &menu_output, NULL, NULL } } },
+    { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),  OPT_SUBMENU,            { .sub = { &menu_postproc, NULL, NULL } } },
+    { LNG("Compatibility  >","ｺﾞｶﾝｾｲ        >"), OPT_SUBMENU,             { .sub = { &menu_compatibility, NULL, NULL } } },
     AUDIO_MENU
-    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"), OPT_SUBMENU,            { .sub = { NULL, load_profile_disp } } },
-    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"), OPT_SUBMENU,            { .sub = { NULL, save_profile_disp } } },
-    { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, LNG("Reset done","ｼｮｷｶｽﾐ"), "" } } },
-    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"),  OPT_FUNC_CALL,          { .fun = { fw_update, LNG("OK - pls restart","OK - ｻｲｷﾄﾞｳｼﾃｸﾀﾞｻｲ"), LNG("failed","ｼｯﾊﾟｲ") } } },
+    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"), OPT_FUNC_CALL,          { .fun = { load_profile, &profile_arg_info } } },
+    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"), OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
+    { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
+    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"),  OPT_FUNC_CALL,        { .fun = { fw_update, NULL } } },
 }))
 
 // Max 3 levels currently
@@ -214,13 +225,13 @@ void display_menu(alt_u8 forcedisp)
         switch (navi[navlvl].m->items[navi[navlvl].mp].type) {
             case OPT_SUBMENU:
                 if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f)
-                    navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f(code);
-                if (navi[navlvl].m->items[navi[navlvl].mp].sub.menu) {
-                    if (navi[navlvl+1].m != navi[navlvl].m->items[navi[navlvl].mp].sub.menu)
-                        navi[navlvl+1].mp = 0;
-                    navi[navlvl+1].m = navi[navlvl].m->items[navi[navlvl].mp].sub.menu;
-                    navlvl++;
-                }
+                    navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f();
+
+                if (navi[navlvl+1].m != navi[navlvl].m->items[navi[navlvl].mp].sub.menu)
+                    navi[navlvl+1].mp = 0;
+                navi[navlvl+1].m = navi[navlvl].m->items[navi[navlvl].mp].sub.menu;
+                navlvl++;
+
                 break;
             case OPT_FUNC_CALL:
                 retval = navi[navlvl].m->items[navi[navlvl].mp].fun.f();
@@ -252,8 +263,26 @@ void display_menu(alt_u8 forcedisp)
                     *val_u16 = (*val_u16 < navi[navlvl].m->items[navi[navlvl].mp].num_u16.max) ? (*val_u16+1) : *val_u16;
                 break;
             case OPT_SUBMENU:
-                if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f)
-                    navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f(code);
+                val = navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->data;
+                val_max = navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->max;
+
+                if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info) {
+                    if (code == VAL_MINUS)
+                        *val = (*val > 0) ? (*val-1) : 0;
+                    else
+                        *val = (*val < val_max) ? (*val+1) : val_max;
+                }
+                break;
+            case OPT_FUNC_CALL:
+                val = navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->data;
+                val_max = navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->max;
+
+                if (navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info) {
+                    if (code == VAL_MINUS)
+                        *val = (*val > 0) ? (*val-1) : 0;
+                    else
+                        *val = (*val < val_max) ? (*val+1) : val_max;
+                }
                 break;
             default:
                 break;
@@ -277,14 +306,16 @@ void display_menu(alt_u8 forcedisp)
             navi[navlvl].m->items[navi[navlvl].mp].num_u16.df(*(navi[navlvl].m->items[navi[navlvl].mp].num_u16.data));
             break;
         case OPT_SUBMENU:
-            if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f)
-                navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f(NO_ACTION);
+            if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info)
+                navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->df(*navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->data);
             else
                 menu_row2[0] = 0;
             break;
         case OPT_FUNC_CALL:
             if (code == OPT_SELECT)
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? navi[navlvl].m->items[navi[navlvl].mp].fun.text_success : navi[navlvl].m->items[navi[navlvl].mp].fun.text_failure);
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Done" : "Failed");
+            else if (navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info)
+                navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->df(*navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->data);
             else
                 menu_row2[0] = 0;
             break;

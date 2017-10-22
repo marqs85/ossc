@@ -229,98 +229,18 @@ set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name QSYS_FILE sys.qsys
 set_global_assignment -name VERILOG_FILE rtl/ossc.v
 set_global_assignment -name VERILOG_FILE rtl/scanconverter.v
+set_global_assignment -name VERILOG_FILE rtl/lat_tester.v
 set_global_assignment -name QIP_FILE rtl/linebuf.qip
 set_global_assignment -name QIP_FILE rtl/pll_2x.qip
 set_global_assignment -name QIP_FILE rtl/pll_3x.qip
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to B_in[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to btn
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to btn[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to btn[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to clk27
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to FID_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to G_in[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_BD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_BD[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_DE
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_GD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_GD[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_HS
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_INT_N
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_MODE
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_PCLK
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_RD[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to HDMI_TX_RD[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HDMI_TX_VS
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to HSYNC_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to ir_rx
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to LCD_BL
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to LCD_CS_N
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to LCD_RS
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to PCLK_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to reset_n
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[4]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[5]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[6]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to R_in[7]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to scl
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to sda
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_CLK
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_CMD
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT[0]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT[1]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT[2]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SD_DAT[3]
-set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VSYNC_in
-
 
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
 set_global_assignment -name SEED 6
+
+
 
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

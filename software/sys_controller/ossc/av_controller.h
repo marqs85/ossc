@@ -108,9 +108,11 @@ typedef struct {
 inline void lcd_write_menu();
 inline void lcd_write_status();
 
-void vm_display(alt_u8 code);
+void vm_select();
 void vm_tweak(alt_u16 v);
-void load_profile_disp(alt_u8 code);
-void save_profile_disp(alt_u8 code);
+int load_profile();
+int save_profile();
+
+int latency_test();
 
 #endif

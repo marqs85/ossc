@@ -32,9 +32,15 @@ typedef enum {
 } menuitem_type;
 
 typedef int (*func_call)(void);
+typedef void (*arg_func)(void);
 typedef void (*disp_func)(alt_u8);
 typedef void (*disp_func_u16)(alt_u16);
 
+typedef struct {
+    alt_u8 *data;
+    alt_u8 max;
+    disp_func df;
+} arg_info_t;
 
 typedef struct {
     alt_u8 *data;
@@ -61,15 +67,15 @@ typedef struct {
 
 typedef struct {
     func_call f;
-    const char *text_success;
-    const char *text_failure;
+    const arg_info_t *arg_info;
 } opt_func_call;
 
 typedef struct menustruct menu_t;
 
 typedef struct {
     const menu_t *menu;
-    disp_func arg_f;
+    const arg_info_t *arg_info;
+    arg_func arg_f;
 } opt_submenu;
 
 typedef struct {
