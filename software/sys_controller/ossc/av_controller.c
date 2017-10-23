@@ -68,13 +68,14 @@ alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit, profile_sel, lt_sel;
+alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[3], lt_sel;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 extern alt_u8 menu_active;
 avinput_t target_mode;
+phyinput_t phy_input_sel;
 
 alt_u8 pcm1862_active;
 
@@ -540,6 +541,7 @@ void program_mode()
 int load_profile() {
     int retval;
 
+    input_profiles[phy_input_sel] = profile_sel;
     retval = read_userdata(profile_sel);
     if (retval == 0)
         write_userdata(INIT_CONFIG_SLOT);
@@ -549,6 +551,7 @@ int load_profile() {
 int save_profile() {
     int retval;
 
+    input_profiles[phy_input_sel] = profile_sel;
     retval = write_userdata(profile_sel);
     if (retval == 0)
         write_userdata(INIT_CONFIG_SLOT);
@@ -806,6 +809,7 @@ int main()
 
         switch (target_mode) {
         case AV1_RGBs:
+            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -813,6 +817,7 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV1_RGsB:
+            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -820,6 +825,7 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV1_YPBPR:
+            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -827,6 +833,7 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV2_YPBPR:
+            phy_input_sel = PHY_AV2;
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -834,6 +841,7 @@ int main()
             target_pcm = PCM_INPUT3;
             break;
         case AV2_RGsB:
+            phy_input_sel = PHY_AV2;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -841,6 +849,7 @@ int main()
             target_pcm = PCM_INPUT3;
             break;
         case AV3_RGBHV:
+            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBHV;
             target_typemask = VIDEO_PC;
@@ -848,6 +857,7 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_RGBs:
+            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -855,6 +865,7 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_RGsB:
+            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -862,6 +873,7 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_YPBPR:
+            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -874,6 +886,13 @@ int main()
 
         if (target_mode != AV_KEEP) {
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_mode]);
+
+            // The input changed, so load the appropriate profile
+            if (profile_sel != input_profiles[phy_input_sel]) {
+                profile_sel = input_profiles[phy_input_sel];
+                load_profile();
+            }
+
             cm.avinput = target_mode;
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);

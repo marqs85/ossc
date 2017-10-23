@@ -29,7 +29,9 @@ extern avmode_t cm;
 extern avconfig_t tc;
 extern mode_data_t video_modes[];
 extern avinput_t target_mode;
+extern phyinput_t phy_input_sel;
 extern alt_u8 update_cur_vm;
+extern alt_u8 input_profiles[3];
 extern alt_u8 profile_sel;
 
 int write_userdata(alt_u8 entry)
@@ -53,8 +55,9 @@ int write_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
-        ((ude_initcfg*)databuf)->last_profile = profile_sel;
+        memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = cm.avinput;
+        ((ude_initcfg*)databuf)->last_phy_input = phy_input_sel;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -133,10 +136,12 @@ int read_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
-            if (((ude_initcfg*)databuf)->last_profile <= MAX_PROFILE)
-                profile_sel = ((ude_initcfg*)databuf)->last_profile;
+            for (alt_u8 i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
+                if (((ude_initcfg*)databuf)->last_profile[i] <= MAX_PROFILE)
+                    input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
             if (((ude_initcfg*)databuf)->last_input < AV_LAST)
                 target_mode = ((ude_initcfg*)databuf)->last_input;
+            profile_sel = input_profiles[((ude_initcfg*)databuf)->last_phy_input];
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }

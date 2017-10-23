@@ -75,6 +75,12 @@ typedef enum {
     AV_LAST         = 10
 } avinput_t;
 
+typedef enum {
+    PHY_AV1         = 0,
+    PHY_AV2         = 1,
+    PHY_AV3         = 2
+} phyinput_t;
+
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,
