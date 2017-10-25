@@ -134,10 +134,10 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="diy-audio-debug">make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG -DENABLE_AUDIO"</Target>
+        <Target Name="diy-audio-debug">make ENABLE_AUDIO=y APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG"</BuildCommand>
+        <BuildCommand>make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>
@@ -174,11 +174,11 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="compile_image_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP mem_init_generate</Target>
-        <Target Name="compile_image_aud_jp">make clean &amp;&amp; iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make ENABLE_AUDIO=y OSDLANG=JP mem_init_generate</Target>
-        <Target Name="compile_image_aud">make clean &amp;&amp; make ENABLE_AUDIO=y mem_init_generate</Target>
-        <Target Name="compile_image">make clean &amp;&amp; make mem_init_generate</Target>
-        <Target Name="Build_jp">iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c &gt; ossc/menu_sjis.c &amp;&amp; make OSDLANG=JP</Target>
+        <Target Name="compile_image_jp">make OSDLANG=JP generate_hex</Target>
+        <Target Name="compile_image_aud_jp">make ENABLE_AUDIO=y OSDLANG=JP generate_hex</Target>
+        <Target Name="compile_image_aud">make ENABLE_AUDIO=y generate_hex</Target>
+        <Target Name="compile_image">make generate_hex</Target>
+        <Target Name="Build_jp">make OSDLANG=JP</Target>
         <Target Name="Build_audio">make ENABLE_AUDIO=y</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>

@@ -38,18 +38,25 @@ nios2-bsp-editor
 nios2-bsp-generate-files --bsp-dir . --settings settings.bsp
 ~~~~
 NOTE: the previous step must be done every time after RTL/bitstream is built
+
 4. Enter software root directory:
 ~~~~
 cd software/sys_controller
 ~~~~
-5. Build SW image for target configuration:
+5. Build SW for target configuration:
 ~~~~
-make <OPTIONS> mem_init_generate
+make [OPTIONS] [TARGET]
 ~~~~
-where OPTIONS may include following definitions:
-* OSDLANG=JP (Japanese language menu. Run "iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c ossc/menu_sjis.c" before make)
-* DIY_AUDIO=y (Includes code for DIY audio board)
-6. Optionally test updated SW by programming Nios2 CPU via JTAG (RTL-SW interface in active FW must be compatible new SW BSP configuration)
+OPTIONS may include following definitions:
+* OSDLANG=JP (Japanese language menu)
+* ENABLE_AUDIO=y (Includes audio setup code for v1.6 PCB / DIY audio add-on board)
+
+TARGET is typically one of the following:
+* all (Default target. Compiles an ELF for direct downloading to Nios2 during testing)
+* generate_hex (Generates a memory initialization file required for bitstream)
+* clean (cleans ELF and intermediate files. Should be invoked every time OPTIONS are changed between compilations, expect with generate_hex where it is done automatically)
+
+6. Optionally test updated SW by downloading ELF to Nios2 CPU via JTAG (RTL-SW interface in active FW must be compatible new SW BSP configuration)
 ~~~~
 nios2-download -g --accept-bad-sysid sys_controller.elf
 ~~~~
@@ -63,7 +70,7 @@ Building RTL / bitstream
 
 If only software image is updated, bitstream can be quickly rebuilt by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
-Installing the firmware via JTAG
+Installing firmware via JTAG
 --------------------------
 The bitstream can be either directly programmed into FPGA (volatile method, suitable for quick testing), or into serial flash chip where it is automatically loaded every time FPGA is subsequently powered on (nonvolatile method, suitable for long-term use).
 
@@ -72,13 +79,32 @@ To program FPGA, open Programmer in Quartus, select your USB Blaster device, add
 To program flash, FPGA configuration file must be first converted into JTAG indirect Configuration file (.jic). Open conversion tool ("File->Convert Programming Files") in Quartus, click "Open Conversion Setup Data", select "ossc.cof" and press Generate. Then open Programmer, add generated file (output_files/ossc.jic) and press Start after which flash is programmed. Installed/updated firmware is activated after power-cycling the board.
 
 
+Generating SD card image
+--------------------------
+Bitstream file (Altera propiertary format) must be wrapped with custom header structure (including checksums) so that it can be processed reliably on the CPU. This can be done with included helper application which generates a disk image which can written to a SD card and subsequently loaded on OSSC:
+
+1. Compile tools/create_fw_img.c
+~~~~
+cd tools && gcc create_fw_img.c -o create_fw_img
+~~~~
+2. Generate the firmware image:
+~~~~
+./create_fw_img <rbf> <version> [version_suffix]
+~~~~
+where
+* \<rbf\> is RBF format bitstream file (typically ../output_files/ossc.rbf)
+* \<version\> is version string (e.g. 0.78)
+* \[version_suffix\] is optional max. 8 character suffix name (e.g. "mytest")
+
+
 Debugging
 --------------------------
 1. Rebuild the software in debug mode:
 ~~~~
-make clean && make APP_CFLAGS_DEFINED_SYMBOLS="-DDEBUG"
+make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"
 ~~~~
-NOTE: Fw update functionality via SD card is disabled in debug build due to code space limitations
+NOTE: Fw update functionality via SD card is disabled in debug builds due to code space limitations. If audio support is enabled on debug build, other functionality needs to be disabled as well.
+
 2. Program Nios2 CPU via JTAG and open terminal for UART
 ~~~~
 nios2-download -g --accept-bad-sysid sys_controller.elf && nios2-terminal

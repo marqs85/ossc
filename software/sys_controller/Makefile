@@ -184,7 +184,7 @@ CREATE_ELF_DERIVED_FILES := 0
 CREATE_LINKER_MAP := 1
 
 # Common arguments for ALT_CFLAGSs
-APP_CFLAGS_DEFINED_SYMBOLS := -DNO_I2C_DEBUG -DNO_DEBUG
+APP_CFLAGS_DEFINED_SYMBOLS :=
 ifeq ($(ENABLE_AUDIO),y)
 APP_CFLAGS_DEFINED_SYMBOLS += -DENABLE_AUDIO
 endif
@@ -1120,3 +1120,11 @@ print-elf-name:
 	@$(ECHO) $(ELF)
 
 
+#------------------------------------------------------------------------------
+#                         CUSTOM TARGETS
+#------------------------------------------------------------------------------
+ossc/menu_sjis.c: ossc/menu.c
+	iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c > ossc/menu_sjis.c
+
+.PHONY: generate_hex
+generate_hex: clean mem_init_generate
