@@ -31,7 +31,7 @@
 #define WRDELAY     20
 #define CLEARDELAY  800
 
-extern alt_u8 sys_ctrl;
+extern alt_u16 sys_ctrl;
 
 static void lcd_cmd(alt_u8 cmd, alt_u16 postdelay) {
     SPI_write(I2CA_BASE, &cmd, 1);

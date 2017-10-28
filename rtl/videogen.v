@@ -17,12 +17,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-`define LT_POS_NONE         2'b00
-`define LT_POS_TOPLEFT      2'b01
-`define LT_POS_CENTER       2'b10
-`define LT_POS_BOTTOMRIGHT  2'b11
-`define LT_WIDTH            100
-`define LT_HEIGHT           100
+`include "lat_tester_includes.v"
 
 module videogen (
     input clk27,
@@ -129,13 +124,13 @@ begin
                     V_gen <= 8'h00;
                 end
                 `LT_POS_TOPLEFT: begin
-                    V_gen <= ((h_cnt < (X_START+`LT_WIDTH)) && (v_cnt < (Y_START+`LT_HEIGHT))) ? 8'hff : 8'h00;
+                    V_gen <= ((h_cnt < (X_START+(H_ACTIVE/`LT_WIDTH_DIV))) && (v_cnt < (Y_START+(V_ACTIVE/`LT_HEIGHT_DIV)))) ? 8'hff : 8'h00;
                 end
                 `LT_POS_CENTER: begin
-                    V_gen <= ((h_cnt >= (X_START+(H_ACTIVE/2)-(`LT_WIDTH/2))) && (h_cnt < (X_START+(H_ACTIVE/2)+(`LT_WIDTH/2))) && (v_cnt >= (Y_START+(V_ACTIVE/2)-(`LT_HEIGHT/2))) && (v_cnt < (Y_START+(V_ACTIVE/2)+(`LT_HEIGHT/2)))) ? 8'hff : 8'h00;
+                    V_gen <= ((h_cnt >= (X_START+(H_ACTIVE/2)-(H_ACTIVE/(`LT_WIDTH_DIV*2)))) && (h_cnt < (X_START+(H_ACTIVE/2)+(H_ACTIVE/(`LT_WIDTH_DIV*2)))) && (v_cnt >= (Y_START+(V_ACTIVE/2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2)))) && (v_cnt < (Y_START+(V_ACTIVE/2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2))))) ? 8'hff : 8'h00;
                 end
                 `LT_POS_BOTTOMRIGHT: begin
-                    V_gen <= ((h_cnt >= (X_START+H_ACTIVE-`LT_WIDTH)) && (v_cnt >= (Y_START+V_ACTIVE-`LT_HEIGHT))) ? 8'hff : 8'h00;
+                    V_gen <= ((h_cnt >= (X_START+H_ACTIVE-(H_ACTIVE/`LT_WIDTH_DIV))) && (v_cnt >= (Y_START+V_ACTIVE-(V_ACTIVE/`LT_HEIGHT_DIV)))) ? 8'hff : 8'h00;
                 end
             endcase
         end else begin

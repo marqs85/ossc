@@ -238,7 +238,7 @@ set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 
 
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
-set_global_assignment -name SEED 6
+set_global_assignment -name SEED 2
 
 
 

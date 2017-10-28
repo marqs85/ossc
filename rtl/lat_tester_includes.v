@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -17,22 +17,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <io.h>
-#include "sdcard.h"
-#include "lcd.h"
+`define LT_POS_NONE         2'b00
+`define LT_POS_TOPLEFT      2'b01
+`define LT_POS_CENTER       2'b10
+`define LT_POS_BOTTOMRIGHT  2'b11
 
-extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
-
-SD_DEV sdcard_dev;
-
-int check_sdcard(alt_u8 *databuf)
-{
-    SDRESULTS res;
-
-    res = SD_Init(&sdcard_dev);
-    printf("SD det status: %u\n", res);
-    if (res != SD_OK)
-        return res;
-
-    return SD_Read(&sdcard_dev, databuf, 0, 0, 512);
-}
+`define LT_WIDTH_DIV        8
+`define LT_HEIGHT_DIV       8

@@ -42,7 +42,7 @@ extern avmode_t cm;
 extern avconfig_t tc;
 extern avinput_t target_mode;
 extern alt_u8 menu_active;
-extern alt_u8 sys_ctrl;
+extern alt_u16 sys_ctrl;
 extern alt_u8 profile_sel;
 
 alt_u32 remote_code;

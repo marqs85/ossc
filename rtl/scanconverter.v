@@ -17,6 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+`include "lat_tester_includes.v"
+
 `define TRUE                    1'b1
 `define FALSE                   1'b0
 `define HI                      1'b1
@@ -80,7 +82,9 @@ module scanconverter (
     output [1:0] pclk_lock,
     output [1:0] pll_lock_lost,
     output reg [10:0] vmax,
-    output reg [10:0] vmax_tvp
+    output reg [10:0] vmax_tvp,
+    input lt_active,
+    input [1:0] lt_mode
 );
 
 //clock-related signals
@@ -124,7 +128,8 @@ reg line_idx;
 reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_4x;
 reg [2:0] line_out_idx_5x;
 reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x;
-reg mask_enable_pp1, mask_enable_pp2, mask_enable_pp3, mask_enable_pp4, mask_enable_pp5, mask_enable_pp6;
+reg border_enable_pp1, border_enable_pp2, border_enable_pp3, border_enable_pp4, border_enable_pp5, border_enable_pp6;
+reg lt_box_enable_pp1, lt_box_enable_pp2, lt_box_enable_pp3, lt_box_enable_pp4, lt_box_enable_pp5, lt_box_enable_pp6;
 wire rlpf_trigger_act;
 reg rlpf_trigger_pp1;
 
@@ -191,19 +196,51 @@ function [7:0] apply_scanlines;
     end
     endfunction
 
-//Border masking
+//LT box / border generation
 function [7:0] apply_mask;
-    input enable;
+    input lt_active;
+    input lt_box_enable;
+    input border_enable;
     input [7:0] data;
     input [3:0] brightness;
     begin
-        if (enable)
+        if (lt_active)
+            apply_mask = lt_box_enable ? 8'hff : 8'h00;
+        else if (border_enable)
             apply_mask = {brightness, 4'h0};
         else
             apply_mask = data;
     end
     endfunction
 
+//LT position select
+    function [7:0] apply_lt_box;
+    input [1:0] mode;
+    input [11:0] h_cnt;
+    input [10:0] v_cnt;
+    input [9:0] h_start;
+    input [6:0] v_start;
+    input [10:0] h_active;
+    input [10:0] v_active;
+    begin
+        case (mode)
+            default: begin
+                apply_lt_box = 0;
+            end
+            `LT_POS_TOPLEFT: begin
+                apply_lt_box = ((h_cnt < (h_start+(h_active/`LT_WIDTH_DIV))) && (v_cnt < (v_start+(v_active/`LT_HEIGHT_DIV)))) ? 1 : 0;
+            end
+            `LT_POS_CENTER: begin
+                apply_lt_box = ((h_cnt >= (h_start+(h_active/2)-(h_active/(`LT_WIDTH_DIV*2)))) && (h_cnt < (h_start+(h_active/2)+(h_active/(`LT_WIDTH_DIV*2)))) && (v_cnt >= (v_start+(v_active/2)-(v_active/(`LT_HEIGHT_DIV*2)))) && (v_cnt < (v_start+(v_active/2)+(v_active/(`LT_HEIGHT_DIV*2))))) ? 1 : 0;
+            end
+            `LT_POS_BOTTOMRIGHT: begin
+                apply_lt_box = ((h_cnt >= (h_start+h_active-(h_active/`LT_WIDTH_DIV))) && (v_cnt >= (v_start+v_active-(v_active/`LT_HEIGHT_DIV)))) ? 1 : 0;
+            end
+        endcase
+    end
+    endfunction
+
+//Reverse LPF
 function [7:0] apply_reverse_lpf;
     input enable;
     input [7:0] data;
@@ -402,15 +439,17 @@ always @(posedge pclk_act)
 begin
     line_id_pp1 <= line_id_act;
     col_id_pp1 <= col_id_act;
-    mask_enable_pp1 <= ((hcnt_act < H_AVIDSTART+H_MASK) | (hcnt_act >= H_AVIDSTART+H_ACTIVE-H_MASK) | (vcnt_act < V_AVIDSTART+V_MASK) | (vcnt_act >= V_AVIDSTART+V_ACTIVE-V_MASK));
+    border_enable_pp1 <= ((hcnt_act < H_AVIDSTART+H_MASK) | (hcnt_act >= H_AVIDSTART+H_ACTIVE-H_MASK) | (vcnt_act < V_AVIDSTART+V_MASK) | (vcnt_act >= V_AVIDSTART+V_ACTIVE-V_MASK));
     rlpf_trigger_pp1 <= rlpf_trigger_act;
+    lt_box_enable_pp1 <= apply_lt_box(lt_mode, hcnt_act, vcnt_act, H_AVIDSTART, V_AVIDSTART, H_ACTIVE, V_ACTIVE);
 
     HSYNC_pp2 <= HSYNC_act;
     VSYNC_pp2 <= VSYNC_act;
     DE_pp2 <= DE_act;
     line_id_pp2 <= line_id_pp1;
     col_id_pp2 <= col_id_pp1;
-    mask_enable_pp2 <= mask_enable_pp1;
+    border_enable_pp2 <= border_enable_pp1;
+    lt_box_enable_pp2 <= lt_box_enable_pp1;
     // Optimized modes repeat pixels. Save previous pixel only when linebuffer offset changes.
     if (rlpf_trigger_pp1) begin
         R_prev_pp2 <= R_act;
@@ -418,7 +457,6 @@ begin
         B_prev_pp2 <= B_act;
     end
 
-    
     R_pp3 <= R_act;
     G_pp3 <= G_act;
     B_pp3 <= B_act;
@@ -427,7 +465,8 @@ begin
     DE_pp3 <= DE_pp2;
     line_id_pp3 <= line_id_pp2;
     col_id_pp3 <= col_id_pp2;
-    mask_enable_pp3 <= mask_enable_pp2;
+    border_enable_pp3 <= border_enable_pp2;
+    lt_box_enable_pp3 <= lt_box_enable_pp2;
     R_prev_pp3 <= R_prev_pp2;
     G_prev_pp3 <= G_prev_pp2;
     B_prev_pp3 <= B_prev_pp2;
@@ -444,7 +483,8 @@ begin
     DE_pp4 <= DE_pp3;
     line_id_pp4 <= line_id_pp3;
     col_id_pp4 <= col_id_pp3;
-    mask_enable_pp4 <= mask_enable_pp3;
+    border_enable_pp4 <= border_enable_pp3;
+    lt_box_enable_pp4 <= lt_box_enable_pp3;
     R_prev_pp4 <= R_prev_pp3;
     G_prev_pp4 <= G_prev_pp3;
     B_prev_pp4 <= B_prev_pp3;
@@ -461,7 +501,8 @@ begin
     DE_pp5 <= DE_pp4;
     line_id_pp5 <= line_id_pp4;
     col_id_pp5 <= col_id_pp4;
-    mask_enable_pp5 <= mask_enable_pp4;
+    border_enable_pp5 <= border_enable_pp4;
+    lt_box_enable_pp5 <= lt_box_enable_pp4;
 
     R_pp6 <= apply_scanlines(V_SCANLINEMODE, R_pp5, X_SCANLINESTR, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
     G_pp6 <= apply_scanlines(V_SCANLINEMODE, G_pp5, X_SCANLINESTR, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
@@ -469,11 +510,12 @@ begin
     HSYNC_pp6 <= HSYNC_pp5;
     VSYNC_pp6 <= VSYNC_pp5;
     DE_pp6 <= DE_pp5;
-    mask_enable_pp6 <= mask_enable_pp5;
+    border_enable_pp6 <= border_enable_pp5;
+    lt_box_enable_pp6 <= lt_box_enable_pp5;
 
-    R_out <= apply_mask(mask_enable_pp6, R_pp6, X_MASK_BR);
-    G_out <= apply_mask(mask_enable_pp6, G_pp6, X_MASK_BR);
-    B_out <= apply_mask(mask_enable_pp6, B_pp6, X_MASK_BR);
+    R_out <= apply_mask(lt_active, lt_box_enable_pp6, border_enable_pp6, R_pp6, X_MASK_BR);
+    G_out <= apply_mask(lt_active, lt_box_enable_pp6, border_enable_pp6, G_pp6, X_MASK_BR);
+    B_out <= apply_mask(lt_active, lt_box_enable_pp6, border_enable_pp6, B_pp6, X_MASK_BR);
     HSYNC_out <= HSYNC_pp6;
     VSYNC_out <= VSYNC_pp6;
     DE_out <= DE_pp6;

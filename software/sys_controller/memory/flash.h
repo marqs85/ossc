@@ -32,6 +32,12 @@
 #define USERDATA_OFFSET 0x100000
 #define MAX_USERDATA_ENTRY 15    // 16 sectors for userdata
 
+#define FLASH_DETECT_ERROR      200
+#define FLASH_READ_ERROR        201
+#define FLASH_ERASE_ERROR       202
+#define FLASH_WRITE_ERROR       203
+#define FLASH_VERIFY_ERROR      204
+
 int check_flash();
 
 int read_flash(alt_u32 offset, alt_u32 length, alt_u8 *dstbuf);

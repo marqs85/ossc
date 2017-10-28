@@ -77,6 +77,9 @@ set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V
 # Ignore paths from registers which are updated only at leading edge of hsync
 set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
 
+# Ignore paths to latency tester sync regs
+set_false_path -to [get_registers {lat_tester:lt0|mode_synced* lat_tester:lt0|VSYNC_in_* lat_tester:lt0|trigger_*}]
+
 
 ### JTAG Signal Constraints ###
 

@@ -49,7 +49,7 @@
 #define SYNC_LOSS_THOLD         -5
 #define STATUS_TIMEOUT          10000
 
-alt_u8 sys_ctrl;
+alt_u16 sys_ctrl;
 
 // Current mode
 avmode_t cm;
@@ -595,7 +595,7 @@ int init_hw()
 
     // Reset hardware
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x00);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x0000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, 0x00000000);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, 0x00000000);
     usleep(10000);
@@ -670,15 +670,22 @@ int init_hw()
     return 0;
 }
 
+#ifdef DEBUG
+int latency_test()
+{
+    sniprintf(menu_row2, LCD_ROW_LEN+1, "Unavailable");
+    lcd_write_menu();
+    usleep(1000000);
+    return -1;
+}
+#else
 int latency_test() {
-    alt_u32 base_val, btn_vec, btn_vec_prev=1;
+    alt_u32 lt_status, btn_vec, btn_vec_prev=1;
+    alt_u16 latency_ms_x100, stb_ms_x100;
     alt_u8 position = lt_sel+1;
-    alt_u16 latency_x100ms;
 
-    base_val = IORD_ALTERA_AVALON_PIO_DATA(PIO_6_BASE) & 0xff;
-
-    base_val |= (1<<31);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, base_val|(position<<28));
+    sys_ctrl |= LT_ACTIVE|(position<<LT_MODE_OFFS);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
     sniprintf(menu_row2, LCD_ROW_LEN+1, "OK to init");
     lcd_write_menu();
 
@@ -687,31 +694,48 @@ int latency_test() {
 
         if ((btn_vec_prev == 0) && (btn_vec != 0)) {
             if (btn_vec == rc_keymap[RC_OK]) {
-                IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, base_val);
+                sys_ctrl &= ~(3<<LT_MODE_OFFS);
+                IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
                 menu_row2[0] = 0;
                 lcd_write_menu();
-                usleep(200000);
-                IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, base_val|(position<<28)|(1<<30));
-                while (IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT) {}
-                latency_x100ms = IORD_ALTERA_AVALON_PIO_DATA(PIO_7_BASE) & 0xffff;
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "lat: %u.%.2ums", latency_x100ms/100, latency_x100ms%100);
+                usleep(400000);
+                sys_ctrl |= LT_ARMED|(position<<LT_MODE_OFFS);
+                IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+                //while (!((lt_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_7_BASE)) & (1<<31))) {} //Hangs if sync is lost
+                SPI_Timer_On(1000);
+                while ((SPI_Timer_Status()==TRUE)) {
+                    lt_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_7_BASE);
+                    if (lt_status & (1<<31))
+                        break;
+                }
+                SPI_Timer_Off();
+                latency_ms_x100 = lt_status & 0xffff;
+                stb_ms_x100 = (lt_status >> 16) & 0xfff;
+                if ((latency_ms_x100 == 0) || (latency_ms_x100 == 0xffff))
+                    sniprintf(menu_row2, LCD_ROW_LEN+1, "Timeout");
+                else if (stb_ms_x100 == 0xfff)
+                    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2ums", latency_ms_x100/100, latency_ms_x100%100);
+                else
+                    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2ums/%u.%.2ums", latency_ms_x100/100, latency_ms_x100%100, stb_ms_x100/100, stb_ms_x100%100);
                 lcd_write_menu();
             } else if (btn_vec == rc_keymap[RC_BACK]) {
                 break;
             }
 
-            IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, base_val|(position<<28));
+            sys_ctrl &= ~LT_ARMED;
+            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
         }
 
         btn_vec_prev = btn_vec;
         usleep(WAITLOOP_SLEEP_US);
     }
 
-    base_val &= 0xff;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, base_val);
+    sys_ctrl &= ~LT_CTRL_MASK;
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     return 0;
 }
+#endif
 
 // Enable chip outputs
 void enable_outputs()

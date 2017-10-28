@@ -32,18 +32,15 @@
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern SD_DEV sdcard_dev;
-extern alt_u8 sys_ctrl;
+extern alt_u16 sys_ctrl;
 
 static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
 {
     alt_u32 crcval, tmp;
 
     strncpy(hdr->fw_key, (char*)databuf, 4);
-    if (strncmp(hdr->fw_key, "OSSC", 4)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid image");
-        menu_row2[0] = '\0';
-        return 1;
-    }
+    if (strncmp(hdr->fw_key, "OSSC", 4))
+        return FW_IMAGE_ERROR;
 
     hdr->version_major = databuf[4];
     hdr->version_minor = databuf[5];
@@ -60,19 +57,13 @@ static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
     memcpy(&tmp, databuf+508, 4);
     hdr->hdr_crc = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
 
-    if (hdr->hdr_len < 26 || hdr->hdr_len > 508) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid header");
-        menu_row2[0] = '\0';
-        return -1;
-    }
+    if (hdr->hdr_len < 26 || hdr->hdr_len > 508)
+        return FW_HDR_ERROR;
 
     crcval = crcCI(databuf, hdr->hdr_len, 1);
 
-    if (crcval != hdr->hdr_crc) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid hdr CRC");
-        menu_row2[0] = '\0';
-        return -2;
-    }
+    if (crcval != hdr->hdr_crc)
+        return FW_HDR_CRC_ERROR;
 
     return 0;
 }
@@ -87,17 +78,14 @@ static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_
         retval = SD_Read(&sdcard_dev, tmpbuf, (offset+i)/SD_BLK_SIZE, 0, bytes_to_read);
         //retval = read_sd_block(offset+i, bytes_to_read, tmpbuf);
 
-        if (retval != 0)
-            return -2;
+        if (retval != SD_OK)
+            return retval;
 
         crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
     }
 
-    if (crcval != golden_crc) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Invalid data CRC");
-        menu_row2[0] = '\0';
-        return -3;
-    }
+    if (crcval != golden_crc)
+        return FW_DATA_CRC_ERROR;
 
     return 0;
 }
@@ -115,6 +103,7 @@ int fw_update()
 {
     int retval, i;
     int retries = FW_UPDATE_RETRIES;
+    char *errmsg;
     alt_u8 databuf[SD_BLK_SIZE];
     alt_u32 btn_vec;
     alt_u32 bytes_to_rw;
@@ -146,8 +135,7 @@ int fw_update()
         if (btn_vec == rc_keymap[RC_BTN1]) {
             break;
         } else if (btn_vec == rc_keymap[RC_BTN2]) {
-            retval = 2;
-            strncpy(menu_row1, "Cancelled", LCD_ROW_LEN+1);
+            retval = FW_UPD_CANCELLED;
             goto failure;
         }
 
@@ -168,8 +156,10 @@ update_init:
     for (i=0; i<fw_header.data_len; i=i+SD_BLK_SIZE) {
         bytes_to_rw = ((fw_header.data_len-i < SD_BLK_SIZE) ? (fw_header.data_len-i) : SD_BLK_SIZE);
         retval = SD_Read(&sdcard_dev, databuf, (512+i)/SD_BLK_SIZE, 0, bytes_to_rw);
-        if (retval != 0)
+        if (retval != 0) {
+            retval = -retval; //flag any SD errors critical to trigger update retry
             goto failure;
+        }
 
         retval = write_flash_page(databuf, ((bytes_to_rw < PAGESIZE) ? bytes_to_rw : PAGESIZE), (i/PAGESIZE));
         if (retval != 0)
@@ -190,15 +180,58 @@ update_init:
         goto failure;
 
     SPI_CS_High();
+
+    strncpy(menu_row1, "Firmware updated", LCD_ROW_LEN+1);
+    strncpy(menu_row2, "please restart", LCD_ROW_LEN+1);
+    lcd_write_menu();
+    while (1) {}
+
     return 0;
 
 failure:
     SPI_CS_High();
+
+    switch (retval) {
+        case SD_NOINIT:
+            errmsg = "No SD card det.";
+            break;
+        case FW_IMAGE_ERROR:
+            errmsg = "Invalid image";
+            break;
+        case FW_HDR_ERROR:
+            errmsg = "Invalid header";
+            break;
+        case FW_HDR_CRC_ERROR:
+            errmsg = "Invalid hdr CRC";
+            break;
+        case FW_DATA_CRC_ERROR:
+            errmsg = "Invalid data CRC";
+            break;
+        case FW_UPD_CANCELLED:
+            errmsg = "Update cancelled";
+            break;
+        case -FLASH_READ_ERROR:
+            errmsg = "Flash read err";
+            break;
+        case -FLASH_ERASE_ERROR:
+            errmsg = "Flash erase err";
+            break;
+        case -FLASH_WRITE_ERROR:
+            errmsg = "Flash write err";
+            break;
+        case -FLASH_VERIFY_ERROR:
+            errmsg = "Flash verif fail";
+            break;
+        default:
+            errmsg = "Error";
+            break;
+    }
+    strncpy(menu_row2, errmsg, LCD_ROW_LEN+1);
     lcd_write_menu();
     usleep(1000000);
 
-    // Probable rw error, retry update
-    if ((retval <= -200) && (retries > 0)) {
+    // Critical error, retry update
+    if ((retval < 0) && (retries > 0)) {
         sniprintf(menu_row1, LCD_ROW_LEN+1, "Retrying update");
         retries--;
         goto update_init;

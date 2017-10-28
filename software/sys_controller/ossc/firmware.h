@@ -40,6 +40,12 @@
 
 #define FW_UPDATE_RETRIES       3
 
+#define FW_IMAGE_ERROR          100
+#define FW_HDR_ERROR            101
+#define FW_HDR_CRC_ERROR        102
+#define FW_DATA_CRC_ERROR       103
+#define FW_UPD_CANCELLED        104
+
 typedef struct {
     char fw_key[4];
     alt_u8 version_major;
