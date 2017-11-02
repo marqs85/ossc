@@ -57,7 +57,6 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
         memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = cm.avinput;
-        ((ude_initcfg*)databuf)->last_phy_input = phy_input_sel;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -141,7 +140,7 @@ int read_userdata(alt_u8 entry)
                     input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
             if (((ude_initcfg*)databuf)->last_input < AV_LAST)
                 target_mode = ((ude_initcfg*)databuf)->last_input;
-            profile_sel = input_profiles[((ude_initcfg*)databuf)->last_phy_input];
+            profile_sel = input_profiles[0]; // Arbitrary default
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }

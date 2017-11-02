@@ -890,7 +890,7 @@ int main()
             // The input changed, so load the appropriate profile
             if (profile_sel != input_profiles[phy_input_sel]) {
                 profile_sel = input_profiles[phy_input_sel];
-                load_profile();
+                read_userdata(profile_sel);
             }
 
             cm.avinput = target_mode;
