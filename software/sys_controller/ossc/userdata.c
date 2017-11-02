@@ -39,6 +39,7 @@ int write_userdata(alt_u8 entry)
     alt_u16 vm_to_write;
     alt_u16 pageoffset, srcoffset;
     alt_u8 pageno;
+    alt_u32 bytes_to_w;
     int retval;
 
     if (entry > MAX_USERDATA_ENTRY) {
@@ -68,31 +69,29 @@ int write_userdata(alt_u8 entry)
         ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
         ((ude_profile*)databuf)->vm_data_len = vm_to_write;
 
-        pageno = 0;
         pageoffset = offsetof(ude_profile, avc);
 
         // assume that sizeof(avconfig_t) << PAGESIZE
         memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
         pageoffset += sizeof(avconfig_t);
 
-        srcoffset = 0;
+        // write a full page first
+        memcpy(databuf+pageoffset, (char*)video_modes, PAGESIZE-pageoffset);
+        srcoffset = PAGESIZE-pageoffset;
+        vm_to_write -= PAGESIZE-pageoffset;
+        write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE));
+
+        // then write the rest
+        pageno = 1;
         while (vm_to_write > 0) {
-            if (vm_to_write >= PAGESIZE-pageoffset) {
-                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, PAGESIZE-pageoffset);
-                srcoffset += PAGESIZE-pageoffset;
-                pageoffset = 0;
-                vm_to_write -= PAGESIZE-pageoffset;
-                // check
-                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-                pageno++;
-            } else {
-                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, vm_to_write);
-                pageoffset += vm_to_write;
-                vm_to_write = 0;
-                // check
-                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-            }
+            bytes_to_w = (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write;
+            memcpy(databuf, (char*)video_modes+srcoffset, bytes_to_w);
+            write_flash_page(databuf, bytes_to_w, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
+            srcoffset += bytes_to_w;
+            vm_to_write -= bytes_to_w;
+            ++pageno;
         }
+
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
     default:
