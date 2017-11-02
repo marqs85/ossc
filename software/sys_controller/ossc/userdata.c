@@ -29,7 +29,6 @@ extern avmode_t cm;
 extern avconfig_t tc;
 extern mode_data_t video_modes[];
 extern avinput_t target_mode;
-extern phyinput_t phy_input_sel;
 extern alt_u8 update_cur_vm;
 extern alt_u8 input_profiles[3];
 extern alt_u8 profile_sel;

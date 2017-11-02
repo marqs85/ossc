@@ -809,7 +809,6 @@ int main()
 
         switch (target_mode) {
         case AV1_RGBs:
-            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -817,7 +816,6 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV1_RGsB:
-            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -825,7 +823,6 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV1_YPBPR:
-            phy_input_sel = PHY_AV1;
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -833,7 +830,6 @@ int main()
             target_pcm = PCM_INPUT4;
             break;
         case AV2_YPBPR:
-            phy_input_sel = PHY_AV2;
             target_input = TVP_INPUT1;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -841,7 +837,6 @@ int main()
             target_pcm = PCM_INPUT3;
             break;
         case AV2_RGsB:
-            phy_input_sel = PHY_AV2;
             target_input = TVP_INPUT1;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -849,7 +844,6 @@ int main()
             target_pcm = PCM_INPUT3;
             break;
         case AV3_RGBHV:
-            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBHV;
             target_typemask = VIDEO_PC;
@@ -857,7 +851,6 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_RGBs:
-            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGBS;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -865,7 +858,6 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_RGsB:
-            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_RGsB;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -873,7 +865,6 @@ int main()
             target_pcm = PCM_INPUT2;
             break;
         case AV3_YPBPR:
-            phy_input_sel = PHY_AV3;
             target_input = TVP_INPUT3;
             target_format = FORMAT_YPbPr;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
@@ -886,6 +877,8 @@ int main()
 
         if (target_mode != AV_KEEP) {
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_mode]);
+
+            phy_input_sel = avinput_to_phyinput[target_mode];
 
             // The input changed, so load the appropriate profile
             if (profile_sel != input_profiles[phy_input_sel]) {
