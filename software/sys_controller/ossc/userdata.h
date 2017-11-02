@@ -31,6 +31,8 @@
 #define MAX_PROFILE 9
 #define INIT_CONFIG_SLOT MAX_USERDATA_ENTRY
 
+#define UDATA_IMPT_CANCELLED 104
+
 typedef enum {
     UDE_INITCFG  = 0,
     UDE_PROFILE,
@@ -64,5 +66,6 @@ typedef struct {
 
 int write_userdata(alt_u8 entry);
 int read_userdata(alt_u8 entry);
+int import_userdata();
 
 #endif
