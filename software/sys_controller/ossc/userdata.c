@@ -87,15 +87,8 @@ int write_userdata(alt_u8 entry)
         write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE));
 
         // then write the rest
-        pageno = 1;
-        while (vm_to_write > 0) {
-            bytes_to_w = (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write;
-            memcpy(databuf, (char*)video_modes+srcoffset, bytes_to_w);
-            write_flash_page(databuf, bytes_to_w, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-            srcoffset += bytes_to_w;
-            vm_to_write -= bytes_to_w;
-            ++pageno;
-        }
+        if (vm_to_write > 0)
+            write_flash((alt_u8*)video_modes+srcoffset, vm_to_write, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + 1, databuf);
 
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
