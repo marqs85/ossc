@@ -32,6 +32,7 @@ extern avinput_t target_mode;
 extern alt_u8 update_cur_vm;
 extern alt_u8 input_profiles[3];
 extern alt_u8 profile_sel;
+extern alt_u8 def_input;
 
 int write_userdata(alt_u8 entry)
 {
@@ -57,6 +58,7 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
         memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = cm.avinput;
+        ((ude_initcfg*)databuf)->def_input = def_input;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -138,6 +140,7 @@ int read_userdata(alt_u8 entry)
                     input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
             if (((ude_initcfg*)databuf)->last_input < AV_LAST)
                 target_mode = ((ude_initcfg*)databuf)->last_input;
+            def_input = ((ude_initcfg*)databuf)->def_input;
             profile_sel = input_profiles[0]; // Arbitrary default
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));

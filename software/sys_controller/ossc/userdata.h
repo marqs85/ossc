@@ -48,6 +48,7 @@ typedef struct {
     alt_u16 data_len;
     alt_u8 last_profile[3];
     avinput_t last_input;
+    avinput_t def_input;
     alt_u16 keys[REMOTE_MAX_KEYS];
 } __attribute__((packed, __may_alias__)) ude_initcfg;
 

@@ -68,7 +68,7 @@ alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[3], lt_sel;
+alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[3], lt_sel, def_input;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -785,8 +785,8 @@ int main()
         while (1) {}
     }
 
-    if (tc.def_input < AV_LAST)
-        target_mode = tc.def_input;
+    if (def_input < AV_LAST)
+        target_mode = def_input;
 
     // Mainloop
     while(1) {
@@ -901,7 +901,7 @@ int main()
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
             if (!menu_active)
                 lcd_write_status();
-            if (av_init && (tc.def_input == AV_LAST))
+            if (av_init && (def_input == AV_LAST))
                 write_userdata(INIT_CONFIG_SLOT);
             av_init = 1;
         }
