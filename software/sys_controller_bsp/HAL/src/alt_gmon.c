@@ -247,7 +247,7 @@ static int nios2_pcsample_init(void)
  */
 static alt_u32 nios2_pcsample(void* context)
 {
-  unsigned int pc;
+  unsigned int pc=0;
   unsigned int bucket;
 
   /* read the exception return address - this will be

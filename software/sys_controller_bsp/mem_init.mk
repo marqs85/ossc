@@ -150,12 +150,12 @@ flash2dat_extra_args = $(mem_pad_flag) $(mem_reloc_input_flag)
 
 # This following VERSION comment indicates the version of the tool used to 
 # generate this makefile. A makefile variable is provided for VERSION as well. 
-# ACDS_VERSION: 17.0
-ACDS_VERSION := 17.0
+# ACDS_VERSION: 17.1
+ACDS_VERSION := 17.1
 
 # This following BUILD_NUMBER comment indicates the build number of the tool 
 # used to generate this makefile. 
-# BUILD_NUMBER: 595
+# BUILD_NUMBER: 590
 
 # Optimize for simulation
 SIM_OPTIMIZE ?= 0
