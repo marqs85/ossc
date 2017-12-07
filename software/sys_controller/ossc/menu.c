@@ -41,7 +41,7 @@ extern mode_data_t video_modes[];
 extern alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
-extern alt_u8 vm_sel, profile_sel, lt_sel;
+extern alt_u8 vm_sel, profile_sel, lt_sel, def_input;
 
 alt_u8 menu_active;
 
@@ -134,7 +134,7 @@ MENU(menu_output, P99_PROTECT({ \
     { LNG("256x240 aspect","256x240ｱｽﾍﾟｸﾄ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ar_256col,       OPT_WRAP, SETTING_ITEM(ar_256col_desc) } } },
     { LNG("TX mode","TXﾓｰﾄﾞ"),                  OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
     { "HDMI ITC",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_itc,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),         OPT_AVCONFIG_SELECTION, { .sel = { &tc.def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
+    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),         OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
 }))
 
 MENU(menu_postproc, P99_PROTECT({ \

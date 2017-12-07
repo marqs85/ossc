@@ -30,7 +30,9 @@ extern avconfig_t tc;
 extern mode_data_t video_modes[];
 extern avinput_t target_mode;
 extern alt_u8 update_cur_vm;
+extern alt_u8 input_profiles[3];
 extern alt_u8 profile_sel;
+extern alt_u8 def_input;
 
 int write_userdata(alt_u8 entry)
 {
@@ -38,6 +40,7 @@ int write_userdata(alt_u8 entry)
     alt_u16 vm_to_write;
     alt_u16 pageoffset, srcoffset;
     alt_u8 pageno;
+    alt_u32 bytes_to_w;
     int retval;
 
     if (entry > MAX_USERDATA_ENTRY) {
@@ -53,8 +56,9 @@ int write_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
-        ((ude_initcfg*)databuf)->last_profile = profile_sel;
+        memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = cm.avinput;
+        ((ude_initcfg*)databuf)->def_input = def_input;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -67,31 +71,29 @@ int write_userdata(alt_u8 entry)
         ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
         ((ude_profile*)databuf)->vm_data_len = vm_to_write;
 
-        pageno = 0;
         pageoffset = offsetof(ude_profile, avc);
 
         // assume that sizeof(avconfig_t) << PAGESIZE
         memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
         pageoffset += sizeof(avconfig_t);
 
-        srcoffset = 0;
+        // write a full page first
+        memcpy(databuf+pageoffset, (char*)video_modes, PAGESIZE-pageoffset);
+        srcoffset = PAGESIZE-pageoffset;
+        vm_to_write -= PAGESIZE-pageoffset;
+        write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE));
+
+        // then write the rest
+        pageno = 1;
         while (vm_to_write > 0) {
-            if (vm_to_write >= PAGESIZE-pageoffset) {
-                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, PAGESIZE-pageoffset);
-                srcoffset += PAGESIZE-pageoffset;
-                pageoffset = 0;
-                vm_to_write -= PAGESIZE-pageoffset;
-                // check
-                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-                pageno++;
-            } else {
-                memcpy(databuf+pageoffset, (char*)video_modes+srcoffset, vm_to_write);
-                pageoffset += vm_to_write;
-                vm_to_write = 0;
-                // check
-                write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-            }
+            bytes_to_w = (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write;
+            memcpy(databuf, (char*)video_modes+srcoffset, bytes_to_w);
+            write_flash_page(databuf, bytes_to_w, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
+            srcoffset += bytes_to_w;
+            vm_to_write -= bytes_to_w;
+            ++pageno;
         }
+
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
     default:
@@ -133,10 +135,13 @@ int read_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
-            if (((ude_initcfg*)databuf)->last_profile <= MAX_PROFILE)
-                profile_sel = ((ude_initcfg*)databuf)->last_profile;
+            for (alt_u8 i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
+                if (((ude_initcfg*)databuf)->last_profile[i] <= MAX_PROFILE)
+                    input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
             if (((ude_initcfg*)databuf)->last_input < AV_LAST)
                 target_mode = ((ude_initcfg*)databuf)->last_input;
+            def_input = ((ude_initcfg*)databuf)->def_input;
+            profile_sel = input_profiles[0]; // Arbitrary default
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }
