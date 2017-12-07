@@ -75,6 +75,27 @@ typedef enum {
     AV_LAST         = 10
 } avinput_t;
 
+typedef enum {
+    PHY_AV1         = 0,
+    PHY_AV2         = 1,
+    PHY_AV3         = 2,
+    PHY_INVALID     = 3
+} phyinput_t;
+
+static phyinput_t avinput_to_phyinput[] = {
+    [AV_KEEP]       = PHY_INVALID,
+    [AV1_RGBs]      = PHY_AV1,
+    [AV1_RGsB]      = PHY_AV1,
+    [AV1_YPBPR]     = PHY_AV1,
+    [AV2_YPBPR]     = PHY_AV2,
+    [AV2_RGsB]      = PHY_AV2,
+    [AV3_RGBHV]     = PHY_AV3,
+    [AV3_RGBs]      = PHY_AV3,
+    [AV3_RGsB]      = PHY_AV3,
+    [AV3_YPBPR]     = PHY_AV3,
+    [AV_LAST]       = PHY_INVALID
+};
+
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,

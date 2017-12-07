@@ -68,13 +68,14 @@ alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit, profile_sel, lt_sel;
+alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[3], lt_sel, def_input;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 extern alt_u8 menu_active;
 avinput_t target_mode;
+phyinput_t phy_input_sel;
 
 alt_u8 pcm1862_active;
 
@@ -540,6 +541,7 @@ void program_mode()
 int load_profile() {
     int retval;
 
+    input_profiles[phy_input_sel] = profile_sel;
     retval = read_userdata(profile_sel);
     if (retval == 0)
         write_userdata(INIT_CONFIG_SLOT);
@@ -549,6 +551,7 @@ int load_profile() {
 int save_profile() {
     int retval;
 
+    input_profiles[phy_input_sel] = profile_sel;
     retval = write_userdata(profile_sel);
     if (retval == 0)
         write_userdata(INIT_CONFIG_SLOT);
@@ -782,8 +785,8 @@ int main()
         while (1) {}
     }
 
-    if (tc.def_input < AV_LAST)
-        target_mode = tc.def_input;
+    if (def_input < AV_LAST)
+        target_mode = def_input;
 
     // Mainloop
     while(1) {
@@ -874,6 +877,15 @@ int main()
 
         if (target_mode != AV_KEEP) {
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_mode]);
+
+            phy_input_sel = avinput_to_phyinput[target_mode];
+
+            // The input changed, so load the appropriate profile
+            if (profile_sel != input_profiles[phy_input_sel]) {
+                profile_sel = input_profiles[phy_input_sel];
+                read_userdata(profile_sel);
+            }
+
             cm.avinput = target_mode;
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
@@ -889,7 +901,7 @@ int main()
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
             if (!menu_active)
                 lcd_write_status();
-            if (av_init && (tc.def_input == AV_LAST))
+            if (av_init && (def_input == AV_LAST))
                 write_userdata(INIT_CONFIG_SLOT);
             av_init = 1;
         }
