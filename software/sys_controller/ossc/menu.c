@@ -41,7 +41,7 @@ extern mode_data_t video_modes[];
 extern alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
-extern alt_u8 vm_sel, profile_sel, lt_sel, def_input;
+extern alt_u8 vm_sel, profile_sel, lt_sel, def_input, profile_link;
 
 alt_u8 menu_active;
 
@@ -134,7 +134,6 @@ MENU(menu_output, P99_PROTECT({ \
     { LNG("256x240 aspect","256x240ｱｽﾍﾟｸﾄ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.ar_256col,       OPT_WRAP, SETTING_ITEM(ar_256col_desc) } } },
     { LNG("TX mode","TXﾓｰﾄﾞ"),                  OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
     { "HDMI ITC",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_itc,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),         OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
 }))
 
 MENU(menu_postproc, P99_PROTECT({ \
@@ -164,6 +163,15 @@ MENU(menu_audio, P99_PROTECT({ \
 #define AUDIO_MENU
 #endif
 
+MENU(menu_settings, P99_PROTECT({ \
+    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"), OPT_FUNC_CALL,          { .fun = { load_profile, &profile_arg_info } } },
+    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"), OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
+    { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
+    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
+    { "Link input/prof",                          OPT_AVCONFIG_SELECTION, { .sel = { &profile_link,     OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"),  OPT_FUNC_CALL,        { .fun = { fw_update, NULL } } },
+}))
+
 
 MENU(menu_main, P99_PROTECT({ \
     { LNG("Video in proc  >","ﾀｲｵｳｴｲｿﾞｳ     >"),  OPT_SUBMENU,            { .sub = { &menu_vinputproc, NULL, NULL } } },
@@ -173,10 +181,7 @@ MENU(menu_main, P99_PROTECT({ \
     { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),  OPT_SUBMENU,            { .sub = { &menu_postproc, NULL, NULL } } },
     { LNG("Compatibility  >","ｺﾞｶﾝｾｲ        >"), OPT_SUBMENU,             { .sub = { &menu_compatibility, NULL, NULL } } },
     AUDIO_MENU
-    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"), OPT_FUNC_CALL,          { .fun = { load_profile, &profile_arg_info } } },
-    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"), OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
-    { LNG("<Reset settings>","<ｾｯﾃｲｵｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
-    { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"),  OPT_FUNC_CALL,        { .fun = { fw_update, NULL } } },
+    { "Settings opt   >",                       OPT_SUBMENU,             { .sub = { &menu_settings, NULL, NULL } } },
 }))
 
 // Max 3 levels currently
@@ -190,7 +195,7 @@ void display_menu(alt_u8 forcedisp)
     menuitem_type type;
     alt_u8 *val, val_wrap, val_min, val_max;
     alt_u16 *val_u16;
-    int i, retval = 0;
+    int i, func_called = 0, retval = 0;
 
     for (i=RC_OK; i < RC_INFO; i++) {
         if (remote_code == rc_keymap[i]) {
@@ -235,6 +240,7 @@ void display_menu(alt_u8 forcedisp)
                 break;
             case OPT_FUNC_CALL:
                 retval = navi[navlvl].m->items[navi[navlvl].mp].fun.f();
+                func_called = 1;
                 break;
             default:
                 break;
@@ -312,7 +318,7 @@ void display_menu(alt_u8 forcedisp)
                 menu_row2[0] = 0;
             break;
         case OPT_FUNC_CALL:
-            if (code == OPT_SELECT)
+            if (func_called)
                 sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Done" : "Failed");
             else if (navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info)
                 navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->df(*navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->data);

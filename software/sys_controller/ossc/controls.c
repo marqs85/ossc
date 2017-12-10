@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -40,7 +40,7 @@ extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern const mode_data_t video_modes[];
 extern avmode_t cm;
 extern avconfig_t tc;
-extern avinput_t target_mode;
+extern avinput_t target_input;
 extern alt_u8 menu_active;
 extern alt_u16 sys_ctrl;
 extern alt_u8 profile_sel;
@@ -127,15 +127,15 @@ void parse_control()
     }
 
     switch (i) {
-        case RC_BTN1: target_mode = AV1_RGBs; break;
-        case RC_BTN4: target_mode = AV1_RGsB; break;
-        case RC_BTN7: target_mode = AV1_YPBPR; break;
-        case RC_BTN2: target_mode = AV2_YPBPR; break;
-        case RC_BTN5: target_mode = AV2_RGsB; break;
-        case RC_BTN3: target_mode = AV3_RGBHV; break;
-        case RC_BTN6: target_mode = AV3_RGBs; break;
-        case RC_BTN9: target_mode = AV3_RGsB; break;
-        case RC_BTN0: target_mode = AV3_YPBPR; break;
+        case RC_BTN1: target_input = AV1_RGBs; break;
+        case RC_BTN4: target_input = AV1_RGsB; break;
+        case RC_BTN7: target_input = AV1_YPBPR; break;
+        case RC_BTN2: target_input = AV2_YPBPR; break;
+        case RC_BTN5: target_input = AV2_RGsB; break;
+        case RC_BTN3: target_input = AV3_RGBHV; break;
+        case RC_BTN6: target_input = AV3_RGBs; break;
+        case RC_BTN9: target_input = AV3_RGsB; break;
+        case RC_BTN0: target_input = AV3_YPBPR; break;
         case RC_MENU:
             menu_active = !menu_active;
 
@@ -228,7 +228,7 @@ void parse_control()
 Button_Check:
     if (btn_code_prev == 0) {
         if (btn_code & PB0_BIT)
-            target_mode = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
+            target_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
         if (btn_code & PB1_BIT)
             tc.sl_mode = tc.sl_mode < SL_MODE_MAX ? tc.sl_mode + 1 : 0;
     }

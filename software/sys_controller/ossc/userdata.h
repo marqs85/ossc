@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -46,7 +46,8 @@ typedef struct {
 typedef struct {
     ude_hdr hdr;
     alt_u16 data_len;
-    alt_u8 last_profile[3];
+    alt_u8 last_profile[AV_LAST];
+    alt_u8 profile_link;
     avinput_t last_input;
     avinput_t def_input;
     alt_u16 keys[REMOTE_MAX_KEYS];

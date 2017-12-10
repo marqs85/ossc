@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -62,7 +62,7 @@
 static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
 
 typedef enum {
-    AV_KEEP         = 0,
+    AV_TESTPAT      = 0,
     AV1_RGBs        = 1,
     AV1_RGsB        = 2,
     AV1_YPBPR       = 3,
@@ -74,27 +74,6 @@ typedef enum {
     AV3_YPBPR       = 9,
     AV_LAST         = 10
 } avinput_t;
-
-typedef enum {
-    PHY_AV1         = 0,
-    PHY_AV2         = 1,
-    PHY_AV3         = 2,
-    PHY_INVALID     = 3
-} phyinput_t;
-
-static phyinput_t avinput_to_phyinput[] = {
-    [AV_KEEP]       = PHY_INVALID,
-    [AV1_RGBs]      = PHY_AV1,
-    [AV1_RGsB]      = PHY_AV1,
-    [AV1_YPBPR]     = PHY_AV1,
-    [AV2_YPBPR]     = PHY_AV2,
-    [AV2_RGsB]      = PHY_AV2,
-    [AV3_RGBHV]     = PHY_AV3,
-    [AV3_RGBs]      = PHY_AV3,
-    [AV3_RGsB]      = PHY_AV3,
-    [AV3_YPBPR]     = PHY_AV3,
-    [AV_LAST]       = PHY_INVALID
-};
 
 // In reverse order of importance
 typedef enum {

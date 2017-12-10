@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -28,11 +28,11 @@ extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern avmode_t cm;
 extern avconfig_t tc;
 extern mode_data_t video_modes[];
-extern avinput_t target_mode;
+extern avinput_t target_input;
 extern alt_u8 update_cur_vm;
-extern alt_u8 input_profiles[3];
+extern alt_u8 input_profiles[AV_LAST];
 extern alt_u8 profile_sel;
-extern alt_u8 def_input;
+extern alt_u8 def_input, profile_link;
 
 int write_userdata(alt_u8 entry)
 {
@@ -59,6 +59,7 @@ int write_userdata(alt_u8 entry)
         memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = cm.avinput;
         ((ude_initcfg*)databuf)->def_input = def_input;
+        ((ude_initcfg*)databuf)->profile_link = profile_link;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -135,13 +136,16 @@ int read_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
-            for (alt_u8 i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
+            for (i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
                 if (((ude_initcfg*)databuf)->last_profile[i] <= MAX_PROFILE)
                     input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
-            if (((ude_initcfg*)databuf)->last_input < AV_LAST)
-                target_mode = ((ude_initcfg*)databuf)->last_input;
             def_input = ((ude_initcfg*)databuf)->def_input;
-            profile_sel = input_profiles[0]; // Arbitrary default
+            if (def_input < AV_LAST)
+                target_input = def_input;
+            else if (((ude_initcfg*)databuf)->last_input < AV_LAST)
+                target_input = ((ude_initcfg*)databuf)->last_input;
+            profile_link = ((ude_initcfg*)databuf)->profile_link;
+            profile_sel = input_profiles[AV_TESTPAT]; // Global profile
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }
