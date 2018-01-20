@@ -50,8 +50,11 @@ parameter   H_OVERSCAN      =   40; //at both sides
 parameter   V_OVERSCAN      =   16; //top and bottom
 parameter   H_AREA          =   640;
 parameter   V_AREA          =   448;
-parameter   H_BORDER        =   (H_AREA-512)/2;
-parameter   V_BORDER        =   (V_AREA-256)/2;
+parameter   H_GRADIENT      =   512;
+parameter   V_GRADIENT      =   256;
+parameter   V_GRAYRAMP      =   84;
+parameter   H_BORDER        =   (H_AREA-H_GRADIENT)/2;
+parameter   V_BORDER        =   (V_AREA-V_GRADIENT)/2;
 
 parameter   X_START     =   H_SYNCLEN + H_BACKPORCH;
 parameter   Y_START     =   V_SYNCLEN + V_BACKPORCH;
@@ -138,6 +141,8 @@ begin
                 V_gen <= (h_cnt[0] ^ v_cnt[0]) ? 8'hff : 8'h00;
             else if ((h_cnt < X_START+H_OVERSCAN+H_BORDER) || (h_cnt >= X_START+H_OVERSCAN+H_AREA-H_BORDER) || (v_cnt < Y_START+V_OVERSCAN+V_BORDER) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA-V_BORDER))
                 V_gen <= 8'h50;
+            else if (v_cnt >= Y_START+V_OVERSCAN+V_BORDER+V_GRADIENT-V_GRAYRAMP)
+                V_gen <= (((h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 4) << 3) + (h_cnt - (X_START+H_OVERSCAN+H_BORDER) >> 6);
             else
                 V_gen <= (h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 1;
         end
