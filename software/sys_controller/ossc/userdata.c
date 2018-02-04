@@ -38,6 +38,7 @@ extern alt_u8 input_profiles[AV_LAST];
 extern alt_u8 profile_sel;
 extern alt_u8 def_input, profile_link;
 extern alt_u8 lcd_bl_timeout;
+extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern SD_DEV sdcard_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
@@ -68,6 +69,10 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->def_input = def_input;
         ((ude_initcfg*)databuf)->profile_link = profile_link;
         ((ude_initcfg*)databuf)->lcd_bl_timeout = lcd_bl_timeout;
+        ((ude_initcfg*)databuf)->auto_input = auto_input;
+        ((ude_initcfg*)databuf)->auto_av1_ypbpr = auto_av1_ypbpr;
+        ((ude_initcfg*)databuf)->auto_av2_ypbpr = auto_av2_ypbpr;
+        ((ude_initcfg*)databuf)->auto_av3_ypbpr = auto_av3_ypbpr;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
         if (retval != 0)
@@ -145,6 +150,10 @@ int read_userdata(alt_u8 entry)
                 target_input = def_input;
             else if (((ude_initcfg*)databuf)->last_input < AV_LAST)
                 target_input = ((ude_initcfg*)databuf)->last_input;
+            auto_input = ((ude_initcfg*)databuf)->auto_input;
+            auto_av1_ypbpr = ((ude_initcfg*)databuf)->auto_av1_ypbpr;
+            auto_av2_ypbpr = ((ude_initcfg*)databuf)->auto_av2_ypbpr;
+            auto_av3_ypbpr = ((ude_initcfg*)databuf)->auto_av3_ypbpr;
             profile_link = ((ude_initcfg*)databuf)->profile_link;
             profile_sel = input_profiles[AV_TESTPAT]; // Global profile
             lcd_bl_timeout = ((ude_initcfg*)databuf)->lcd_bl_timeout;

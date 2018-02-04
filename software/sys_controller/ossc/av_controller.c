@@ -41,6 +41,7 @@
 #include "HDMI_TX.h"
 #include "hdmitx.h"
 #include "sd_io.h"
+#include "sys/alt_timestamp.h"
 
 #define STABLE_THOLD            1
 #define MIN_LINES_PROGRESSIVE   200
@@ -69,6 +70,7 @@ alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
 alt_u8 vm_sel, vm_edit, profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
+alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -785,6 +787,12 @@ int main()
 
     alt_u32 input_vec;
 
+    alt_u32 auto_input_timestamp = 300 * (alt_timestamp_freq() >> 10);
+    alt_u8 auto_input_changed = 0;
+    alt_u8 auto_input_ctr = 0;
+    alt_u8 auto_input_current_ctr = AUTO_CURRENT_MAX_COUNT;
+    alt_u8 auto_input_keep_current = 0;
+
     int init_stat, man_input_change;
 
     init_stat = init_hw();
@@ -806,6 +814,9 @@ int main()
         while (1) {}
     }
 
+    // start timer for auto input
+    alt_timestamp_start();
+
     // Mainloop
     while(1) {
         // Read remote control and PCB button status
@@ -826,10 +837,67 @@ int main()
             btn_code = 0;
         }
 
+        // Auto input switching
+        if (auto_input != AUTO_OFF && cm.avinput != AV_TESTPAT && !cm.sync_active && !menu_active
+            && alt_timestamp() >= auto_input_timestamp && auto_input_ctr < AUTO_MAX_COUNT) {
+
+            // Keep switching on the same physical input when set to Current input or a short time after losing sync.
+            auto_input_keep_current = (auto_input == AUTO_CURRENT_INPUT || auto_input_current_ctr < AUTO_CURRENT_MAX_COUNT);
+
+            switch(cm.avinput) {
+            case AV1_RGBs:
+                target_input = auto_av1_ypbpr ? AV1_YPBPR : AV1_RGsB;
+                break;
+            case AV1_RGsB:
+            case AV1_YPBPR:
+                target_input = auto_input_keep_current ? AV1_RGBs : (auto_av2_ypbpr ? AV2_YPBPR : AV2_RGsB);
+                break;
+            case AV2_YPBPR:
+            case AV2_RGsB:
+                target_input = auto_input_keep_current ? target_input : AV3_RGBHV;
+                break;
+            case AV3_RGBHV:
+                target_input = AV3_RGBs;
+                break;
+            case AV3_RGBs:
+                target_input = auto_av3_ypbpr ? AV3_YPBPR : AV3_RGsB;
+                break;
+            case AV3_RGsB:
+            case AV3_YPBPR:
+                target_input = auto_input_keep_current ? AV3_RGBHV : AV1_RGBs;
+                break;
+            default:
+                break;
+            }
+
+            auto_input_ctr++;
+
+            if (auto_input_current_ctr < AUTO_CURRENT_MAX_COUNT)
+                auto_input_current_ctr++;
+
+            // For input linked profile loading below
+            auto_input_changed = 1;
+
+            // reset timer
+            alt_timestamp_start();
+        }
+
         man_input_change = parse_control();
 
         if (menu_active)
             display_menu(0);
+
+        // Only auto load profile when input is manually changed or when sync is active after automatic switch.
+        if ((target_input != cm.avinput && man_input_change) || (auto_input_changed && cm.sync_active))  {
+            // The input changed, so load the appropriate profile if
+            // input->profile link is enabled
+            if (profile_link && (profile_sel != input_profiles[target_input])) {
+                profile_sel = input_profiles[target_input];
+                read_userdata(profile_sel);
+            }
+
+            auto_input_changed = 0;
+        }
 
         if (target_input != cm.avinput) {
 
@@ -873,13 +941,6 @@ int main()
 
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_input]);
 
-            // The input changed, so load the appropriate profile if
-            // input->profile link is enabled
-            if (profile_link && (profile_sel != input_profiles[target_input])) {
-                profile_sel = input_profiles[target_input];
-                read_userdata(profile_sel);
-            }
-
             cm.avinput = target_input;
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
@@ -895,9 +956,14 @@ int main()
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
             if (!menu_active)
                 lcd_write_status();
-            // record last input if it was selected manually
-            if ((def_input == AV_LAST) && man_input_change)
-                write_userdata(INIT_CONFIG_SLOT);
+            if (man_input_change) {
+                // record last input if it was selected manually
+                if (def_input == AV_LAST)
+                    write_userdata(INIT_CONFIG_SLOT);
+                // Reset auto input timer when input is manually changed
+                auto_input_ctr = 0;
+                alt_timestamp_start();
+            }
         }
 
         // Check here to enable regardless of input
@@ -933,6 +999,9 @@ int main()
                     strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
                     if (!menu_active)
                         lcd_write_status();
+                    alt_timestamp_start();// reset auto input timer
+                    auto_input_ctr = 0;
+                    auto_input_current_ctr = 0;
                 }
                 break;
             case MODE_CHANGE:
