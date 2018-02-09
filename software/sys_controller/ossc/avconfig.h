@@ -45,6 +45,7 @@
 typedef struct {
     alt_u8 sl_mode;
     alt_u8 sl_type;
+    alt_u8 sl_method;
     alt_u8 sl_str;
     alt_u8 sl_id;
     alt_u8 linemult_target;

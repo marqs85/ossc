@@ -301,6 +301,7 @@ status_t get_status(tvp_input_t input, video_format format)
 
     if ((tc.sl_mode != cm.cc.sl_mode) ||
         (tc.sl_type != cm.cc.sl_type) ||
+        (tc.sl_method != cm.cc.sl_method) ||
         (tc.sl_str != cm.cc.sl_str) ||
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
@@ -365,8 +366,8 @@ status_t get_status(tvp_input_t input, video_format format)
 // v_info:     [31:29]           [28:27]               [26]           [25:20]       [19:17]          [16:11]            [10:0]
 //           | V_MULTMODE[2:0] | V_SCANLINEMODE[1:0] | V_SCANLINEID | V_MASK[5:0] | V_SYNCLEN[2:0] | V_BACKPORCH[5:0] | V_ACTIVE[10:0] |
 //
-// extra:      [31:13]  [12:8]          [7:4]            [3:0]
-//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINESTR[3:0] |
+// extra:      [31:14]  [13:9]          [8:5]            [4]                  [3:0]
+//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINESTR_TYPE | H_SCANLINESTR[3:0] |
 //
 void set_videoinfo()
 {
@@ -461,9 +462,10 @@ void set_videoinfo()
                                             (video_modes[cm.id].v_synclen<<17) |
                                             (v_backporch<<11) |
                                             v_active);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<8) |
-                                            (cm.cc.mask_br<<4) |
-                                            cm.cc.sl_str);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<9) |
+                                            (cm.cc.mask_br<<5) |
+                                            (cm.cc.sl_method << 4) |
+                                             cm.cc.sl_str);
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
