@@ -42,6 +42,9 @@
 `define SCANLINES_V             2'h2
 `define SCANLINES_ALT           2'h3
 
+`define SCANLINES_CONTRAST_LOW  2'h1
+`define SCANLINES_CONTRAST_HIGH 2'h2
+
 `define VSYNCGEN_LEN            6
 `define VSYNCGEN_GENMID_BIT     0
 `define VSYNCGEN_CHOPMID_BIT    1
@@ -100,6 +103,8 @@ reg [7:0] R_in_L, G_in_L, B_in_L, R_in_LL, G_in_LL, B_in_LL, R_1x, G_1x, B_1x;
 reg [7:0] R_pp3, G_pp3, B_pp3, R_pp4, G_pp4, B_pp4, R_pp5, G_pp5, B_pp5, R_pp6, G_pp6, B_pp6;
 reg [7:0] R_prev_pp2, G_prev_pp2, B_prev_pp2, R_prev_pp3, G_prev_pp3, B_prev_pp3, R_prev_pp4, G_prev_pp4, B_prev_pp4;
 reg signed [14:0] R_diff_pp3, G_diff_pp3, B_diff_pp3, R_diff_pp4, G_diff_pp4, B_diff_pp4;
+reg [7:0] R_sl_contrast_pp4, G_sl_contrast_pp4, B_sl_contrast_pp4, R_scanline_str_pp5, G_scanline_str_pp5, B_scanline_str_pp5;
+
 
 //H+V syncs + data enable signals&registers
 wire HSYNC_act, VSYNC_act, DE_act;
@@ -163,7 +168,9 @@ reg [9:0] H_L5BORDER;
 reg [3:0] X_MASK_BR;
 reg [7:0] X_SCANLINESTR;
 reg [5:0] X_REV_LPF_STR;
+reg [1:0] H_SL_CONTRAST;
 reg X_REV_LPF_ENABLE;
+
 
 //clk27 related registers
 reg VSYNC_in_cc_L, VSYNC_in_cc_LL, VSYNC_in_cc_LLL;
@@ -175,6 +182,20 @@ assign pclk_1x = PCLK_in;
 assign PCLK_out = pclk_act;
 assign pclk_lock = {pclk_2x_lock, pclk_3x_lock};
 
+//Scanline contrast. Bright pixels decrease scanline strength.
+function [7:0] apply_scanline_strength;
+    input [7:0] str;
+    input [7:0] data;
+    input [1:0] contrast;
+
+    begin
+        if (contrast)
+            apply_scanline_strength = (str > data) ? (str - data) : 8'h00;
+        else
+            apply_scanline_strength = str;
+    end
+    endfunction
+
 //Scanline generation
 function [7:0] apply_scanlines;
     input [1:0] mode;
@@ -184,6 +205,7 @@ function [7:0] apply_scanlines;
     input [2:0] line_id;
     input [2:0] col_id;
     input fid;
+
     begin
         if ((mode == `SCANLINES_H) && (mask & (5'h1<<line_id)))
             apply_scanlines = (data > str) ? (data-str) : 8'h00;
@@ -492,6 +514,10 @@ begin
     R_diff_pp4 <= (R_diff_pp3 * X_REV_LPF_STR);
     G_diff_pp4 <= (G_diff_pp3 * X_REV_LPF_STR);
     B_diff_pp4 <= (B_diff_pp3 * X_REV_LPF_STR);
+    // Scanline contrast Low (62%) and High (87%) setting.
+    R_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (R_pp3 - (R_pp3 >> 3)) : ((R_pp3 >> 1) + (R_pp3 >> 3));
+    G_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (G_pp3 - (G_pp3 >> 3)) : ((G_pp3 >> 1) + (G_pp3 >> 3));
+    B_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (B_pp3 - (B_pp3 >> 3)) : ((B_pp3 >> 1) + (B_pp3 >> 3));
 
     R_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, R_pp4, R_prev_pp4, R_diff_pp4);
     G_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, G_pp4, G_prev_pp4, G_diff_pp4);
@@ -503,10 +529,13 @@ begin
     col_id_pp5 <= col_id_pp4;
     border_enable_pp5 <= border_enable_pp4;
     lt_box_enable_pp5 <= lt_box_enable_pp4;
+    R_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, R_sl_contrast_pp4, H_SL_CONTRAST);
+    G_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, G_sl_contrast_pp4, H_SL_CONTRAST);
+    B_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, B_sl_contrast_pp4, H_SL_CONTRAST);
 
-    R_pp6 <= apply_scanlines(V_SCANLINEMODE, R_pp5, X_SCANLINESTR, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
-    G_pp6 <= apply_scanlines(V_SCANLINEMODE, G_pp5, X_SCANLINESTR, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
-    B_pp6 <= apply_scanlines(V_SCANLINEMODE, B_pp5, X_SCANLINESTR, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+    R_pp6 <= apply_scanlines(V_SCANLINEMODE, R_pp5, R_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+    G_pp6 <= apply_scanlines(V_SCANLINEMODE, G_pp5, G_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+    B_pp6 <= apply_scanlines(V_SCANLINEMODE, B_pp5, B_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
     HSYNC_pp6 <= HSYNC_pp5;
     VSYNC_pp6 <= VSYNC_pp5;
     DE_pp6 <= DE_pp5;
@@ -687,6 +716,8 @@ begin
             H_OPT_SAMPLE_SEL <= h_info2[15:13];
             H_OPT_SAMPLE_MULT <= h_info2[12:10];
             H_OPT_STARTOFF <= h_info2[9:0];
+
+            H_SL_CONTRAST <= extra_info[14:13];
 
             X_REV_LPF_ENABLE <= (extra_info[12:8] != 5'b00000);
             X_REV_LPF_STR <= (extra_info[12:8] + 6'd16);
