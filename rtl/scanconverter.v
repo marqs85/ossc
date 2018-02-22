@@ -255,14 +255,12 @@ function [7:0] apply_reverse_lpf;
     input [7:0] data;
     input [7:0] data_prev;
     input signed [14:0] diff;
-    reg signed [12:0] data_prev_x;
     reg signed [10:0] result;
 
     begin
-        data_prev_x = (data_prev << 4);
-        result = (data_prev_x - diff) >>> 4;
+        result = ({3'b000,data_prev} + ~diff[14:4] + ~|diff[3:0]);
         if (enable)
-            apply_reverse_lpf = (result < 0) ? 8'h00 : (result > 255) ? 8'hFF : result;
+            apply_reverse_lpf = result[10] ? 8'h00 : |result[9:8] ? 8'hFF : result[7:0];
         else
             apply_reverse_lpf = data;
     end
