@@ -47,5 +47,12 @@
 #define PCM1862_DIN_RESAMPLE    0x1B
 
 #define PCM1862_CLKCONFIG       0x20
+#define PCM1862_DSP1_CLKDIV     0x21
+#define PCM1862_DSP2_CLKDIV     0x22
+#define PCM1862_ADC_CLKDIV      0x23
+
+#define PCM1862_PLLCONFIG       0x28
+
+#define PCM1862_DSP_CTRL        0x71
 
 #endif /* PCM1862_REGS_H_ */
