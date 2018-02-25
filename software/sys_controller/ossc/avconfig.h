@@ -45,6 +45,7 @@
 typedef struct {
     alt_u8 sl_mode;
     alt_u8 sl_type;
+	alt_u8 sl_hybr_contr;
     alt_u8 sl_method;
     alt_u8 sl_str;
     alt_u8 sl_id;
@@ -80,7 +81,6 @@ typedef struct {
     alt_u8 full_tx_setup;
     alt_u8 vga_ilace_fix;
     alt_u8 reverse_lpf;
-    alt_u8 sl_contrast;
 #ifdef ENABLE_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
