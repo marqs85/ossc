@@ -301,7 +301,7 @@ status_t get_status(tvp_input_t input, video_format format)
 
     if ((tc.sl_mode != cm.cc.sl_mode) ||
         (tc.sl_type != cm.cc.sl_type) ||
-        (tc.sl_hybr_contr != cm.cc.sl_hybr_contr) ||
+        (tc.sl_hybr_str != cm.cc.sl_hybr_str) ||
         (tc.sl_method != cm.cc.sl_method) ||
         (tc.sl_str != cm.cc.sl_str) ||
         (tc.sl_id != cm.cc.sl_id) ||
@@ -367,8 +367,8 @@ status_t get_status(tvp_input_t input, video_format format)
 // v_info:     [31:29]           [28:27]               [26]           [25:20]       [19:17]          [16:11]            [10:0]
 //           | V_MULTMODE[2:0] | V_SCANLINEMODE[1:0] | V_SCANLINEID | V_MASK[5:0] | V_SYNCLEN[2:0] | V_BACKPORCH[5:0] | V_ACTIVE[10:0] |
 //
-// extra:      [31:16]  [15:11]         [10:7]           [6]                [5:4]                   [3:0]
-//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINE_METHOD | H_SL_HYBRID_CONTRAST | H_SCANLINESTR[3:0] |
+// extra:      [31:19]  [18:14]         [13:10]          [9]                [8:4]                [3:0]
+//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINE_METHOD | H_SL_HYBRSTR[4:0] | H_SCANLINESTR[3:0] |
 //
 void set_videoinfo()
 {
@@ -463,10 +463,10 @@ void set_videoinfo()
                                             (video_modes[cm.id].v_synclen<<17) |
                                             (v_backporch<<11) |
                                             v_active);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<11) |
-                                            (cm.cc.mask_br<<7) |
-                                            (cm.cc.sl_method << 6) |
-                                            (cm.cc.sl_hybr_contr << 4) |
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<14) |
+                                            (cm.cc.mask_br<<10) |
+                                            (cm.cc.sl_method << 9) |
+                                            (cm.cc.sl_hybr_str << 4) |
                                              cm.cc.sl_str);
 }
 
