@@ -185,34 +185,35 @@ assign pclk_lock = {pclk_2x_lock, pclk_3x_lock};
 
 
 //Scanline generation
-reg [7:0] R_sl_hybrid_ref, G_sl_hybrid_ref, B_sl_hybrid_ref;
-reg [7:0] R_sl_str, G_sl_str, B_sl_str;
+reg [8:0] Y_rb_tmp;
+reg [9:0] Y;
+reg [7:0] Y_sl_hybrid_ref, R_sl_hybrid_ref, G_sl_hybrid_ref, B_sl_hybrid_ref;
+reg [7:0] Y_sl_str, R_sl_str, G_sl_str, B_sl_str;
 
+reg [7:0] R_sl_sub, G_sl_sub, B_sl_sub;
 wire [7:0] R_sl_mult, G_sl_mult, B_sl_mult;
-
 lpm_mult_4_sl R_sl_mult_u
 (
   .clock(pclk_act),
   .dataa(R_pp7),
-  .datab(~R_sl_str[7:4]),
+  .datab(~Y_sl_str),
   .result(R_sl_mult)
 );
 lpm_mult_4_sl G_sl_mult_u
 (
   .clock(pclk_act),
   .dataa(G_pp7),
-  .datab(~G_sl_str[7:4]),
+  .datab(~Y_sl_str),
   .result(G_sl_mult)
 );
 lpm_mult_4_sl B_sl_mult_u
 (
   .clock(pclk_act),
   .dataa(B_pp7),
-  .datab(~B_sl_str[7:4]),
+  .datab(~Y_sl_str),
   .result(B_sl_mult)
 );
 
-reg [7:0] R_sl_lin, G_sl_lin, B_sl_lin;
 reg draw_sl;
 
 //LT box / border generation
@@ -506,6 +507,8 @@ begin
     R_prev_pp4 <= R_prev_pp3;
     G_prev_pp4 <= G_prev_pp3;
     B_prev_pp4 <= B_prev_pp3;
+    // calculate Y step 1/2
+    Y_rb_tmp <=  {1'b0,R_pp3} + {1'b0,B_pp3};
     // Reverse LPF step2
     R_diff_pp4 <= (R_diff_pp3 * X_REV_LPF_STR);
     G_diff_pp4 <= (G_diff_pp3 * X_REV_LPF_STR);
@@ -514,6 +517,8 @@ begin
     R_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, R_pp4, R_prev_pp4, R_diff_pp4);
     G_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, G_pp4, G_prev_pp4, G_diff_pp4);
     B_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, B_pp4, B_prev_pp4, B_diff_pp4);
+    // calculate Y step 2/2
+    Y <= {1'b0,Y_rb_tmp} + {1'b0,G_pp4,1'b0};
     HSYNC_pp5 <= HSYNC_pp4;
     VSYNC_pp5 <= VSYNC_pp4;
     DE_pp5 <= DE_pp4;
@@ -525,7 +530,11 @@ begin
     R_pp6 <= R_pp5;
     G_pp6 <= G_pp5;
     B_pp6 <= B_pp5;
-    // modify scanline strength for linear method step 1
+    // modify scanline strength for linear method step 1/2
+    Y_sl_hybrid_ref <= (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_HIGH) ? (Y[9:2] - (Y[9:2] >> 3))        :
+                       (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_MED)  ? ((Y[9:2] >> 1) + (Y[9:2] >> 3)) :
+                       (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_LOW)  ? (Y[9:2] >> 1)                  :
+                                                                                   8'h0;
     R_sl_hybrid_ref <= (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_HIGH) ? (R_pp5 - (R_pp5 >> 3))        :
                        (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_MED)  ? ((R_pp5 >> 1) + (R_pp5 >> 3)) :
                        (X_SCANLINESTR_HYBR_CONTR == `SCANLINES_HYBR_CONTR_LOW)  ? (R_pp5 >> 1)                  :
@@ -549,7 +558,8 @@ begin
     R_pp7 <= R_pp6;
     G_pp7 <= G_pp6;
     B_pp7 <= B_pp6;
-    // modify scanline strength for linear method step 2
+    // modify scanline strength for linear method step 2/2
+    Y_sl_str <= (X_SCANLINESTR > Y_sl_hybrid_ref) ? X_SCANLINESTR - Y_sl_hybrid_ref : 8'h0;
     R_sl_str <= (X_SCANLINESTR > R_sl_hybrid_ref) ? X_SCANLINESTR - R_sl_hybrid_ref : 8'h0;
     G_sl_str <= (X_SCANLINESTR > G_sl_hybrid_ref) ? X_SCANLINESTR - G_sl_hybrid_ref : 8'h0;
     B_sl_str <= (X_SCANLINESTR > B_sl_hybrid_ref) ? X_SCANLINESTR - B_sl_hybrid_ref : 8'h0;
@@ -564,10 +574,11 @@ begin
     R_pp8 <= R_pp7;
     G_pp8 <= G_pp7;
     B_pp8 <= B_pp7;
-    // R_sl_mult, G_sl_mult and B_sl_mult are registered output of IP blocks (line 191-213)
-    R_sl_lin <= (R_pp7 > R_sl_str) ? (R_pp7-R_sl_str) : 8'h00;
-    G_sl_lin <= (G_pp7 > G_sl_str) ? (G_pp7-G_sl_str) : 8'h00;
-    B_sl_lin <= (B_pp7 > B_sl_str) ? (B_pp7-B_sl_str) : 8'h00;
+    // R_sl_mult, G_sl_mult and B_sl_mult are registered output of IP blocks (line 194-215)
+    // perform subtraction
+    R_sl_sub <= (R_pp7 > R_sl_str) ? (R_pp7-R_sl_str) : 8'h00;
+    G_sl_sub <= (G_pp7 > G_sl_str) ? (G_pp7-G_sl_str) : 8'h00;
+    B_sl_sub <= (B_pp7 > B_sl_str) ? (B_pp7-B_sl_str) : 8'h00;
     draw_sl <= |{(V_SCANLINEMODE == `SCANLINES_H)   && (V_SCANLINEID & (5'h1<<line_id_pp7)),
                  (V_SCANLINEMODE == `SCANLINES_V)   && (5'h0 == col_id_pp7),
                  (V_SCANLINEMODE == `SCANLINES_ALT) && (V_SCANLINEID & (5'h1<<(line_id_pp7^FID_1x)))};
@@ -577,9 +588,9 @@ begin
     border_enable_pp8 <= border_enable_pp7;
     lt_box_enable_pp8 <= lt_box_enable_pp7;
 
-    R_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? R_sl_lin : R_sl_mult) : R_pp8;
-    G_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? G_sl_lin : G_sl_mult) : G_pp8;
-    B_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? B_sl_lin : B_sl_mult) : B_pp8;
+    R_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? R_sl_sub : R_sl_mult) : R_pp8;
+    G_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? G_sl_sub : G_sl_mult) : G_pp8;
+    B_pp9 <= draw_sl ? (X_SCANLINESTR_METHOD ? B_sl_sub : B_sl_mult) : B_pp8;
     HSYNC_pp9 <= HSYNC_pp8;
     VSYNC_pp9 <= VSYNC_pp8;
     DE_pp9 <= DE_pp8;
