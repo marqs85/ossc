@@ -348,6 +348,9 @@ status_t get_status(tvp_input_t input, video_format format)
 #endif
         (tc.audio_swap_lr != cm.cc.audio_swap_lr))
         SetupAudio(tc.tx_mode);
+
+    if (pcm1862_active && (tc.audio_gain != cm.cc.audio_gain))
+        pcm_set_gain(tc.audio_gain-AUDIO_GAIN_0DB);
 #endif
 
     cm.cc = tc;

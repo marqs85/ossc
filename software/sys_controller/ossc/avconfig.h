@@ -38,6 +38,11 @@
 #define SL_MODE_MAX         2
 #define SL_TYPE_MAX         2
 
+#define AUDIO_GAIN_M12DB    0
+#define AUDIO_GAIN_0DB      12
+#define AUDIO_GAIN_12DB     24
+#define AUDIO_GAIN_MAX      AUDIO_GAIN_12DB
+
 #define L5FMT_1920x1080     0
 #define L5FMT_1600x1200     1
 #define L5FMT_1920x1200     2
@@ -82,6 +87,7 @@ typedef struct {
 #ifdef ENABLE_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
+    alt_u8 audio_gain;
 #endif
     color_setup_t col;
 } __attribute__((packed)) avconfig_t;

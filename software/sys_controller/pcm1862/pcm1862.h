@@ -30,7 +30,9 @@ typedef enum {
     PCM_INPUT4 = 3
 } pcm_input_t;
 
-void pcm_source_sel(pcm_input_t input) ;
+void pcm_source_sel(pcm_input_t input);
+
+void pcm_set_gain(alt_8 db_gain);
 
 int pcm1862_init();
 

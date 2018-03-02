@@ -57,6 +57,7 @@ const avconfig_t tc_default = {
 #ifdef ENABLE_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
     .tx_mode = TX_HDMI,
+    .audio_gain = AUDIO_GAIN_0DB,
 #endif
     .col = {
         .r_f_gain = DEFAULT_FINE_GAIN,
