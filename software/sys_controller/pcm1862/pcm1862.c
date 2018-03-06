@@ -48,6 +48,13 @@ void pcm_source_sel(pcm_input_t input) {
     pcm1862_writereg(PCM1862_ADC1R, adc_ch);
 }
 
+void pcm_set_gain(alt_8 db_gain) {
+    alt_8 gain_val = 2*db_gain;
+
+    pcm1862_writereg(PCM1862_PGA1L, gain_val);
+    pcm1862_writereg(PCM1862_PGA1R, gain_val);
+}
+
 int pcm1862_init()
 {
     if (pcm1862_readreg(0x05) != 0x86)
@@ -55,6 +62,12 @@ int pcm1862_init()
 
     //pcm1862_writereg(0x00, 0xff);
     pcm1862_writereg(PCM1862_CLKCONFIG, 0x90);
+
+    pcm1862_writereg(PCM1862_DSP1_CLKDIV, 0x00);
+    pcm1862_writereg(PCM1862_DSP2_CLKDIV, 0x00);
+    pcm1862_writereg(PCM1862_ADC_CLKDIV,  0x03);
+    pcm1862_writereg(PCM1862_PLLCONFIG, 0x00);
+    pcm1862_writereg(PCM1862_DSP_CTRL, 0x30);
 
     return 1;
 }
