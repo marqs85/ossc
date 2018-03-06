@@ -42,6 +42,9 @@
 `define SCANLINES_V             2'h2
 `define SCANLINES_ALT           2'h3
 
+`define SCANLINES_CONTRAST_LOW  2'h1
+`define SCANLINES_CONTRAST_HIGH 2'h2
+
 `define VSYNCGEN_LEN            6
 `define VSYNCGEN_GENMID_BIT     0
 `define VSYNCGEN_CHOPMID_BIT    1
@@ -100,6 +103,8 @@ reg [7:0] R_in_L, G_in_L, B_in_L, R_in_LL, G_in_LL, B_in_LL, R_1x, G_1x, B_1x;
 reg [7:0] R_pp3, G_pp3, B_pp3, R_pp4, G_pp4, B_pp4, R_pp5, G_pp5, B_pp5, R_pp6, G_pp6, B_pp6, R_pp7, G_pp7, B_pp7;
 reg [7:0] R_prev_pp2, G_prev_pp2, B_prev_pp2, R_prev_pp3, G_prev_pp3, B_prev_pp3, R_prev_pp4, G_prev_pp4, B_prev_pp4;
 reg signed [14:0] R_diff_pp3, G_diff_pp3, B_diff_pp3, R_diff_pp4, G_diff_pp4, B_diff_pp4;
+reg [7:0] R_sl_contrast_pp4, G_sl_contrast_pp4, B_sl_contrast_pp4, R_scanline_str_pp5, G_scanline_str_pp5, B_scanline_str_pp5;
+
 
 //H+V syncs + data enable signals&registers
 wire HSYNC_act, VSYNC_act, DE_act;
@@ -165,7 +170,9 @@ reg       X_SCANLINESTR_METHOD;
 reg [7:0] X_SCANLINESTR_SUB;
 reg [3:0] X_SCANLINESTR_MULT;
 reg [5:0] X_REV_LPF_STR;
+reg [1:0] H_SL_CONTRAST;
 reg X_REV_LPF_ENABLE;
+
 
 //clk27 related registers
 reg VSYNC_in_cc_L, VSYNC_in_cc_LL, VSYNC_in_cc_LLL;
@@ -177,7 +184,22 @@ assign pclk_1x = PCLK_in;
 assign PCLK_out = pclk_act;
 assign pclk_lock = {pclk_2x_lock, pclk_3x_lock};
 
+//Scanline contrast. Bright pixels decrease scanline strength.
+function [7:0] apply_scanline_strength;
+    input [7:0] str;
+    input [7:0] data;
+    input [1:0] contrast;
+
+    begin
+        if (contrast)
+            apply_scanline_strength = (str > data) ? (str - data) : 8'h00;
+        else
+            apply_scanline_strength = str;
+    end
+    endfunction
+
 //Scanline generation
+<<<<<<< HEAD
 wire [7:0] R_sl_mult, G_sl_mult, B_sl_mult;
 lpm_mult_4_sl R_sl_mult_u
 (
@@ -204,6 +226,28 @@ lpm_mult_4_sl B_sl_mult_u
 reg [7:0] R_sl_sub, G_sl_sub, B_sl_sub;
 reg draw_sl;
 
+=======
+function [7:0] apply_scanlines;
+    input [1:0] mode;
+    input [7:0] data;
+    input [7:0] str;
+    input [4:0] mask;
+    input [2:0] line_id;
+    input [2:0] col_id;
+    input fid;
+
+    begin
+        if ((mode == `SCANLINES_H) && (mask & (5'h1<<line_id)))
+            apply_scanlines = (data > str) ? (data-str) : 8'h00;
+        else if ((mode == `SCANLINES_V) && (5'h0 == col_id))
+            apply_scanlines = (data > str) ? (data-str) : 8'h00;
+        else if ((mode == `SCANLINES_ALT) && (mask & (5'h1<<(line_id^fid))))
+            apply_scanlines = (data > str) ? (data-str) : 8'h00;
+        else
+            apply_scanlines = data;
+    end
+    endfunction
+>>>>>>> 990bc1563eef0a5650dabcc5633d3aeb562abc38
 
 //LT box / border generation
 function [7:0] apply_mask;
@@ -500,6 +544,10 @@ begin
     R_diff_pp4 <= (R_diff_pp3 * X_REV_LPF_STR);
     G_diff_pp4 <= (G_diff_pp3 * X_REV_LPF_STR);
     B_diff_pp4 <= (B_diff_pp3 * X_REV_LPF_STR);
+    // Scanline contrast Low (62%) and High (87%) setting.
+    R_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (R_pp3 - (R_pp3 >> 3)) : ((R_pp3 >> 1) + (R_pp3 >> 3));
+    G_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (G_pp3 - (G_pp3 >> 3)) : ((G_pp3 >> 1) + (G_pp3 >> 3));
+    B_sl_contrast_pp4 <= (H_SL_CONTRAST == `SCANLINES_CONTRAST_HIGH) ? (B_pp3 - (B_pp3 >> 3)) : ((B_pp3 >> 1) + (B_pp3 >> 3));
 
     R_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, R_pp4, R_prev_pp4, R_diff_pp4);
     G_pp5 <= apply_reverse_lpf(X_REV_LPF_ENABLE, G_pp4, G_prev_pp4, G_diff_pp4);
@@ -511,7 +559,11 @@ begin
     col_id_pp5 <= col_id_pp4;
     border_enable_pp5 <= border_enable_pp4;
     lt_box_enable_pp5 <= lt_box_enable_pp4;
+    R_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, R_sl_contrast_pp4, H_SL_CONTRAST);
+    G_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, G_sl_contrast_pp4, H_SL_CONTRAST);
+    B_scanline_str_pp5 <= apply_scanline_strength(X_SCANLINESTR, B_sl_contrast_pp4, H_SL_CONTRAST);
 
+<<<<<<< HEAD
     R_pp6 <= R_pp5;
     G_pp6 <= G_pp5;
     B_pp6 <= B_pp5;
@@ -522,6 +574,11 @@ begin
     draw_sl <= |{(V_SCANLINEMODE == `SCANLINES_H)   && (V_SCANLINEID & (5'h1<<line_id_pp5)),
                  (V_SCANLINEMODE == `SCANLINES_V)   && (5'h0 == col_id_pp5),
                  (V_SCANLINEMODE == `SCANLINES_ALT) && (V_SCANLINEID & (5'h1<<(line_id_pp5^FID_1x)))};
+=======
+    R_pp6 <= apply_scanlines(V_SCANLINEMODE, R_pp5, R_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+    G_pp6 <= apply_scanlines(V_SCANLINEMODE, G_pp5, G_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+    B_pp6 <= apply_scanlines(V_SCANLINEMODE, B_pp5, B_scanline_str_pp5, V_SCANLINEID, line_id_pp5, col_id_pp5, FID_1x);
+>>>>>>> 990bc1563eef0a5650dabcc5633d3aeb562abc38
     HSYNC_pp6 <= HSYNC_pp5;
     VSYNC_pp6 <= VSYNC_pp5;
     DE_pp6 <= DE_pp5;
@@ -712,10 +769,17 @@ begin
             H_OPT_SAMPLE_MULT <= h_info2[12:10];
             H_OPT_STARTOFF <= h_info2[9:0];
 
+<<<<<<< HEAD
             X_REV_LPF_ENABLE <= (extra_info[13:9] != 5'b00000);
             X_REV_LPF_STR <= (extra_info[13:9] + 6'd16);
 
             X_MASK_BR <= extra_info[8:5];
+=======
+            H_SL_CONTRAST <= extra_info[14:13];
+
+            X_REV_LPF_ENABLE <= (extra_info[12:8] != 5'b00000);
+            X_REV_LPF_STR <= (extra_info[12:8] + 6'd16);
+>>>>>>> 990bc1563eef0a5650dabcc5633d3aeb562abc38
 
             X_SCANLINESTR_METHOD <= extra_info[4];
             X_SCANLINESTR_SUB    <= ((extra_info[3:0]+8'h01)<<4)-1'b1;
