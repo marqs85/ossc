@@ -227,7 +227,7 @@ set_global_assignment -name AUTO_RAM_TO_LCELL_CONVERSION ON
 set_global_assignment -name MAX_RAM_BLOCKS_M4K 56
 
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
-set_global_assignment -name SEED 20
+set_global_assignment -name SEED 91
 
 
 set_global_assignment -name VERILOG_FILE rtl/videogen.v
