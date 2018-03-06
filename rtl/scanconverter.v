@@ -33,6 +33,12 @@
 `define V_MULTMODE_4X           3'd3
 `define V_MULTMODE_5X           3'd4
 
+`define PCLK_MUX_1X             3'd0
+`define PCLK_MUX_2X             3'd1
+`define PCLK_MUX_3X             3'd2
+`define PCLK_MUX_4X             3'd3
+`define PCLK_MUX_5X             3'd4
+
 `define H_MULTMODE_FULLWIDTH    2'h0
 `define H_MULTMODE_ASPECTFIX    2'h1
 `define H_MULTMODE_OPTIMIZED    2'h2
@@ -91,7 +97,7 @@ module scanconverter (
 wire pclk_act;
 wire pclk_1x, pclk_2x, pclk_3x, pclk_4x, pclk_5x;
 wire pclk_2x_lock, pclk_3x_lock;
-wire linebuf_rdclock;
+wire [2:0] pclk_mux_sel;
 
 //RGB signals&registers: 8 bits per component -> 16.7M colors
 wire [7:0] R_act, G_act, B_act;
@@ -278,8 +284,7 @@ case (V_MULTMODE)
         line_id_act = {2'b00, vcnt_1x[0]};
         hcnt_act = hcnt_1x;
         vcnt_act = vcnt_1x;
-        pclk_act = pclk_1x;
-        linebuf_rdclock = 0;
+        pclk_mux_sel = `PCLK_MUX_1X;
         linebuf_hoffset = 0;
         col_id_act = {2'b00, hcnt_1x[0]};
         rlpf_trigger_act = 1'b1;
@@ -294,16 +299,15 @@ case (V_MULTMODE)
         line_id_act = {1'b0, line_out_idx_2x[1], line_out_idx_2x[0]^FID_1x};
         hcnt_act = hcnt_2x;
         vcnt_act = vcnt_2x;
-        linebuf_rdclock = pclk_2x;
         case (H_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
-                pclk_act = pclk_2x;
+                pclk_mux_sel = `PCLK_MUX_2X;
                 linebuf_hoffset = hcnt_2x;
                 col_id_act = {2'b00, hcnt_2x[0]};
                 rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
-                pclk_act = pclk_1x;     //special case: pclk bypass to enable 2x native sampling
+                pclk_mux_sel = `PCLK_MUX_1X;     //special case: pclk bypass to enable 2x native sampling
                 linebuf_hoffset = hcnt_2x_opt;
                 col_id_act = {2'b00, hcnt_2x[1]};
                 rlpf_trigger_act = (hcnt_2x_opt_ctr == H_OPT_SCALE-1'b1);
@@ -321,24 +325,21 @@ case (V_MULTMODE)
         vcnt_act = vcnt_3x;
         case (H_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
-                pclk_act = pclk_3x;
-                linebuf_rdclock = pclk_3x;
+                pclk_mux_sel = `PCLK_MUX_3X;
                 linebuf_hoffset = hcnt_3x;
                 hcnt_act = hcnt_3x;
                 col_id_act = {2'b00, hcnt_3x[0]};
                 rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_ASPECTFIX: begin
-                pclk_act = pclk_4x;
-                linebuf_rdclock = pclk_4x;
+                pclk_mux_sel = `PCLK_MUX_4X;
                 linebuf_hoffset = hcnt_4x_aspfix;
                 hcnt_act = hcnt_4x_aspfix;
                 col_id_act = {2'b00, hcnt_4x[0]};
                 rlpf_trigger_act = 1'b1;
             end
             `H_MULTMODE_OPTIMIZED: begin
-                pclk_act = pclk_3x;
-                linebuf_rdclock = pclk_3x;
+                pclk_mux_sel = `PCLK_MUX_3X;
                 linebuf_hoffset = hcnt_3x_opt;
                 hcnt_act = hcnt_3x;
                 col_id_act = hcnt_3x_opt_ctr;
@@ -356,8 +357,7 @@ case (V_MULTMODE)
         line_id_act = {1'b0, line_out_idx_4x};
         hcnt_act = hcnt_4x;
         vcnt_act = vcnt_4x;
-        pclk_act = pclk_4x;
-        linebuf_rdclock = pclk_4x;
+        pclk_mux_sel = `PCLK_MUX_4X;
         case (H_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
                 linebuf_hoffset = hcnt_4x;
@@ -381,8 +381,7 @@ case (V_MULTMODE)
         line_id_act = {2'b00, line_out_idx_5x};
         hcnt_act = hcnt_5x;
         vcnt_act = vcnt_5x;
-        pclk_act = pclk_5x;
-        linebuf_rdclock = pclk_5x;
+        pclk_mux_sel = `PCLK_MUX_5X;
         case (H_MULTMODE)
             default: begin //`H_MULTMODE_FULLWIDTH
                 linebuf_hoffset = hcnt_5x_hscomp;
@@ -422,11 +421,21 @@ wire [11:0] linebuf_wraddr = hcnt_1x-H_AVIDSTART;
 linebuf linebuf_rgb (
     .data({R_in_L, G_in_L, B_in_L}),
     .rdaddress ( {~line_idx, linebuf_rdaddr[10:0]} ),
-    .rdclock ( linebuf_rdclock ),
+    .rdclock ( pclk_act ),
     .wraddress( {line_idx, linebuf_wraddr[10:0]} ),
     .wrclock ( pclk_1x ),
     .wren ( !linebuf_wraddr[11] ),
     .q ( {R_lbuf, G_lbuf, B_lbuf} )
+);
+
+mux5 mux5_inst (
+    .data0 ( pclk_1x ),
+    .data1 ( pclk_2x ),
+    .data2 ( pclk_3x ),
+    .data3 ( pclk_4x ),
+    .data4 ( pclk_5x ),
+    .sel ( pclk_mux_sel ),
+    .result ( pclk_act )
 );
 
 //Postprocess pipeline
