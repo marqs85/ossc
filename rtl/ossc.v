@@ -34,12 +34,21 @@ module ossc (
     input VSYNC_in,
     input HSYNC_in,
     input PCLK_in,
+`ifdef VIDEOGEN
+    output reg [7:0] HDMI_TX_RD,
+    output reg [7:0] HDMI_TX_GD,
+    output reg [7:0] HDMI_TX_BD,
+    output reg HDMI_TX_DE,
+    output reg HDMI_TX_HS,
+    output reg HDMI_TX_VS,
+`else
     output [7:0] HDMI_TX_RD,
     output [7:0] HDMI_TX_GD,
     output [7:0] HDMI_TX_BD,
     output HDMI_TX_DE,
     output HDMI_TX_HS,
     output HDMI_TX_VS,
+`endif
     output HDMI_TX_PCLK,
     input HDMI_TX_INT_N,
     input HDMI_TX_MODE,
@@ -53,6 +62,7 @@ module ossc (
     inout SD_CMD,
     inout [3:0] SD_DAT
 );
+
 
 wire [15:0] sys_ctrl;
 wire h_unstable;
@@ -167,13 +177,25 @@ assign LCD_BL = sys_ctrl[4];    //reset_n in v1.2 PCB
 `ifdef VIDEOGEN
 wire videogen_sel;
 assign videogen_sel = ~sys_ctrl[1];
-assign HDMI_TX_RD = videogen_sel ? R_out_videogen : R_out;
-assign HDMI_TX_GD = videogen_sel ? G_out_videogen : G_out;
-assign HDMI_TX_BD = videogen_sel ? B_out_videogen : B_out;
-assign HDMI_TX_HS = videogen_sel ? HSYNC_out_videogen : HSYNC_out;
-assign HDMI_TX_VS = videogen_sel ? VSYNC_out_videogen : VSYNC_out;
 assign HDMI_TX_PCLK = videogen_sel ? PCLK_out_videogen : PCLK_out;
-assign HDMI_TX_DE = videogen_sel ? DE_out_videogen : DE_out;
+
+always @(posedge HDMI_TX_PCLK) begin
+  if (videogen_sel) begin
+    HDMI_TX_RD <= R_out_videogen;
+    HDMI_TX_GD <= G_out_videogen;
+    HDMI_TX_BD <= B_out_videogen;
+    HDMI_TX_HS <= HSYNC_out_videogen;
+    HDMI_TX_VS <= VSYNC_out_videogen;
+    HDMI_TX_DE <= DE_out_videogen;
+  end else begin
+    HDMI_TX_RD <= R_out;
+    HDMI_TX_GD <= G_out;
+    HDMI_TX_BD <= B_out;
+    HDMI_TX_HS <= HSYNC_out;
+    HDMI_TX_VS <= VSYNC_out;
+    HDMI_TX_DE <= DE_out;
+  end
+end
 `else
 wire videogen_sel;
 assign videogen_sel = 1'b0;
