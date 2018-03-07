@@ -45,10 +45,10 @@ module lpm_mult_4_hybr_ref (
 	input	  clock;
 	input	[8:0]  dataa;
 	input	[7:0]  datab;
-	output	[9:0]  result;
+	output	[8:0]  result;
 
-	wire [9:0] sub_wire0;
-	wire [9:0] result = sub_wire0[9:0];
+	wire [8:0] sub_wire0;
+	wire [8:0] result = sub_wire0[8:0];
 
 	lpm_mult	lpm_mult_component (
 				.clock (clock),
@@ -66,7 +66,7 @@ module lpm_mult_4_hybr_ref (
 		lpm_mult_component.lpm_type = "LPM_MULT",
 		lpm_mult_component.lpm_widtha = 9,
 		lpm_mult_component.lpm_widthb = 8,
-		lpm_mult_component.lpm_widthp = 10;
+		lpm_mult_component.lpm_widthp = 9;
 
 
 endmodule
@@ -86,7 +86,7 @@ endmodule
 // Retrieval info: PRIVATE: ValidConstant NUMERIC "0"
 // Retrieval info: PRIVATE: WidthA NUMERIC "9"
 // Retrieval info: PRIVATE: WidthB NUMERIC "8"
-// Retrieval info: PRIVATE: WidthP NUMERIC "10"
+// Retrieval info: PRIVATE: WidthP NUMERIC "9"
 // Retrieval info: PRIVATE: aclr NUMERIC "0"
 // Retrieval info: PRIVATE: clken NUMERIC "0"
 // Retrieval info: PRIVATE: new_diagram STRING "1"
@@ -98,15 +98,15 @@ endmodule
 // Retrieval info: CONSTANT: LPM_TYPE STRING "LPM_MULT"
 // Retrieval info: CONSTANT: LPM_WIDTHA NUMERIC "9"
 // Retrieval info: CONSTANT: LPM_WIDTHB NUMERIC "8"
-// Retrieval info: CONSTANT: LPM_WIDTHP NUMERIC "10"
+// Retrieval info: CONSTANT: LPM_WIDTHP NUMERIC "9"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT NODEFVAL "clock"
 // Retrieval info: USED_PORT: dataa 0 0 9 0 INPUT NODEFVAL "dataa[8..0]"
 // Retrieval info: USED_PORT: datab 0 0 8 0 INPUT NODEFVAL "datab[7..0]"
-// Retrieval info: USED_PORT: result 0 0 10 0 OUTPUT NODEFVAL "result[9..0]"
+// Retrieval info: USED_PORT: result 0 0 9 0 OUTPUT NODEFVAL "result[8..0]"
 // Retrieval info: CONNECT: @clock 0 0 0 0 clock 0 0 0 0
 // Retrieval info: CONNECT: @dataa 0 0 9 0 dataa 0 0 9 0
 // Retrieval info: CONNECT: @datab 0 0 8 0 datab 0 0 8 0
-// Retrieval info: CONNECT: result 0 0 10 0 @result 0 0 10 0
+// Retrieval info: CONNECT: result 0 0 9 0 @result 0 0 9 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_4_hybr_ref.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_4_hybr_ref.inc FALSE
 // Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_4_hybr_ref.cmp FALSE

@@ -255,7 +255,7 @@ lpm_mult_4_hybr_ref_pre B_sl_hybr_ref_pre_u
   .result(B_sl_hybr_ref_pre)
 );
 
-wire [9:0] Y_sl_hybr_ref, R_sl_hybr_ref, G_sl_hybr_ref, B_sl_hybr_ref;
+wire [8:0] Y_sl_hybr_ref, R_sl_hybr_ref, G_sl_hybr_ref, B_sl_hybr_ref;
 lpm_mult_4_hybr_ref Y_sl_hybr_ref_u
 (
   .clock(pclk_act),
@@ -631,10 +631,10 @@ begin
     // Y_sl_hybr_ref,R_sl_hybr_ref,G_sl_hybr_ref,B_sl_hybr_ref are outputs of multiplier IPs (1 pp-stage delay)
 
     // ... step 3/3
-    Y_sl_str <= {2'b0,X_SCANLINESTR} < Y_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - Y_sl_hybr_ref[7:0];
-    R_sl_str <= {2'b0,X_SCANLINESTR} < R_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - R_sl_hybr_ref[7:0];
-    G_sl_str <= {2'b0,X_SCANLINESTR} < G_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - G_sl_hybr_ref[7:0];
-    B_sl_str <= {2'b0,X_SCANLINESTR} < B_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - B_sl_hybr_ref[7:0];
+    Y_sl_str <= {1'b0,X_SCANLINESTR} < Y_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - Y_sl_hybr_ref[7:0];
+    R_sl_str <= {1'b0,X_SCANLINESTR} < R_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - R_sl_hybr_ref[7:0];
+    G_sl_str <= {1'b0,X_SCANLINESTR} < G_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - G_sl_hybr_ref[7:0];
+    B_sl_str <= {1'b0,X_SCANLINESTR} < B_sl_hybr_ref ? 8'h0 : X_SCANLINESTR - B_sl_hybr_ref[7:0];
 
     // perform scanline generation (1 pp-stage)
     // R_sl_mult, G_sl_mult and B_sl_mult are registered outputs of IP blocks (1 pp-stage delay)
