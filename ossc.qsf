@@ -223,9 +223,6 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name USE_SIGNALTAP_FILE output_files/ossc_la.stp
 
-set_global_assignment -name AUTO_RAM_TO_LCELL_CONVERSION ON
-set_global_assignment -name MAX_RAM_BLOCKS_M4K 56
-
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
 set_global_assignment -name SEED 52
 #set_global_assignment -name SEED 34

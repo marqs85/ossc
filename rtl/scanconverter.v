@@ -117,15 +117,13 @@ wire [2:0] pclk_mux_sel;
 wire [7:0] R_act, G_act, B_act;
 wire [7:0] R_lbuf, G_lbuf, B_lbuf;
 reg [7:0] R_in_L, G_in_L, B_in_L, R_in_LL, G_in_LL, B_in_LL, R_1x, G_1x, B_1x;
-reg [7:0] R_pp[3:`PP_PIPELINE_LENGTH-1], G_pp[3:`PP_PIPELINE_LENGTH-1], B_pp[3:`PP_PIPELINE_LENGTH-1];
 
 //H+V syncs + data enable signals&registers
 wire HSYNC_act, VSYNC_act, DE_act;
 reg HSYNC_in_L, VSYNC_in_L;
 reg HSYNC_1x, HSYNC_2x, HSYNC_3x, HSYNC_4x, HSYNC_5x;
-reg HSYNC_pp[1:`PP_PIPELINE_LENGTH-1];
-reg VSYNC_1x, VSYNC_2x, VSYNC_3x, VSYNC_4x, VSYNC_5x, VSYNC_pp[1:`PP_PIPELINE_LENGTH-1];
-reg DE_1x, DE_2x, DE_3x, DE_4x, DE_5x, DE_pp[1:`PP_PIPELINE_LENGTH-1], DE_3x_prev4x;
+reg VSYNC_1x, VSYNC_2x, VSYNC_3x, VSYNC_4x, VSYNC_5x;
+reg DE_1x, DE_2x, DE_3x, DE_4x, DE_5x, DE_3x_prev4x;
 
 //registers indicating line/frame change and field type
 reg FID_cur, FID_prev, FID_1x;
@@ -134,21 +132,31 @@ reg frame_change, line_change;
 //H+V counters
 wire [11:0] linebuf_hoffset; //Offset for line (max. 2047 pixels), MSB indicates which line is read/written
 wire [11:0] hcnt_act;
-reg [11:0] hcnt_1x, hcnt_2x, hcnt_3x, hcnt_4x, hcnt_5x, hcnt_4x_aspfix, hcnt_2x_opt, hcnt_3x_opt, hcnt_4x_opt, hcnt_5x_opt, hcnt_5x_hscomp, hcnt_pp;
+reg [11:0] hcnt_1x, hcnt_2x, hcnt_3x, hcnt_4x, hcnt_5x, hcnt_4x_aspfix, hcnt_2x_opt, hcnt_3x_opt, hcnt_4x_opt, hcnt_5x_opt, hcnt_5x_hscomp;
 reg [2:0] hcnt_2x_opt_ctr, hcnt_3x_opt_ctr, hcnt_4x_opt_ctr, hcnt_5x_opt_ctr;
 wire [10:0] vcnt_act;
-reg [10:0] vcnt_tvp, vcnt_1x, vcnt_2x, vcnt_3x, vcnt_4x, vcnt_5x, vcnt_pp; //max. 2047
+reg [10:0] vcnt_tvp, vcnt_1x, vcnt_2x, vcnt_3x, vcnt_4x, vcnt_5x; //max. 2047
 
 //other counters
 wire [2:0] line_id_act, col_id_act;
-reg [2:0] line_id_pp[1:`PP_SLGEN_PL_END-2], col_id_pp[1:`PP_SLGEN_PL_END-2];
 reg [11:0] hmax[0:1];
 reg line_idx;
 reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_4x;
 reg [2:0] line_out_idx_5x;
 reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x;
-reg border_enable_pp[2:`PP_PIPELINE_LENGTH-2];
-reg lt_box_enable_pp[2:`PP_PIPELINE_LENGTH-1];
+
+// post-processing pipeline
+reg HSYNC_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg VSYNC_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg DE_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg [7:0] R_pp[3:`PP_PIPELINE_LENGTH-1], G_pp[3:`PP_PIPELINE_LENGTH-1], B_pp[3:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg [11:0] hcnt_pp /* synthesis ramstyle = "logic" */;
+reg [10:0] vcnt_pp /* synthesis ramstyle = "logic" */;
+reg  rlpf_trigger_r[1:`PP_RLPF_PL_START-1] /* synthesis ramstyle = "logic" */;
+reg [7:0] R_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], G_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], B_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1] /* synthesis ramstyle = "logic" */;
+reg [2:0] line_id_pp[1:`PP_SLGEN_PL_END-2], col_id_pp[1:`PP_SLGEN_PL_END-2] /* synthesis ramstyle = "logic" */;
+reg border_enable_pp[2:`PP_PIPELINE_LENGTH-2] /* synthesis ramstyle = "logic" */;
+reg lt_box_enable_pp[2:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
 
 //helper registers for sampling at synchronized clock edges
 reg pclk_1x_prev3x;
@@ -307,9 +315,6 @@ reg draw_sl;
 
 //Reverse LPF
 wire rlpf_trigger_act;
-reg  rlpf_trigger_r[1:`PP_RLPF_PL_START-1];
-
-reg [7:0] R_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], G_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], B_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1];
 reg signed [14:0] R_diff_s15_pre, G_diff_s15_pre, B_diff_s15_pre, R_diff_s15, G_diff_s15, B_diff_s15;
 reg signed [10:0] R_rlpf_result, G_rlpf_result, B_rlpf_result;
 
