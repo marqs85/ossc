@@ -115,6 +115,8 @@ typedef struct {
     { "288p",        720,  288,   864,  312,   69, 19,   63, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 384p: Sega Model 2 */ \
     { "384p",        496,  384,   640,  423,   50, 29,   62, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    /* 640x400, VGA Mode 13h */ \
+    { "640x400",     640,  400,   800,  449,   48, 36,   96, 2,  VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2) },                                                                          \
     /* 384p: X68k @ 24kHz */ \
     { "640x384",     640,  384,   800,  492,   48, 63,   96, 2,  VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* ~525-line modes */ \
