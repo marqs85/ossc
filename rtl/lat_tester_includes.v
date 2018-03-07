@@ -24,6 +24,3 @@
 
 `define LT_WIDTH_DIV        8
 `define LT_HEIGHT_DIV       8
-
-`define LT_WIDTH_RSHIFT     3
-`define LT_HEIGHT_RSHIFT    3
