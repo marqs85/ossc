@@ -808,69 +808,39 @@ int main()
 
         if (target_input != cm.avinput) {
 
+            target_tvp = TVP_INPUT1;
+            target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
+
+            if (target_input <= AV1_YPBPR) {
+                target_ths = THS_INPUT_B;
+                target_pcm = PCM_INPUT4;
+            } else if (target_input <= AV2_RGsB) {
+                target_ths = THS_INPUT_A;
+                target_pcm = PCM_INPUT3;
+            } else  { // if (target_input <= AV3_YPBPR) {
+                target_tvp = TVP_INPUT3;
+                target_ths = THS_STANDBY;
+                target_pcm = PCM_INPUT2;
+            }
+                
             switch (target_input) {
             case AV1_RGBs:
-                target_tvp = TVP_INPUT1;
+            case AV3_RGBs:
                 target_format = FORMAT_RGBS;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_INPUT_B;
-                target_pcm = PCM_INPUT4;
                 break;
             case AV1_RGsB:
-                target_tvp = TVP_INPUT1;
+            case AV2_RGsB:
+            case AV3_RGsB:
                 target_format = FORMAT_RGsB;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_INPUT_B;
-                target_pcm = PCM_INPUT4;
                 break;
             case AV1_YPBPR:
-                target_tvp = TVP_INPUT1;
-                target_format = FORMAT_YPbPr;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_INPUT_B;
-                target_pcm = PCM_INPUT4;
-                break;
             case AV2_YPBPR:
-                target_tvp = TVP_INPUT1;
+            case AV3_YPBPR:
                 target_format = FORMAT_YPbPr;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_INPUT_A;
-                target_pcm = PCM_INPUT3;
-                break;
-            case AV2_RGsB:
-                target_tvp = TVP_INPUT1;
-                target_format = FORMAT_RGsB;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_INPUT_A;
-                target_pcm = PCM_INPUT3;
                 break;
             case AV3_RGBHV:
-                target_tvp = TVP_INPUT3;
                 target_format = FORMAT_RGBHV;
                 target_typemask = VIDEO_PC;
-                target_ths = THS_STANDBY;
-                target_pcm = PCM_INPUT2;
-                break;
-            case AV3_RGBs:
-                target_tvp = TVP_INPUT3;
-                target_format = FORMAT_RGBS;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_STANDBY;
-                target_pcm = PCM_INPUT2;
-                break;
-            case AV3_RGsB:
-                target_tvp = TVP_INPUT3;
-                target_format = FORMAT_RGsB;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_STANDBY;
-                target_pcm = PCM_INPUT2;
-                break;
-            case AV3_YPBPR:
-                target_tvp = TVP_INPUT3;
-                target_format = FORMAT_YPbPr;
-                target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
-                target_ths = THS_STANDBY;
-                target_pcm = PCM_INPUT2;
                 break;
             default:
                 break;
