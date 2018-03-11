@@ -34,27 +34,27 @@ module videogen (
 );
 
 //Parameters for 720x480@59.94Hz (858px x 525lines, pclk 27MHz -> 59.94Hz)
-parameter   H_SYNCLEN       =   62;
-parameter   H_BACKPORCH     =   60;
-parameter   H_ACTIVE        =   720;
-parameter   H_FRONTPORCH    =   16;
-parameter   H_TOTAL         =   858;
+parameter   H_SYNCLEN       =   10'd62;
+parameter   H_BACKPORCH     =   10'd60;
+parameter   H_ACTIVE        =   10'd720;
+parameter   H_FRONTPORCH    =   10'd16;
+parameter   H_TOTAL         =   10'd858;
 
-parameter   V_SYNCLEN       =   6;
-parameter   V_BACKPORCH     =   30;
-parameter   V_ACTIVE        =   480;
-parameter   V_FRONTPORCH    =   9;
-parameter   V_TOTAL         =   525;
+parameter   V_SYNCLEN       =   10'd6;
+parameter   V_BACKPORCH     =   10'd30;
+parameter   V_ACTIVE        =   10'd480;
+parameter   V_FRONTPORCH    =   10'd9;
+parameter   V_TOTAL         =   10'd525;
 
-parameter   H_OVERSCAN      =   40; //at both sides
-parameter   V_OVERSCAN      =   16; //top and bottom
-parameter   H_AREA          =   640;
-parameter   V_AREA          =   448;
-parameter   H_GRADIENT      =   512;
-parameter   V_GRADIENT      =   256;
-parameter   V_GRAYRAMP      =   84;
-parameter   H_BORDER        =   (H_AREA-H_GRADIENT)/2;
-parameter   V_BORDER        =   (V_AREA-V_GRADIENT)/2;
+parameter   H_OVERSCAN      =   10'd40; //at both sides
+parameter   V_OVERSCAN      =   10'd16; //top and bottom
+parameter   H_AREA          =   10'd640;
+parameter   V_AREA          =   10'd448;
+parameter   H_GRADIENT      =   10'd512;
+parameter   V_GRADIENT      =   10'd256;
+parameter   V_GRAYRAMP      =   10'd84;
+parameter   H_BORDER        =   ((H_AREA-H_GRADIENT)>>1);
+parameter   V_BORDER        =   ((V_AREA-V_GRADIENT)>>1);
 
 parameter   X_START     =   H_SYNCLEN + H_BACKPORCH;
 parameter   Y_START     =   V_SYNCLEN + V_BACKPORCH;

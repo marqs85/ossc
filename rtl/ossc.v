@@ -54,6 +54,7 @@ module ossc (
     inout [3:0] SD_DAT
 );
 
+
 wire [15:0] sys_ctrl;
 wire h_unstable;
 wire [1:0] pclk_lock;
