@@ -21,28 +21,23 @@ create_generated_clock -master_clock pclk_3x_source -source {scanconverter_inst|
 create_generated_clock -master_clock pclk_4x_source -source {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 4 -duty_cycle 50.00 -name pclk_4x {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[1]}
 create_generated_clock -master_clock pclk_5x_source -source {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 5 -duty_cycle 50.00 -name pclk_5x {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[1]}
 
-# retrieve post-map/post-fix clkmux source and output pins dynamically
-set clkmux_source [get_pins -nowarn scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_*clkctrl|inclk[0]]
-set clkmux_output [get_pins -nowarn scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_*clkctrl|outclk]
-if {[get_collection_size $clkmux_source] != 1} {
-    set clkmux_source [get_pins scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_result*|dataa]
-    set clkmux_output [get_pins scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_result*|combout]
-}
+# retrieve post-mapping clkmux output pin
+set clkmux_output [get_pins scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_result*|combout]
 
-# create postmux clocks which clock postprocess pipeline
-create_generated_clock -master_clock pclk_1x -source $clkmux_source -multiply_by 1 -name pclk_1x_postmux $clkmux_output
-create_generated_clock -master_clock pclk_2x -source $clkmux_source -multiply_by 1 -name pclk_2x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_3x -source $clkmux_source -multiply_by 1 -name pclk_3x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_4x -source $clkmux_source -multiply_by 1 -name pclk_4x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_5x -source $clkmux_source -multiply_by 1 -name pclk_5x_postmux $clkmux_output -add
+# specify postmux clocks which clock postprocess pipeline
+create_generated_clock -master_clock pclk_1x -source [get_ports PCLK_in] -multiply_by 1 -name pclk_1x_postmux $clkmux_output
+create_generated_clock -master_clock pclk_2x -source [get_pins scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[0]] -multiply_by 1 -name pclk_2x_postmux $clkmux_output -add
+create_generated_clock -master_clock pclk_3x -source [get_pins scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[0]] -multiply_by 1 -name pclk_3x_postmux $clkmux_output -add
+create_generated_clock -master_clock pclk_4x -source [get_pins scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[1]] -multiply_by 1 -name pclk_4x_postmux $clkmux_output -add
+create_generated_clock -master_clock pclk_5x -source [get_pins scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[1]] -multiply_by 1 -name pclk_5x_postmux $clkmux_output -add
 
-# create output clocks that drive PCLK output pin
+# specify output clocks that drive PCLK output pin
 set pclk_out_port [get_ports HDMI_TX_PCLK]
-create_generated_clock -master_clock pclk_1x -source $clkmux_source -multiply_by 1 -name pclk_1x_out $pclk_out_port
-create_generated_clock -master_clock pclk_2x -source $clkmux_source -multiply_by 1 -name pclk_2x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_3x -source $clkmux_source -multiply_by 1 -name pclk_3x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_4x -source $clkmux_source -multiply_by 1 -name pclk_4x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_5x -source $clkmux_source -multiply_by 1 -name pclk_5x_out $pclk_out_port -add
+create_generated_clock -master_clock pclk_1x_postmux -source $clkmux_output -multiply_by 1 -name pclk_1x_out $pclk_out_port
+create_generated_clock -master_clock pclk_2x_postmux -source $clkmux_output -multiply_by 1 -name pclk_2x_out $pclk_out_port -add
+create_generated_clock -master_clock pclk_3x_postmux -source $clkmux_output -multiply_by 1 -name pclk_3x_out $pclk_out_port -add
+create_generated_clock -master_clock pclk_4x_postmux -source $clkmux_output -multiply_by 1 -name pclk_4x_out $pclk_out_port -add
+create_generated_clock -master_clock pclk_5x_postmux -source $clkmux_output -multiply_by 1 -name pclk_5x_out $pclk_out_port -add
 
 derive_clock_uncertainty
 
