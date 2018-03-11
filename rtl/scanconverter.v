@@ -70,11 +70,11 @@
 `define PP_RLPF_PL_START        3   // minimum 2
 `define PP_RLPF_PL_LENGTH       3   // counted from aquisition
 `define PP_SLGEN_PL_LENGTH      5
-`define PP_LT_BORDER_GEN_LENGTH 2
+`define PP_LT_BORDER_GEN_LENGTH 1   // lt_box / border_mask gen
 
 `define PP_RLPF_PL_END          (`PP_RLPF_PL_START+`PP_RLPF_PL_LENGTH)
 `define PP_SLGEN_PL_END         (`PP_RLPF_PL_END+`PP_SLGEN_PL_LENGTH)
-`define PP_PIPELINE_LENGTH      (`PP_SLGEN_PL_END+`PP_LT_BORDER_GEN_LENGTH)
+`define PP_PIPELINE_LENGTH      (`PP_SLGEN_PL_END+`PP_LT_BORDER_GEN_LENGTH-1'b1)
 
 module scanconverter (
     input reset_n,
@@ -146,17 +146,17 @@ reg [2:0] line_out_idx_5x;
 reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x;
 
 // post-processing pipeline
-reg HSYNC_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
-reg VSYNC_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
-reg DE_pp[1:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
-reg [7:0] R_pp[3:`PP_PIPELINE_LENGTH-1], G_pp[3:`PP_PIPELINE_LENGTH-1], B_pp[3:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg HSYNC_pp[1:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
+reg VSYNC_pp[1:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
+reg DE_pp[1:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
+reg [7:0] R_pp[3:`PP_PIPELINE_LENGTH], G_pp[3:`PP_PIPELINE_LENGTH], B_pp[3:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
 reg [11:0] hcnt_pp /* synthesis ramstyle = "logic" */;
 reg [10:0] vcnt_pp /* synthesis ramstyle = "logic" */;
 reg  rlpf_trigger_r[1:`PP_RLPF_PL_START-1] /* synthesis ramstyle = "logic" */;
 reg [7:0] R_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], G_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1], B_prev_pp[`PP_RLPF_PL_START:`PP_RLPF_PL_END-1] /* synthesis ramstyle = "logic" */;
 reg [2:0] line_id_pp[1:`PP_SLGEN_PL_END-2], col_id_pp[1:`PP_SLGEN_PL_END-2] /* synthesis ramstyle = "logic" */;
-reg border_enable_pp[2:`PP_PIPELINE_LENGTH-2] /* synthesis ramstyle = "logic" */;
-reg lt_box_enable_pp[2:`PP_PIPELINE_LENGTH-1] /* synthesis ramstyle = "logic" */;
+reg border_enable_pp[2:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
+reg lt_box_enable_pp[2:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
 
 //helper registers for sampling at synchronized clock edges
 reg pclk_1x_prev3x;
@@ -228,61 +228,61 @@ reg [9:0] Y;
 wire [8:0] Y_sl_hybr_ref_pre, R_sl_hybr_ref_pre, G_sl_hybr_ref_pre, B_sl_hybr_ref_pre;
 lpm_mult_4_hybr_ref_pre Y_sl_hybr_ref_pre_u
 (
-  .clock(pclk_act),
-  .dataa(Y[9:2]),
-  .datab(X_SCANLINE_HYBRSTR),
-  .result(Y_sl_hybr_ref_pre)
+    .clock(pclk_act),
+    .dataa(Y[9:2]),
+    .datab(X_SCANLINE_HYBRSTR),
+    .result(Y_sl_hybr_ref_pre)
 );
 lpm_mult_4_hybr_ref_pre R_sl_hybr_ref_pre_u
 (
-  .clock(pclk_act),
-  .dataa(R_pp[`PP_RLPF_PL_END]),
-  .datab(X_SCANLINE_HYBRSTR),
-  .result(R_sl_hybr_ref_pre)
+    .clock(pclk_act),
+    .dataa(R_pp[`PP_RLPF_PL_END]),
+    .datab(X_SCANLINE_HYBRSTR),
+    .result(R_sl_hybr_ref_pre)
 );
 lpm_mult_4_hybr_ref_pre G_sl_hybr_ref_pre_u
 (
-  .clock(pclk_act),
-  .dataa(G_pp[`PP_RLPF_PL_END]),
-  .datab(X_SCANLINE_HYBRSTR),
-  .result(G_sl_hybr_ref_pre)
+    .clock(pclk_act),
+    .dataa(G_pp[`PP_RLPF_PL_END]),
+    .datab(X_SCANLINE_HYBRSTR),
+    .result(G_sl_hybr_ref_pre)
 );
 lpm_mult_4_hybr_ref_pre B_sl_hybr_ref_pre_u
 (
-  .clock(pclk_act),
-  .dataa(B_pp[`PP_RLPF_PL_END]),
-  .datab(X_SCANLINE_HYBRSTR),
-  .result(B_sl_hybr_ref_pre)
+    .clock(pclk_act),
+    .dataa(B_pp[`PP_RLPF_PL_END]),
+    .datab(X_SCANLINE_HYBRSTR),
+    .result(B_sl_hybr_ref_pre)
 );
 
 wire [8:0] Y_sl_hybr_ref, R_sl_hybr_ref, G_sl_hybr_ref, B_sl_hybr_ref;
 lpm_mult_4_hybr_ref Y_sl_hybr_ref_u
 (
-  .clock(pclk_act),
-  .dataa(Y_sl_hybr_ref_pre),
-  .datab(X_SCANLINESTR),
-  .result(Y_sl_hybr_ref)
+    .clock(pclk_act),
+    .dataa(Y_sl_hybr_ref_pre),
+    .datab(X_SCANLINESTR),
+    .result(Y_sl_hybr_ref)
 );
 lpm_mult_4_hybr_ref R_sl_hybr_ref_u
 (
-  .clock(pclk_act),
-  .dataa(R_sl_hybr_ref_pre),
-  .datab(X_SCANLINESTR),
-  .result(R_sl_hybr_ref)
+    .clock(pclk_act),
+    .dataa(R_sl_hybr_ref_pre),
+    .datab(X_SCANLINESTR),
+    .result(R_sl_hybr_ref)
 );
 lpm_mult_4_hybr_ref G_sl_hybr_ref_u
 (
-  .clock(pclk_act),
-  .dataa(G_sl_hybr_ref_pre),
-  .datab(X_SCANLINESTR),
-  .result(G_sl_hybr_ref)
+    .clock(pclk_act),
+    .dataa(G_sl_hybr_ref_pre),
+    .datab(X_SCANLINESTR),
+    .result(G_sl_hybr_ref)
 );
 lpm_mult_4_hybr_ref B_sl_hybr_ref_u
 (
-  .clock(pclk_act),
-  .dataa(B_sl_hybr_ref_pre),
-  .datab(X_SCANLINESTR),
-  .result(B_sl_hybr_ref)
+    .clock(pclk_act),
+    .dataa(B_sl_hybr_ref_pre),
+    .datab(X_SCANLINESTR),
+    .result(B_sl_hybr_ref)
 );
 
 reg [7:0] Y_sl_str, R_sl_str, G_sl_str, B_sl_str;
@@ -291,24 +291,24 @@ reg [7:0] R_sl_sub, G_sl_sub, B_sl_sub;
 wire [7:0] R_sl_mult, G_sl_mult, B_sl_mult;
 lpm_mult_4_sl R_sl_mult_u
 (
-  .clock(pclk_act),
-  .dataa(R_pp[`PP_SLGEN_PL_END-2]),
-  .datab(~Y_sl_str),
-  .result(R_sl_mult)
+    .clock(pclk_act),
+    .dataa(R_pp[`PP_SLGEN_PL_END-2]),
+    .datab(~Y_sl_str),
+    .result(R_sl_mult)
 );
 lpm_mult_4_sl G_sl_mult_u
 (
-  .clock(pclk_act),
-  .dataa(G_pp[`PP_SLGEN_PL_END-2]),
-  .datab(~Y_sl_str),
-  .result(G_sl_mult)
+    .clock(pclk_act),
+    .dataa(G_pp[`PP_SLGEN_PL_END-2]),
+    .datab(~Y_sl_str),
+    .result(G_sl_mult)
 );
 lpm_mult_4_sl B_sl_mult_u
 (
-  .clock(pclk_act),
-  .dataa(B_pp[`PP_SLGEN_PL_END-2]),
-  .datab(~Y_sl_str),
-  .result(B_sl_mult)
+    .clock(pclk_act),
+    .dataa(B_pp[`PP_SLGEN_PL_END-2]),
+    .datab(~Y_sl_str),
+    .result(B_sl_mult)
 );
 
 reg draw_sl;
@@ -328,7 +328,7 @@ function [7:0] apply_reverse_lpf;
         result = {3'b0,data_prev} + ~diff[14:4]; // allow for a small error to reduce adder length
         apply_reverse_lpf = result[10] ? 8'h00 : |result[9:8] ? 8'hFF : result[7:0];
     end
-    endfunction
+endfunction
 
 
 //Mux for active data selection
@@ -509,72 +509,80 @@ mux5 mux5_inst (
 // line_id, col_id:                 0 cycles
 // HSYNC, VSYNC, DE:                1 cycle
 // RGB:                             2 cycles
-
+//
+// Pipeline structure
+// |   1   |   2   |   3   |   4   |   5   |   6   |   7   |   8   |   9   |  10   |  11   |
+// |-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+// | LBUF  | LBUF  |       |       |       |       |       |       |       |       |       |
+// |       |       | RLPF  | RLPF  | RLPF  |       |       |       |       |       |       |
+// |       |       |       |   Y   |   Y   |       |       |       |       |       |       |
+// |       |       |       |       |       |  SLG  |  SLG  |  SLG  |  SLG  |  SLG  |       |
+// |       |       |       |       |       |       |       |       |       |       | MASK  |
+// |       |       |       |       |       |       |       |       |       |       | LTBOX |
 integer pp_idx;
 always @(posedge pclk_act)
 begin
     line_id_pp[1] <= line_id_act;
-     col_id_pp[1]  <= col_id_act;
+    col_id_pp[1] <= col_id_act;
     for(pp_idx = 2; pp_idx <= `PP_SLGEN_PL_END-2; pp_idx = pp_idx+1) begin
-      line_id_pp[pp_idx] <= line_id_pp[pp_idx-1];
-       col_id_pp[pp_idx] <=  col_id_pp[pp_idx-1];
+        line_id_pp[pp_idx] <= line_id_pp[pp_idx-1];
+        col_id_pp[pp_idx] <= col_id_pp[pp_idx-1];
     end
 
     hcnt_pp <= hcnt_act;
     vcnt_pp <= vcnt_act;
     border_enable_pp[2] <= ((hcnt_pp < H_AVIDMASK_START) | (hcnt_pp >= H_AVIDMASK_STOP) | (vcnt_pp < V_AVIDMASK_START) | (vcnt_pp >= V_AVIDMASK_STOP));
-    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH-2; pp_idx = pp_idx+1) begin
-      border_enable_pp[pp_idx] <= border_enable_pp[pp_idx-1];
+    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH; pp_idx = pp_idx+1) begin
+        border_enable_pp[pp_idx] <= border_enable_pp[pp_idx-1];
     end
 
     case (lt_mode)
-      default: begin
-        lt_box_enable_pp[2] <= 0;
-      end
-      `LT_POS_TOPLEFT: begin
-        lt_box_enable_pp[2] <= ((hcnt_pp < LT_POS_TOPLEFT_BOX_H_STOP) && (vcnt_pp < LT_POS_TOPLEFT_BOX_V_STOP)) ? 1'b1 : 1'b0;
-      end
-      `LT_POS_CENTER: begin
-        lt_box_enable_pp[2] <= ((hcnt_pp >= LT_POS_CENTER_BOX_H_START) && (hcnt_pp < LT_POS_CENTER_BOX_H_STOP) && (vcnt_pp >= LT_POS_CENTER_BOX_V_START) && (vcnt_pp < LT_POS_CENTER_BOX_V_STOP)) ? 1'b1 : 1'b0;
-      end
-      `LT_POS_BOTTOMRIGHT: begin
-        lt_box_enable_pp[2] <= ((hcnt_pp >= LT_POS_BOTTOMRIGHT_H_START) && (vcnt_pp >= LT_POS_BOTTOMRIGHT_V_START)) ? 1'b1 : 1'b0;
-      end
+        default: begin
+            lt_box_enable_pp[2] <= 0;
+        end
+        `LT_POS_TOPLEFT: begin
+            lt_box_enable_pp[2] <= ((hcnt_pp < LT_POS_TOPLEFT_BOX_H_STOP) && (vcnt_pp < LT_POS_TOPLEFT_BOX_V_STOP)) ? 1'b1 : 1'b0;
+        end
+        `LT_POS_CENTER: begin
+            lt_box_enable_pp[2] <= ((hcnt_pp >= LT_POS_CENTER_BOX_H_START) && (hcnt_pp < LT_POS_CENTER_BOX_H_STOP) && (vcnt_pp >= LT_POS_CENTER_BOX_V_START) && (vcnt_pp < LT_POS_CENTER_BOX_V_STOP)) ? 1'b1 : 1'b0;
+        end
+        `LT_POS_BOTTOMRIGHT: begin
+            lt_box_enable_pp[2] <= ((hcnt_pp >= LT_POS_BOTTOMRIGHT_H_START) && (vcnt_pp >= LT_POS_BOTTOMRIGHT_V_START)) ? 1'b1 : 1'b0;
+        end
     endcase
-    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH-1; pp_idx = pp_idx+1) begin
-      lt_box_enable_pp[pp_idx] <= lt_box_enable_pp[pp_idx-1];
+    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH; pp_idx = pp_idx+1) begin
+        lt_box_enable_pp[pp_idx] <= lt_box_enable_pp[pp_idx-1];
     end
-
 
     HSYNC_pp[2] <= HSYNC_act;
     VSYNC_pp[2] <= VSYNC_act;
-       DE_pp[2] <=    DE_act;
-    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH-1; pp_idx = pp_idx+1) begin
-      HSYNC_pp[pp_idx] <= HSYNC_pp[pp_idx-1];
-      VSYNC_pp[pp_idx] <= VSYNC_pp[pp_idx-1];
-         DE_pp[pp_idx] <=    DE_pp[pp_idx-1];
+    DE_pp[2] <= DE_act;
+    for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH; pp_idx = pp_idx+1) begin
+        HSYNC_pp[pp_idx] <= HSYNC_pp[pp_idx-1];
+        VSYNC_pp[pp_idx] <= VSYNC_pp[pp_idx-1];
+        DE_pp[pp_idx] <= DE_pp[pp_idx-1];
     end
-    HSYNC_out <= HSYNC_pp[`PP_PIPELINE_LENGTH-1];
-    VSYNC_out <= VSYNC_pp[`PP_PIPELINE_LENGTH-1];
-       DE_out <=    DE_pp[`PP_PIPELINE_LENGTH-1];
+    HSYNC_out <= HSYNC_pp[`PP_PIPELINE_LENGTH];
+    VSYNC_out <= VSYNC_pp[`PP_PIPELINE_LENGTH];
+    DE_out <= DE_pp[`PP_PIPELINE_LENGTH];
 
     // get RGB and delay it
     R_pp[3] <= R_act;
     G_pp[3] <= G_act;
     B_pp[3] <= B_act;
-    for(pp_idx = 4; pp_idx <= `PP_PIPELINE_LENGTH-1; pp_idx = pp_idx + 1) begin
-      R_pp[pp_idx] <= R_pp[pp_idx-1];
-      G_pp[pp_idx] <= G_pp[pp_idx-1];
-      B_pp[pp_idx] <= B_pp[pp_idx-1];
+    for(pp_idx = 4; pp_idx <= `PP_PIPELINE_LENGTH; pp_idx = pp_idx + 1) begin
+        R_pp[pp_idx] <= R_pp[pp_idx-1];
+        G_pp[pp_idx] <= G_pp[pp_idx-1];
+        B_pp[pp_idx] <= B_pp[pp_idx-1];
     end
-    R_out <= R_pp[`PP_PIPELINE_LENGTH-1];
-    G_out <= G_pp[`PP_PIPELINE_LENGTH-1];
-    B_out <= B_pp[`PP_PIPELINE_LENGTH-1];
+    R_out <= R_pp[`PP_PIPELINE_LENGTH];
+    G_out <= G_pp[`PP_PIPELINE_LENGTH];
+    B_out <= B_pp[`PP_PIPELINE_LENGTH];
 
     // reverse LPF ...
     rlpf_trigger_r[1] <= rlpf_trigger_act;
     for(pp_idx = 2; pp_idx <= `PP_RLPF_PL_START-1; pp_idx = pp_idx + 1)
-      rlpf_trigger_r[`PP_RLPF_PL_START-1] <= rlpf_trigger_r[1];
+        rlpf_trigger_r[`PP_RLPF_PL_START-1] <= rlpf_trigger_r[1];
 
     // Optimized modes repeat pixels. Save previous pixel only when linebuffer offset changes.
     if (rlpf_trigger_r[`PP_RLPF_PL_START-1]) begin
@@ -589,11 +597,11 @@ begin
 `endif
     end
     for(pp_idx = `PP_RLPF_PL_START+1; pp_idx <= `PP_RLPF_PL_END-1; pp_idx = pp_idx + 1) begin
-      R_prev_pp[pp_idx] <= R_prev_pp[pp_idx-1];
-      G_prev_pp[pp_idx] <= G_prev_pp[pp_idx-1];
-      B_prev_pp[pp_idx] <= B_prev_pp[pp_idx-1];
+        R_prev_pp[pp_idx] <= R_prev_pp[pp_idx-1];
+        G_prev_pp[pp_idx] <= G_prev_pp[pp_idx-1];
+        B_prev_pp[pp_idx] <= B_prev_pp[pp_idx-1];
     end
-    
+
     // ... step 1
 `ifdef PP_RLPF_PL_START_EARLY
     R_diff_s15_pre <= (R_prev_pp[`PP_RLPF_PL_START] - R_act);
@@ -614,9 +622,9 @@ begin
 
     // ... step 3
     if (X_REV_LPF_ENABLE) begin
-      R_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(R_prev_pp[`PP_RLPF_PL_END-1], R_diff_s15);
-      G_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(G_prev_pp[`PP_RLPF_PL_END-1], G_diff_s15);
-      B_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(B_prev_pp[`PP_RLPF_PL_END-1], B_diff_s15);
+        R_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(R_prev_pp[`PP_RLPF_PL_END-1], R_diff_s15);
+        G_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(G_prev_pp[`PP_RLPF_PL_END-1], G_diff_s15);
+        B_pp[`PP_RLPF_PL_END] <= apply_reverse_lpf(B_prev_pp[`PP_RLPF_PL_END-1], B_diff_s15);
     end
 
     // calculate Y (based on non-reverseLPF values to keep pipeline length a bit lower)
@@ -647,23 +655,20 @@ begin
 
     // draw scanline (1 pp-stage)
     if (draw_sl) begin
-      R_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? R_sl_sub : R_sl_mult;
-      G_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? G_sl_sub : G_sl_mult;
-      B_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? B_sl_sub : B_sl_mult;
+        R_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? R_sl_sub : R_sl_mult;
+        G_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? G_sl_sub : G_sl_mult;
+        B_pp[`PP_SLGEN_PL_END] <= X_SCANLINE_METHOD ? B_sl_sub : B_sl_mult;
     end
 
-	// apply mask (border generation)
-    if (border_enable_pp[`PP_PIPELINE_LENGTH-2]) begin
-      R_pp[`PP_PIPELINE_LENGTH-1] <= {2{X_MASK_BR}};
-      G_pp[`PP_PIPELINE_LENGTH-1] <= {2{X_MASK_BR}};
-      B_pp[`PP_PIPELINE_LENGTH-1] <= {2{X_MASK_BR}};
-    end
-
-	// apply LT box
+    // apply LT box / mask
     if (lt_active) begin
-      R_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH-1]}};
-      G_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH-1]}};
-      B_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH-1]}};
+        R_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
+        G_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
+        B_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
+    end else if (border_enable_pp[`PP_PIPELINE_LENGTH-1]) begin
+        R_out <= {2{X_MASK_BR}};
+        G_out <= {2{X_MASK_BR}};
+        B_out <= {2{X_MASK_BR}};
     end
 end
 
@@ -848,29 +853,29 @@ begin
             X_SCANLINE_HYBRSTR <= extra_info[8:4];
             X_SCANLINESTR      <= ((extra_info[3:0]+8'h01)<<4)-1'b1;
 
-          CALC_CONSTS <= 1'b1;
+            CALC_CONSTS <= 1'b1;
         end
 
-    if (CALC_CONSTS) begin
-      H_AVIDSTOP <= H_AVIDSTART+H_ACTIVE;
-      V_AVIDSTOP <= V_AVIDSTART+V_ACTIVE;
+        if (CALC_CONSTS) begin
+            H_AVIDSTOP <= H_AVIDSTART+H_ACTIVE;
+            V_AVIDSTOP <= V_AVIDSTART+V_ACTIVE;
 
-      H_AVIDMASK_START <= H_AVIDSTART+H_MASK;
-      H_AVIDMASK_STOP <= H_AVIDSTART+H_ACTIVE-H_MASK;
-      V_AVIDMASK_START <= V_AVIDSTART+V_MASK;
-      V_AVIDMASK_STOP <= V_AVIDSTART+V_ACTIVE-V_MASK;
+            H_AVIDMASK_START <= H_AVIDSTART+H_MASK;
+            H_AVIDMASK_STOP <= H_AVIDSTART+H_ACTIVE-H_MASK;
+            V_AVIDMASK_START <= V_AVIDSTART+V_MASK;
+            V_AVIDMASK_STOP <= V_AVIDSTART+V_ACTIVE-V_MASK;
 
-      LT_POS_TOPLEFT_BOX_H_STOP <= H_AVIDSTART+(H_ACTIVE/`LT_WIDTH_DIV);
-      LT_POS_TOPLEFT_BOX_V_STOP <= V_AVIDSTART+(V_ACTIVE/`LT_HEIGHT_DIV);
-      LT_POS_CENTER_BOX_H_START <= H_AVIDSTART+(H_ACTIVE/2)-(H_ACTIVE/(`LT_WIDTH_DIV*2));
-      LT_POS_CENTER_BOX_H_STOP <= H_AVIDSTART+(H_ACTIVE/2)+(H_ACTIVE/(`LT_WIDTH_DIV*2));
-      LT_POS_CENTER_BOX_V_START <= V_AVIDSTART+(V_ACTIVE/2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2));
-      LT_POS_CENTER_BOX_V_STOP <= V_AVIDSTART+(V_ACTIVE/2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2));
-      LT_POS_BOTTOMRIGHT_H_START <= H_AVIDSTART+H_ACTIVE-(H_ACTIVE/`LT_WIDTH_DIV);
-      LT_POS_BOTTOMRIGHT_V_START <= V_AVIDSTART+V_ACTIVE-(V_ACTIVE/`LT_HEIGHT_DIV);
+            LT_POS_TOPLEFT_BOX_H_STOP <= H_AVIDSTART+(H_ACTIVE/`LT_WIDTH_DIV);
+            LT_POS_TOPLEFT_BOX_V_STOP <= V_AVIDSTART+(V_ACTIVE/`LT_HEIGHT_DIV);
+            LT_POS_CENTER_BOX_H_START <= H_AVIDSTART+(H_ACTIVE/2)-(H_ACTIVE/(`LT_WIDTH_DIV*2));
+            LT_POS_CENTER_BOX_H_STOP <= H_AVIDSTART+(H_ACTIVE/2)+(H_ACTIVE/(`LT_WIDTH_DIV*2));
+            LT_POS_CENTER_BOX_V_START <= V_AVIDSTART+(V_ACTIVE/2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2));
+            LT_POS_CENTER_BOX_V_STOP <= V_AVIDSTART+(V_ACTIVE/2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2));
+            LT_POS_BOTTOMRIGHT_H_START <= H_AVIDSTART+H_ACTIVE-(H_ACTIVE/`LT_WIDTH_DIV);
+            LT_POS_BOTTOMRIGHT_V_START <= V_AVIDSTART+V_ACTIVE-(V_ACTIVE/`LT_HEIGHT_DIV);
 
-      CALC_CONSTS <= 1'b0;
-    end
+            CALC_CONSTS <= 1'b0;
+        end
 
         R_in_L <= R_in;
         G_in_L <= G_in;

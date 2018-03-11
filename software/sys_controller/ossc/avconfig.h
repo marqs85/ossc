@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -51,7 +51,7 @@
 typedef struct {
     alt_u8 sl_mode;
     alt_u8 sl_type;
-	  alt_u8 sl_hybr_str;
+    alt_u8 sl_hybr_str;
     alt_u8 sl_method;
     alt_u8 sl_str;
     alt_u8 sl_id;

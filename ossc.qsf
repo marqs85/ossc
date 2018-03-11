@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE15E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY ossc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:27:03  MAY 17, 2014"
-set_global_assignment -name LAST_QUARTUS_VERSION "17.1.1 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "17.1.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -224,7 +224,7 @@ set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name USE_SIGNALTAP_FILE output_files/ossc_la.stp
 
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
-set_global_assignment -name SEED 16
+set_global_assignment -name SEED 3
 
 
 set_global_assignment -name VERILOG_FILE rtl/videogen.v

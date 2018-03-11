@@ -73,7 +73,7 @@ set_clock_groups -asynchronous -group \
                             {pclk_5x_source pclk_5x pclk_5x_postmux pclk_5x_out}
 
 # Ignore paths from registers which are updated only at leading edge of vsync
-set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|FID_1x}]
+set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|LT_POS_* scanconverter_inst|FID_1x}]
 
 # Ignore paths from registers which are updated only at leading edge of hsync
 set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
