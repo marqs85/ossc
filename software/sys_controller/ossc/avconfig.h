@@ -48,6 +48,22 @@
 #define L5FMT_1600x1200     1
 #define L5FMT_1920x1200     2
 
+static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
+
+typedef enum {
+    AV_TESTPAT      = 0,
+    AV1_RGBs        = 1,
+    AV1_RGsB        = 2,
+    AV1_YPBPR       = 3,
+    AV2_YPBPR       = 4,
+    AV2_RGsB        = 5,
+    AV3_RGBHV       = 6,
+    AV3_RGBs        = 7,
+    AV3_RGsB        = 8,
+    AV3_YPBPR       = 9,
+    AV_LAST         = 10
+} avinput_t;
+
 typedef struct {
     alt_u8 sl_mode;
     alt_u8 sl_type;
@@ -93,6 +109,7 @@ typedef struct {
     alt_u8 audio_gain;
 #endif
     color_setup_t col;
+    avinput_t link_av;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_avconfig();

@@ -59,22 +59,6 @@
 #define FPGA_SCANLINEMODE_V         2
 #define FPGA_SCANLINEMODE_ALT       3
 
-static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
-
-typedef enum {
-    AV_TESTPAT      = 0,
-    AV1_RGBs        = 1,
-    AV1_RGsB        = 2,
-    AV1_YPBPR       = 3,
-    AV2_YPBPR       = 4,
-    AV2_RGsB        = 5,
-    AV3_RGBHV       = 6,
-    AV3_RGBs        = 7,
-    AV3_RGsB        = 8,
-    AV3_YPBPR       = 9,
-    AV_LAST         = 10
-} avinput_t;
-
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,

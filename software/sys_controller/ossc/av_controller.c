@@ -549,8 +549,13 @@ int load_profile() {
 
     input_profiles[profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
     retval = read_userdata(profile_sel);
-    if (retval == 0)
+    if (retval == 0) {
+        // Change the input if the new profile demands a different one.
+        if (tc.link_av != AV_LAST && tc.link_av != cm.avinput)
+            target_input = tc.link_av;
+
         write_userdata(INIT_CONFIG_SLOT);
+    }
     return retval;
 }
 
@@ -822,7 +827,7 @@ int main()
                 target_ths = THS_STANDBY;
                 target_pcm = PCM_INPUT2;
             }
-                
+
             switch (target_input) {
             case AV1_RGBs:
             case AV3_RGBs:
@@ -848,11 +853,17 @@ int main()
 
             printf("### SWITCH MODE TO %s ###\n", avinput_str[target_input]);
 
-            // The input changed, so load the appropriate profile
+            // The input changed, so load the appropriate profile if
+            // input->profile link is enabled
             if (profile_link && (profile_sel != input_profiles[target_input])) {
                 profile_sel = input_profiles[target_input];
                 read_userdata(profile_sel);
             }
+
+            // If profile->input link is enabled, update it to the new input to
+            // stay consistent, but don't automatically save the new setting.
+            if (tc.link_av != AV_LAST)
+                tc.link_av = target_input;
 
             cm.avinput = target_input;
             cm.sync_active = 0;
