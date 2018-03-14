@@ -67,6 +67,7 @@ alt_u8 target_typemask;
 alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
+alt_u8 omit_profile_load;
 
 alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[AV_LAST], lt_sel, def_input, profile_link;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
@@ -551,8 +552,11 @@ int load_profile() {
     retval = read_userdata(profile_sel);
     if (retval == 0) {
         // Change the input if the new profile demands a different one.
-        if (tc.link_av != AV_LAST && tc.link_av != cm.avinput)
+        // Also prevent the change of input from inducing a profile load.
+        if (tc.link_av != AV_LAST && tc.link_av != cm.avinput) {
             target_input = tc.link_av;
+            omit_profile_load = 1;
+        }
 
         write_userdata(INIT_CONFIG_SLOT);
     }
@@ -769,6 +773,7 @@ int main()
     ths_input_t target_ths = 0;
     pcm_input_t target_pcm = 0;
     video_format target_format = 0;
+    omit_profile_load = 0;
 
     status_t status;
 
@@ -855,10 +860,13 @@ int main()
 
             // The input changed, so load the appropriate profile if
             // input->profile link is enabled
-            if (profile_link && (profile_sel != input_profiles[target_input])) {
+            if (profile_link && (profile_sel != input_profiles[target_input]) &&
+                !omit_profile_load)
+            {
                 profile_sel = input_profiles[target_input];
                 read_userdata(profile_sel);
             }
+            omit_profile_load = 0;
 
             // If profile->input link is enabled, update it to the new input to
             // stay consistent, but don't automatically save the new setting.
