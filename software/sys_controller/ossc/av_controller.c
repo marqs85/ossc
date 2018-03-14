@@ -868,11 +868,6 @@ int main()
             }
             omit_profile_load = 0;
 
-            // If profile->input link is enabled, update it to the new input to
-            // stay consistent, but don't automatically save the new setting.
-            if (tc.link_av != AV_LAST)
-                tc.link_av = target_input;
-
             cm.avinput = target_input;
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
