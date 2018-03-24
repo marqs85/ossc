@@ -547,17 +547,14 @@ void program_mode()
 int load_profile() {
     int retval;
 
-    input_profiles[profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
     retval = read_userdata(profile_sel);
     if (retval == 0) {
-        // Change the input if the new profile demands a different one.
-        // Also prevent the change of input from inducing a profile load.
-        if (tc.link_av != AV_LAST && tc.link_av != cm.avinput) {
+        // Change the input if the new profile demands it.
+        if (tc.link_av != AV_LAST)
             target_input = tc.link_av;
-            input_profiles[profile_link ? target_input : AV_TESTPAT]
-                = profile_sel;
-        }
 
+        // Update profile link (also prevents the change of input from inducing a profile load).
+        input_profiles[profile_link ? target_input : AV_TESTPAT] = profile_sel;
         write_userdata(INIT_CONFIG_SLOT);
     }
     return retval;
@@ -778,7 +775,7 @@ int main()
 
     alt_u32 input_vec;
 
-    int init_stat;
+    int init_stat, man_input_change;
 
     init_stat = init_hw();
 
@@ -810,7 +807,16 @@ int main()
         if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
             remote_code = 0;
 
-        parse_control();
+        remote_rpt_prev = remote_rpt;
+
+        if (btn_code_prev == 0) {
+            btn_code_prev = btn_code;
+        } else {
+            btn_code_prev = btn_code;
+            btn_code = 0;
+        }
+
+        man_input_change = parse_control();
 
         if (menu_active)
             display_menu(0);
@@ -880,7 +886,7 @@ int main()
             if (!menu_active)
                 lcd_write_status();
             // record last input if it was selected manually
-            if ((def_input == AV_LAST) && (remote_code || (btn_code & PB0_BIT)))
+            if ((def_input == AV_LAST) && man_input_change)
                 write_userdata(INIT_CONFIG_SLOT);
         }
 
@@ -936,8 +942,6 @@ int main()
             }
         }
 
-        btn_code_prev = btn_code;
-        remote_rpt_prev = remote_rpt;
         usleep(300);    // Avoid executing mainloop multiple times per vsync
     }
 

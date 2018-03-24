@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -57,7 +57,7 @@ int write_userdata(alt_u8 entry)
     case UDE_INITCFG:
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
         memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
-        ((ude_initcfg*)databuf)->last_input = cm.avinput;
+        ((ude_initcfg*)databuf)->last_input = target_input;
         ((ude_initcfg*)databuf)->def_input = def_input;
         ((ude_initcfg*)databuf)->profile_link = profile_link;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));

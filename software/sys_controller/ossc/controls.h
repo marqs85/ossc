@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -60,6 +60,6 @@ typedef enum {
 #define REMOTE_MAX_KEYS (RC_PROF_HOTKEY-RC_BTN1+1)
 
 void setup_rc();
-void parse_control();
+int parse_control();
 
 #endif
