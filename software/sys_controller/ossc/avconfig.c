@@ -67,6 +67,7 @@ const avconfig_t tc_default = {
         .g_f_off = DEFAULT_FINE_OFFSET,
         .b_f_off = DEFAULT_FINE_OFFSET,
     },
+    .link_av = AV_LAST,
 };
 
 int set_default_avconfig()
