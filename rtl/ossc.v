@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -62,6 +62,8 @@ wire [1:0] pll_lock_lost;
 wire [31:0] h_info, h_info2, v_info, extra_info;
 wire [10:0] vmax, vmax_tvp;
 wire [1:0] fpga_vsyncgen;
+wire ilace_flag;
+wire [19:0] pcnt_frame;
 
 wire [15:0] ir_code;
 wire [7:0] ir_code_cnt;
@@ -95,6 +97,12 @@ wire [1:0] lt_mode_synced;
 wire [15:0] lt_lat_result;
 wire [11:0] lt_stb_result;
 wire lt_finished;
+
+wire remote_event = sys_ctrl[8];
+reg remove_event_prev;
+reg [14:0] to_ctr, to_ctr_ms;
+wire lcd_bl_timeout;
+
 
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
 always @(posedge PCLK_in or negedge reset_n)
@@ -163,7 +171,9 @@ assign LED_G = (ir_code == 0);
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
 assign LCD_CS_N = sys_ctrl[6];
 assign LCD_RS = sys_ctrl[5];
-assign LCD_BL = sys_ctrl[4];    //reset_n in v1.2 PCB
+wire lcd_bl_on = sys_ctrl[4];    //reset_n in v1.2 PCB
+wire [1:0] lcd_bl_time = sys_ctrl[3:2];
+assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 
 `ifdef VIDEOGEN
 wire videogen_sel;
@@ -187,6 +197,33 @@ assign HDMI_TX_PCLK = PCLK_out;
 assign HDMI_TX_DE = DE_out;
 `endif
 
+// LCD backlight timeout counters
+always @(posedge clk27)
+begin
+    if (remote_event != remove_event_prev) begin
+        to_ctr <= 15'd0;
+        to_ctr_ms <= 15'd0;
+    end else begin
+        if (to_ctr == 27000-1) begin
+            to_ctr <= 0;
+            if (to_ctr_ms < 15'h7fff)
+                to_ctr_ms <= to_ctr_ms + 1'b1;
+        end else begin
+            to_ctr <= to_ctr + 1'b1;
+        end
+    end
+
+    case (lcd_bl_time)
+        default: lcd_bl_timeout <= 0; //off
+        2'b01:  lcd_bl_timeout <= (to_ctr_ms >= 3000);  //3s
+        2'b10:  lcd_bl_timeout <= (to_ctr_ms >= 10000); //10s
+        2'b11:  lcd_bl_timeout <= (to_ctr_ms >= 30000); //30s
+    endcase
+
+    remove_event_prev <= remote_event;
+end
+
+
 sys sys_inst(
     .clk_clk                                (clk27),
     .reset_reset_n                          (cpu_reset_n),
@@ -198,12 +235,13 @@ sys sys_inst(
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
     .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
-    .pio_2_status_in_export                 ({VSYNC_out, 2'b00, vmax_tvp, fpga_vsyncgen, 5'h0, vmax}),
+    .pio_2_status_in_export                 ({VSYNC_out, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
     .pio_3_h_info_out_export                (h_info),
     .pio_4_h_info2_out_export               (h_info2),
     .pio_5_v_info_out_export                (v_info),
     .pio_6_extra_info_out_export            (extra_info),
-    .pio_7_lt_results_in_export             ({lt_finished, 3'h0, lt_stb_result, lt_lat_result})
+    .pio_7_lt_results_in_export             ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
+    .pio_8_pcnt_vhz_in_export               ({12'h000, pcnt_frame})
 );
 
 scanconverter scanconverter_inst (
@@ -233,6 +271,8 @@ scanconverter scanconverter_inst (
     .pll_lock_lost  (pll_lock_lost),
     .vmax           (vmax),
     .vmax_tvp       (vmax_tvp),
+    .pcnt_frame     (pcnt_frame),
+    .ilace_flag     (ilace_flag),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced)
 );

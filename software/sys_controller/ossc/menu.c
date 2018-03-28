@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -41,7 +41,7 @@ extern mode_data_t video_modes[];
 extern alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
-extern alt_u8 vm_sel, profile_sel, lt_sel, def_input, profile_link;
+extern alt_u8 vm_sel, profile_sel_menu, lt_sel, def_input, profile_link, lcd_bl_timeout;
 
 alt_u8 menu_active;
 
@@ -65,6 +65,7 @@ static const char *sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical"
 static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
 static const char *audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
 static const char *lt_desc[] = { "Top-left", "Center", "Bottom-right" };
+static const char *lcd_bl_timeout_desc[] = { "Off", "3s", "10s", "30s" };
 
 static void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), (v*1125)/100); }
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
@@ -81,7 +82,7 @@ static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes[v].name,
 static void link_av_desc (avinput_t v) { strncpy(menu_row2, v == AV_LAST ? "No link" : avinput_str[v], LCD_ROW_LEN+1); }
 
 static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
-static const arg_info_t profile_arg_info = {&profile_sel, MAX_PROFILE, value_disp};
+static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, value_disp};
 static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-1, lt_disp};
 
 
@@ -147,8 +148,8 @@ MENU(menu_postproc, P99_PROTECT({ \
     { LNG("Scanline method","Scanline method"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_method,     OPT_WRAP,   SETTING_ITEM(sl_method_desc) } } },
     { LNG("Scanline type","ｽｷｬﾝﾗｲﾝﾙｲ"),            OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_type,     OPT_WRAP,   SETTING_ITEM(sl_type_desc) } } },
     { LNG("Scanline alignm.","ｽｷｬﾝﾗｲﾝﾎﾟｼﾞｼｮﾝ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_id,       OPT_WRAP,   SETTING_ITEM(sl_id_desc) } } },
-    { LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
-    { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, HV_MASK_MAX, pixels_disp } } },
+    { LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, H_MASK_MAX, pixels_disp } } },
+    { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, V_MASK_MAX, pixels_disp } } },
     { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
     { LNG("Reverse LPF","ｷﾞｬｸLPF"),              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
     { LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
@@ -177,6 +178,7 @@ MENU(menu_settings, P99_PROTECT({ \
     { LNG("Link prof->input","Link prof->input"), OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.link_av,  OPT_WRAP, AV1_RGBs, AV_LAST, link_av_desc } } },
     { LNG("Link input->prof","Link input->prof"),   OPT_AVCONFIG_SELECTION, { .sel = { &profile_link,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
+    { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
     { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"), OPT_FUNC_CALL,          { .fun = { fw_update, NULL } } },
 }))
 

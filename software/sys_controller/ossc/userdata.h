@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -50,6 +50,7 @@ typedef struct {
     alt_u8 profile_link;
     avinput_t last_input;
     avinput_t def_input;
+    alt_u8 lcd_bl_timeout;
     alt_u16 keys[REMOTE_MAX_KEYS];
 } __attribute__((packed, __may_alias__)) ude_initcfg;
 

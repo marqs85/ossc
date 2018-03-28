@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -103,6 +103,8 @@ module scanconverter (
     output [1:0] pll_lock_lost,
     output reg [10:0] vmax,
     output reg [10:0] vmax_tvp,
+    output reg [19:0] pcnt_frame,
+    output ilace_flag,
     input lt_active,
     input [1:0] lt_mode
 );
@@ -126,8 +128,8 @@ reg VSYNC_1x, VSYNC_2x, VSYNC_3x, VSYNC_4x, VSYNC_5x;
 reg DE_1x, DE_2x, DE_3x, DE_4x, DE_5x, DE_3x_prev4x;
 
 //registers indicating line/frame change and field type
-reg FID_cur, FID_prev, FID_1x;
-reg frame_change, line_change;
+reg FID_cur, FID_last, FID_prev, FID_1x;
+reg frame_change, frame_change_longpulse, line_change;
 
 //H+V counters
 wire [11:0] linebuf_hoffset; //Offset for line (max. 2047 pixels), MSB indicates which line is read/written
@@ -179,7 +181,7 @@ reg [4:0] V_SCANLINEID;
 reg [5:0] V_MASK;
 reg [2:0] V_MULTMODE;
 reg [1:0] H_MULTMODE;
-reg [9:0] H_MASK;
+reg [10:0] H_MASK;
 reg [9:0] H_OPT_STARTOFF;
 reg [2:0] H_OPT_SCALE;
 reg [2:0] H_OPT_SAMPLE_MULT;
@@ -215,12 +217,14 @@ reg [10:0] LT_POS_BOTTOMRIGHT_V_START;
 reg VSYNC_in_cc_L, VSYNC_in_cc_LL, VSYNC_in_cc_LLL;
 reg [21:0] clk27_ctr;   // min. 6.5Hz
 reg [2:0] dbl_frame_ctr;
+reg frame_change_longpulse_cc_L, frame_change_longpulse_cc_LL, frame_change_longpulse_cc_LLL;
+reg [19:0] pcnt_ctr;
 
 
 assign pclk_1x = PCLK_in;
 assign PCLK_out = pclk_act;
 assign pclk_lock = {pclk_2x_lock, pclk_3x_lock};
-
+assign ilace_flag = (FID_cur != FID_last);
 
 //Scanline generation
 reg [8:0] Y_rb_tmp;
@@ -740,11 +744,34 @@ begin
     end
 end
 
-//Buffer the inputs using input pixel clock and generate 1x signals
+//Calculate exact vertical frequency
+always @(posedge clk27 or negedge reset_n)
+begin
+    if (!reset_n) begin
+        frame_change_longpulse_cc_L <= 1'b0;
+        frame_change_longpulse_cc_LL <= 1'b0;
+        frame_change_longpulse_cc_LLL <= 1'b0;
+        pcnt_ctr <= 1;
+        pcnt_frame <= 1;
+    end else begin
+        if (frame_change_longpulse_cc_LL & !frame_change_longpulse_cc_LLL) begin
+            pcnt_ctr <= 1;
+            pcnt_frame <= pcnt_ctr;
+        end else if (pcnt_ctr < 20'hfffff) begin
+            pcnt_ctr <= pcnt_ctr + 1'b1;
+        end
+
+        frame_change_longpulse_cc_L <= frame_change_longpulse;
+        frame_change_longpulse_cc_LL <= frame_change_longpulse_cc_L;
+        frame_change_longpulse_cc_LLL <= frame_change_longpulse_cc_LL;
+    end
+end
+
 
 wire [11:0] H_L5BORDER_1920_tmp = (11'd1920-h_info[10:0]);
 wire [11:0] H_L5BORDER_1600_tmp = (11'd1600-h_info[10:0]);
 
+//Buffer the inputs using input pixel clock and generate 1x signals
 always @(posedge pclk_1x or negedge reset_n)
 begin
     if (!reset_n) begin
@@ -757,8 +784,10 @@ begin
         vmax_tvp <= 0;
         line_idx <= 0;
         FID_cur <= 1'b0;
+        FID_last <= 1'b0;
         line_change <= 1'b0;
         frame_change <= 1'b0;
+        frame_change_longpulse <= 1'b0;
         fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] <= 1'b0;
         H_MULTMODE <= 0;
         V_MULTMODE <= 0;
@@ -776,6 +805,7 @@ begin
         if (`HSYNC_LEADING_EDGE) begin
             if (`VSYNC_LEADING_EDGE) begin // non-interlace frame or even field (interlace) start
                 FID_cur <= 1'b0;
+                FID_last <= FID_cur;
                 vcnt_1x <= 0;
                 frame_change <= 1'b1;
                 vmax <= vcnt_1x;
@@ -788,17 +818,19 @@ begin
         end else if (`VSYNC_LEADING_EDGE) begin // odd field (interlace) start
             if (!`FALSE_FIELD) begin
                 FID_cur <= 1'b1;
+                FID_last <= FID_cur;
                 vcnt_1x <= 11'h7ff; // -1 for 11 bit word
                 frame_change <= 1'b1;
-                vmax <= vcnt_1x;
+                //vmax <= vcnt_1x;
             end
             vcnt_tvp <= 0;
             vmax_tvp <= vcnt_tvp;
         end else if ((fpga_vsyncgen[`VSYNCGEN_GENMID_BIT]) && (vcnt_tvp == (vmax_tvp>>1)) && (hcnt_1x == (hmax[~line_idx]>>1))) begin //VSM=1
             FID_cur <= 1'b1;
+            FID_last <= FID_cur;
             vcnt_1x <= 11'h7ff; // -1 for 11 bit word
             frame_change <= 1'b1;
-            vmax <= vcnt_1x;
+            //vmax <= vcnt_1x;
         end else
             frame_change <= 1'b0;
 
@@ -825,7 +857,7 @@ begin
             V_AVIDSTART <= v_info[16:11] + v_info[19:17];   // Vertical sync+backporch length (0...127)
             V_ACTIVE <= v_info[10:0];                       // Vertical active length (0...2047)
 
-            H_MASK <= h_info2[28:19];
+            H_MASK <= h_info2[29:19];
             V_MASK <= v_info[25:20];
             
             V_SCANLINEMODE <= v_info[28:27];
@@ -855,6 +887,12 @@ begin
 
             CALC_CONSTS <= 1'b1;
         end
+
+        // generate long pulse for hz counter
+        if (frame_change)
+            frame_change_longpulse <= 1'b1;
+        else if (vcnt_1x > 0)
+            frame_change_longpulse <= 1'b0;
 
         if (CALC_CONSTS) begin
             H_AVIDSTOP <= H_AVIDSTART+H_ACTIVE;

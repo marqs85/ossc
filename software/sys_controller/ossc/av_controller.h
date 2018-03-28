@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -24,15 +24,17 @@
 #include "sysconfig.h"
 
 // sys_ctrl bits
-#define LT_ACTIVE   (1<<15)
-#define LT_ARMED    (1<<14)
-#define LT_MODE_OFFS    12
-#define SD_SPI_SS_N (1<<7)
-#define LCD_CS_N    (1<<6)
-#define LCD_RS      (1<<5)
-#define LCD_BL      (1<<4)
-#define VIDGEN_OFF  (1<<1)
-#define AV_RESET_N  (1<<0)
+#define LT_ACTIVE                   (1<<15)
+#define LT_ARMED                    (1<<14)
+#define LT_MODE_OFFS                12
+#define REMOTE_EVENT                (1<<8)
+#define SD_SPI_SS_N                 (1<<7)
+#define LCD_CS_N                    (1<<6)
+#define LCD_RS                      (1<<5)
+#define LCD_BL                      (1<<4)
+#define LCD_BL_TIMEOUT_OFFS         2
+#define VIDGEN_OFF                  (1<<1)
+#define AV_RESET_N                  (1<<0)
 
 #define LT_CTRL_MASK    0xf000
 

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -108,6 +108,16 @@ int fw_update()
     alt_u32 btn_vec;
     alt_u32 bytes_to_rw;
     fw_hdr fw_header;
+
+#ifdef CHECK_STACK_USE
+    // estimate stack usage, assuming around here is the worst case (due to 512B databuf)
+    alt_u32 sp;
+    asm volatile("mov %0, sp" : "=r"(sp));
+    sniprintf(menu_row1, LCD_ROW_LEN+1, "Stack size:");
+    sniprintf(menu_row2, LCD_ROW_LEN+1, "%lu bytes", (ONCHIP_MEMORY2_0_BASE+ONCHIP_MEMORY2_0_SIZE_VALUE)-sp);
+    lcd_write_menu();
+    usleep(1000000);
+#endif
 
     retval = check_sdcard(databuf);
     SPI_CS_High();

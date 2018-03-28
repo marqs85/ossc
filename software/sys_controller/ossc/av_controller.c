@@ -68,7 +68,7 @@ alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit, profile_sel, input_profiles[AV_LAST], lt_sel, def_input, profile_link;
+alt_u8 vm_sel, vm_edit, profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
 alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -364,8 +364,8 @@ status_t get_status(tvp_input_t input, video_format format)
 // h_info:     [31:30]           [29]     [28]  [27:20]          [19:11]            [10:0]
 //           | H_MULTMODE[1:0] | H_L5FMT |    | H_SYNCLEN[7:0] | H_BACKPORCH[8:0] | H_ACTIVE[10:0] |
 //
-// h_info2:   [31:29]  [28:19]       [18:16]            [15:13]                 [12:10]                  [9:0]
-//           |       | H_MASK[9:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
+// h_info2:   [31:30]   [29:19]       [18:16]            [15:13]                 [12:10]                  [9:0]
+//           |       | H_MASK[10:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
 //
 // v_info:     [31:29]           [28:27]               [26]           [25:20]       [19:17]          [16:11]            [10:0]
 //           | V_MULTMODE[2:0] | V_SCANLINEMODE[1:0] | V_SCANLINEID | V_MASK[5:0] | V_SYNCLEN[2:0] | V_BACKPORCH[5:0] | V_ACTIVE[10:0] |
@@ -547,8 +547,10 @@ void program_mode()
 int load_profile() {
     int retval;
 
-    retval = read_userdata(profile_sel);
+    retval = read_userdata(profile_sel_menu);
     if (retval == 0) {
+        profile_sel = profile_sel_menu;
+
         // Change the input if the new profile demands it.
         if (tc.link_av != AV_LAST)
             target_input = tc.link_av;
@@ -557,16 +559,21 @@ int load_profile() {
         input_profiles[profile_link ? target_input : AV_TESTPAT] = profile_sel;
         write_userdata(INIT_CONFIG_SLOT);
     }
+
     return retval;
 }
 
 int save_profile() {
     int retval;
 
-    input_profiles[profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
-    retval = write_userdata(profile_sel);
-    if (retval == 0)
+    retval = write_userdata(profile_sel_menu);
+    if (retval == 0) {
+        profile_sel = profile_sel_menu;
+
+        input_profiles[profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
         write_userdata(INIT_CONFIG_SLOT);
+    }
+
     return retval;
 }
 
@@ -616,7 +623,7 @@ int init_hw()
     usleep(10000);
 
     // unreset hw
-    sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N;
+    sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT;
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     //wait >500ms for SD card interface to be stable

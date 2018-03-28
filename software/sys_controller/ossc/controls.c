@@ -43,7 +43,8 @@ extern avconfig_t tc;
 extern avinput_t target_input;
 extern alt_u8 menu_active;
 extern alt_u16 sys_ctrl;
-extern alt_u8 profile_sel;
+extern alt_u8 profile_sel, profile_sel_menu;
+extern alt_u8 lcd_bl_timeout;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -105,10 +106,14 @@ void setup_rc()
 
 int parse_control()
 {
-    int i;
+    int i, ret=0;
     alt_u32 btn_vec;
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
+
+    alt_u32 fpga_status;
+    alt_u32 fpga_v_hz_x100;
+    alt_u8 fpga_ilace;
 
     // one for each video_group
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
@@ -139,6 +144,7 @@ int parse_control()
         case RC_BTN0: man_target_input = AV3_YPBPR; break;
         case RC_MENU:
             menu_active = !menu_active;
+            profile_sel_menu = profile_sel;
 
             if (menu_active)
                 display_menu(1);
@@ -147,15 +153,21 @@ int parse_control()
 
             break;
         case RC_INFO:
-            sniprintf(menu_row1, LCD_ROW_LEN+1, "VMod: %s", video_modes[cm.id].name);
-            sniprintf(menu_row2, LCD_ROW_LEN+1, "LC: %u VSM: %u", (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) & 0x7ff)+1, (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) >> 16) & 0x3);
+            fpga_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE);
+            fpga_ilace = !!(fpga_status & (1<<11));
+            sniprintf(menu_row1, LCD_ROW_LEN+1, "Prof.%u %9s", profile_sel, video_modes[cm.id].name);
+            if (cm.sync_active) {
+                fpga_v_hz_x100 = (100*TVP_EXTCLK_HZ)/IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE);
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %3lu.%.2luHz", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
+                                                                              fpga_ilace ? 'i' : 'p',
+                                                                              ((fpga_status >> 16) & 0x3) ? '*' : ' ',
+                                                                              fpga_v_hz_x100/100,
+                                                                              fpga_v_hz_x100%100);
+            }
             lcd_write_menu();
-            printf("Mod: %s\n", video_modes[cm.id].name);
-            printf("Lines: %u M: %u\n", (IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) & 0x7ff)+1, cm.macrovis);
             break;
         case RC_LCDBL:
             sys_ctrl ^= LCD_BL;
-            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
             break;
         case RC_SL_MODE: tc.sl_mode = (tc.sl_mode < SL_MODE_MAX) ? (tc.sl_mode + 1) : 0; break;
         case RC_SL_TYPE: tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0; break;
@@ -211,7 +223,7 @@ int parse_control()
                 }
 
                 if (i <= RC_BTN0) {
-                    profile_sel = (i+1)%10;
+                    profile_sel_menu = (i+1)%10;
                     load_profile();
                     break;
                 } else if (i == RC_BACK) {
@@ -226,6 +238,8 @@ int parse_control()
         default: break;
     }
 
+    sys_ctrl ^= REMOTE_EVENT;
+
 Button_Check:
     if (btn_code & PB0_BIT)
         man_target_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
@@ -234,8 +248,14 @@ Button_Check:
 
     if (man_target_input != AV_LAST) {
         target_input = man_target_input;
-        return 1;
+        ret = 1;
     }
 
-    return 0;
+    sys_ctrl &= ~(3<<LCD_BL_TIMEOUT_OFFS);
+    if (!menu_active)
+        sys_ctrl |= (lcd_bl_timeout << LCD_BL_TIMEOUT_OFFS);
+
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+
+    return ret;
 }

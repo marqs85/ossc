@@ -25,7 +25,8 @@
 
 #define SCANLINESTR_MAX     15
 #define SL_HYBRIDSTR_MAX    28
-#define HV_MASK_MAX         63
+#define H_MASK_MAX          255
+#define V_MASK_MAX          63
 #define HV_MASK_MAX_BR      15
 #define VIDEO_LPF_MAX       5
 #define SAMPLER_PHASE_MAX   31
