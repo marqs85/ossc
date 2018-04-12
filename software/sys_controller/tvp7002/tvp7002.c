@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -43,19 +43,21 @@ static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
 
 static void tvp_set_clamp(video_format fmt)
 {
+    alt_u8 status = tvp_readreg(TVP_SOGTHOLD) & 0xF8;
+
     switch (fmt) {
     case FORMAT_YPbPr:
         //select mid clamp for Pb & Pr
-        tvp_writereg(TVP_SOGTHOLD, 0x5D);
+        status |= 0x5;
         break;
     case FORMAT_RGBS:
     case FORMAT_RGBHV:
     case FORMAT_RGsB:
     default:
         //select bottom clamp (RGB)
-        tvp_writereg(TVP_SOGTHOLD, 0x58);
         break;
     }
+    tvp_writereg(TVP_SOGTHOLD, status);
 }
 
 static void tvp_set_clamp_position(video_type type, alt_u8 h_syncinlen)
@@ -142,10 +144,19 @@ inline void tvp_set_ssthold(alt_u8 vsdetect_thold)
 
 void tvp_init()
 {
+    color_setup_t def_gain_offs = {
+        .r_f_gain = DEFAULT_FINE_GAIN,
+        .g_f_gain = DEFAULT_FINE_GAIN,
+        .b_f_gain = DEFAULT_FINE_GAIN,
+        .r_f_off = DEFAULT_FINE_OFFSET,
+        .g_f_off = DEFAULT_FINE_OFFSET,
+        .b_f_off = DEFAULT_FINE_OFFSET,
+    };
+
     // disable output
     tvp_disable_output();
 
-    //Set global defaults
+    // Set default configuration (skip those which match register reset values)
 
     // Configure external refclk
     tvp_sel_clk(REFCLK_EXT27);
@@ -162,11 +173,11 @@ void tvp_init()
     tvp_sel_csc(&csc_coeffs[0]);
 
     // Set default phase
-    tvp_set_hpll_phase(0x10, 1);
+    //tvp_set_hpll_phase(DEFAULT_SAMPLER_PHASE, 1);
 
-    // Set min LPF
-    tvp_set_lpf(0);
-    tvp_set_sync_lpf(0);
+    // Set min video LPF, max sync LPF
+    //tvp_set_lpf(0);
+    tvp_set_sync_lpf(DEFAULT_SYNC_LPF);
 
     // Increase line length tolerance
     tvp_set_linelen_tol(DEFAULT_LINELEN_TOL);
@@ -177,17 +188,24 @@ void tvp_init()
     //tvp_writereg(TVP_OUTFORMAT, 0x0C);
 
     // Minimize HSYNC window for best sync stability
-    tvp_writereg(TVP_MVSWIDTH, 0x03);
+    //tvp_writereg(TVP_MVSWIDTH, 0x03);
 
     // Common sync separator threshold
     // Some arcade games need more that the default 0x40
     tvp_set_ssthold(DEFAULT_VSYNC_THOLD);
+
+    // Analog sync/SoG thresholf
+    //tvp_set_sog_thold(DEFAULT_SYNC_VTH);
+
+    // Default (3,3) coast may lead to PLL jitter and sync loss (e.g. SNES)
+    tvp_set_hpllcoast(DEFAULT_PRE_COAST, DEFAULT_POST_COAST);
 
     //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
     tvp_writereg(TVP_BG_CGAIN, 0x88);
     tvp_writereg(TVP_R_CGAIN, 0x08);
 
     //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
+    tvp_set_fine_gain_offset(&def_gain_offs);
 }
 
 void tvp_set_fine_gain_offset(color_setup_t *col) {
@@ -293,8 +311,8 @@ void tvp_set_lpf(alt_u8 val)
 void tvp_set_sync_lpf(alt_u8 val)
 {
     alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0x3F;
-    tvp_writereg(TVP_INPMUX2, status|((3-val)<<6));
-    printf("Sync LPF value set to 0x%x\n", (3-val));
+    tvp_writereg(TVP_INPMUX2, status|(val<<6));
+    printf("Sync LPF value set to 0x%x\n", val);
 }
 
 alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult)
@@ -342,13 +360,11 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
     }
 }
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold)
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen)
 {
     // Clamp position and ALC
     tvp_set_clamp_position(type, h_syncinlen);
     tvp_set_alc(1, type, h_syncinlen);
-
-    tvp_set_ssthold(vsync_thold);
 
     // Setup Macrovision stripper and H-PLL coast signal.
     // Coast needs to be enabled when HSYNC is missing during VSYNC. RGBHV mode cannot use it, so turn off the internal signal for this mode.
@@ -367,9 +383,6 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per
     }
 
     tvp_setup_hpll(h_samplerate, refclks_per_line, plldivby2);
-
-    // Default (3,3) coast may lead to PLL jitter and sync loss (e.g. SNES)
-    tvp_set_hpllcoast(pre_coast, post_coast);
 }
 
 void tvp_source_sel(tvp_input_t input, video_format fmt)

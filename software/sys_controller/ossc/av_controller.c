@@ -61,7 +61,7 @@ extern alt_u16 rc_keymap_default[REMOTE_MAX_KEYS];
 extern alt_u32 remote_code;
 extern alt_u32 btn_code, btn_code_prev;
 extern alt_u8 remote_rpt, remote_rpt_prev;
-extern avconfig_t tc;
+extern avconfig_t tc, tc_default;
 
 alt_u8 target_typemask;
 alt_u8 target_type;
@@ -338,7 +338,7 @@ status_t get_status(tvp_input_t input, video_format format)
     if (tc.sync_lpf != cm.cc.sync_lpf)
         tvp_set_sync_lpf(tc.sync_lpf);
 
-    if (!memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
+    if (memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
         tvp_set_fine_gain_offset(&cm.cc.col);
 
 #ifdef ENABLE_AUDIO
@@ -520,10 +520,7 @@ void program_mode()
                      cm.sample_mult*video_modes[cm.id].h_total,
                      cm.clkcnt,
                      cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
-                     (alt_u8)h_synclen_px,
-                     cm.cc.pre_coast,
-                     cm.cc.post_coast,
-                     cm.cc.vsync_thold);
+                     (alt_u8)h_synclen_px);
     set_lpf(cm.cc.video_lpf);
     cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
 
@@ -676,6 +673,7 @@ int init_hw()
 
     // Set defaults
     set_default_avconfig();
+    memcpy(&cm.cc, &tc_default, sizeof(avconfig_t));
     memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
 
     // Load initconfig and profile

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -25,13 +25,6 @@
 #include "tvp7002.h"
 
 #define DEFAULT_ON              1
-#define DEFAULT_PRE_COAST       1
-#define DEFAULT_POST_COAST      0
-#define DEFAULT_SAMPLER_PHASE   16
-#define DEFAULT_SYNC_LPF        3
-#define DEFAULT_SYNC_VTH        11
-#define DEFAULT_FINE_GAIN       26
-#define DEFAULT_FINE_OFFSET     0x80
 
 extern mode_data_t video_modes[], video_modes_default[];
 extern alt_u8 update_cur_vm;
@@ -46,7 +39,7 @@ const avconfig_t tc_default = {
     .pm_384p = 1,
     .pm_480i = 1,
     .pm_1080i = 1,
-    .tvp_hpll2x = 1,
+    .tvp_hpll2x = DEFAULT_ON,
     .sampler_phase = DEFAULT_SAMPLER_PHASE,
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,

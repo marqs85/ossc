@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -24,11 +24,18 @@
 #include "video_modes.h"
 #include "sysconfig.h"
 
-#define DEFAULT_VSYNC_THOLD 0x44
-#define DEFAULT_LINELEN_TOL 0x06
+#define DEFAULT_VSYNC_THOLD     0x44
+#define DEFAULT_LINELEN_TOL     0x06
+#define DEFAULT_SAMPLER_PHASE   0x10
+#define DEFAULT_PRE_COAST       1
+#define DEFAULT_POST_COAST      0
+#define DEFAULT_SYNC_LPF        0
+#define DEFAULT_SYNC_VTH        0x0B
+#define DEFAULT_FINE_GAIN       26
+#define DEFAULT_FINE_OFFSET     0x80
 
-#define TVP_INTCLK_HZ       6500000UL
-#define TVP_EXTCLK_HZ       27000000UL
+#define TVP_INTCLK_HZ           6500000UL
+#define TVP_EXTCLK_HZ           27000000UL
 
 typedef enum {
     TVP_INPUT1 = 0,
@@ -100,7 +107,7 @@ void tvp_set_sog_thold(alt_u8 val);
 
 void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen);
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_u8 pre_coast, alt_u8 post_coast, alt_u8 vsync_thold);
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen);
 
 void tvp_source_sel(tvp_input_t input, video_format fmt);
 
