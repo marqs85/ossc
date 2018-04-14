@@ -151,6 +151,7 @@ void tvp_init()
         .r_f_off = DEFAULT_FINE_OFFSET,
         .g_f_off = DEFAULT_FINE_OFFSET,
         .b_f_off = DEFAULT_FINE_OFFSET,
+        .c_gain = DEFAULT_COARSE_GAIN,
     };
 
     // disable output
@@ -201,20 +202,20 @@ void tvp_init()
     tvp_set_hpllcoast(DEFAULT_PRE_COAST, DEFAULT_POST_COAST);
 
     //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
-    tvp_writereg(TVP_BG_CGAIN, 0x88);
-    tvp_writereg(TVP_R_CGAIN, 0x08);
-
     //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
-    tvp_set_fine_gain_offset(&def_gain_offs);
+    tvp_set_gain_offset(&def_gain_offs);
 }
 
-void tvp_set_fine_gain_offset(color_setup_t *col) {
+void tvp_set_gain_offset(color_setup_t *col) {
+    tvp_writereg(TVP_BG_CGAIN, ((col->c_gain << 4) | (col->c_gain & 0xF)));
+    tvp_writereg(TVP_R_CGAIN, col->c_gain);
     tvp_writereg(TVP_R_FGAIN, col->r_f_gain);
     tvp_writereg(TVP_G_FGAIN, col->g_f_gain);
     tvp_writereg(TVP_B_FGAIN, col->b_f_gain);
     tvp_writereg(TVP_R_FOFFSET_MSB, col->r_f_off);
     tvp_writereg(TVP_G_FOFFSET_MSB, col->g_f_off);
     tvp_writereg(TVP_B_FOFFSET_MSB, col->b_f_off);
+
 }
 
 // Configure H-PLL (sampling rate, VCO gain and charge pump current)

@@ -33,6 +33,7 @@
 #define DEFAULT_SYNC_VTH        0x0B
 #define DEFAULT_FINE_GAIN       26
 #define DEFAULT_FINE_OFFSET     0x80
+#define DEFAULT_COARSE_GAIN     0x8
 
 #define TVP_INTCLK_HZ           6500000UL
 #define TVP_EXTCLK_HZ           27000000UL
@@ -68,6 +69,7 @@ typedef struct {
     alt_u8 r_f_gain;
     alt_u8 g_f_gain;
     alt_u8 b_f_gain;
+    alt_u8 c_gain;
 } __attribute__((packed)) color_setup_t;
 
 
@@ -89,7 +91,7 @@ inline void tvp_set_ssthold(alt_u8 vsdetect_thold);
 
 void tvp_init();
 
-void tvp_set_fine_gain_offset(color_setup_t *col);
+void tvp_set_gain_offset(color_setup_t *col);
 
 void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2);
 
