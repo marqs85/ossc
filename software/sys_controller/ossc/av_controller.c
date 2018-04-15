@@ -339,7 +339,7 @@ status_t get_status(tvp_input_t input, video_format format)
         tvp_set_sync_lpf(tc.sync_lpf);
 
     if (memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
-        tvp_set_fine_gain_offset(&cm.cc.col);
+        tvp_set_fine_gain_offset(&tc.col);
 
 #ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
@@ -443,15 +443,20 @@ void set_videoinfo()
     if (target_type == VIDEO_HDTV)
         h_synclen *= 2;
 
+    // 1920x* modes need short hsync
+    if (h_synclen > cm.hsync_cut)
+        h_synclen -= cm.hsync_cut;
+    else
+        h_synclen = 1;
+
     h_border = (((cm.sample_mult-h_opt_scale)*video_modes[cm.id].h_active)/2);
     h_mask = h_border + h_opt_scale*cm.cc.h_mask;
     h_opt_startoffs = h_border + (cm.sample_mult-h_opt_scale)*(h_synclen+(alt_u16)video_modes[cm.id].h_backporch);
-    h_opt_startoffs = (h_opt_startoffs/cm.sample_mult)*cm.sample_mult;
     printf("h_border: %u, h_opt_startoffs: %u\n", h_border, h_opt_startoffs);
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (cm.fpga_hmultmode<<30) |
                                             ((cm.cc.l5_fmt!=L5FMT_1600x1200)<<29) |
-                                            ((((cm.sample_mult*h_synclen)-cm.hsync_cut)&0xff)<<20) |
+                                            (((cm.sample_mult*h_synclen)&0xff)<<20) |
                                             (((cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch)&0x1ff)<<11) |
                                             ((cm.sample_mult*video_modes[cm.id].h_active)&0x7ff));
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_4_BASE, (h_mask<<19) |

@@ -669,7 +669,7 @@ begin
         R_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
         G_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
         B_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
-    end else if (border_enable_pp[`PP_PIPELINE_LENGTH-1]) begin
+    end else if (border_enable_pp[`PP_PIPELINE_LENGTH]) begin
         R_out <= {2{X_MASK_BR}};
         G_out <= {2{X_MASK_BR}};
         B_out <= {2{X_MASK_BR}};
@@ -947,7 +947,7 @@ begin
         vcnt_2x <= 0;
         line_out_idx_2x <= 0;
     end else begin
-        if ((pclk_1x == 1'b0) & (line_change | frame_change)) begin  //aligned with posedge of pclk_1x
+        if ((pclk_1x == 1'b1) & (line_change | frame_change)) begin  //aligned with negedge of pclk_1x
             hcnt_2x <= 0;
             hcnt_2x_opt <= H_OPT_SAMPLE_SEL;
             hcnt_2x_opt_ctr <= 0;

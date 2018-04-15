@@ -187,13 +187,13 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 5;
-                    cm.hsync_cut = 120;
+                    cm.hsync_cut = 24;
                     break;
                 case MODE_L5_256_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 6;
-                    cm.hsync_cut = 120;
+                    cm.hsync_cut = 20;
                     break;
                 default:
                     printf("WARNING: invalid target_lm\n");
