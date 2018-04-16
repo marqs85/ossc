@@ -157,12 +157,16 @@ int parse_control()
             fpga_ilace = !!(fpga_status & (1<<11));
             sniprintf(menu_row1, LCD_ROW_LEN+1, "Prof.%u %9s", profile_sel, video_modes[cm.id].name);
             if (cm.sync_active) {
-                fpga_v_hz_x100 = (100*TVP_EXTCLK_HZ)/IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE);
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %3lu.%.2luHz", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
+                //fpga_v_hz_x100 = (100*TVP_EXTCLK_HZ)/IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE);
+                /*sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %3lu.%.2luHz", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
                                                                               fpga_ilace ? 'i' : 'p',
                                                                               ((fpga_status >> 16) & 0x3) ? '*' : ' ',
                                                                               fpga_v_hz_x100/100,
-                                                                              fpga_v_hz_x100%100);
+                                                                              fpga_v_hz_x100%100);*/
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %u", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
+                                                                     fpga_ilace ? 'i' : 'p',
+                                                                     ((fpga_status >> 16) & 0x3) ? '*' : ' ',
+                                                                     IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE));
             }
             lcd_write_menu();
             break;
