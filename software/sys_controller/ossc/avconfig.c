@@ -59,6 +59,7 @@ const avconfig_t tc_default = {
         .r_f_off = DEFAULT_FINE_OFFSET,
         .g_f_off = DEFAULT_FINE_OFFSET,
         .b_f_off = DEFAULT_FINE_OFFSET,
+        .c_gain = DEFAULT_COARSE_GAIN,
     },
     .link_av = AV_LAST,
 };

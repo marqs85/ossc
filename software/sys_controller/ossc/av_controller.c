@@ -339,7 +339,7 @@ status_t get_status(tvp_input_t input, video_format format)
         tvp_set_sync_lpf(tc.sync_lpf);
 
     if (memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
-        tvp_set_fine_gain_offset(&tc.col);
+        tvp_set_gain_offset(&tc.col);
 
 #ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||

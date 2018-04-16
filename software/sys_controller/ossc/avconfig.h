@@ -36,6 +36,7 @@
 #define SD_SYNC_WIN_MAX     255
 #define PLL_COAST_MAX       5
 #define REVERSE_LPF_MAX     31
+#define COARSE_GAIN_MAX     15
 
 #define SL_MODE_MAX         2
 #define SL_TYPE_MAX         2
