@@ -379,7 +379,7 @@ case (V_MULTMODE)
                 pclk_mux_sel = `PCLK_MUX_1X;     //special case: pclk bypass to enable 2x native sampling
                 linebuf_hoffset = hcnt_2x_opt;
                 col_id_act = {2'b00, hcnt_2x[1]};
-                rlpf_trigger_act = (hcnt_2x_opt_ctr == H_OPT_SCALE-1'b1);
+                rlpf_trigger_act = (hcnt_2x_opt_ctr == 0);
             end
         endcase
     end
