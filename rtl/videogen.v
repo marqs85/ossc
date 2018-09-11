@@ -30,21 +30,19 @@ module videogen (
     output reg HSYNC_out,
     output reg VSYNC_out,
     output PCLK_out,
-    output reg ENABLE_out
+    output reg ENABLE_out,
+    input [1:0] pat_id,
+    input [3:0] pat_speed,
+    input interlace,
+    input [8:0] H_BACKPORCH,
+    input [7:0] H_SYNCLEN,
+    input [10:0] H_ACTIVE,
+    input [11:0] H_TOTAL,
+    input [5:0] V_BACKPORCH,
+    input [2:0] V_SYNCLEN,
+    input [10:0] V_ACTIVE,
+    input [10:0] V_TOTAL
 );
-
-//Parameters for 720x480@59.94Hz (858px x 525lines, pclk 27MHz -> 59.94Hz)
-parameter   H_SYNCLEN       =   10'd62;
-parameter   H_BACKPORCH     =   10'd60;
-parameter   H_ACTIVE        =   10'd720;
-parameter   H_FRONTPORCH    =   10'd16;
-parameter   H_TOTAL         =   10'd858;
-
-parameter   V_SYNCLEN       =   10'd6;
-parameter   V_BACKPORCH     =   10'd30;
-parameter   V_ACTIVE        =   10'd480;
-parameter   V_FRONTPORCH    =   10'd9;
-parameter   V_TOTAL         =   10'd525;
 
 parameter   H_OVERSCAN      =   10'd40; //at both sides
 parameter   V_OVERSCAN      =   10'd16; //top and bottom
@@ -56,17 +54,18 @@ parameter   V_GRAYRAMP      =   10'd84;
 parameter   H_BORDER        =   ((H_AREA-H_GRADIENT)>>1);
 parameter   V_BORDER        =   ((V_AREA-V_GRADIENT)>>1);
 
-parameter   X_START     =   H_SYNCLEN + H_BACKPORCH;
-parameter   Y_START     =   V_SYNCLEN + V_BACKPORCH;
+wire [9:0] X_START = H_BACKPORCH + H_SYNCLEN;
+wire [6:0] Y_START = V_BACKPORCH + V_SYNCLEN;
 
 //Counters
-reg [9:0] h_cnt; //max. 1024
-reg [9:0] v_cnt; //max. 1024
-
-reg [9:0] xpos;
-reg [9:0] ypos;
+reg [11:0] h_cnt;
+reg [10:0] v_cnt;
+reg [10:0] x_offset;
+reg [10:0] y_pos;
+reg fid, frame_id;
 
 assign PCLK_out = clk27;
+wire [11:0] x_pat = h_cnt-x_offset;
 
 //R, G and B should be 0 outside of active area
 assign R_out = ENABLE_out ? V_gen : 8'h00;
@@ -99,18 +98,54 @@ always @(posedge clk27 or negedge reset_n)
 begin
     if (!reset_n) begin
         v_cnt <= 0;
+        y_pos <= 0;
         VSYNC_out <= 0;
     end else begin
         //Vsync counter
-        if (h_cnt == H_TOTAL-1) begin
-            if (v_cnt < V_TOTAL-1)
-                v_cnt <= v_cnt + 1'b1;
-            else
+        if (!interlace) begin
+            if (h_cnt == H_TOTAL-1) begin
+                if (v_cnt < V_TOTAL-1) begin
+                    v_cnt <= v_cnt + 1'b1;
+                    if (v_cnt >= Y_START) begin
+                        if (pat_id == 2)
+                            y_pos <= y_pos + v_cnt[0];
+                        else
+                            y_pos <= y_pos + 1'b1;
+                    end
+                end else begin
+                    v_cnt <= 0;
+                    x_offset <= (x_offset < H_ACTIVE) ? (x_offset + pat_speed + 1'b1) : 0;
+                    frame_id <= frame_id ^ 1;
+                    if (pat_id == 1)
+                        y_pos <= frame_id;
+                    else
+                        y_pos <= 0;
+                end
+            end
+            
+            //Vsync signal
+            VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
+        end else begin
+            if ((fid==1'b0) && (v_cnt==(V_TOTAL>>1)) && (h_cnt==(H_TOTAL>>1)-1)) begin // odd field end
+                v_cnt <= 11'h7ff;
+                y_pos <= 1;
+                fid <= fid ^ 1'b1;
+            end else if (((fid==1'b1) && (v_cnt==(V_TOTAL>>1)-1) && (h_cnt == H_TOTAL-1))) begin // even field end
                 v_cnt <= 0;
-        end
-
-        //Vsync signal
-        VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
+                y_pos <= 0;
+                fid <= fid ^ 1'b1;
+            end else if (h_cnt == H_TOTAL-1) begin
+                v_cnt <= v_cnt + 1'b1;
+                if (v_cnt >= Y_START)
+                    y_pos <= y_pos + 2;
+            end
+            
+            //Vsync signal
+            if (fid==1'b0)
+                VSYNC_out <= (v_cnt < V_SYNCLEN) ? 1'b0 : 1'b1;
+            else
+                VSYNC_out <= ((v_cnt+1'b1 < V_SYNCLEN) | ((v_cnt+1'b1==V_SYNCLEN) & (h_cnt < (H_TOTAL>>1)))) ? 1'b0 : 1'b1;
+            end
     end
 end
 
@@ -137,14 +172,18 @@ begin
                 end
             endcase
         end else begin
-            if ((h_cnt < X_START+H_OVERSCAN) || (h_cnt >= X_START+H_OVERSCAN+H_AREA) || (v_cnt < Y_START+V_OVERSCAN) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA))
-                V_gen <= (h_cnt[0] ^ v_cnt[0]) ? 8'hff : 8'h00;
-            else if ((h_cnt < X_START+H_OVERSCAN+H_BORDER) || (h_cnt >= X_START+H_OVERSCAN+H_AREA-H_BORDER) || (v_cnt < Y_START+V_OVERSCAN+V_BORDER) || (v_cnt >= Y_START+V_OVERSCAN+V_AREA-V_BORDER))
-                V_gen <= 8'h50;
-            else if (v_cnt >= Y_START+V_OVERSCAN+V_BORDER+V_GRADIENT-V_GRAYRAMP)
-                V_gen <= (((h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 4) << 3) + (h_cnt - (X_START+H_OVERSCAN+H_BORDER) >> 6);
-            else
-                V_gen <= (h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 1;
+            if (pat_id < 3) begin
+                if ((h_cnt < X_START+H_OVERSCAN) || (h_cnt >= X_START+H_OVERSCAN+H_AREA) || (y_pos < V_OVERSCAN) || (y_pos >= V_OVERSCAN+V_AREA))
+                    V_gen <= (h_cnt[0] ^ y_pos[0]) ? 8'hff : 8'h00;
+                else if ((h_cnt < X_START+H_OVERSCAN+H_BORDER) || (h_cnt >= X_START+H_OVERSCAN+H_AREA-H_BORDER) || (y_pos < V_OVERSCAN+V_BORDER) || (y_pos >= V_OVERSCAN+V_AREA-V_BORDER))
+                    V_gen <= 8'h50;
+                else if (y_pos >= V_OVERSCAN+V_BORDER+V_GRADIENT-V_GRAYRAMP)
+                    V_gen <= (((h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 4) << 3) + (h_cnt - (X_START+H_OVERSCAN+H_BORDER) >> 6);
+                else
+                    V_gen <= (h_cnt - (X_START+H_OVERSCAN+H_BORDER)) >> 1;
+            end else begin
+                V_gen <= ((h_cnt >= (X_START+x_offset)) && (h_cnt < (X_START+x_offset+(H_ACTIVE/(`LT_WIDTH_DIV)))) && (y_pos >= ((V_ACTIVE/2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2)))) && (y_pos < ((V_ACTIVE/2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2))))) ? {8{x_pat[3]^y_pos[3]}} : 8'h00;
+            end
         end
 
         ENABLE_out <= (h_cnt >= X_START && h_cnt < X_START + H_ACTIVE && v_cnt >= Y_START && v_cnt < Y_START + V_ACTIVE);

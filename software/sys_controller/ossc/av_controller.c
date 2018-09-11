@@ -55,6 +55,7 @@ alt_u16 sys_ctrl;
 avmode_t cm;
 
 extern mode_data_t video_modes[];
+extern const mode_data_t video_modes_vgen[];
 extern ypbpr_to_rgb_csc_t csc_coeffs[];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern alt_u16 rc_keymap_default[REMOTE_MAX_KEYS];
@@ -478,6 +479,40 @@ void set_videoinfo()
                                              cm.cc.sl_str);
 }
 
+void set_videoinfo_vg()
+{
+    int pll_sel;
+
+    switch (video_modes_vgen[cm.cc.vgen_mode].type) {
+        case VIDEO_SDTV:
+            pll_sel = 1;
+            break;
+        case VIDEO_HDTV:
+            pll_sel = 2;
+            break;
+        case VIDEO_PC:
+            pll_sel = 3;
+            break;
+        case VIDEO_EDTV:
+        default:
+            pll_sel = 0;
+            break;
+    }
+
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, ((video_modes_vgen[cm.cc.vgen_mode].h_synclen)<<20) |
+                                            ((video_modes_vgen[cm.cc.vgen_mode].h_backporch)<<11) |
+                                            video_modes_vgen[cm.cc.vgen_mode].h_active);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_4_BASE, video_modes_vgen[cm.cc.vgen_mode].h_total);
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, ((video_modes_vgen[cm.cc.vgen_mode].v_total)<<20) |
+                                            ((video_modes_vgen[cm.cc.vgen_mode].v_synclen)<<17) |
+                                            ((video_modes_vgen[cm.cc.vgen_mode].v_backporch)<<11) |
+                                            (video_modes_vgen[cm.cc.vgen_mode].v_active));
+    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, ((video_modes_vgen[cm.cc.vgen_mode].group)<<30) |
+                                            ((!!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED))<<29) |
+                                            (pll_sel<<4) |
+                                            cm.cc.vgen_spd);
+}
+
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
@@ -784,6 +819,7 @@ int main()
     status_t status;
 
     alt_u32 input_vec;
+    alt_u8 tx_pixelrep, hdmitx_pixr_ifr;
 
     int init_stat, man_input_change;
 
@@ -805,6 +841,8 @@ int main()
         lcd_write_status();
         while (1) {}
     }
+
+    set_videoinfo_vg();
 
     // Mainloop
     while(1) {
@@ -912,6 +950,26 @@ int main()
             printf("setting ITC to %d\n", tc.hdmi_itc);
             HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
+        }
+
+        if ((tc.vgen_mode != cm.cc.vgen_mode) || (tc.vgen_spd != cm.cc.vgen_spd)) {
+            cm.cc.vgen_mode = tc.vgen_mode;
+            cm.cc.vgen_spd = tc.vgen_spd;
+            set_videoinfo_vg();
+            /*if (cm.hdmitx_pixr_ifr != !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED)) {
+                cm.hdmitx_pixr_ifr = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED);
+                TX_SetPixelRepetition(TX_PIXELREP_DISABLE, 0);
+                HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            }*/
+            tx_pixelrep = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED) | (video_modes_vgen[cm.cc.vgen_mode].type == VIDEO_HDTV);
+            hdmitx_pixr_ifr = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED);
+            if (cm.tx_pixelrep != tx_pixelrep) {
+                cm.tx_pixelrep = tx_pixelrep;
+                cm.hdmitx_pixr_ifr = hdmitx_pixr_ifr;
+                TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode==TX_HDMI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
+                if (cm.cc.tx_mode==TX_HDMI)
+                    HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            }
         }
 
         if (cm.avinput != AV_TESTPAT) {

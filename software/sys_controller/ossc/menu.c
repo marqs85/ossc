@@ -38,6 +38,7 @@
 extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern avconfig_t tc;
 extern mode_data_t video_modes[];
+extern const mode_data_t video_modes_vgen[];
 extern alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
@@ -81,6 +82,7 @@ static void aud_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB",
 static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes[v].name, LCD_ROW_LEN+1); }
 static void link_av_desc (avinput_t v) { strncpy(menu_row2, v == AV_LAST ? "No link" : avinput_str[v], LCD_ROW_LEN+1); }
 //static void coarse_gain_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%u", ((v*10)+50)/100, (((v*10)+50)%100)/10); }
+static void vgen_mode_disp (alt_u8 v) { strncpy(menu_row2, video_modes_vgen[v].name, LCD_ROW_LEN+1); }
 
 static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
 static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, value_disp};
@@ -128,6 +130,8 @@ MENU(menu_sync, P99_PROTECT({ \
 }))
 
 MENU(menu_output, P99_PROTECT({ \
+    { "Testpattern mode",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.vgen_mode,       OPT_WRAP, 0, VIDEO_MODES_VGEN_CNT-1, vgen_mode_disp } } },
+    { "Testpattern spd.",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.vgen_spd,       OPT_WRAP, 0, 15, value_disp } } },
     { LNG("240p/288p proc","240p/288pｼｮﾘ"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_240p,         OPT_WRAP, SETTING_ITEM(pm_240p_desc) } } },
     { LNG("384p proc","384pｼｮﾘ"),               OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_384p,         OPT_WRAP, SETTING_ITEM(pm_384p_480p_desc) } } },
     { LNG("480i/576i proc","480i/576iｼｮﾘ"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.pm_480i,         OPT_WRAP, SETTING_ITEM(pm_480i_desc) } } },

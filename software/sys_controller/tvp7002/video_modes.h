@@ -146,6 +146,22 @@ typedef struct {
 #define VIDEO_MODES_SIZE (sizeof((mode_data_t[])VIDEO_MODES_DEF))
 #define VIDEO_MODES_CNT (sizeof((mode_data_t[])VIDEO_MODES_DEF)/sizeof(mode_data_t))
 
+
+#define VIDEO_MODES_VGEN { \
+    { "480p STD",        720,  480,   858,  525,   60, 30,   62, 6,  (VIDEO_EDTV),   0,     0 },                                                                                  \
+    { "576p STD",        720,  576,   864,  625,   68, 39,   64, 5,  (VIDEO_EDTV),   0,     0 },                                                                                  \
+    { "480i STD",       720,  240,   858,  525,   57, 15,   62, 3,  (VIDEO_SDTV),   0,    MODE_INTERLACED },                                                                    \
+    { "576i STD",       720,  288,   864,  625,   69, 19,   63, 3,  (VIDEO_SDTV),   0,    MODE_INTERLACED },                                                                    \
+    { "480p Bob",        720,  480,   858,  525,   60, 30,   62, 6,  (VIDEO_EDTV),   1,     0 },                                                                                  \
+    { "480p 59.5",      720,  480,   858,  529,   60, 30,   62, 6,  (VIDEO_EDTV),   3,     0 },                                                                                   \
+    { "480p 60.5",      720,  480,   858,  520,   60, 30,   62, 6,  (VIDEO_EDTV),   3,     0 },                                                                                   \
+    { "480p 55.0",      720,  480,   858,  572,   60, 30,   62, 6,  (VIDEO_EDTV),   3,     0 },                                                                                   \
+    { "400p 70.0",     640,  400,   800,  449,   48, 36,   96, 2,   VIDEO_PC,       3,     0 },                                                                                    \
+    { "960p",          720,  2*480,   858,  2*525,   60, 2*30,   62, 2*6,  VIDEO_HDTV,   2,     0 },                                                                                  \
+}
+
+#define VIDEO_MODES_VGEN_CNT (sizeof((mode_data_t[])VIDEO_MODES_VGEN)/sizeof(mode_data_t))
+
 alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask);
 
 #endif /* VIDEO_MODES_H_ */

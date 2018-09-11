@@ -302,8 +302,28 @@ lat_tester lt0 (
 );
 
 `ifdef VIDEOGEN
+wire pclk_vgen, clk13p5, clk54, clk24p2;
+
+pll_vgen pll_vgen_inst (
+    .inclk0 ( clk27 ),
+    .c0 ( clk13p5 ),
+    .c1 ( clk54 ),
+    .c2 ( clk24p2 ),
+    .locked ()
+);
+
+mux5 mux5_inst (
+    .data0 ( clk27 ),
+    .data1 ( clk13p5 ),
+    .data2 ( clk54 ),
+    .data3 ( clk24p2 ),
+    .data4 ( 1'b0 ),
+    .sel ( {1'b0, extra_info[5:4]} ),
+    .result ( pclk_vgen )
+);
+
 videogen vg0 (
-    .clk27          (clk27),
+    .clk27          (pclk_vgen),
     .reset_n        (cpu_reset_n & videogen_sel),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
@@ -313,7 +333,18 @@ videogen vg0 (
     .HSYNC_out      (HSYNC_out_videogen),
     .VSYNC_out      (VSYNC_out_videogen),
     .PCLK_out       (PCLK_out_videogen),
-    .ENABLE_out     (DE_out_videogen)
+    .ENABLE_out     (DE_out_videogen),
+    .pat_id         (extra_info[31:30]),
+    .pat_speed      (extra_info[3:0]),
+    .interlace      (extra_info[29]),
+    .H_BACKPORCH    (h_info[19:11]),
+    .H_SYNCLEN      (h_info[27:20]),
+    .H_ACTIVE       (h_info[10:0]),
+    .H_TOTAL        (h_info2[11:0]),
+    .V_BACKPORCH    (v_info[16:11]),
+    .V_SYNCLEN      (v_info[19:17]),
+    .V_ACTIVE       (v_info[10:0]),
+    .V_TOTAL        (v_info[30:20])
 );
 `endif
 

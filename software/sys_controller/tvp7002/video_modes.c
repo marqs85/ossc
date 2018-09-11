@@ -30,6 +30,8 @@ extern avmode_t cm;
 const mode_data_t video_modes_default[] = VIDEO_MODES_DEF;
 mode_data_t video_modes[VIDEO_MODES_CNT];
 
+const mode_data_t video_modes_vgen[] = VIDEO_MODES_VGEN;
+
 /* TODO: rewrite, check hz etc. */
 alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask)
 {

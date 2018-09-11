@@ -47,6 +47,7 @@ const avconfig_t tc_default = {
     .sync_lpf = DEFAULT_SYNC_LPF,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
+    .vgen_spd = 7,
 #ifdef ENABLE_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
     .tx_mode = TX_HDMI,
