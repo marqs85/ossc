@@ -95,7 +95,7 @@ int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmp
         if (retval != 0)
             return retval;
 
-        crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
+        //crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
     }
 
     if (crcval != golden_crc)

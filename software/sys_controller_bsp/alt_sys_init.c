@@ -49,7 +49,7 @@
  */
 
 #include "system.h"
-#include "sys/alt_irq.h"
+//#include "sys/alt_irq.h"
 #include "sys/alt_sys_init.h"
 
 #include <stddef.h>
@@ -58,7 +58,7 @@
  * Device headers
  */
 
-#include "altera_nios2_gen2_irq.h"
+//#include "altera_nios2_gen2_irq.h"
 #include "altera_avalon_jtag_uart.h"
 #include "altera_avalon_timer.h"
 #include "altera_epcq_controller_mod.h"
@@ -68,7 +68,7 @@
  * Allocate the device storage
  */
 
-ALTERA_NIOS2_GEN2_IRQ_INSTANCE ( NIOS2_QSYS_0, nios2_qsys_0);
+//ALTERA_NIOS2_GEN2_IRQ_INSTANCE ( NIOS2_QSYS_0, nios2_qsys_0);
 ALTERA_AVALON_JTAG_UART_INSTANCE ( JTAG_UART_0, jtag_uart_0);
 ALTERA_AVALON_TIMER_INSTANCE ( TIMER_0, timer_0);
 ALTERA_EPCQ_CONTROLLER_MOD_AVL_MEM_AVL_CSR_INSTANCE ( EPCQ_CONTROLLER_0, EPCQ_CONTROLLER_0_AVL_MEM, EPCQ_CONTROLLER_0_AVL_CSR, epcq_controller_0);
@@ -83,11 +83,11 @@ I2C_OPENCORES_INSTANCE ( I2C_OPENCORES_1, i2c_opencores_1);
  * present for backwards-compatibility.
  */
 
-void alt_irq_init ( const void* base )
+/*void alt_irq_init ( const void* base )
 {
     ALTERA_NIOS2_GEN2_IRQ_INIT ( NIOS2_QSYS_0, nios2_qsys_0);
     alt_irq_cpu_enable_interrupts();
-}
+}*/
 
 /*
  * Initialize the non-interrupt controller devices.

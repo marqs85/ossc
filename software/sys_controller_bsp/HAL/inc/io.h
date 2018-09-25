@@ -51,18 +51,18 @@ extern "C"
   ((void *)(((alt_u8*)BASE) + (OFFSET)))
 
 #define IORD_32DIRECT(BASE, OFFSET) \
-  __builtin_ldwio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)))
+  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
 #define IORD_16DIRECT(BASE, OFFSET) \
-  __builtin_ldhuio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)))
+  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
 #define IORD_8DIRECT(BASE, OFFSET) \
-  __builtin_ldbuio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)))
+  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
 
 #define IOWR_32DIRECT(BASE, OFFSET, DATA) \
-  __builtin_stwio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)), (DATA))
+  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
 #define IOWR_16DIRECT(BASE, OFFSET, DATA) \
-  __builtin_sthio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)), (DATA))
+  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
 #define IOWR_8DIRECT(BASE, OFFSET, DATA) \
-  __builtin_stbio (__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET)), (DATA))
+  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
 
 /* Native bus access functions */
 
@@ -70,9 +70,9 @@ extern "C"
   ((void *)(((alt_u8*)BASE) + ((REGNUM) * (SYSTEM_BUS_WIDTH/8))))
 
 #define IORD(BASE, REGNUM) \
-  __builtin_ldwio (__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM)))
+  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))))
 #define IOWR(BASE, REGNUM, DATA) \
-  __builtin_stwio (__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM)), (DATA))
+  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))) = (DATA))
 
 #ifdef __cplusplus
 }

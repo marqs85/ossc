@@ -19,7 +19,7 @@
 
 
 # Path to the provided linker script.
-BSP_LINKER_SCRIPT := $(ALT_LIBRARY_ROOT_DIR)/linker.x
+BSP_LINKER_SCRIPT := link.riscv.ld
 
 # Include paths:
 # The path to root of all header files that a library wishes to make
@@ -119,15 +119,15 @@ ELF_PATCH_FLAG  += --cpu_name $(CPU_NAME)
 
 # Hardware Divider present. 
 # setting HARDWARE_DIVIDE is false
-ALT_CFLAGS += -mno-hw-div
+#ALT_CFLAGS += -mno-hw-div
 
 # Hardware Multiplier present. 
 # setting HARDWARE_MULTIPLY is false
-ALT_CFLAGS += -mno-hw-mul
+#ALT_CFLAGS += -mno-hw-mul
 
 # Hardware Mulx present. 
 # setting HARDWARE_MULX is false
-ALT_CFLAGS += -mno-hw-mulx
+#ALT_CFLAGS += -mno-hw-mulx
 
 # Debug Core present. 
 # setting HAS_DEBUG_CORE is true
@@ -258,7 +258,8 @@ ALT_CPPFLAGS += -DSMALL_C_LIB
 # generate GP-relative accesses for small data objects that are external, weak, 
 # or common. none 
 # setting hal.make.cflags_mgpopt is -mgpopt=global
-ALT_CFLAGS += -mgpopt=global
+#ALT_CFLAGS += -mgpopt=global
+ALT_CFLAGS += -march=rv32imc -mabi=ilp32
 
 # Enable BSP generation to query if SOPC system is big endian. If true ignores 
 # export of 'ALT_CFLAGS += -meb' to public.mk if big endian system. none 

@@ -112,10 +112,10 @@ SOPC_FILE := ../../sys.sopcinfo
 #-------------------------------------------------------------------------------
 
 # Archiver command. Creates library files. 
-AR = nios2-elf-ar
+AR = riscv64-unknown-elf-ar
 
 # Assembler command. Note that CC is used for .S files. 
-AS = nios2-elf-gcc
+AS = riscv64-unknown-elf-gcc
 
 # Custom flags only passed to the archiver. This content of this variable is 
 # directly passed to the archiver rather than the more standard "ARFLAGS". The 
@@ -139,10 +139,10 @@ BSP_CFLAGS_OPTIMIZATION = -Os
 BSP_CFLAGS_WARNINGS = -Wall
 
 # C compiler command. 
-CC = nios2-elf-gcc -xc
+CC = riscv64-unknown-elf-gcc -xc
 
 # C++ compiler command. 
-CXX = nios2-elf-gcc -xc++
+CXX = riscv64-unknown-elf-gcc -xc++
 
 # Command used to remove files during 'clean' target. 
 RM = rm -f
@@ -222,7 +222,6 @@ altera_avalon_timer_driver_SRCS_ROOT := drivers
 
 # altera_avalon_timer_driver sources 
 altera_avalon_timer_driver_C_LIB_SRCS := \
-	$(altera_avalon_timer_driver_SRCS_ROOT)/src/altera_avalon_timer_sc.c \
 	$(altera_avalon_timer_driver_SRCS_ROOT)/src/altera_avalon_timer_ts.c \
 	$(altera_avalon_timer_driver_SRCS_ROOT)/src/altera_avalon_timer_vars.c
 
@@ -238,96 +237,25 @@ altera_nios2_gen2_hal_driver_SRCS_ROOT := HAL
 
 # altera_nios2_gen2_hal_driver sources 
 altera_nios2_gen2_hal_driver_C_LIB_SRCS := \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/altera_nios2_gen2_irq.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_usleep.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_busy_sleep.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_irq_vars.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_icache_flush.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_icache_flush_all.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_dcache_flush.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_dcache_flush_all.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_dcache_flush_no_writeback.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_ecc_fatal_exception.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_instruction_exception_entry.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_irq_register.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_iic.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_remap_cached.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_remap_uncached.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_uncached_free.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_uncached_malloc.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_do_ctors.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_do_dtors.c \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_gmon.c
-
-altera_nios2_gen2_hal_driver_ASM_LIB_SRCS := \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_ecc_fatal_entry.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_exception_entry.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_exception_trap.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_exception_muldiv.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_irq_entry.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_software_exception.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_mcount.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_log_macro.S \
-	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/crt0.S
+	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_do_dtors.c
 
 # hal sources root 
 hal_SRCS_ROOT := HAL
 
 # hal sources 
 hal_C_LIB_SRCS := \
-	$(hal_SRCS_ROOT)/src/alt_alarm_start.c \
-	$(hal_SRCS_ROOT)/src/alt_close.c \
-	$(hal_SRCS_ROOT)/src/alt_dev.c \
 	$(hal_SRCS_ROOT)/src/alt_dev_llist_insert.c \
-	$(hal_SRCS_ROOT)/src/alt_dma_rxchan_open.c \
-	$(hal_SRCS_ROOT)/src/alt_dma_txchan_open.c \
-	$(hal_SRCS_ROOT)/src/alt_environ.c \
-	$(hal_SRCS_ROOT)/src/alt_env_lock.c \
 	$(hal_SRCS_ROOT)/src/alt_errno.c \
-	$(hal_SRCS_ROOT)/src/alt_execve.c \
-	$(hal_SRCS_ROOT)/src/alt_exit.c \
-	$(hal_SRCS_ROOT)/src/alt_fcntl.c \
-	$(hal_SRCS_ROOT)/src/alt_fd_lock.c \
-	$(hal_SRCS_ROOT)/src/alt_fd_unlock.c \
-	$(hal_SRCS_ROOT)/src/alt_find_dev.c \
-	$(hal_SRCS_ROOT)/src/alt_find_file.c \
 	$(hal_SRCS_ROOT)/src/alt_flash_dev.c \
-	$(hal_SRCS_ROOT)/src/alt_fork.c \
-	$(hal_SRCS_ROOT)/src/alt_fs_reg.c \
-	$(hal_SRCS_ROOT)/src/alt_fstat.c \
-	$(hal_SRCS_ROOT)/src/alt_get_fd.c \
-	$(hal_SRCS_ROOT)/src/alt_getchar.c \
-	$(hal_SRCS_ROOT)/src/alt_getpid.c \
-	$(hal_SRCS_ROOT)/src/alt_gettod.c \
-	$(hal_SRCS_ROOT)/src/alt_iic_isr_register.c \
-	$(hal_SRCS_ROOT)/src/alt_instruction_exception_register.c \
-	$(hal_SRCS_ROOT)/src/alt_ioctl.c \
-	$(hal_SRCS_ROOT)/src/alt_io_redirect.c \
-	$(hal_SRCS_ROOT)/src/alt_irq_handler.c \
-	$(hal_SRCS_ROOT)/src/alt_isatty.c \
-	$(hal_SRCS_ROOT)/src/alt_kill.c \
-	$(hal_SRCS_ROOT)/src/alt_link.c \
-	$(hal_SRCS_ROOT)/src/alt_load.c \
-	$(hal_SRCS_ROOT)/src/alt_log_printf.c \
-	$(hal_SRCS_ROOT)/src/alt_lseek.c \
-	$(hal_SRCS_ROOT)/src/alt_main.c \
-	$(hal_SRCS_ROOT)/src/alt_malloc_lock.c \
-	$(hal_SRCS_ROOT)/src/alt_open.c \
-	$(hal_SRCS_ROOT)/src/alt_printf.c \
-	$(hal_SRCS_ROOT)/src/alt_putchar.c \
-	$(hal_SRCS_ROOT)/src/alt_putcharbuf.c \
-	$(hal_SRCS_ROOT)/src/alt_putstr.c \
-	$(hal_SRCS_ROOT)/src/alt_read.c \
-	$(hal_SRCS_ROOT)/src/alt_release_fd.c \
-	$(hal_SRCS_ROOT)/src/alt_rename.c \
-	$(hal_SRCS_ROOT)/src/alt_sbrk.c \
-	$(hal_SRCS_ROOT)/src/alt_settod.c \
-	$(hal_SRCS_ROOT)/src/alt_stat.c \
-	$(hal_SRCS_ROOT)/src/alt_tick.c \
-	$(hal_SRCS_ROOT)/src/alt_times.c \
-	$(hal_SRCS_ROOT)/src/alt_unlink.c \
-	$(hal_SRCS_ROOT)/src/alt_wait.c \
-	$(hal_SRCS_ROOT)/src/alt_write.c
 
 # i2c_opencores_driver sources root 
 i2c_opencores_driver_SRCS_ROOT := drivers
@@ -338,11 +266,6 @@ i2c_opencores_driver_C_LIB_SRCS := \
 
 # nios2_hw_crc32_driver sources root 
 nios2_hw_crc32_driver_SRCS_ROOT := drivers
-
-# nios2_hw_crc32_driver sources 
-nios2_hw_crc32_driver_C_LIB_SRCS := \
-	$(nios2_hw_crc32_driver_SRCS_ROOT)/src/ci_crc.c \
-	$(nios2_hw_crc32_driver_SRCS_ROOT)/src/crc.c
 
 
 # Assemble all component C source files 
@@ -444,8 +367,7 @@ GENERATED_H_FILES := $(ABS_BSP_ROOT)/system.h
 
 GENERATED_LINKER_SCRIPT := $(ABS_BSP_ROOT)/linker.x
 
-GENERATED_FILES += $(GENERATED_H_FILES) \
-                   $(GENERATED_LINKER_SCRIPT)
+GENERATED_FILES += $(GENERATED_H_FILES)
 
 
 #------------------------------------------------------------------------------

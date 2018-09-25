@@ -17,7 +17,7 @@ ALT_LIBRARY_NAMES :=
 # List of library names for -msys-lib linker option (-msys-lib added when used).
 # These are libraries that might be located in the BSP and depend on the BSP
 # library, or vice versa
-ALT_BSP_DEP_LIBRARY_NAMES :=
+ALT_BSP_DEP_LIBRARY_NAMES := libhal_bsp.a
 
 # List of dependencies for the linker.  This is usually the full pathname
 # of each library (*.a) file.
@@ -168,7 +168,7 @@ C_SRCS += ossc/userdata.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
-ASM_SRCS :=
+ASM_SRCS := crt0.boot.S
 
 
 # Path to root of object file tree.
@@ -344,12 +344,12 @@ ifneq ($(AVOID_NIOS2_GCC3_OPTIONS),)
 # Detect if small newlib C library is requested.
 # If yes, remove the -msmallc option because it is
 # now handled by other means.
-ifneq ($(filter -msmallc,$(ALT_LDFLAGS)),)
-	ALT_LDFLAGS := $(filter-out -msmallc,$(ALT_LDFLAGS))
-	ALT_C_LIBRARY := smallc
-else
-	ALT_C_LIBRARY := c
-endif
+#ifneq ($(filter -msmallc,$(ALT_LDFLAGS)),)
+	#ALT_LDFLAGS := $(filter-out -msmallc,$(ALT_LDFLAGS))
+	#ALT_C_LIBRARY := smallc
+#else
+	#ALT_C_LIBRARY := c
+#endif
 
 # Put each BSP dependent library in a group to avoid circular dependencies.
 APP_BSP_DEP_LIBS := $(foreach l,$(ALT_BSP_DEP_LIBRARY_NAMES),-Wl,--start-group -l$(ALT_C_LIBRARY) -lgcc -l$(l) -Wl,--end-group)
@@ -359,7 +359,8 @@ else # !AVOID_NIOS2_GCC3_OPTIONS
 #
 # Use Nios II GCC 3.X options.
 #
-APP_BSP_DEP_LIBS := $(addprefix -msys-lib=, $(ALT_BSP_DEP_LIBRARY_NAMES))
+#APP_BSP_DEP_LIBS := $(addprefix -msys-lib=, $(ALT_BSP_DEP_LIBRARY_NAMES))
+APP_BSP_DEP_LIBS := $(addprefix -l:, $(ALT_BSP_DEP_LIBRARY_NAMES))
 
 endif # !AVOID_NIOS2_GCC3_OPTIONS
 
@@ -389,7 +390,7 @@ APP_ASFLAGS := $(APP_ASM_INC_DIRS) \
                $(ASFLAGS)
 
 # Arguments only for the linker.
-APP_LDFLAGS := $(APP_LDFLAGS_USER)
+APP_LDFLAGS := $(APP_LDFLAGS_USER) --specs=nano.specs -nostartfiles
 
 ifneq ($(LINKER_SCRIPT),)
 APP_LDFLAGS += -T'$(LINKER_SCRIPT)'
@@ -410,17 +411,16 @@ else # !AVOID_NIOS2_GCC3_OPTIONS
 
 # Use Nios II GCC 3.x options.
 ifneq ($(CRT0),)
-APP_LDFLAGS += -msys-crt0='$(CRT0)'
+#APP_LDFLAGS += -msys-crt0='$(CRT0)'
 endif
 ifneq ($(SYS_LIB),)
-APP_LDFLAGS += -msys-lib=$(SYS_LIB)
+#APP_LDFLAGS += -msys-lib=$(SYS_LIB)
 endif
 
 endif # !AVOID_NIOS2_GCC3_OPTIONS
 
 APP_LDFLAGS += \
            $(APP_LIB_DIRS) \
-           $(ALT_LDFLAGS) \
            $(LDFLAGS)
 
 LINKER_MAP_NAME := $(APP_NAME).map
@@ -651,23 +651,24 @@ build_post_process :
 # included makefile fragment.
 #
 ifeq ($(DEFAULT_CROSS_COMPILE),)
-DEFAULT_CROSS_COMPILE := nios2-elf-
+DEFAULT_CROSS_COMPILE := riscv64-unknown-elf-
 endif
 
 ifeq ($(DEFAULT_STACKREPORT),)
-DEFAULT_STACKREPORT := nios2-stackreport
+DEFAULT_STACKREPORT := riscv64-unknown-elf-size
 endif
 
 ifeq ($(DEFAULT_DOWNLOAD),)
-DEFAULT_DOWNLOAD := nios2-download
+DEFAULT_DOWNLOAD := anios2-download
 endif
 
 ifeq ($(DEFAULT_FLASHPROG),)
-DEFAULT_FLASHPROG := nios2-flash-programmer
+DEFAULT_FLASHPROG := anios2-flash-programmer
 endif
 
+DISABLE_ELFPATCH 		:= 1
 ifeq ($(DEFAULT_ELFPATCH),)
-DEFAULT_ELFPATCH := nios2-elf-insert
+DEFAULT_ELFPATCH := anios2-elf-insert
 endif
 
 ifeq ($(DEFAULT_RM),)
@@ -732,7 +733,7 @@ OBJCOPY := $(CROSS_COMPILE)objcopy
 endif
 
 ifeq ($(STACKREPORT),)
-STACKREPORT := $(DEFAULT_STACKREPORT) --prefix $(CROSS_COMPILE)
+STACKREPORT := $(DEFAULT_STACKREPORT)
 else
 DISABLE_STACKREPORT := 1
 endif

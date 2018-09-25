@@ -60,7 +60,7 @@ static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
     if (hdr->hdr_len < 26 || hdr->hdr_len > 508)
         return FW_HDR_ERROR;
 
-    crcval = crcCI(databuf, hdr->hdr_len, 1);
+    //crcval = crcCI(databuf, hdr->hdr_len, 1);
 
     if (crcval != hdr->hdr_crc)
         return FW_HDR_CRC_ERROR;
@@ -81,7 +81,7 @@ static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_
         if (retval != SD_OK)
             return retval;
 
-        crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
+        //crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
     }
 
     if (crcval != golden_crc)
