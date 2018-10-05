@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Sep 25, 2018 9:18:49 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1537899529022</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>Oct 5, 2018 8:21:01 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1538758741996</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>./</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>../../sys.sopcinfo</SopcDesignFile>
@@ -899,100 +899,100 @@
                 <Group xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
         </Setting>
         <MemoryMap>
-                <slaveDescriptor>epcq_controller_0_avl_mem</slaveDescriptor>
-                <addressRange>0x00000000 - 0x007FFFFF</addressRange>
-                <addressSpan>8388608</addressSpan>
-                <attributes>flash, memory, non-volatile</attributes>
-        </MemoryMap>
-        <MemoryMap>
                 <slaveDescriptor>onchip_memory2_0</slaveDescriptor>
-                <addressRange>0x00810000 - 0x00819FFF</addressRange>
+                <addressRange>0x00010000 - 0x00019FFF</addressRange>
                 <addressSpan>40960</addressSpan>
                 <attributes>memory</attributes>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>timer_0</slaveDescriptor>
-                <addressRange>0x00821000 - 0x0082101F</addressRange>
+                <addressRange>0x00020000 - 0x0002001F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes>timer</attributes>
         </MemoryMap>
         <MemoryMap>
+                <slaveDescriptor>jtag_uart_0</slaveDescriptor>
+                <addressRange>0x00020020 - 0x00020027</addressRange>
+                <addressSpan>8</addressSpan>
+                <attributes>printable</attributes>
+        </MemoryMap>
+        <MemoryMap>
                 <slaveDescriptor>epcq_controller_0_avl_csr</slaveDescriptor>
-                <addressRange>0x00821020 - 0x0082103F</addressRange>
+                <addressRange>0x00020100 - 0x0002011F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>i2c_opencores_1</slaveDescriptor>
-                <addressRange>0x00821040 - 0x0082105F</addressRange>
+                <addressRange>0x00021020 - 0x0002103F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>i2c_opencores_0</slaveDescriptor>
-                <addressRange>0x00821060 - 0x0082107F</addressRange>
+                <addressRange>0x00021040 - 0x0002105F</addressRange>
                 <addressSpan>32</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_8</slaveDescriptor>
-                <addressRange>0x00821080 - 0x0082108F</addressRange>
+                <addressRange>0x00021060 - 0x0002106F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_7</slaveDescriptor>
-                <addressRange>0x00821090 - 0x0082109F</addressRange>
+                <addressRange>0x00021070 - 0x0002107F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_6</slaveDescriptor>
-                <addressRange>0x008210A0 - 0x008210AF</addressRange>
+                <addressRange>0x00021080 - 0x0002108F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_5</slaveDescriptor>
-                <addressRange>0x008210B0 - 0x008210BF</addressRange>
+                <addressRange>0x00021090 - 0x0002109F</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_4</slaveDescriptor>
-                <addressRange>0x008210C0 - 0x008210CF</addressRange>
+                <addressRange>0x000210A0 - 0x000210AF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_3</slaveDescriptor>
-                <addressRange>0x008210D0 - 0x008210DF</addressRange>
+                <addressRange>0x000210B0 - 0x000210BF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_2</slaveDescriptor>
-                <addressRange>0x008210E0 - 0x008210EF</addressRange>
+                <addressRange>0x000210C0 - 0x000210CF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_1</slaveDescriptor>
-                <addressRange>0x008210F0 - 0x008210FF</addressRange>
+                <addressRange>0x000210D0 - 0x000210DF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
                 <slaveDescriptor>pio_0</slaveDescriptor>
-                <addressRange>0x00821100 - 0x0082110F</addressRange>
+                <addressRange>0x000210E0 - 0x000210EF</addressRange>
                 <addressSpan>16</addressSpan>
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>jtag_uart_0</slaveDescriptor>
-                <addressRange>0x00821110 - 0x00821117</addressRange>
-                <addressSpan>8</addressSpan>
-                <attributes>printable</attributes>
+                <slaveDescriptor>epcq_controller_0_avl_mem</slaveDescriptor>
+                <addressRange>0x00800000 - 0x00FFFFFF</addressRange>
+                <addressSpan>8388608</addressSpan>
+                <attributes>flash, memory, non-volatile</attributes>
         </MemoryMap>
         <LinkerSection>
                 <sectionName>.text</sectionName>

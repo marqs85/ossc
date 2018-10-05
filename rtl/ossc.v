@@ -83,6 +83,7 @@ wire DE_out_videogen;
 
 reg [7:0] cpu_reset_ctr = 0;
 reg cpu_reset_n = 1'b0;
+wire ext_reset_req;
 
 reg [7:0] R_in_L, G_in_L, B_in_L;
 reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
@@ -226,7 +227,12 @@ end
 
 sys sys_inst(
     .clk_clk                                (clk27),
-    .reset_reset_n                          (cpu_reset_n),
+    .reset_reset_n                          (cpu_reset_n & ~ext_reset_req),
+    .pulpino_0_config_testmode_i            (1'b0),
+    .pulpino_0_config_fetch_enable_i        (1'b1),
+    .pulpino_0_config_clock_gating_i        (1'b0),
+    .pulpino_0_config_boot_addr_i           (32'h00010000),
+    .master_0_master_reset_reset            (ext_reset_req),
     .i2c_opencores_0_export_scl_pad_io      (scl),
     .i2c_opencores_0_export_sda_pad_io      (sda),
     .i2c_opencores_0_export_spi_miso_pad_i  (1'b0),

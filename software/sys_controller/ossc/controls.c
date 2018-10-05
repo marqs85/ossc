@@ -163,7 +163,7 @@ int parse_control()
                                                                               ((fpga_status >> 16) & 0x3) ? '*' : ' ',
                                                                               fpga_v_hz_x100/100,
                                                                               fpga_v_hz_x100%100);*/
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %u", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %lu", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
                                                                      fpga_ilace ? 'i' : 'p',
                                                                      ((fpga_status >> 16) & 0x3) ? '*' : ' ',
                                                                      IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE));

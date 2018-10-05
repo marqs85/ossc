@@ -754,6 +754,8 @@ ifeq ($(MKDIR),)
 MKDIR := $(DEFAULT_MKDIR)
 endif
 
+RV_OBJCOPY = riscv64-unknown-elf-objcopy
+
 #------------------------------------------------------------------------------
 #                     PATTERN RULES TO BUILD OBJECTS
 #------------------------------------------------------------------------------
@@ -1127,5 +1129,16 @@ print-elf-name:
 ossc/menu_sjis.c: ossc/menu.c
 	iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c > ossc/menu_sjis.c
 
+mem_init/sys_onchip_memory2_0.hex: sys_controller.elf
+	$(RV_OBJCOPY) --change-addresses -0x10000 -O binary --gap-fill 0 $< mem_init/sys_onchip_memory2_0.bin
+	../../tools/bin2hex mem_init/sys_onchip_memory2_0.bin mem_init/sys_onchip_memory2_0.hex
+
+.PHONY: mem_init_generate_new
+mem_init_generate_new: mem_init/sys_onchip_memory2_0.hex
+
 .PHONY: generate_hex
-generate_hex: clean mem_init_generate
+generate_hex: clean mem_init_generate_new
+
+.PHONY: rv-reprogram
+rv-reprogram: mem_init_generate_new
+	system-console -cli --script ../../scripts/rv-reprogram.tcl

@@ -83,11 +83,11 @@ I2C_OPENCORES_INSTANCE ( I2C_OPENCORES_1, i2c_opencores_1);
  * present for backwards-compatibility.
  */
 
-/*void alt_irq_init ( const void* base )
+void alt_irq_init ( const void* base )
 {
-    ALTERA_NIOS2_GEN2_IRQ_INIT ( NIOS2_QSYS_0, nios2_qsys_0);
-    alt_irq_cpu_enable_interrupts();
-}*/
+    /*ALTERA_NIOS2_GEN2_IRQ_INIT ( NIOS2_QSYS_0, nios2_qsys_0);
+    alt_irq_cpu_enable_interrupts();*/
+}
 
 /*
  * Initialize the non-interrupt controller devices.

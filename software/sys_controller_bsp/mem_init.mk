@@ -161,7 +161,7 @@ ACDS_VERSION := 17.1
 SIM_OPTIMIZE ?= 0
 
 # The CPU reset address as needed by elf2flash
-RESET_ADDRESS ?= 0x00810000
+RESET_ADDRESS ?= 0x00010000
 
 # The specific Nios II ELF file format to use.
 NIOS2_ELF_FORMAT ?= elf32-littlenios2
@@ -175,8 +175,8 @@ MEM_0 := epcq_controller_0
 $(MEM_0)_NAME := epcq_controller_0
 HEX_FILES += $(MEM_INIT_DIR)/$(MEM_0).hex
 MEM_INIT_INSTALL_FILES += $(MEM_INIT_INSTALL_DIR)/$(MEM_0).hex
-$(MEM_0)_START := 0x00000000
-$(MEM_0)_END := 0x007fffff
+$(MEM_0)_START := 0x00800000
+$(MEM_0)_END := 0x00ffffff
 $(MEM_0)_SPAN := 0x00800000
 $(MEM_0)_HIERARCHICAL_PATH := epcq_controller_0
 $(MEM_0)_WIDTH := 32
@@ -198,9 +198,9 @@ DAT_FILES += $(HDL_SIM_DIR)/$(MEM_1).dat
 HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_1).dat
 SYM_FILES += $(HDL_SIM_DIR)/$(MEM_1).sym
 HDL_SIM_INSTALL_FILES += $(HDL_SIM_INSTALL_DIR)/$(MEM_1).sym
-$(MEM_1)_START := 0x00810000
-$(MEM_1)_END := 0x00819fff
-$(MEM_1)_SPAN := 0x0000a000
+$(MEM_1)_START := 0x00010000
+$(MEM_1)_END := 0x00018fff
+$(MEM_1)_SPAN := 0x00009000
 $(MEM_1)_HIERARCHICAL_PATH := onchip_memory2_0
 $(MEM_1)_WIDTH := 32
 $(MEM_1)_HEX_DATA_WIDTH := 32
@@ -304,10 +304,10 @@ ELF_TO_HEX_CMD = $(strip $(if $(flash_mem_boot_loader_flag), \
 	$(ELF_TO_HEX_CMD_NO_BOOTLOADER) \
 	))
 
-$(HEX_FILES): %.hex: $(ELF)
-	$(post-process-info)
-	@$(MKDIR) $(@D)
-	$(ELF_TO_HEX_CMD)
+#$(HEX_FILES): %.hex: $(ELF)
+#	$(post-process-info)
+#	@$(MKDIR) $(@D)
+#	$(ELF_TO_HEX_CMD)
 
 $(SYM_FILES): %.sym: $(ELF)
 	$(post-process-info)

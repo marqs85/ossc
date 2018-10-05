@@ -57,77 +57,13 @@ unsigned int alt_busy_sleep (unsigned int us)
  * skipped to speed up simulation.
  */
 #ifndef ALT_SIM_OPTIMIZE
-  int i;
-  int big_loops;
-  alt_u32 cycles_per_loop;
-  
-  if (!strcmp(NIOS2_CPU_IMPLEMENTATION,"tiny"))
-  {
-    cycles_per_loop = 9;
-  }
-  else  
-  {
-    cycles_per_loop = 3;
-  }
-  
+  unsigned long i, loops;
 
-  big_loops = us / (INT_MAX/
-  (ALT_CPU_FREQ/(cycles_per_loop * 1000000)));
+  // 1 loop >= 7 cyc
+  loops = ((ALT_CPU_FREQ/1000000)*us)/7;
 
-  if (big_loops)
-  {
-    for(i=0;i<big_loops;i++)
-    {
-      /*
-      * Do NOT Try to single step the asm statement below 
-      * (single step will never return)
-      * Step out of this function or set a breakpoint after the asm statements
-      */
-      __asm__ volatile (
-        "\n0:"
-        "\n\taddi %0,%0, -1"
-        "\n\tbne %0,zero,0b"
-        "\n1:"
-        "\n\t.pushsection .debug_alt_sim_info"
-        "\n\t.int 4, 0, 0b, 1b"
-        "\n\t.popsection"
-        :: "r" (INT_MAX));
-      us -= (INT_MAX/(ALT_CPU_FREQ/
-      (cycles_per_loop * 1000000)));
-    }
-
-    /*
-    * Do NOT Try to single step the asm statement below 
-    * (single step will never return)
-    * Step out of this function or set a breakpoint after the asm statements
-    */
-    __asm__ volatile (
-      "\n0:"
-      "\n\taddi %0,%0, -1"
-      "\n\tbne %0,zero,0b"
-      "\n1:"
-      "\n\t.pushsection .debug_alt_sim_info"
-      "\n\t.int 4, 0, 0b, 1b"
-      "\n\t.popsection"
-      :: "r" (us*(ALT_CPU_FREQ/(cycles_per_loop * 1000000))));
-  }
-  else
-  {
-    /*
-    * Do NOT Try to single step the asm statement below 
-    * (single step will never return)
-    * Step out of this function or set a breakpoint after the asm statements
-    */
-    __asm__ volatile (
-      "\n0:"
-      "\n\taddi %0,%0, -1"
-      "\n\tbgt %0,zero,0b"
-      "\n1:"
-      "\n\t.pushsection .debug_alt_sim_info"
-      "\n\t.int 4, 0, 0b, 1b"
-      "\n\t.popsection"
-      :: "r" (us*(ALT_CPU_FREQ/(cycles_per_loop * 1000000))));
-  }
+  for (i=7; i<loops; i++)
+    asm volatile ("nop");
 #endif /* #ifndef ALT_SIM_OPTIMIZE */
   return 0;
 }

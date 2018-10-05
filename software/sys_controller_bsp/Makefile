@@ -256,6 +256,7 @@ hal_C_LIB_SRCS := \
 	$(hal_SRCS_ROOT)/src/alt_dev_llist_insert.c \
 	$(hal_SRCS_ROOT)/src/alt_errno.c \
 	$(hal_SRCS_ROOT)/src/alt_flash_dev.c \
+	$(hal_SRCS_ROOT)/src/alt_main.c
 
 # i2c_opencores_driver sources root 
 i2c_opencores_driver_SRCS_ROOT := drivers
