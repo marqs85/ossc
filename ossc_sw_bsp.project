@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="ossc_sw_bsp" InternalType="">
+<CodeLite_Project Name="ossc_sw_bsp" InternalType="" Version="10.0.0">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -280,10 +280,9 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="nios2-bsp-editor">nios2-bsp-editor</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>nios2-bsp-generate-files --bsp-dir . --settings settings.bsp</BuildCommand>
+        <BuildCommand>make</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>
@@ -320,10 +319,9 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="nios2-bsp-editor">nios2-bsp-editor</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>nios2-bsp-generate-files --bsp-dir ./ --settings settings.bsp</BuildCommand>
+        <BuildCommand>make</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>

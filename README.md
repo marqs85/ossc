@@ -12,6 +12,7 @@ Requirements for building and debugging firmware
 
 * Software
   * [Altera Quartus II + Cyclone IV support](http://dl.altera.com/?edition=lite) (v 16.1 or higher - free Lite Edition suffices)
+  * [RISC-V GNU Compiler Toolchain](https://github.com/riscv/riscv-gnu-toolchain)
   * GCC (or another C compiler) for host architecture (for building a SD card image)
   * Make
   * [iconv](https://en.wikipedia.org/wiki/Iconv) (for building with JP lang menu)
@@ -19,31 +20,33 @@ Requirements for building and debugging firmware
 
 Architecture
 ------------------------------
-* [Reference board schematics](https://www.niksula.hut.fi/~mhiienka/ossc/diy-v1.5/ossc_v1.5-diy_schematic.pdf)
+* [Reference board schematics](https://github.com/marqs85/ossc_pcb/raw/v1.6/ossc_board.pdf)
 * [Reference PCB project](https://github.com/marqs85/ossc_pcb)
+
+
+SW toolchain build procedure
+--------------------------
+1. Download, configure, build and install RISC-V toolchain with Newlib + multilib support:
+~~~~
+git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+cd riscv-gnu-toolchain
+./configure --prefix=/opt/riscv --enable-multilib
+make
+make install
+~~~~
+2. Compile custom binary to IHEX converter:
+~~~~
+gcc tools/bin2hex.c -o tools/bin2hex
+~~~~
 
 
 Building software image
 --------------------------
-1. Enter BSP directory:
-~~~~
-cd software/sys_controller_bsp
-~~~~
-2. (Optionally) edit BSP settings:
-~~~~
-nios2-bsp-editor
-~~~~
-3. Generate BSP:
-~~~~
-nios2-bsp-generate-files --bsp-dir . --settings settings.bsp
-~~~~
-NOTE: the previous step must be done every time after RTL/bitstream is built
-
-4. Enter software root directory:
+1. Enter software root directory:
 ~~~~
 cd software/sys_controller
 ~~~~
-5. Build SW for target configuration:
+2. Build SW for target configuration:
 ~~~~
 make [OPTIONS] [TARGET]
 ~~~~
@@ -52,21 +55,25 @@ OPTIONS may include following definitions:
 * ENABLE_AUDIO=y (Includes audio setup code for v1.6 PCB / DIY audio add-on board)
 
 TARGET is typically one of the following:
-* all (Default target. Compiles an ELF for direct downloading to Nios2 during testing)
+* all (Default target. Compiles an ELF for direct downloading to CPU during testing)
 * generate_hex (Generates a memory initialization file required for bitstream)
 * clean (cleans ELF and intermediate files. Should be invoked every time OPTIONS are changed between compilations, expect with generate_hex where it is done automatically)
 
-6. Optionally test updated SW by downloading ELF to Nios2 CPU via JTAG (RTL-SW interface in active FW must be compatible new SW BSP configuration)
+3. Optionally test updated SW by directly downloading ELF to CPU via JTAG
 ~~~~
-nios2-download -g --accept-bad-sysid sys_controller.elf
+make rv-reprogram
 ~~~~
 
 
-Building RTL / bitstream
+Building RTL (bitstream)
 --------------------------
-1. Load the project (ossc.qpf) in Quartus
-2. Generate the FPGA bitstream (Processing -> Start Compilation). NOTE: make sure software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) is up to date before generating bitstream.
-3. Ensure that there are no severe timing violations by looking into Timing Analyzer report
+1. Initialize pulpino submodules (once after cloning ossc project)
+~~~~
+git submodule update --init --recursive ip/pulpino_qsys
+~~~~
+2. Load the project (ossc.qpf) in Quartus
+3. Generate the FPGA bitstream (Processing -> Start Compilation). NOTE: make sure software hex image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) is up to date before generating bitstream.
+4. Ensure that there are no severe timing violations by looking into Timing Analyzer report
 
 If only software image is updated, bitstream can be quickly rebuilt by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
@@ -105,8 +112,8 @@ make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"
 ~~~~
 NOTE: Fw update functionality via SD card is disabled in debug builds due to code space limitations. If audio support is enabled on debug build, other functionality needs to be disabled as well.
 
-2. Program Nios2 CPU via JTAG and open terminal for UART
+2. Program CPU via JTAG and open terminal for UART
 ~~~~
-nios2-download -g --accept-bad-sysid sys_controller.elf && nios2-terminal
+make rv-reprogram && nios2-terminal
 ~~~~
 Remember to close nios2-terminal after debug session, otherwise any JTAG transactions will hang/fail.

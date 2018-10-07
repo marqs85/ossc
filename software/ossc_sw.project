@@ -121,7 +121,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="" IntermediateDirectory="./Debug" Command="nios2-download -g --accept-bad-sysid sys_controller.elf &amp;&amp; nios2-terminal" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(ProjectPath)/sys_controller" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="" IntermediateDirectory="./Debug" Command="make rv-reprogram &amp;&amp; nios2-terminal" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(ProjectPath)/sys_controller" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="Default"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
@@ -135,6 +135,7 @@
       <PostBuild/>
       <CustomBuild Enabled="yes">
         <Target Name="diy-audio-debug">make ENABLE_AUDIO=y APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</Target>
+        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch public.mk Makefile</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</BuildCommand>
@@ -180,6 +181,7 @@
         <Target Name="compile_image">make generate_hex</Target>
         <Target Name="Build_jp">make OSDLANG=JP</Target>
         <Target Name="Build_audio">make ENABLE_AUDIO=y</Target>
+        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch public.mk Makefile</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make</BuildCommand>

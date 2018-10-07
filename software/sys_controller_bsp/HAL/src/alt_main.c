@@ -39,7 +39,7 @@
 
 #include "sys/alt_dev.h"
 #include "sys/alt_sys_init.h"
-#include "sys/alt_irq.h"
+//#include "sys/alt_irq.h"
 #include "sys/alt_dev.h"
 
 #include "os/alt_hooks.h"
@@ -50,6 +50,8 @@
 #include "system.h"
 
 #include "sys/alt_log_printf.h"
+
+extern void alt_irq_init ( const void* base );
 
 extern void _do_ctors(void);
 extern void _do_dtors(void);

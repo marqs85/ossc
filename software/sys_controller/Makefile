@@ -165,6 +165,7 @@ else
 C_SRCS += ossc/menu.c
 endif
 C_SRCS += ossc/userdata.c
+C_SRCS += ossc/utils.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
