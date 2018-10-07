@@ -21,7 +21,7 @@
 #include <string.h>
 #include "system.h"
 #include "flash.h"
-#include "ci_crc.h"
+#include "utils.h"
 
 extern alt_epcq_controller_dev epcq_controller_0;
 
@@ -50,7 +50,7 @@ int read_flash(alt_u32 offset, alt_u32 length, alt_u8 *dstbuf)
         return -FLASH_READ_ERROR;
 
     for (i=0; i<length; i++)
-        dstbuf[i] = ALT_CI_NIOS_CUSTOM_INSTR_BITSWAP_0(dstbuf[i]) >> 24;
+        dstbuf[i] = bitswap8(dstbuf[i]);
 
     return 0;
 }
@@ -71,7 +71,7 @@ int write_flash_page(alt_u8 *pagedata, alt_u32 length, alt_u32 pagenum)
 
     // Bit-reverse bytes for flash
     for (i=0; i<length; i++)
-        pagedata[i] = ALT_CI_NIOS_CUSTOM_INSTR_BITSWAP_0(pagedata[i]) >> 24;
+        pagedata[i] = bitswap8(pagedata[i]);
 
     retval = alt_epcq_controller_write_block(&epcq_controller_dev->dev, (pagenum/PAGES_PER_SECTOR)*PAGES_PER_SECTOR*PAGESIZE, pagenum*PAGESIZE, pagedata, length);
 
@@ -95,7 +95,7 @@ int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmp
         if (retval != 0)
             return retval;
 
-        //crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
+        crcval = crc32(tmpbuf, bytes_to_read, (i==0));
     }
 
     if (crcval != golden_crc)

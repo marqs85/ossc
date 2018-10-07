@@ -26,7 +26,7 @@
 #include "tvp7002.h"
 #include "av_controller.h"
 #include "lcd.h"
-#include "ci_crc.h"
+#include "utils.h"
 #include "altera_avalon_pio_regs.h"
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -48,19 +48,19 @@ static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
     hdr->version_suffix[7] = 0;
 
     memcpy(&tmp, databuf+14, 4);
-    hdr->hdr_len = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
+    hdr->hdr_len = bswap32(tmp);
     memcpy(&tmp, databuf+18, 4);
-    hdr->data_len = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
+    hdr->data_len = bswap32(tmp);
     memcpy(&tmp, databuf+22, 4);
-    hdr->data_crc = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
+    hdr->data_crc = bswap32(tmp);
     // Always at bytes [508-511]
     memcpy(&tmp, databuf+508, 4);
-    hdr->hdr_crc = ALT_CI_NIOS_CUSTOM_INSTR_ENDIANCONVERTER_0(tmp);
+    hdr->hdr_crc = bswap32(tmp);
 
     if (hdr->hdr_len < 26 || hdr->hdr_len > 508)
         return FW_HDR_ERROR;
 
-    //crcval = crcCI(databuf, hdr->hdr_len, 1);
+    crcval = crc32(databuf, hdr->hdr_len, 1);
 
     if (crcval != hdr->hdr_crc)
         return FW_HDR_CRC_ERROR;
@@ -81,7 +81,7 @@ static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_
         if (retval != SD_OK)
             return retval;
 
-        //crcval = crcCI(tmpbuf, bytes_to_read, (i==0));
+        crcval = crc32(tmpbuf, bytes_to_read, (i==0));
     }
 
     if (crcval != golden_crc)
