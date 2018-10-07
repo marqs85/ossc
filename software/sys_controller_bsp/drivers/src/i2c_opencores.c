@@ -69,7 +69,7 @@ int I2C_start(alt_u32 base, alt_u32 add, alt_u32 read)
   IOWR_I2C_OPENCORES_CR(base, I2C_OPENCORES_CR_STA_MSK | I2C_OPENCORES_CR_WR_MSK );
 
           /* wait for the trnasaction to be over.*/
-  while( IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK);
+  while (IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK) {}
 
          /* now check to see if the address was acknowledged */
    if(IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_RXNACK_MSK)
@@ -119,7 +119,7 @@ alt_u32 I2C_read(alt_u32 base,alt_u32 last)
           IOWR_I2C_OPENCORES_CR(base, I2C_OPENCORES_CR_RD_MSK );
   }
           /* wait for the trnasaction to be over.*/
-  while( IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK);
+  while (IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK) {}
 
          /* now read the data */
         return (IORD_I2C_OPENCORES_RXR(base));
@@ -162,7 +162,7 @@ alt_u32 I2C_write(alt_u32 base,alt_u8 data, alt_u32 last)
           IOWR_I2C_OPENCORES_CR(base, I2C_OPENCORES_CR_WR_MSK );
   }
            /* wait for the trnasaction to be over.*/
-  while( IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK);
+  while (IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_TIP_MSK) {}
 
          /* now check to see if the address was acknowledged */
    if(IORD_I2C_OPENCORES_SR(base) & I2C_OPENCORES_SR_RXNACK_MSK)
