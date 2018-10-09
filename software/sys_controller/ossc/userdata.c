@@ -18,11 +18,15 @@
 //
 
 #include <string.h>
+#include <unistd.h>
 #include "userdata.h"
 #include "flash.h"
+#include "sdcard.h"
 #include "firmware.h"
+#include "lcd.h"
 #include "controls.h"
 #include "av_controller.h"
+#include "altera_avalon_pio_regs.h"
 
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern avmode_t cm;
@@ -34,6 +38,8 @@ extern alt_u8 input_profiles[AV_LAST];
 extern alt_u8 profile_sel;
 extern alt_u8 def_input, profile_link;
 extern alt_u8 lcd_bl_timeout;
+extern SD_DEV sdcard_dev;
+extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 int write_userdata(alt_u8 entry)
 {
@@ -87,15 +93,8 @@ int write_userdata(alt_u8 entry)
         write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE));
 
         // then write the rest
-        pageno = 1;
-        while (vm_to_write > 0) {
-            bytes_to_w = (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write;
-            memcpy(databuf, (char*)video_modes+srcoffset, bytes_to_w);
-            write_flash_page(databuf, bytes_to_w, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + pageno);
-            srcoffset += bytes_to_w;
-            vm_to_write -= bytes_to_w;
-            ++pageno;
-        }
+        if (vm_to_write > 0)
+            write_flash((alt_u8*)video_modes+srcoffset, vm_to_write, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + 1, databuf);
 
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
@@ -191,4 +190,85 @@ int read_userdata(alt_u8 entry)
     }
 
     return 0;
+}
+
+int import_userdata()
+{
+    int retval;
+    char *errmsg;
+    alt_u8 databuf[SD_BLK_SIZE];
+    ude_hdr header;
+    alt_u32 btn_vec;
+
+    retval = check_sdcard(databuf);
+    SPI_CS_High();
+    if (retval != 0)
+        goto failure;
+
+    strncpy(menu_row1, "Import? 1=Y, 2=N", LCD_ROW_LEN+1);
+    *menu_row2 = '\0';
+    lcd_write_menu();
+
+    while (1) {
+        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+
+        if (btn_vec == rc_keymap[RC_BTN1]) {
+            break;
+        } else if (btn_vec == rc_keymap[RC_BTN2]) {
+            retval = UDATA_IMPT_CANCELLED;
+            goto failure;
+        }
+
+        usleep(WAITLOOP_SLEEP_US);
+    }
+
+    strncpy(menu_row1, "Loading settings", LCD_ROW_LEN+1);
+    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
+    lcd_write_menu();
+
+    // Import the userdata
+    for (int n=0; n<=MAX_USERDATA_ENTRY; ++n) {
+        retval = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
+        if (retval != 0) {
+            printf("Failed to read SD card\n");
+            retval = -retval;
+            goto failure;
+        }
+
+        if (strncmp(header.userdata_key, "USRDATA", 8)) {
+            printf("Not an userdata entry at %u\n", profile);
+            continue;
+        }
+
+        if ((header.version_major != FW_VER_MAJOR) || (header.version_minor != FW_VER_MINOR)) {
+            printf("Data version %u.%u does not match fw\n", header->version_major, header->version_minor);
+            continue;
+        }
+
+        if (header.type > UDE_PROFILE) {
+            printf("Unknown userdata entry\n", header->type);
+            continue;
+        }
+
+        // Just blindly write the entry to flash
+        retval = copy_sd_to_flash((512+n*SECTORSIZE)/SD_BLK_SIZE, (n*PAGES_PER_SECTOR)+(USERDATA_OFFSET/PAGESIZE),
+            (header.type == UDE_PROFILE) ? sizeof(ude_profile) : sizeof(ude_initcfg), databuf);
+        if (retval != 0) {
+            printf("Copy from SD to flash failed (error %d)\n", retval);
+            goto failure;
+        }
+    }
+
+    SPI_CS_High();
+
+    read_userdata(INIT_CONFIG_SLOT);
+    profile_sel = input_profiles[target_input];
+    read_userdata(profile_sel);
+
+    return 0;
+
+failure:
+    SPI_CS_High();
+
+    return -1;
 }

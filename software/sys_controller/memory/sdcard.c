@@ -19,6 +19,7 @@
 
 #include <io.h>
 #include "sdcard.h"
+#include "flash.h"
 #include "lcd.h"
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -35,4 +36,29 @@ int check_sdcard(alt_u8 *databuf)
         return res;
 
     return SD_Read(&sdcard_dev, databuf, 0, 0, 512);
+}
+
+int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, alt_u8 *tmpbuf)
+{
+    int retval;
+    alt_u32 bytes_to_rw;
+
+    while (length > 0) {
+        bytes_to_rw = (length < SD_BLK_SIZE) ? length : SD_BLK_SIZE;
+        retval = SD_Read(&sdcard_dev, tmpbuf, sd_blknum, 0, bytes_to_rw);
+        if (retval != 0) {
+            printf("Failed to read SD card\n");
+            return -retval;
+        }
+
+        retval = write_flash(tmpbuf, bytes_to_rw, flash_pagenum, NULL);
+        if (retval != 0)
+            return retval;
+
+        ++sd_blknum;
+        flash_pagenum += bytes_to_rw/PAGESIZE;
+        length -= bytes_to_rw;
+    }
+
+    return 0;
 }

@@ -163,24 +163,9 @@ update_init:
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
     lcd_write_menu();
 
-    for (i=0; i<fw_header.data_len; i=i+SD_BLK_SIZE) {
-        bytes_to_rw = ((fw_header.data_len-i < SD_BLK_SIZE) ? (fw_header.data_len-i) : SD_BLK_SIZE);
-        retval = SD_Read(&sdcard_dev, databuf, (512+i)/SD_BLK_SIZE, 0, bytes_to_rw);
-        if (retval != 0) {
-            retval = -retval; //flag any SD errors critical to trigger update retry
-            goto failure;
-        }
-
-        retval = write_flash_page(databuf, ((bytes_to_rw < PAGESIZE) ? bytes_to_rw : PAGESIZE), (i/PAGESIZE));
-        if (retval != 0)
-            goto failure;
-        //TODO: support multiple page sizes
-        if (bytes_to_rw > PAGESIZE) {
-            retval = write_flash_page(databuf+PAGESIZE, (bytes_to_rw-PAGESIZE), (i/PAGESIZE)+1);
-            if (retval != 0)
-                goto failure;
-        }
-    }
+    retval = copy_sd_to_flash(512/SD_BLK_SIZE, 0, fw_header.data_len, databuf);
+    if (retval != 0)
+        goto failure;
 
     strncpy(menu_row1, "Verifying flash", LCD_ROW_LEN+1);
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
