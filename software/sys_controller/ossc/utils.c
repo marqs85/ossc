@@ -21,12 +21,6 @@
 #include "system.h"
 #include "io.h"
 
-unsigned char bitswap8(unsigned char v)
-{
-    return ((v * 0x0802LU & 0x22110LU) |
-            (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
-}
-
 alt_u32 bswap32(alt_u32 w)
 {
     return (((w << 24) & 0xff000000) |

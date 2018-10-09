@@ -44,7 +44,7 @@ int read_flash(alt_u32 offset, alt_u32 length, alt_u8 *dstbuf);
 
 int write_flash_page(alt_u8 *pagedata, alt_u32 length, alt_u32 pagenum);
 
-int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum, alt_u8 *tmpbuf);
+int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum);
 
 int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmpbuf);
 

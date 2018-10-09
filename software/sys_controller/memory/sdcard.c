@@ -51,7 +51,7 @@ int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, a
             return -retval;
         }
 
-        retval = write_flash(tmpbuf, bytes_to_rw, flash_pagenum, NULL);
+        retval = write_flash(tmpbuf, bytes_to_rw, flash_pagenum);
         if (retval != 0)
             return retval;
 

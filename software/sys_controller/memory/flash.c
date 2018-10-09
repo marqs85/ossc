@@ -49,9 +49,6 @@ int read_flash(alt_u32 offset, alt_u32 length, alt_u8 *dstbuf)
     if (retval != 0)
         return -FLASH_READ_ERROR;
 
-    for (i=0; i<length; i++)
-        dstbuf[i] = bitswap8(dstbuf[i]);
-
     return 0;
 }
 
@@ -69,10 +66,6 @@ int write_flash_page(alt_u8 *pagedata, alt_u32 length, alt_u32 pagenum)
         }
     }
 
-    // Bit-reverse bytes for flash
-    for (i=0; i<length; i++)
-        pagedata[i] = bitswap8(pagedata[i]);
-
     retval = alt_epcq_controller_write_block(&epcq_controller_dev->dev, (pagenum/PAGES_PER_SECTOR)*PAGES_PER_SECTOR*PAGESIZE, pagenum*PAGESIZE, pagedata, length);
 
     if (retval != 0) {
@@ -83,7 +76,7 @@ int write_flash_page(alt_u8 *pagedata, alt_u32 length, alt_u32 pagenum)
     return 0;
 }
 
-int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum, alt_u8 *tmpbuf)
+int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum)
 {
     int retval;
     alt_u32 bytes_to_w;
@@ -91,13 +84,7 @@ int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum, alt_u8 *tmpbuf)
     while (length > 0) {
         bytes_to_w = (length > PAGESIZE) ? PAGESIZE : length;
 
-        // Use a temporary buffer if one was given.
-        // This is to avoid the original buffer from
-        // being overwritten by write_flash_page().
-        if (tmpbuf)
-            memcpy(tmpbuf, buf, bytes_to_w);
-
-        retval = write_flash_page(tmpbuf ? tmpbuf : buf, bytes_to_w, pagenum);
+        retval = write_flash_page(buf, bytes_to_w, pagenum);
         if (retval != 0)
             return retval;
 

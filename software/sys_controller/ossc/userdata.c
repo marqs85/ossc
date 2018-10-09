@@ -94,7 +94,7 @@ int write_userdata(alt_u8 entry)
 
         // then write the rest
         if (vm_to_write > 0)
-            write_flash((alt_u8*)video_modes+srcoffset, vm_to_write, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + 1, databuf);
+            write_flash((alt_u8*)video_modes+srcoffset, vm_to_write, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + 1);
 
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
@@ -236,17 +236,17 @@ int import_userdata()
         }
 
         if (strncmp(header.userdata_key, "USRDATA", 8)) {
-            printf("Not an userdata entry at %u\n", profile);
+            printf("Not an userdata entry at 0x%x\n", 512+n*SECTORSIZE);
             continue;
         }
 
         if ((header.version_major != FW_VER_MAJOR) || (header.version_minor != FW_VER_MINOR)) {
-            printf("Data version %u.%u does not match fw\n", header->version_major, header->version_minor);
+            printf("Data version %u.%u does not match fw\n", header.version_major, header.version_minor);
             continue;
         }
 
         if (header.type > UDE_PROFILE) {
-            printf("Unknown userdata entry\n", header->type);
+            printf("Unknown userdata entry type %u\n", header.type);
             continue;
         }
 
