@@ -426,7 +426,7 @@ $(OBJS): $(wildcard $(FORCE_REBUILD_DEP)) $(wildcard $(FORCE_REBUILD_ALL_DEP))
 
 .PHONY: all
 all: build_pre_process
-all: Makefile $(GENERATED_FILES) $(BSP_LIB) $(NEWLIB_DIR)
+all: Makefile bsp_timestamp $(GENERATED_FILES) $(BSP_LIB) $(NEWLIB_DIR)
 all: build_post_process
 
 
@@ -465,23 +465,39 @@ ifneq ($(wildcard $(SETTINGS_FILE)),$(SETTINGS_FILE))
 $(warning Warning: BSP Settings File $(SETTINGS_FILE) could not be found.)
 endif
 
-Makefile: $(wildcard $(SETTINGS_FILE))
-	@$(ECHO) Makefile not up to date.
-	@$(ECHO) $(SETTINGS_FILE) has been modified since the BSP Makefile was generated.
-	@$(ECHO)
-	@$(ECHO) Update system.h etc. BSP files manually, then run \"touch public.mk Makefile\" on BSP dir.
-	@$(ECHO)
-	@exit 1
+#Makefile: $(wildcard $(SETTINGS_FILE))
+#	@$(ECHO) Makefile not up to date.
+#	@$(ECHO) $(SETTINGS_FILE) has been modified since the BSP Makefile was generated.
+#	@$(ECHO)
+#	@$(ECHO) Update system.h etc. BSP files manually, then run \"touch public.mk Makefile\" on BSP dir.
+#	@$(ECHO)
+#	@exit 1
 
 ifneq ($(wildcard $(SOPC_FILE)),$(SOPC_FILE))
 $(warning Warning: SOPC File $(SOPC_FILE) could not be found.)
 endif
 
-public.mk: $(wildcard $(SOPC_FILE))
-	@$(ECHO) Makefile not up to date.
-	@$(ECHO) $(SOPC_FILE) has been modified since the BSP was generated.
+#public.mk: $(wildcard $(SOPC_FILE))
+#	@$(ECHO) Makefile not up to date.
+#	@$(ECHO) $(SOPC_FILE) has been modified since the BSP was generated.
+#	@$(ECHO)
+#	@$(ECHO) Update system.h etc. BSP files manually, then run \"touch public.mk Makefile\" on BSP dir.
+#	@$(ECHO)
+#	@exit 1
+
+bsp_timestamp: $(wildcard $(SOPC_FILE))
+	@$(ECHO) BSP not up to date.
+	@$(ECHO) $(SOPC_FILE) has been modified since the BSP was last updated.
 	@$(ECHO)
-	@$(ECHO) Update system.h etc. BSP files manually, then run \"touch public.mk Makefile\" on BSP dir.
+	@$(ECHO) "If you have not customized QSYS platform:"
+	@$(ECHO) " 1. Open sys.qsys in Quartus Platform Designer, generate platform"
+	@$(ECHO) "    files (Generate -> Generate HDL, Generate) and run compilation"
+	@$(ECHO) " 2. Run \"touch bsp_timestamp\" in BSP dir"
+	@$(ECHO)
+	@$(ECHO) "If you have customized and regenerated QSYS platform:"
+	@$(ECHO) " 1. Update system.h, public.mk, Makefile etc. BSP files manually"
+	@$(ECHO) "    to match your updates"
+	@$(ECHO) " 2. Run \"touch bsp_timestamp\" in BSP dir"
 	@$(ECHO)
 	@exit 1
 

@@ -31,13 +31,31 @@ SW toolchain build procedure
 git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=/opt/riscv --enable-multilib
-make
-make install
+sudo make    # sudo needed if installing under default /opt/riscv location
 ~~~~
 2. Compile custom binary to IHEX converter:
 ~~~~
 gcc tools/bin2hex.c -o tools/bin2hex
 ~~~~
+
+
+Building RTL (bitstream)
+--------------------------
+1. Initialize pulpino submodules (once after cloning ossc project or when submoduled have been updated)
+~~~~
+git submodule update --init --recursive ip/pulpino_qsys
+~~~~
+2. Load the project (ossc.qpf) in Quartus
+3. Generate QSYS output files (only needed before first compilation or when QSYS structure has been modified)
+    * Open Platform Designer (Tools -> Platform Designer)
+    * Load platform configuration (sys.qsys)
+    * Generate output (Generate -> Generate HDL, Generate)
+    * Close Platform Designer
+    * Run "touch software/sys_controller_bsp/bsp_timestamp" to acknowledge QSYS update
+3. Generate the FPGA bitstream (Processing -> Start Compilation)
+4. Ensure that there are no severe timing violations by looking into Timing Analyzer report
+
+NOTE: If the software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) was not up to date at the time of compilation, bitstream can be quickly rebuilt with updated hex by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
 
 Building software image
@@ -55,27 +73,15 @@ OPTIONS may include following definitions:
 * ENABLE_AUDIO=y (Includes audio setup code for v1.6 PCB / DIY audio add-on board)
 
 TARGET is typically one of the following:
-* all (Default target. Compiles an ELF for direct downloading to CPU during testing)
-* generate_hex (Generates a memory initialization file required for bitstream)
+* all (Default target. Compiles an ELF file)
+* generate_hex (Generates a memory initialization file required for bitstream and direct download)
 * clean (cleans ELF and intermediate files. Should be invoked every time OPTIONS are changed between compilations, expect with generate_hex where it is done automatically)
 
-3. Optionally test updated SW by directly downloading ELF to CPU via JTAG
+3. Optionally test updated SW by directly downloading memory image to block RAM via JTAG
 ~~~~
 make rv-reprogram
 ~~~~
 
-
-Building RTL (bitstream)
---------------------------
-1. Initialize pulpino submodules (once after cloning ossc project)
-~~~~
-git submodule update --init --recursive ip/pulpino_qsys
-~~~~
-2. Load the project (ossc.qpf) in Quartus
-3. Generate the FPGA bitstream (Processing -> Start Compilation). NOTE: make sure software hex image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) is up to date before generating bitstream.
-4. Ensure that there are no severe timing violations by looking into Timing Analyzer report
-
-If only software image is updated, bitstream can be quickly rebuilt by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
 Installing firmware via JTAG
 --------------------------
@@ -108,11 +114,11 @@ Debugging
 --------------------------
 1. Rebuild the software in debug mode:
 ~~~~
-make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"
+make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex
 ~~~~
 NOTE: Fw update functionality via SD card is disabled in debug builds due to code space limitations. If audio support is enabled on debug build, other functionality needs to be disabled as well.
 
-2. Program CPU via JTAG and open terminal for UART
+2. Download memory image via JTAG and open terminal for UART
 ~~~~
 make rv-reprogram && nios2-terminal
 ~~~~
