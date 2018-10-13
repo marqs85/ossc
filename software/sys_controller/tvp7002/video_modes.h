@@ -68,20 +68,24 @@ typedef enum {
     //at least one of the flags below must be set for each mode
     MODE_PT             = (1<<2),
     MODE_L2             = (1<<3),
-    MODE_L2_320_COL     = (1<<4),
-    MODE_L2_256_COL     = (1<<5),
-    MODE_L2_240x360     = (1<<6),
-    MODE_L3_GEN_16_9    = (1<<7),
-    MODE_L3_GEN_4_3     = (1<<8),
-    MODE_L3_320_COL     = (1<<9),
-    MODE_L3_256_COL     = (1<<10),
-    MODE_L3_240x360     = (1<<11),
-    MODE_L4_GEN_4_3     = (1<<12),
-    MODE_L4_320_COL     = (1<<13),
-    MODE_L4_256_COL     = (1<<14),
-    MODE_L5_GEN_4_3     = (1<<15),
-    MODE_L5_320_COL     = (1<<16),
-    MODE_L5_256_COL     = (1<<17),
+    MODE_L2_512_COL     = (1<<4),
+    MODE_L2_320_COL     = (1<<5),
+    MODE_L2_256_COL     = (1<<6),
+    MODE_L2_240x360     = (1<<7),
+    MODE_L3_GEN_16_9    = (1<<8),
+    MODE_L3_GEN_4_3     = (1<<9),
+    MODE_L3_512_COL     = (1<<10),
+    MODE_L3_320_COL     = (1<<11),
+    MODE_L3_256_COL     = (1<<12),
+    MODE_L3_240x360     = (1<<13),
+    MODE_L4_GEN_4_3     = (1<<14),
+    MODE_L4_512_COL     = (1<<15),
+    MODE_L4_320_COL     = (1<<16),
+    MODE_L4_256_COL     = (1<<17),
+    MODE_L5_GEN_4_3     = (1<<18),
+    MODE_L5_512_COL     = (1<<19),
+    MODE_L5_320_COL     = (1<<20),
+    MODE_L5_256_COL     = (1<<21),
 } mode_flags;
 
 typedef struct {
@@ -105,6 +109,7 @@ typedef struct {
     { "1536x240",   1536,  240,  2046,  262,  234, 15,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x240",   1280,  240,  1560,  262,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x240",     960,  240,  1170,  262,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "512x240",     512,  240,   682,  262,   77, 14,   50, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
     { "320x240",     320,  240,   426,  262,   49, 14,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240",     256,  240,   341,  262,   39, 14,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "240p",        720,  240,   858,  262,   57, 15,   62, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
@@ -112,6 +117,7 @@ typedef struct {
     { "1536x240L",  1536,  240,  2046,  312,  234, 41,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x288",   1280,  288,  1560,  312,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x288",     960,  288,  1170,  312,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "512x240LB",   512,  240,   682,  312,   77, 41,   50, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
     { "320x240LB",   320,  240,   426,  312,   49, 41,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240LB",   256,  240,   341,  312,   39, 41,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "288p",        720,  288,   864,  312,   69, 19,   63, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \

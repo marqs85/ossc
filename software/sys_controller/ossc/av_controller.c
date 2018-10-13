@@ -419,28 +419,19 @@ void set_videoinfo()
         case MODE_L4_256_COL:
             h_opt_scale = 5-cm.cc.ar_256col;
             break;
-        case MODE_L5_GEN_4_3:
-            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
-                v_active -= 24;
-                v_backporch += 12;
-            }
-            break;
         case MODE_L5_320_COL:
             h_opt_scale = 5;
-            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
-                v_active -= 24;
-                v_backporch += 12;
-            }
             break;
         case MODE_L5_256_COL:
             h_opt_scale = 6-cm.cc.ar_256col;
-            if (cm.cc.l5_fmt == L5FMT_1920x1080) {
-                v_active -= 24;
-                v_backporch += 12;
-            }
             break;
         default:
             break;
+    }
+
+    if (cm.target_lm >= MODE_L5_GEN_4_3 && cm.cc.l5_fmt == L5FMT_1920x1080) {
+        v_active -= 24;
+        v_backporch += 12;
     }
 
     // CEA-770.3 HDTV modes use tri-level syncs which have twice the width of bi-level syncs of corresponding CEA-861 modes
