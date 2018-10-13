@@ -361,8 +361,8 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:30]           [29]     [28]  [27:20]          [19:11]            [10:0]
-//           | H_MULTMODE[1:0] | H_L5FMT |    | H_SYNCLEN[7:0] | H_BACKPORCH[8:0] | H_ACTIVE[10:0] |
+// h_info:     [31:30]           [29]      [28]           [27:20]          [19:11]            [10:0]
+//           | H_MULTMODE[1:0] | H_L5FMT | H_L3_240x360 | H_SYNCLEN[7:0] | H_BACKPORCH[8:0] | H_ACTIVE[10:0] |
 //
 // h_info2:   [31:30]   [29:19]       [18:16]            [15:13]                 [12:10]                  [9:0]
 //           |       | H_MASK[10:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
@@ -398,6 +398,7 @@ void set_videoinfo()
 
     switch (cm.target_lm) {
         case MODE_L2_320_COL:
+        case MODE_L2_240x360:
             h_opt_scale = 4;
             break;
         case MODE_L2_256_COL:
@@ -408,6 +409,9 @@ void set_videoinfo()
             break;
         case MODE_L3_256_COL:
             h_opt_scale = 4-cm.cc.ar_256col;
+            break;
+        case MODE_L3_240x360:
+            h_opt_scale = 6;
             break;
         case MODE_L4_320_COL:
             h_opt_scale = 4;
@@ -456,6 +460,7 @@ void set_videoinfo()
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (cm.fpga_hmultmode<<30) |
                                             ((cm.cc.l5_fmt!=L5FMT_1600x1200)<<29) |
+                                            ((cm.target_lm==MODE_L3_240x360)<<28) |
                                             (((cm.sample_mult*h_synclen)&0xff)<<20) |
                                             (((cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch)&0x1ff)<<11) |
                                             ((cm.sample_mult*video_modes[cm.id].h_active)&0x7ff));

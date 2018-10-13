@@ -70,16 +70,18 @@ typedef enum {
     MODE_L2             = (1<<3),
     MODE_L2_320_COL     = (1<<4),
     MODE_L2_256_COL     = (1<<5),
-    MODE_L3_GEN_16_9    = (1<<6),
-    MODE_L3_GEN_4_3     = (1<<7),
-    MODE_L3_320_COL     = (1<<8),
-    MODE_L3_256_COL     = (1<<9),
-    MODE_L4_GEN_4_3     = (1<<10),
-    MODE_L4_320_COL     = (1<<11),
-    MODE_L4_256_COL     = (1<<12),
-    MODE_L5_GEN_4_3     = (1<<13),
-    MODE_L5_320_COL     = (1<<14),
-    MODE_L5_256_COL     = (1<<15),
+    MODE_L2_240x360     = (1<<6),
+    MODE_L3_GEN_16_9    = (1<<7),
+    MODE_L3_GEN_4_3     = (1<<8),
+    MODE_L3_320_COL     = (1<<9),
+    MODE_L3_256_COL     = (1<<10),
+    MODE_L3_240x360     = (1<<11),
+    MODE_L4_GEN_4_3     = (1<<12),
+    MODE_L4_320_COL     = (1<<13),
+    MODE_L4_256_COL     = (1<<14),
+    MODE_L5_GEN_4_3     = (1<<15),
+    MODE_L5_320_COL     = (1<<16),
+    MODE_L5_256_COL     = (1<<17),
 } mode_flags;
 
 typedef struct {
@@ -113,6 +115,9 @@ typedef struct {
     { "320x240LB",   320,  240,   426,  312,   49, 41,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240LB",   256,  240,   341,  312,   39, 41,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "288p",        720,  288,   864,  312,   69, 19,   63, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    /* 360p: GBI */ \
+    { "480x360",     480,  360,   600,  375,   63, 10,   38, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    { "240x360",     256,  360,   300,  375,   24, 10,   18, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_L2_240x360 | MODE_L3_240x360) },                                                          \
     /* 384p: Sega Model 2 */ \
     { "384p",        496,  384,   640,  423,   50, 29,   62, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 640x400, VGA Mode 13h */ \

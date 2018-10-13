@@ -49,7 +49,11 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
         switch (video_modes[i].group) {
             case GROUP_NONE:
             case GROUP_240P:
+                break;
             case GROUP_384P:
+                //fixed Line2x/3x mode for 240x360p
+                valid_lm[2] = MODE_L2_240x360;
+                valid_lm[3] = MODE_L3_240x360;
                 break;
             case GROUP_480I:
                 //fixed Line3x/4x mode for 480i
@@ -107,7 +111,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
                     // Use native 2x sampling with low-res modes when possible to minimize jitter and generate min. 25MHz input pclk for FPGA PLL
                     if ((!cm.cc.vga_ilace_fix) && (video_modes[i].h_total < 1400) && ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_384P) || (video_modes[i].group == GROUP_480I))) {
-                        cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                        cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED_1X;
                         cm.sample_mult = 2;
                     } else {
                         cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
@@ -124,13 +128,18 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     break;
                 case MODE_L2_256_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
-                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED_1X;
                     cm.sample_mult = 6;
                     break;
                 case MODE_L2_320_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
-                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED_1X;
                     cm.sample_mult = 4;
+                    break;
+                case MODE_L2_240x360:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 5;
                     break;
                 case MODE_L3_GEN_16_9:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
@@ -156,6 +165,12 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 5;
+                    break;
+                case MODE_L3_240x360:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 7;
+                    cm.hsync_cut = 13;
                     break;
                 case MODE_L4_GEN_4_3:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
