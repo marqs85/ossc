@@ -119,6 +119,8 @@ int parse_control()
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
     alt_u8 valid_pm[] = { 0x1, 0x1f, 0x3, 0xf, 0x3, 0x3, 0x3 };
 
+    avinput_t next_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
+
     if (remote_code)
         printf("RCODE: 0x%.4lx, %d\n", remote_code, remote_rpt);
 
@@ -239,6 +241,10 @@ int parse_control()
             lcd_write_status();
             menu_active = 0;
             break;
+        case RC_RIGHT:
+            if (!menu_active)
+                man_target_input = next_input;
+            break;
         default: break;
     }
 
@@ -246,7 +252,7 @@ int parse_control()
 
 Button_Check:
     if (btn_code & PB0_BIT)
-        man_target_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
+        man_target_input = next_input;
     if (btn_code & PB1_BIT)
         tc.sl_mode = tc.sl_mode < SL_MODE_MAX ? tc.sl_mode + 1 : 0;
 

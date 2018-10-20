@@ -53,6 +53,10 @@ typedef struct {
     avinput_t last_input;
     avinput_t def_input;
     alt_u8 lcd_bl_timeout;
+    alt_u8 auto_input;
+    alt_u8 auto_av1_ypbpr;
+    alt_u8 auto_av2_ypbpr;
+    alt_u8 auto_av3_ypbpr;
     alt_u16 keys[REMOTE_MAX_KEYS];
 } __attribute__((packed, __may_alias__)) ude_initcfg;
 

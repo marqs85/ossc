@@ -61,6 +61,11 @@
 #define FPGA_SCANLINEMODE_V         2
 #define FPGA_SCANLINEMODE_ALT       3
 
+#define AUTO_OFF                    0
+#define AUTO_CURRENT_INPUT          1
+#define AUTO_MAX_COUNT            100
+#define AUTO_CURRENT_MAX_COUNT      6
+
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,
