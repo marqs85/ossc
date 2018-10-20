@@ -17,8 +17,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <stdio.h>
+#include <stdarg.h>
+#include "sys/alt_stdio.h"
 #include "utils.h"
 #include "system.h"
+#include "sysconfig.h"
 #include "io.h"
 
 alt_u32 bswap32(alt_u32 w)
@@ -71,4 +75,19 @@ unsigned long crc32(unsigned char *input_data, unsigned long input_data_length, 
     * in order to receive the full result.
     */
     return IORD_32DIRECT(HW_CRC32_0_BASE, 0x10);
+}
+
+/* printf for direct driver interface */
+int dd_printf(const char *__restrict fmt, ...) {
+    int ret;
+    va_list ap;
+    char buf[PRINTF_BUFSIZE];
+
+    va_start(ap, fmt);
+    ret = vsnprintf(buf, PRINTF_BUFSIZE, fmt, ap);
+    va_end(ap);
+    if (ret > 0)
+        alt_putstr(buf);
+
+    return 0;
 }

@@ -238,6 +238,9 @@ altera_nios2_gen2_hal_driver_SRCS_ROOT := HAL
 # altera_nios2_gen2_hal_driver sources 
 altera_nios2_gen2_hal_driver_C_LIB_SRCS := \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_usleep.c \
+	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_printf.c \
+	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_putchar.c \
+	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_putstr.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_busy_sleep.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_ecc_fatal_exception.c \
 	$(altera_nios2_gen2_hal_driver_SRCS_ROOT)/src/alt_instruction_exception_entry.c \

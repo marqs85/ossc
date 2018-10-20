@@ -30,10 +30,12 @@
 #define printf(...)
 #else
 #include <stdio.h>
+#include "utils.h"
 #define OS_PRINTF printf
 #define ErrorF printf
 // use reduced printf
 //#define printf alt_printf
+#define printf dd_printf
 #endif
 
 #define WAITLOOP_SLEEP_US   10000

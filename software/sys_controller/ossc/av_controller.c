@@ -78,6 +78,7 @@ avinput_t target_input;
 
 alt_u8 pcm1862_active;
 
+alt_u32 read_it2(alt_u32 regaddr);
 
 inline void lcd_write_menu()
 {

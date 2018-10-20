@@ -90,15 +90,6 @@ static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_
     return 0;
 }
 
-#ifdef DEBUG
-int fw_update()
-{
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "Unavailable");
-    lcd_write_menu();
-    usleep(1000000);
-    return -1;
-}
-#else
 int fw_update()
 {
     int retval, i;
@@ -234,4 +225,3 @@ failure:
 
     return -1;
 }
-#endif
