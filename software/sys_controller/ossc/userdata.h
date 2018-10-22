@@ -28,7 +28,7 @@
 #include "video_modes.h"
 #include "flash.h"
 
-#define MAX_PROFILE 9
+#define MAX_PROFILE (MAX_USERDATA_ENTRY-1)
 #define INIT_CONFIG_SLOT MAX_USERDATA_ENTRY
 
 #define UDATA_IMPT_CANCELLED 104
