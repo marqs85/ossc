@@ -698,15 +698,6 @@ int init_hw()
     return 0;
 }
 
-#ifdef DEBUG
-int latency_test()
-{
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "Unavailable");
-    lcd_write_menu();
-    usleep(1000000);
-    return -1;
-}
-#else
 int latency_test() {
     alt_u32 lt_status, btn_vec, btn_vec_prev=1;
     alt_u16 latency_ms_x100, stb_ms_x100;
@@ -739,7 +730,9 @@ int latency_test() {
                 SPI_Timer_Off();
                 latency_ms_x100 = lt_status & 0xffff;
                 stb_ms_x100 = (lt_status >> 16) & 0xfff;
-                if ((latency_ms_x100 == 0) || (latency_ms_x100 == 0xffff))
+                if (latency_ms_x100 == 0)
+                    sniprintf(menu_row2, LCD_ROW_LEN+1, "False trigger");
+                else if (latency_ms_x100 == 0xffff)
                     sniprintf(menu_row2, LCD_ROW_LEN+1, "Timeout");
                 else if (stb_ms_x100 == 0xfff)
                     sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2ums", latency_ms_x100/100, latency_ms_x100%100);
@@ -763,7 +756,6 @@ int latency_test() {
 
     return 0;
 }
-#endif
 
 // Enable chip outputs
 void enable_outputs()
