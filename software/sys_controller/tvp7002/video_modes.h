@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define H_TOTAL_MIN 300
-#define H_TOTAL_MAX 2300
+#define H_TOTAL_MAX 2800
 #define H_SYNCLEN_MIN 10
 #define H_SYNCLEN_MAX 255
 #define H_BPORCH_MIN 1
@@ -100,14 +100,14 @@ typedef struct {
 
 #define VIDEO_MODES_DEF { \
     /* 240p modes */ \
-    { "1536x240",   1536,  240,  2046,  262,  234, 15,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "1600x240",   1600,  240,  2046,  262,  202, 15,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x240",   1280,  240,  1560,  262,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x240",     960,  240,  1170,  262,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "320x240",     320,  240,   426,  262,   49, 14,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240",     256,  240,   341,  262,   39, 14,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "240p",        720,  240,   858,  262,   57, 15,   62, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 288p modes */ \
-    { "1536x240L",  1536,  240,  2046,  312,  234, 41,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "1600x240L",  1600,  240,  2046,  312,  202, 41,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x288",   1280,  288,  1560,  312,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x288",     960,  288,  1170,  312,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "320x240LB",   320,  240,   426,  312,   49, 41,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
