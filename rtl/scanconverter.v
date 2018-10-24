@@ -42,6 +42,7 @@
 `define H_MULTMODE_FULLWIDTH    2'h0
 `define H_MULTMODE_ASPECTFIX    2'h1
 `define H_MULTMODE_OPTIMIZED    2'h2
+`define H_MULTMODE_OPTIMIZED_1X 2'h3
 
 `define SCANLINES_OFF           2'h0
 `define SCANLINES_H             2'h1
@@ -187,6 +188,8 @@ reg [2:0] H_OPT_SCALE;
 reg [2:0] H_OPT_SAMPLE_MULT;
 reg [2:0] H_OPT_SAMPLE_SEL;
 reg [9:0] H_L5BORDER;
+reg [9:0] H_L3BORDER;
+reg [6:0] H_L3_OPT_SAMPLE_COMP;
 reg [3:0] X_MASK_BR;
 reg       X_SCANLINE_METHOD;
 reg [4:0] X_SCANLINE_HYBRSTR;
@@ -375,12 +378,18 @@ case (V_MULTMODE)
                 col_id_act = {2'b00, hcnt_2x[0]};
                 rlpf_trigger_act = 1'b1;
             end
-            `H_MULTMODE_OPTIMIZED: begin
+            `H_MULTMODE_OPTIMIZED_1X: begin
                 pclk_mux_sel = `PCLK_MUX_1X;     //special case: pclk bypass to enable 2x native sampling
                 linebuf_hoffset = hcnt_2x_opt;
                 col_id_act = {2'b00, hcnt_2x[1]};
                 rlpf_trigger_act = (hcnt_2x_opt_ctr == 0);
             end
+            `H_MULTMODE_OPTIMIZED: begin
+                pclk_mux_sel = `PCLK_MUX_2X;
+                linebuf_hoffset = hcnt_2x_opt;
+                col_id_act = hcnt_2x_opt_ctr;
+                rlpf_trigger_act = (hcnt_2x_opt_ctr == 0);
+             end
         endcase
     end
     `V_MULTMODE_3X: begin
@@ -870,6 +879,10 @@ begin
 
 //            H_L5BORDER <= h_info[29] ? (11'd1920-h_info[10:0])/2 : (11'd1600-h_info[10:0])/2;
             H_L5BORDER <= h_info[29] ? H_L5BORDER_1920_tmp[10:1] : H_L5BORDER_1600_tmp[10:1];
+            // For Line3x 240x360
+            H_L3BORDER <= h_info[28] ? H_L5BORDER_1920_tmp[10:1] : 10'd0;
+
+            H_L3_OPT_SAMPLE_COMP <= h_info[28] ? 7'd90 : 7'd0;
 
             H_OPT_SCALE <= h_info2[18:16];
             H_OPT_SAMPLE_SEL <= h_info2[15:13];
@@ -990,7 +1003,7 @@ begin
         if ((pclk_3x_cnt == 0) & (line_change | frame_change)) begin  //aligned with posedge of pclk_1x
             if (!(frame_change & (FID_cur == `FID_ODD))) begin
                 hcnt_3x <= 0;
-                hcnt_3x_opt <= H_OPT_SAMPLE_SEL;
+                hcnt_3x_opt <= H_OPT_SAMPLE_SEL + H_L3_OPT_SAMPLE_COMP;
                 hcnt_3x_opt_ctr <= 0;
                 line_out_idx_3x <= 0;
             end
@@ -1001,7 +1014,7 @@ begin
         end else if (hcnt_3x == hmax[~line_idx]) begin
             hcnt_3x <= 0;
             line_out_idx_3x <= line_out_idx_3x + 1'b1;
-            hcnt_3x_opt <= H_OPT_SAMPLE_SEL;
+            hcnt_3x_opt <= H_OPT_SAMPLE_SEL + H_L3_OPT_SAMPLE_COMP;
             hcnt_3x_opt_ctr <= 0;
         end else begin
             hcnt_3x <= hcnt_3x + 1'b1;
@@ -1032,7 +1045,7 @@ begin
                 VSYNC_3x <= ~`VSYNC_POL;
         end
         
-        DE_3x <= ((hcnt_3x >= H_AVIDSTART) & (hcnt_3x < H_AVIDSTOP)) & ((vcnt_3x >= V_AVIDSTART) & (vcnt_3x < V_AVIDSTOP));
+        DE_3x <= ((hcnt_3x >= H_AVIDSTART-H_L3BORDER) & (hcnt_3x < H_AVIDSTOP+H_L3BORDER)) & ((vcnt_3x >= V_AVIDSTART) & (vcnt_3x < V_AVIDSTOP));
     end
 end
 
