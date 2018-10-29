@@ -259,7 +259,7 @@ ALT_CPPFLAGS += -DSMALL_C_LIB
 # or common. none 
 # setting hal.make.cflags_mgpopt is -mgpopt=global
 #ALT_CFLAGS += -mgpopt=global
-ALT_CFLAGS += -march=rv32imc -mabi=ilp32
+ALT_CFLAGS += -march=rv32emc -mabi=ilp32e
 
 # Enable BSP generation to query if SOPC system is big endian. If true ignores 
 # export of 'ALT_CFLAGS += -meb' to public.mk if big endian system. none 

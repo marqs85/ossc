@@ -112,10 +112,10 @@ SOPC_FILE := ../../sys.sopcinfo
 #-------------------------------------------------------------------------------
 
 # Archiver command. Creates library files. 
-AR = riscv64-unknown-elf-ar
+AR = riscv32-unknown-elf-ar
 
 # Assembler command. Note that CC is used for .S files. 
-AS = riscv64-unknown-elf-gcc
+AS = riscv32-unknown-elf-gcc
 
 # Custom flags only passed to the archiver. This content of this variable is 
 # directly passed to the archiver rather than the more standard "ARFLAGS". The 
@@ -139,10 +139,10 @@ BSP_CFLAGS_OPTIMIZATION = -Os
 BSP_CFLAGS_WARNINGS = -Wall
 
 # C compiler command. 
-CC = riscv64-unknown-elf-gcc -xc
+CC = riscv32-unknown-elf-gcc -xc
 
 # C++ compiler command. 
-CXX = riscv64-unknown-elf-gcc -xc++
+CXX = riscv32-unknown-elf-gcc -xc++
 
 # Command used to remove files during 'clean' target. 
 RM = rm -f

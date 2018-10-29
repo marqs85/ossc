@@ -725,7 +725,7 @@
   <parameter name="AXI_USER_WIDTH" value="0" />
   <parameter name="RISCY_RV32F" value="false" />
   <parameter name="USE_ZERO_RISCY" value="true" />
-  <parameter name="ZERO_RV32E" value="false" />
+  <parameter name="ZERO_RV32E" value="true" />
   <parameter name="ZERO_RV32M" value="true" />
  </module>
  <module name="timer_0" kind="altera_avalon_timer" version="17.1" enabled="1">

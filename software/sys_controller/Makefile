@@ -169,7 +169,7 @@ C_SRCS += ossc/utils.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
-ASM_SRCS := crt0.boot.S
+ASM_SRCS := crt0.boot_E.S
 
 
 # Path to root of object file tree.
@@ -652,11 +652,11 @@ build_post_process :
 # included makefile fragment.
 #
 ifeq ($(DEFAULT_CROSS_COMPILE),)
-DEFAULT_CROSS_COMPILE := riscv64-unknown-elf-
+DEFAULT_CROSS_COMPILE := riscv32-unknown-elf-
 endif
 
 ifeq ($(DEFAULT_STACKREPORT),)
-DEFAULT_STACKREPORT := riscv64-unknown-elf-size
+DEFAULT_STACKREPORT := riscv32-unknown-elf-size
 endif
 
 ifeq ($(DEFAULT_DOWNLOAD),)
@@ -755,7 +755,7 @@ ifeq ($(MKDIR),)
 MKDIR := $(DEFAULT_MKDIR)
 endif
 
-RV_OBJCOPY = riscv64-unknown-elf-objcopy
+RV_OBJCOPY = riscv32-unknown-elf-objcopy
 
 #------------------------------------------------------------------------------
 #                     PATTERN RULES TO BUILD OBJECTS

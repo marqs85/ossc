@@ -136,7 +136,7 @@
       <CustomBuild Enabled="yes">
         <Target Name="compile_image_debug">make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex</Target>
         <Target Name="compile_image_aud-debug">make ENABLE_AUDIO=y APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex</Target>
-        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch public.mk Makefile</Target>
+        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch bsp_timestamp</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</BuildCommand>
@@ -182,7 +182,7 @@
         <Target Name="compile_image">make generate_hex</Target>
         <Target Name="Build_jp">make OSDLANG=JP</Target>
         <Target Name="Build_audio">make ENABLE_AUDIO=y</Target>
-        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch public.mk Makefile</Target>
+        <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch bsp_timestamp</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
         <BuildCommand>make</BuildCommand>
