@@ -105,11 +105,9 @@ typedef struct {
     alt_u8 full_tx_setup;
     alt_u8 vga_ilace_fix;
     alt_u8 reverse_lpf;
-#ifdef ENABLE_AUDIO
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
     alt_u8 audio_gain;
-#endif
     color_setup_t col;
     avinput_t link_av;
 } __attribute__((packed)) avconfig_t;
