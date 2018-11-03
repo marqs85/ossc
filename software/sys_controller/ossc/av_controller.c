@@ -548,7 +548,7 @@ void program_mode()
 int load_profile() {
     int retval;
 
-    retval = read_userdata(profile_sel_menu);
+    retval = read_userdata(profile_sel_menu, 0);
     if (retval == 0) {
         profile_sel = profile_sel_menu;
 
@@ -681,8 +681,8 @@ int init_hw()
     memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
 
     // Load initconfig and profile
-    read_userdata(INIT_CONFIG_SLOT);
-    read_userdata(profile_sel);
+    read_userdata(INIT_CONFIG_SLOT, 0);
+    read_userdata(profile_sel, 0);
 
     // Setup remote keymap
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
@@ -882,7 +882,7 @@ int main()
             // input->profile link is enabled
             if (profile_link && (profile_sel != input_profiles[target_input])) {
                 profile_sel = input_profiles[target_input];
-                read_userdata(profile_sel);
+                read_userdata(profile_sel, 0);
             }
 
             auto_input_changed = 0;

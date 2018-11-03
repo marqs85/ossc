@@ -28,6 +28,8 @@
 #include "video_modes.h"
 #include "flash.h"
 
+#define PROFILE_NAME_LEN 12
+
 #define MAX_PROFILE (MAX_USERDATA_ENTRY-1)
 #define INIT_CONFIG_SLOT MAX_USERDATA_ENTRY
 
@@ -62,6 +64,7 @@ typedef struct {
 
 typedef struct {
     ude_hdr hdr;
+    char name[PROFILE_NAME_LEN+1];
     alt_u16 avc_data_len;
     alt_u16 vm_data_len;
     avconfig_t avc;
@@ -69,7 +72,7 @@ typedef struct {
 } __attribute__((packed, __may_alias__)) ude_profile;
 
 int write_userdata(alt_u8 entry);
-int read_userdata(alt_u8 entry);
+int read_userdata(alt_u8 entry, int dry_run);
 int import_userdata();
 
 #endif

@@ -42,6 +42,8 @@ extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern SD_DEV sdcard_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
+char target_profile_name[PROFILE_NAME_LEN+1];
+
 int write_userdata(alt_u8 entry)
 {
     alt_u8 databuf[PAGESIZE];
@@ -85,6 +87,11 @@ int write_userdata(alt_u8 entry)
         ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
         ((ude_profile*)databuf)->vm_data_len = vm_to_write;
 
+        if (target_profile_name[0] == 0)
+            sniprintf(target_profile_name, PROFILE_NAME_LEN+1, "<used>");
+
+        strncpy(((ude_profile*)databuf)->name, target_profile_name, PROFILE_NAME_LEN+1);
+
         pageoffset = offsetof(ude_profile, avc);
 
         // assume that sizeof(avconfig_t) << PAGESIZE
@@ -110,13 +117,15 @@ int write_userdata(alt_u8 entry)
     return 0;
 }
 
-int read_userdata(alt_u8 entry)
+int read_userdata(alt_u8 entry, int dry_run)
 {
     int retval, i;
     alt_u8 databuf[PAGESIZE];
     alt_u16 vm_to_read;
     alt_u16 pageoffset, dstoffset;
     alt_u8 pageno;
+
+    target_profile_name[0] = 0;
 
     if (entry > MAX_USERDATA_ENTRY) {
         printf("invalid entry\n");
@@ -142,6 +151,9 @@ int read_userdata(alt_u8 entry)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
+            if (dry_run)
+                return 0;
+
             for (i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
                 if (((ude_initcfg*)databuf)->last_profile[i] <= MAX_PROFILE)
                     input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
@@ -163,6 +175,10 @@ int read_userdata(alt_u8 entry)
         break;
     case UDE_PROFILE:
         if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == VIDEO_MODES_SIZE)) {
+            strncpy(target_profile_name, ((ude_profile*)databuf)->name, PROFILE_NAME_LEN+1);
+            if (dry_run)
+                return 0;
+
             vm_to_read = ((ude_profile*)databuf)->vm_data_len;
 
             pageno = 0;
@@ -204,6 +220,7 @@ int read_userdata(alt_u8 entry)
 int import_userdata()
 {
     int retval;
+    int n, entries_imported=0;
     char *errmsg;
     alt_u8 databuf[SD_BLK_SIZE];
     ude_hdr header;
@@ -231,12 +248,8 @@ int import_userdata()
         usleep(WAITLOOP_SLEEP_US);
     }
 
-    strncpy(menu_row1, "Loading settings", LCD_ROW_LEN+1);
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
-
     // Import the userdata
-    for (int n=0; n<=MAX_USERDATA_ENTRY; ++n) {
+    for (n=0; n<=MAX_USERDATA_ENTRY; ++n) {
         retval = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
         if (retval != 0) {
             printf("Failed to read SD card\n");
@@ -266,13 +279,20 @@ int import_userdata()
             printf("Copy from SD to flash failed (error %d)\n", retval);
             goto failure;
         }
+
+        entries_imported++;
     }
 
     SPI_CS_High();
 
-    read_userdata(INIT_CONFIG_SLOT);
+    read_userdata(INIT_CONFIG_SLOT, 0);
     profile_sel = input_profiles[target_input];
-    read_userdata(profile_sel);
+    read_userdata(profile_sel, 0);
+
+    sniprintf(menu_row1, LCD_ROW_LEN+1, "%d entries", entries_imported);
+    strncpy(menu_row2, "imported", LCD_ROW_LEN+1);
+    lcd_write_menu();
+    usleep(1000000);
 
     return 0;
 
