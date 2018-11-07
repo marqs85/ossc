@@ -248,6 +248,10 @@ int import_userdata()
         usleep(WAITLOOP_SLEEP_US);
     }
 
+    strncpy(menu_row1, "Loading settings", LCD_ROW_LEN+1);
+    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
+    lcd_write_menu();
+
     // Import the userdata
     for (n=0; n<=MAX_USERDATA_ENTRY; ++n) {
         retval = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
