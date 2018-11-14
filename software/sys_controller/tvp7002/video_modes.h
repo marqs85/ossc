@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2017  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define H_TOTAL_MIN 300
-#define H_TOTAL_MAX 2300
+#define H_TOTAL_MAX 2800
 #define H_SYNCLEN_MIN 10
 #define H_SYNCLEN_MAX 255
 #define H_BPORCH_MIN 1
@@ -35,7 +35,7 @@
 #define V_SYNCLEN_MAX 7
 #define V_BPORCH_MIN 1
 #define V_BPORCH_MAX 63
-#define V_ACTIVE_MIN 200
+#define V_ACTIVE_MIN 160
 #define V_ACTIVE_MAX 1200
 
 typedef enum {
@@ -68,18 +68,24 @@ typedef enum {
     //at least one of the flags below must be set for each mode
     MODE_PT             = (1<<2),
     MODE_L2             = (1<<3),
-    MODE_L2_320_COL     = (1<<4),
-    MODE_L2_256_COL     = (1<<5),
-    MODE_L3_GEN_16_9    = (1<<6),
-    MODE_L3_GEN_4_3     = (1<<7),
-    MODE_L3_320_COL     = (1<<8),
-    MODE_L3_256_COL     = (1<<9),
-    MODE_L4_GEN_4_3     = (1<<10),
-    MODE_L4_320_COL     = (1<<11),
-    MODE_L4_256_COL     = (1<<12),
-    MODE_L5_GEN_4_3     = (1<<13),
-    MODE_L5_320_COL     = (1<<14),
-    MODE_L5_256_COL     = (1<<15),
+    MODE_L2_512_COL     = (1<<4),
+    MODE_L2_320_COL     = (1<<5),
+    MODE_L2_256_COL     = (1<<6),
+    MODE_L2_240x360     = (1<<7),
+    MODE_L3_GEN_16_9    = (1<<8),
+    MODE_L3_GEN_4_3     = (1<<9),
+    MODE_L3_512_COL     = (1<<10),
+    MODE_L3_320_COL     = (1<<11),
+    MODE_L3_256_COL     = (1<<12),
+    MODE_L3_240x360     = (1<<13),
+    MODE_L4_GEN_4_3     = (1<<14),
+    MODE_L4_512_COL     = (1<<15),
+    MODE_L4_320_COL     = (1<<16),
+    MODE_L4_256_COL     = (1<<17),
+    MODE_L5_GEN_4_3     = (1<<18),
+    MODE_L5_512_COL     = (1<<19),
+    MODE_L5_320_COL     = (1<<20),
+    MODE_L5_256_COL     = (1<<21),
 } mode_flags;
 
 typedef struct {
@@ -100,19 +106,24 @@ typedef struct {
 
 #define VIDEO_MODES_DEF { \
     /* 240p modes */ \
-    { "1536x240",   1536,  240,  2046,  262,  234, 15,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "1600x240",   1600,  240,  2046,  262,  202, 15,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x240",   1280,  240,  1560,  262,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x240",     960,  240,  1170,  262,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "512x240",     512,  240,   682,  262,   77, 14,   50, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
     { "320x240",     320,  240,   426,  262,   49, 14,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240",     256,  240,   341,  262,   39, 14,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "240p",        720,  240,   858,  262,   57, 15,   62, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 288p modes */ \
-    { "1536x240L",  1536,  240,  2046,  312,  234, 41,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "1600x240L",  1600,  240,  2046,  312,  202, 41,  150, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L5_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "1280x288",   1280,  288,  1560,  312,  170, 15,   72, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x288",     960,  288,  1170,  312,  128, 15,   54, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
+    { "512x240LB",   512,  240,   682,  312,   77, 41,   50, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
     { "320x240LB",   320,  240,   426,  312,   49, 41,   31, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240LB",   256,  240,   341,  312,   39, 41,   25, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "288p",        720,  288,   864,  312,   69, 19,   63, 3,  (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    /* 360p: GBI */ \
+    { "480x360",     480,  360,   600,  375,   63, 10,   38, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    { "240x360",     256,  360,   300,  375,   24, 10,   18, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_L2_240x360 | MODE_L3_240x360) },                                                          \
     /* 384p: Sega Model 2 */ \
     { "384p",        496,  384,   640,  423,   50, 29,   62, 3,  (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 640x400, VGA Mode 13h */ \

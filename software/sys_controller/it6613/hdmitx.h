@@ -52,7 +52,7 @@
 //#define NULL 0
 
 //typedef unsigned char bool;
-#include "Altera_UP_SD_Card_Avalon_Interface_mod.h"
+typedef unsigned char  bool;
 #include "sysconfig.h"
 
 // Hardwired to CPU reset

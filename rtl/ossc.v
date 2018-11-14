@@ -19,7 +19,7 @@
 
 //`define DEBUG
 `define VIDEOGEN
-`define CPU_RESET_WIDTH 27  //1us
+`define PO_RESET_WIDTH 27  //1us
 
 module ossc (
     input clk27,
@@ -43,7 +43,7 @@ module ossc (
     output HDMI_TX_PCLK,
     input HDMI_TX_INT_N,
     input HDMI_TX_MODE,
-    output reset_n,
+    output hw_reset_n,
     output LED_G,
     output LED_R,
     output LCD_RS,
@@ -81,8 +81,10 @@ wire PCLK_out_videogen;
 wire DE_out_videogen;
 
 
-reg [7:0] cpu_reset_ctr = 0;
-reg cpu_reset_n = 1'b0;
+reg [7:0] po_reset_ctr = 0;
+reg po_reset_n = 1'b0;
+wire jtagm_reset_req;
+wire sys_reset_n = (po_reset_n & ~jtagm_reset_req);
 
 reg [7:0] R_in_L, G_in_L, B_in_L;
 reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
@@ -105,9 +107,9 @@ wire lcd_bl_timeout;
 
 
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
-always @(posedge PCLK_in or negedge reset_n)
+always @(posedge PCLK_in or negedge hw_reset_n)
 begin
-    if (!reset_n) begin
+    if (!hw_reset_n) begin
         R_in_L <= 8'h00;
         G_in_L <= 8'h00;
         B_in_L <= 8'h00;
@@ -125,9 +127,9 @@ begin
 end
 
 // Insert synchronizers to async inputs (synchronize to CPU clock)
-always @(posedge clk27 or negedge cpu_reset_n)
+always @(posedge clk27 or negedge po_reset_n)
 begin
-    if (!cpu_reset_n) begin
+    if (!po_reset_n) begin
         btn_L <= 2'b00;
         btn_LL <= 2'b00;
         ir_rx_L <= 1'b0;
@@ -148,16 +150,16 @@ begin
     end
 end
 
-// CPU reset pulse generation (is this really necessary?)
+// Power-on reset pulse generation (not strictly necessary)
 always @(posedge clk27)
 begin
-    if (cpu_reset_ctr == `CPU_RESET_WIDTH)
-        cpu_reset_n <= 1'b1;
+    if (po_reset_ctr == `PO_RESET_WIDTH)
+        po_reset_n <= 1'b1;
     else
-        cpu_reset_ctr <= cpu_reset_ctr + 1'b1;
+        po_reset_ctr <= po_reset_ctr + 1'b1;
 end
 
-assign reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
+assign hw_reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 
 
 `ifdef DEBUG
@@ -171,7 +173,7 @@ assign LED_G = (ir_code == 0);
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
 assign LCD_CS_N = sys_ctrl[6];
 assign LCD_RS = sys_ctrl[5];
-wire lcd_bl_on = sys_ctrl[4];    //reset_n in v1.2 PCB
+wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
 wire [1:0] lcd_bl_time = sys_ctrl[3:2];
 assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 
@@ -226,7 +228,12 @@ end
 
 sys sys_inst(
     .clk_clk                                (clk27),
-    .reset_reset_n                          (cpu_reset_n),
+    .reset_reset_n                          (sys_reset_n),
+    .pulpino_0_config_testmode_i            (1'b0),
+    .pulpino_0_config_fetch_enable_i        (1'b1),
+    .pulpino_0_config_clock_gating_i        (1'b0),
+    .pulpino_0_config_boot_addr_i           (32'h00010000),
+    .master_0_master_reset_reset            (jtagm_reset_req),
     .i2c_opencores_0_export_scl_pad_io      (scl),
     .i2c_opencores_0_export_sda_pad_io      (sda),
     .i2c_opencores_0_export_spi_miso_pad_i  (1'b0),
@@ -245,7 +252,7 @@ sys sys_inst(
 );
 
 scanconverter scanconverter_inst (
-    .reset_n        (reset_n),
+    .reset_n        (hw_reset_n),
     .PCLK_in        (PCLK_in),
     .clk27          (clk27),
     .HSYNC_in       (HSYNC_in_L),
@@ -279,7 +286,7 @@ scanconverter scanconverter_inst (
 
 ir_rcv ir0 (
     .clk27          (clk27),
-    .reset_n        (cpu_reset_n),
+    .reset_n        (po_reset_n),
     .ir_rx          (ir_rx_LL),
     .ir_code        (ir_code),
     .ir_code_ack    (),
@@ -304,7 +311,7 @@ lat_tester lt0 (
 `ifdef VIDEOGEN
 videogen vg0 (
     .clk27          (clk27),
-    .reset_n        (cpu_reset_n & videogen_sel),
+    .reset_n        (po_reset_n & videogen_sel),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
     .R_out          (R_out_videogen),

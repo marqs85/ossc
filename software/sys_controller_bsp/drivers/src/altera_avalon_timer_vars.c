@@ -1,6 +1,3 @@
-#ifndef __IO_H__
-#define __IO_H__
-
 /******************************************************************************
 *                                                                             *
 * License Agreement                                                           *
@@ -33,49 +30,16 @@
 * file be used in conjunction or combination with any other product.          *
 ******************************************************************************/
 
-/* IO Header file for Nios II Toolchain */
+#include <string.h>
 
+#include "altera_avalon_timer.h"
 #include "alt_types.h"
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
 
-#ifndef SYSTEM_BUS_WIDTH
-#define SYSTEM_BUS_WIDTH 32
-#endif
+/*
+ * Variables used to store the timestamp parameters. These are initialised
+ * from alt_sys_init() using the ALTERA_AVALON_TIMER_INIT macro
+ * defined in altera_avalon_timer.h.
+ */
 
-/* Dynamic bus access functions */
-
-#define __IO_CALC_ADDRESS_DYNAMIC(BASE, OFFSET) \
-  ((void *)(((alt_u8*)BASE) + (OFFSET)))
-
-#define IORD_32DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-#define IORD_16DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-#define IORD_8DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-
-#define IOWR_32DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-#define IOWR_16DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-#define IOWR_8DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-
-/* Native bus access functions */
-
-#define __IO_CALC_ADDRESS_NATIVE(BASE, REGNUM) \
-  ((void *)(((alt_u8*)BASE) + ((REGNUM) * (SYSTEM_BUS_WIDTH/8))))
-
-#define IORD(BASE, REGNUM) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))))
-#define IOWR(BASE, REGNUM, DATA) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))) = (DATA))
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __IO_H__ */
+void* altera_avalon_timer_ts_base = (void*) 0;
+alt_u32 altera_avalon_timer_ts_freq = 0;

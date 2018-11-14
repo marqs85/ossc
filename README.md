@@ -12,6 +12,7 @@ Requirements for building and debugging firmware
 
 * Software
   * [Altera Quartus II + Cyclone IV support](http://dl.altera.com/?edition=lite) (v 16.1 or higher - free Lite Edition suffices)
+  * [RISC-V GNU Compiler Toolchain](https://github.com/riscv/riscv-gnu-toolchain)
   * GCC (or another C compiler) for host architecture (for building a SD card image)
   * Make
   * [iconv](https://en.wikipedia.org/wiki/Iconv) (for building with JP lang menu)
@@ -19,31 +20,51 @@ Requirements for building and debugging firmware
 
 Architecture
 ------------------------------
-* [Reference board schematics](https://www.niksula.hut.fi/~mhiienka/ossc/diy-v1.5/ossc_v1.5-diy_schematic.pdf)
+* [Reference board schematics](https://github.com/marqs85/ossc_pcb/raw/v1.6/ossc_board.pdf)
 * [Reference PCB project](https://github.com/marqs85/ossc_pcb)
+
+
+SW toolchain build procedure
+--------------------------
+1. Download, configure, build and install RISC-V toolchain with Newlib + RV32EMC support:
+~~~~
+git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+cd riscv-gnu-toolchain
+./configure --prefix=/opt/riscv --with-arch=rv32emc --with-abi=ilp32e
+sudo make    # sudo needed if installing under default /opt/riscv location
+~~~~
+2. Compile custom binary to IHEX converter:
+~~~~
+gcc tools/bin2hex.c -o tools/bin2hex
+~~~~
+
+
+Building RTL (bitstream)
+--------------------------
+1. Initialize pulpino submodules (once after cloning ossc project or when submoduled have been updated)
+~~~~
+git submodule update --init --recursive ip/pulpino_qsys
+~~~~
+2. Load the project (ossc.qpf) in Quartus
+3. Generate QSYS output files (only needed before first compilation or when QSYS structure has been modified)
+    * Open Platform Designer (Tools -> Platform Designer)
+    * Load platform configuration (sys.qsys)
+    * Generate output (Generate -> Generate HDL, Generate)
+    * Close Platform Designer
+    * Run "touch software/sys_controller_bsp/bsp_timestamp" to acknowledge QSYS update
+3. Generate the FPGA bitstream (Processing -> Start Compilation)
+4. Ensure that there are no severe timing violations by looking into Timing Analyzer report
+
+NOTE: If the software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) was not up to date at the time of compilation, bitstream can be quickly rebuilt with updated hex by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
 
 Building software image
 --------------------------
-1. Enter BSP directory:
-~~~~
-cd software/sys_controller_bsp
-~~~~
-2. (Optionally) edit BSP settings:
-~~~~
-nios2-bsp-editor
-~~~~
-3. Generate BSP:
-~~~~
-nios2-bsp-generate-files --bsp-dir . --settings settings.bsp
-~~~~
-NOTE: the previous step must be done every time after RTL/bitstream is built
-
-4. Enter software root directory:
+1. Enter software root directory:
 ~~~~
 cd software/sys_controller
 ~~~~
-5. Build SW for target configuration:
+2. Build SW for target configuration:
 ~~~~
 make [OPTIONS] [TARGET]
 ~~~~
@@ -52,23 +73,15 @@ OPTIONS may include following definitions:
 * ENABLE_AUDIO=y (Includes audio setup code for v1.6 PCB / DIY audio add-on board)
 
 TARGET is typically one of the following:
-* all (Default target. Compiles an ELF for direct downloading to Nios2 during testing)
-* generate_hex (Generates a memory initialization file required for bitstream)
+* all (Default target. Compiles an ELF file)
+* generate_hex (Generates a memory initialization file required for bitstream and direct download)
 * clean (cleans ELF and intermediate files. Should be invoked every time OPTIONS are changed between compilations, expect with generate_hex where it is done automatically)
 
-6. Optionally test updated SW by downloading ELF to Nios2 CPU via JTAG (RTL-SW interface in active FW must be compatible new SW BSP configuration)
+3. Optionally test updated SW by directly downloading memory image to block RAM via JTAG
 ~~~~
-nios2-download -g --accept-bad-sysid sys_controller.elf
+make rv-reprogram
 ~~~~
 
-
-Building RTL / bitstream
---------------------------
-1. Load the project (ossc.qpf) in Quartus
-2. Generate the FPGA bitstream (Processing -> Start Compilation). NOTE: make sure software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) is up to date before generating bitstream.
-3. Ensure that there are no severe timing violations by looking into Timing Analyzer report
-
-If only software image is updated, bitstream can be quickly rebuilt by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
 Installing firmware via JTAG
 --------------------------
@@ -101,12 +114,12 @@ Debugging
 --------------------------
 1. Rebuild the software in debug mode:
 ~~~~
-make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"
+make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex
 ~~~~
 NOTE: Fw update functionality via SD card is disabled in debug builds due to code space limitations. If audio support is enabled on debug build, other functionality needs to be disabled as well.
 
-2. Program Nios2 CPU via JTAG and open terminal for UART
+2. Download memory image via JTAG and open terminal for UART
 ~~~~
-nios2-download -g --accept-bad-sysid sys_controller.elf && nios2-terminal
+make rv-reprogram && nios2-terminal
 ~~~~
 Remember to close nios2-terminal after debug session, otherwise any JTAG transactions will hang/fail.

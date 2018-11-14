@@ -35,7 +35,7 @@
 
 #include <sys/stat.h>
 
-#include "sys/alt_irq.h"
+//#include "sys/alt_irq.h"
 #include "sys/alt_alarm.h"
 #include "sys/ioctl.h"
 #include "alt_types.h"

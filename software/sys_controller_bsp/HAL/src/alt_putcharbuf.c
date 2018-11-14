@@ -1,11 +1,8 @@
-#ifndef __IO_H__
-#define __IO_H__
-
 /******************************************************************************
 *                                                                             *
 * License Agreement                                                           *
 *                                                                             *
-* Copyright (c) 2003 Altera Corporation, San Jose, California, USA.           *
+* Copyright (c) 2015 Altera Corporation, San Jose, California, USA.           *
 * All rights reserved.                                                        *
 *                                                                             *
 * Permission is hereby granted, free of charge, to any person obtaining a     *
@@ -33,49 +30,51 @@
 * file be used in conjunction or combination with any other product.          *
 ******************************************************************************/
 
-/* IO Header file for Nios II Toolchain */
 
-#include "alt_types.h"
-#ifdef __cplusplus
-extern "C"
-{
-#endif /* __cplusplus */
+#ifdef ALT_SEMIHOSTING
+#include "sys/alt_stdio.h"
+#include "unistd.h"
 
-#ifndef SYSTEM_BUS_WIDTH
-#define SYSTEM_BUS_WIDTH 32
+#ifndef ALT_PUTBUF_SIZE
+#define ALT_PUTBUF_SIZE 64
 #endif
 
-/* Dynamic bus access functions */
+// Buffer for the printed chars
+static char buf[ALT_PUTBUF_SIZE] ={0};
+// index into the buffer
+static unsigned int fill_index;
 
-#define __IO_CALC_ADDRESS_DYNAMIC(BASE, OFFSET) \
-  ((void *)(((alt_u8*)BASE) + (OFFSET)))
+/* 
+ * ALT putcharbuf funtion
+ * Used only for semihosting. 
+ * Not thread safe!
+ * This fucntion buffers up chars to be printed until either alt_putbufflush()
+ * is called or the buffer is full.
+ * It is called by alt_printf when semihosting is turned on
+ * Its purpose is to minimize the number of Break 1 issuesd by the semihosting
+ * libraries. 
+ */
+int 
+alt_putcharbuf(int c)
+{
+    buf[fill_index++] = (char)(c & 0xff);
+    if(fill_index >= ALT_PUTBUF_SIZE)
+        alt_putbufflush();
+    return c;
+}
 
-#define IORD_32DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-#define IORD_16DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-#define IORD_8DIRECT(BASE, OFFSET) \
-  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))))
-
-#define IOWR_32DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-#define IOWR_16DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u16*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-#define IOWR_8DIRECT(BASE, OFFSET, DATA) \
-  (*(volatile alt_u8*)(__IO_CALC_ADDRESS_DYNAMIC ((BASE), (OFFSET))) = (DATA))
-
-/* Native bus access functions */
-
-#define __IO_CALC_ADDRESS_NATIVE(BASE, REGNUM) \
-  ((void *)(((alt_u8*)BASE) + ((REGNUM) * (SYSTEM_BUS_WIDTH/8))))
-
-#define IORD(BASE, REGNUM) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))))
-#define IOWR(BASE, REGNUM, DATA) \
-  (*(volatile alt_u32*)(__IO_CALC_ADDRESS_NATIVE ((BASE), (REGNUM))) = (DATA))
-
-#ifdef __cplusplus
+/*
+ * ALT putbufflush 
+ * used only for smehosting
+ * Not thread safe!
+ * Dumps all the chars in the buffer to STDOUT
+ */
+int 
+alt_putbufflush()
+{
+    int results;
+    results = write(STDOUT_FILENO,buf,fill_index);
+    fill_index = 0;
+    return results;
 }
 #endif
-
-#endif /* __IO_H__ */

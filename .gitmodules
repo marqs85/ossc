@@ -1,0 +1,3 @@
+[submodule "ip/pulpino_qsys"]
+	path = ip/pulpino_qsys
+	url = https://github.com/marqs85/pulpino_qsys.git

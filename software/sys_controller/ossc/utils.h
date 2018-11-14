@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -17,14 +17,19 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef SDCARD_H_
-#define SDCARD_H_
+#ifndef UTILS_H_
+#define UTILS_H_
 
-#include "alt_types.h"
-#include "sysconfig.h"
-#include "sd_io.h"
+#include <alt_types.h>
 
-int check_sdcard(alt_u8 *databuf);
-int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, alt_u8 *tmpbuf);
+#define PRINTF_BUFSIZE 512
 
-#endif /* SDCARD_H_ */
+unsigned char bitswap8(unsigned char v);
+
+alt_u32 bswap32(alt_u32 w);
+
+unsigned long crc32(unsigned char *input_data, unsigned long input_data_length, int do_initialize);
+
+int dd_printf(const char *__restrict fmt, ...);
+
+#endif

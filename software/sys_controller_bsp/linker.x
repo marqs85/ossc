@@ -4,7 +4,7 @@
  * Machine generated for CPU 'nios2_qsys_0' in SOPC Builder design 'sys'
  * SOPC Builder design path: ../../sys.sopcinfo
  *
- * Generated: Sun Oct 16 12:18:06 EEST 2016
+ * Generated: Fri Oct 05 19:59:02 EEST 2018
  */
 
 /*
@@ -50,14 +50,14 @@
 
 MEMORY
 {
-    epcq_controller_0_avl_mem : ORIGIN = 0x0, LENGTH = 8388608
-    reset : ORIGIN = 0x810000, LENGTH = 32
-    onchip_memory2_0 : ORIGIN = 0x810020, LENGTH = 40928
+    reset : ORIGIN = 0x10000, LENGTH = 32
+    onchip_memory2_0 : ORIGIN = 0x10020, LENGTH = 36832
+    epcq_controller_0_avl_mem : ORIGIN = 0x800000, LENGTH = 8388608
 }
 
 /* Define symbols for each memory base-address */
-__alt_mem_epcq_controller_0_avl_mem = 0x0;
-__alt_mem_onchip_memory2_0 = 0x810000;
+__alt_mem_onchip_memory2_0 = 0x10000;
+__alt_mem_epcq_controller_0_avl_mem = 0x800000;
 
 OUTPUT_FORMAT( "elf32-littlenios2",
                "elf32-littlenios2",
@@ -309,24 +309,7 @@ SECTIONS
      *
      */
 
-    .epcq_controller_0_avl_mem : AT ( LOADADDR (.bss) + SIZEOF (.bss) )
-    {
-        PROVIDE (_alt_partition_epcq_controller_0_avl_mem_start = ABSOLUTE(.));
-        *(.epcq_controller_0_avl_mem .epcq_controller_0_avl_mem. epcq_controller_0_avl_mem.*)
-        . = ALIGN(4);
-        PROVIDE (_alt_partition_epcq_controller_0_avl_mem_end = ABSOLUTE(.));
-    } > epcq_controller_0_avl_mem
-
-    PROVIDE (_alt_partition_epcq_controller_0_avl_mem_load_addr = LOADADDR(.epcq_controller_0_avl_mem));
-
-    /*
-     *
-     * This section's LMA is set to the .text region.
-     * crt0 will copy to this section's specified mapped region virtual memory address (VMA)
-     *
-     */
-
-    .onchip_memory2_0 LOADADDR (.epcq_controller_0_avl_mem) + SIZEOF (.epcq_controller_0_avl_mem) : AT ( LOADADDR (.epcq_controller_0_avl_mem) + SIZEOF (.epcq_controller_0_avl_mem) )
+    .onchip_memory2_0 LOADADDR (.bss) + SIZEOF (.bss) : AT ( LOADADDR (.bss) + SIZEOF (.bss) )
     {
         PROVIDE (_alt_partition_onchip_memory2_0_start = ABSOLUTE(.));
         *(.onchip_memory2_0 .onchip_memory2_0. onchip_memory2_0.*)
@@ -338,6 +321,23 @@ SECTIONS
     } > onchip_memory2_0
 
     PROVIDE (_alt_partition_onchip_memory2_0_load_addr = LOADADDR(.onchip_memory2_0));
+
+    /*
+     *
+     * This section's LMA is set to the .text region.
+     * crt0 will copy to this section's specified mapped region virtual memory address (VMA)
+     *
+     */
+
+    .epcq_controller_0_avl_mem : AT ( LOADADDR (.onchip_memory2_0) + SIZEOF (.onchip_memory2_0) )
+    {
+        PROVIDE (_alt_partition_epcq_controller_0_avl_mem_start = ABSOLUTE(.));
+        *(.epcq_controller_0_avl_mem .epcq_controller_0_avl_mem. epcq_controller_0_avl_mem.*)
+        . = ALIGN(4);
+        PROVIDE (_alt_partition_epcq_controller_0_avl_mem_end = ABSOLUTE(.));
+    } > epcq_controller_0_avl_mem
+
+    PROVIDE (_alt_partition_epcq_controller_0_avl_mem_load_addr = LOADADDR(.epcq_controller_0_avl_mem));
 
     /*
      * Stabs debugging sections.
@@ -386,7 +386,7 @@ SECTIONS
 /*
  * Don't override this, override the __alt_stack_* symbols instead.
  */
-__alt_data_end = 0x81a000;
+__alt_data_end = 0x19000;
 
 /*
  * The next two symbols define the location of the default stack.  You can
@@ -402,4 +402,4 @@ PROVIDE( __alt_stack_limit   = __alt_stack_base );
  * Override this symbol to put the heap in a different memory.
  */
 PROVIDE( __alt_heap_start    = end );
-PROVIDE( __alt_heap_limit    = 0x81a000 );
+PROVIDE( __alt_heap_limit    = 0x19000 );

@@ -43,6 +43,7 @@
 
 ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments(alt_epcq_controller_dev *flash_info,alt_u32 offset, alt_u32 length);
 alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller_dev* epcq_flash_info);
+ALT_INLINE unsigned char static bitswap8(unsigned char v);
 
 /*
  *  Public API
@@ -334,6 +335,10 @@ int alt_epcq_controller_write_block
         /* prepare the word to be written */
         memcpy((((void*)&word_to_write)) + padding, ((void*)data) + buffer_offset, bytes_to_copy);
 
+        // Bit-reverse bytes for flash
+        for (int i=0; i<bytes_to_copy; i++)
+            *((unsigned char*)&word_to_write+i) = bitswap8(*((unsigned char*)&word_to_write+i));
+
         /* update offset and length variables */
         buffer_offset += bytes_to_copy;
         remaining_length -= bytes_to_copy;
@@ -508,6 +513,10 @@ int alt_epcq_controller_read
 	if(0 == ret_code)
 	{
 		memcpy(dest_addr, (alt_u8*)epcq_flash_info->data_base + offset, length);
+
+        // Bit-reverse bytes read from flash
+        for (int i=0; i<length; i++)
+            *((unsigned char*)dest_addr+i) = bitswap8(*((unsigned char*)dest_addr+i));
 	}
 
     return ret_code;
@@ -792,6 +801,12 @@ alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller_dev* epcq_
 	}
 
 	return 0;
+}
+
+ALT_INLINE unsigned char static bitswap8(unsigned char v)
+{
+    return ((v * 0x0802LU & 0x22110LU) |
+            (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
 }
 
 
