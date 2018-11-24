@@ -193,8 +193,8 @@ int read_userdata(alt_u8 entry, int dry_run)
                 if (vm_to_read >= PAGESIZE-pageoffset) {
                     memcpy((char*)video_modes+dstoffset, databuf+pageoffset, PAGESIZE-pageoffset);
                     dstoffset += PAGESIZE-pageoffset;
-                    pageoffset = 0;
                     vm_to_read -= PAGESIZE-pageoffset;
+                    pageoffset = 0;
                     pageno++;
                     // check
                     read_flash(USERDATA_OFFSET+(entry*SECTORSIZE)+pageno*PAGESIZE, PAGESIZE, databuf);
