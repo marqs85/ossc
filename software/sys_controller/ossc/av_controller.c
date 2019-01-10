@@ -80,6 +80,7 @@ avinput_t target_input;
 
 alt_u8 pcm1862_active;
 
+alt_u32 pclk_out;
 alt_u32 read_it2(alt_u32 regaddr);
 
 inline void lcd_write_menu()
@@ -98,12 +99,7 @@ inline void SetupAudio(tx_mode_t mode)
     DisableAudioOutput();
     EnableAudioInfoFrame(FALSE, NULL);
 
-    if (mode == TX_HDMI) {
-        alt_u32 pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total*cm.sample_mult*(cm.fpga_vmultmode+1);
-
-        pclk_out *= 1+cm.tx_pixelrep;
-
-        printf("PCLK_out: %luHz\n", pclk_out);
+    if (mode != TX_DVI) {
         EnableAudioOutput4OSSC(pclk_out, tc.audio_dw_sampl, tc.audio_swap_lr);
         HDMITX_SetAudioInfoFrame((BYTE)tc.audio_dw_sampl);
 #ifdef DEBUG
@@ -128,10 +124,10 @@ inline void TX_enable(tx_mode_t mode)
 
     //Setup TX configuration
     //TODO: set pclk target and VIC dynamically
-    EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
+    EnableVideoOutput(cm.hdmitx_pclk_level ? PCLK_HIGH : PCLK_MEDIUM, COLOR_RGB444, (mode == TX_HDMI_YCBCR444) ? COLOR_YUV444 : COLOR_RGB444, (mode != TX_DVI));
 
-    if (mode == TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+    if (mode != TX_DVI) {
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
@@ -347,8 +343,6 @@ status_t get_status(tvp_input_t input, video_format format)
 #ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
 #ifdef MANUAL_CTS
-        (tc.edtv_l2x != cm.cc.edtv_l2x) ||
-        (tc.interlace_pt != cm.cc.interlace_pt) ||
         update_cur_vm ||
 #endif
         (tc.audio_swap_lr != cm.cc.audio_swap_lr))
@@ -480,7 +474,7 @@ void set_videoinfo()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u8 h_syncinlen, v_syncinlen;
+    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level;
     alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
@@ -530,13 +524,29 @@ void program_mode()
 
     set_videoinfo();
 
-    TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode==TX_HDMI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
+    TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
 
-    // Full TX initialization increases mode switch delay, use only for compatibility
-    if (cm.cc.full_tx_setup) {
+    pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total*cm.sample_mult*(cm.fpga_vmultmode+1);
+    pclk_out *= 1+cm.tx_pixelrep;
+    if (cm.fpga_hmultmode == FPGA_H_MULTMODE_OPTIMIZED_1X)
+        pclk_out /= 2;
+    else if (cm.fpga_hmultmode == FPGA_H_MULTMODE_ASPECTFIX)
+        pclk_out = (pclk_out*4)/3;
+    printf("PCLK_out: %luHz\n", pclk_out);
+
+    if (pclk_out > 85000000)
+        hdmitx_pclk_level = 1;
+    else if (pclk_out < 75000000)
+        hdmitx_pclk_level = 0;
+    else
+        hdmitx_pclk_level = cm.hdmitx_pclk_level;
+
+    // Full TX initialization increases mode switch delay, use only when necessary
+    if (cm.cc.full_tx_setup || (cm.hdmitx_pclk_level != hdmitx_pclk_level)) {
+        cm.hdmitx_pclk_level = hdmitx_pclk_level;
         TX_enable(cm.cc.tx_mode);
-    } else if (cm.cc.tx_mode==TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
+    } else if (cm.cc.tx_mode!=TX_DVI) {
+        HDMITX_SetAVIInfoFrame(HDMI_Unkown, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
 #ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
@@ -689,7 +699,7 @@ int init_hw()
         setup_rc();
 
     // init always in HDMI mode (fixes yellow screen bug)
-    TX_enable(TX_HDMI);
+    TX_enable(TX_HDMI_RGB);
 
     return 0;
 }
@@ -957,15 +967,15 @@ int main()
 
         // Check here to enable regardless of input
         if (tc.tx_mode != cm.cc.tx_mode) {
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, 0, 0);
+            HDMITX_SetAVIInfoFrame(HDMI_Unkown, F_MODE_RGB444, 0, 0, 0, 0);
             TX_enable(tc.tx_mode);
             cm.cc.tx_mode = tc.tx_mode;
             cm.clkcnt = 0; //TODO: proper invalidate
         }
-        if ((tc.tx_mode == TX_HDMI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
+        if ((tc.tx_mode != TX_DVI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            HDMITX_SetAVIInfoFrame(HDMI_Unkown, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
 

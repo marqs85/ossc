@@ -77,8 +77,9 @@ typedef enum {
 } status_t;
 
 typedef enum {
-    TX_HDMI             = 0,
-    TX_DVI              = 1
+    TX_HDMI_RGB         = 0,
+    TX_HDMI_YCBCR444    = 1,
+    TX_DVI              = 2
 } tx_mode_t;
 
 //TODO: transform binary values into flags
@@ -93,6 +94,7 @@ typedef struct {
     alt_u8 fpga_hmultmode;
     alt_u8 tx_pixelrep;
     alt_u8 hdmitx_pixr_ifr;
+    alt_u8 hdmitx_pclk_level;
     alt_u8 sample_mult;
     alt_u8 sample_sel;
     alt_u8 hsync_cut;

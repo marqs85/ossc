@@ -49,7 +49,7 @@ const avconfig_t tc_default = {
     .post_coast = DEFAULT_POST_COAST,
 #ifdef ENABLE_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
-    .tx_mode = TX_HDMI,
+    .tx_mode = TX_HDMI_RGB,
     .audio_gain = AUDIO_GAIN_0DB,
 #endif
     .col = {
@@ -68,7 +68,7 @@ int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
 #ifndef ENABLE_AUDIO
-    tc.tx_mode = !!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK);
+    tc.tx_mode = (IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) ? TX_DVI : TX_HDMI_RGB;
 #endif
 
     memcpy(video_modes, video_modes_default, VIDEO_MODES_SIZE);
