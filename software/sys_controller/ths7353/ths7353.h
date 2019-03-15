@@ -34,6 +34,10 @@ typedef enum {
     THS_STANDBY = 2
 } ths_input_t;
 
+#define THS_LPF_9MHZ 0x00
+#define THS_LPF_16MHZ 0x01
+#define THS_LPF_35MHZ 0x02
+#define THS_LPF_BYPASS 0x03
 #define THS_LPF_DEFAULT 0x3
 #define THS_LPF_MASK 0x18
 #define THS_LPF_OFFS 3
@@ -48,8 +52,6 @@ typedef enum {
 #define THS_MODE_AVMUTE     1
 #define THS_MODE_AC_BIAS    4
 #define THS_MODE_STC        6   //mid bias
-
-#define THS_LPF_BYPASS 0x03
 
 int ths_init();
 

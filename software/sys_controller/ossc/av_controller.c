@@ -154,17 +154,17 @@ void set_lpf(alt_u8 lpf)
             break;
         case VIDEO_HDTV:
             tvp_set_lpf(0);
-            ths_set_lpf(THS_LPF_BYPASS);
+            ths_set_lpf((pclk < 80000000) ? THS_LPF_35MHZ : THS_LPF_BYPASS);
             break;
         case VIDEO_EDTV:
             tvp_set_lpf(0);
-            ths_set_lpf(1);
+            ths_set_lpf(THS_LPF_16MHZ);
             break;
         case VIDEO_SDTV:
         case VIDEO_LDTV:
         default:
             tvp_set_lpf(0);
-            ths_set_lpf(0);
+            ths_set_lpf(THS_LPF_9MHZ);
             break;
         }
     } else {
