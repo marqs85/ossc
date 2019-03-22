@@ -22,6 +22,7 @@
 
 #include "avconfig.h"
 #include "sysconfig.h"
+#include "sc_config_regs.h"
 
 // sys_ctrl bits
 #define LT_ACTIVE                   (1<<15)
@@ -57,11 +58,6 @@
 #define FPGA_H_MULTMODE_OPTIMIZED   2
 #define FPGA_H_MULTMODE_OPTIMIZED_1X 3
 
-#define FPGA_SCANLINEMODE_OFF       0
-#define FPGA_SCANLINEMODE_H         1
-#define FPGA_SCANLINEMODE_V         2
-#define FPGA_SCANLINEMODE_ALT       3
-
 #define AUTO_OFF                    0
 #define AUTO_CURRENT_INPUT          1
 #define AUTO_MAX_COUNT            100
@@ -70,7 +66,7 @@
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,
-    INFO_CHANGE         = 1,
+    SC_CONFIG_CHANGE    = 1,
     MODE_CHANGE         = 2,
     TX_MODE_CHANGE      = 3,
     ACTIVITY_CHANGE     = 4

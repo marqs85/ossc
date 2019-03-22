@@ -45,6 +45,7 @@ extern alt_u8 menu_active;
 extern alt_u16 sys_ctrl;
 extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
+extern volatile sc_regs *sc;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -111,9 +112,9 @@ int parse_control()
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
 
-    alt_u32 fpga_status;
+    sc_status_reg sc_status;
+    sc_status2_reg sc_status2;
     alt_u32 fpga_v_hz_x100;
-    alt_u8 fpga_ilace;
 
     // one for each video_group
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
@@ -155,8 +156,8 @@ int parse_control()
 
             break;
         case RC_INFO:
-            fpga_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE);
-            fpga_ilace = !!(fpga_status & (1<<11));
+            sc_status = sc->sc_status;
+            sc_status2 = sc->sc_status2;
             sniprintf(menu_row1, LCD_ROW_LEN+1, "Prof.%u %9s", profile_sel, video_modes[cm.id].name);
             if (cm.sync_active) {
                 //fpga_v_hz_x100 = (100*TVP_EXTCLK_HZ)/IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE);
@@ -165,10 +166,10 @@ int parse_control()
                                                                               ((fpga_status >> 16) & 0x3) ? '*' : ' ',
                                                                               fpga_v_hz_x100/100,
                                                                               fpga_v_hz_x100%100);*/
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %lu", (((fpga_status & 0x7ff)+1)<<fpga_ilace)+fpga_ilace,
-                                                                     fpga_ilace ? 'i' : 'p',
-                                                                     ((fpga_status >> 16) & 0x3) ? '*' : ' ',
-                                                                     IORD_ALTERA_AVALON_PIO_DATA(PIO_8_BASE));
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %lu", (unsigned long)((sc_status.vmax+1)<<sc_status.interlace_flag)+sc_status.interlace_flag,
+                                                                     sc_status.interlace_flag ? 'i' : 'p',
+                                                                     sc_status.fpga_vsyncgen ? '*' : ' ',
+                                                                     (unsigned long)sc_status2.pcnt_frame);
             }
             lcd_write_menu();
             break;

@@ -22,5 +22,5 @@
 `define LT_POS_CENTER       2'b10
 `define LT_POS_BOTTOMRIGHT  2'b11
 
-`define LT_WIDTH_DIV        8
-`define LT_HEIGHT_DIV       8
+`define LT_WIDTH_DIV        4'h8
+`define LT_HEIGHT_DIV       4'h8

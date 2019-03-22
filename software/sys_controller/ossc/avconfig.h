@@ -71,8 +71,12 @@ typedef struct {
     alt_u8 sl_type;
     alt_u8 sl_hybr_str;
     alt_u8 sl_method;
+    alt_u8 sl_altern;
+    alt_u8 sl_altiv;
     alt_u8 sl_str;
     alt_u8 sl_id;
+    alt_u8 sl_cust_l_str[5];
+    alt_u8 sl_cust_c_str[6];
     alt_u8 linemult_target;
     alt_u8 l2_mode;
     alt_u8 l3_mode;

@@ -48,7 +48,7 @@
 #define MIN_LINES_INTERLACED    400
 #define SYNC_LOCK_THOLD         3
 #define SYNC_LOSS_THOLD         -5
-#define STATUS_TIMEOUT          10000
+#define STATUS_TIMEOUT          100000
 
 alt_u16 sys_ctrl;
 
@@ -82,6 +82,8 @@ alt_u8 pcm1862_active;
 
 alt_u32 pclk_out;
 alt_u32 read_it2(alt_u32 regaddr);
+
+volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 
 inline void lcd_write_menu()
 {
@@ -201,14 +203,14 @@ status_t get_status(tvp_input_t input, video_format format)
 
     // Wait until vsync active (avoid noise coupled to I2C bus on earlier prototypes)
     for (ctr=0; ctr<STATUS_TIMEOUT; ctr++) {
-        if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) & (1<<31))) {
+        if (sc->sc_status.vsync_flag) {
             //printf("ctrval %u\n", ctr);
             break;
         }
     }
 
     sync_active = tvp_check_sync(input, format);
-    vsyncmode = cm.sync_active ? ((IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) >> 16) & 0x3) : 0;
+    vsyncmode = cm.sync_active ? sc->sc_status.fpga_vsyncgen : 0;
 
     // Read sync information from TVP7002 status registers
     data1 = tvp_readreg(TVP_LINECNT1);
@@ -221,7 +223,7 @@ status_t get_status(tvp_input_t input, video_format format)
     clkcnt = ((data2 & 0x0f) << 8) | data1;
 
     // Read how many lines TVP7002 outputs in reality (valid only if output enabled)
-    totlines_tvp = ((IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE) >> 18) & 0x7ff)+1;
+    totlines_tvp = sc->sc_status.vmax_tvp+1;
 
     // NOTE: "progressive" may not have correct value if H-PLL is not locked (!cm.sync_active)
     if ((vsyncmode == 0x2) || (!cm.sync_active && (totlines < MIN_LINES_INTERLACED))) {
@@ -290,7 +292,7 @@ status_t get_status(tvp_input_t input, video_format format)
 
         if (update_cur_vm) {
             tvp_setup_hpll(cm.sample_mult*video_modes[cm.id].h_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
-            status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
+            status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
         }
 
         cm.totlines = totlines;
@@ -303,17 +305,21 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.sl_hybr_str != cm.cc.sl_hybr_str) ||
         (tc.sl_method != cm.cc.sl_method) ||
         (tc.sl_str != cm.cc.sl_str) ||
+        memcmp(tc.sl_cust_l_str, cm.cc.sl_cust_l_str, 5) ||
+        memcmp(tc.sl_cust_c_str, cm.cc.sl_cust_c_str, 6) ||
+        (tc.sl_altern != cm.cc.sl_altern) ||
+        (tc.sl_altiv != cm.cc.sl_altiv) ||
         (tc.sl_id != cm.cc.sl_id) ||
         (tc.h_mask != cm.cc.h_mask) ||
         (tc.v_mask != cm.cc.v_mask) ||
         (tc.mask_br != cm.cc.mask_br) ||
         (tc.ar_256col != cm.cc.ar_256col) ||
         (tc.reverse_lpf != cm.cc.reverse_lpf))
-        status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
+        status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
 
     if (tc.sampler_phase != cm.cc.sampler_phase) {
         cm.sample_sel = tvp_set_hpll_phase(tc.sampler_phase, cm.sample_mult);
-        status = (status < INFO_CHANGE) ? INFO_CHANGE : status;
+        status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
     }
 
     if (tc.sync_vth != cm.cc.sync_vth)
@@ -358,21 +364,19 @@ status_t get_status(tvp_input_t input, video_format format)
     return status;
 }
 
-// h_info:     [31:30]           [29]      [28]           [27:20]          [19:11]            [10:0]
-//           | H_MULTMODE[1:0] | H_L5FMT | H_L3_240x360 | H_SYNCLEN[7:0] | H_BACKPORCH[8:0] | H_ACTIVE[10:0] |
-//
-// h_info2:   [31:30]   [29:19]       [18:16]            [15:13]                 [12:10]                  [9:0]
-//           |       | H_MASK[10:0] | H_OPT_SCALE[2:0] | H_OPT_SAMPLE_SEL[2:0] | H_OPT_SAMPLE_MULT[2:0] | H_OPT_STARTOFF[9:0] |
-//
-// v_info:     [31:29]           [28:27]               [26]           [25:20]       [19:17]          [16:11]            [10:0]
-//           | V_MULTMODE[2:0] | V_SCANLINEMODE[1:0] | V_SCANLINEID | V_MASK[5:0] | V_SYNCLEN[2:0] | V_BACKPORCH[5:0] | V_ACTIVE[10:0] |
-//
-// extra:      [31:19]  [18:14]         [13:10]          [9]                [8:4]                [3:0]
-//           |        | X_REV_LPF_STR | H_MASK_BR[3:0] | H_SCANLINE_METHOD | H_SL_HYBRSTR[4:0] | H_SCANLINESTR[3:0] |
-//
-void set_videoinfo()
+void update_sc_config()
 {
-    alt_u8 sl_mode_fpga;
+    h_config_reg h_config = {.data=0x00000000};
+    h_config2_reg h_config2 = {.data=0x00000000};
+    v_config_reg v_config = {.data=0x00000000};
+    misc_config_reg misc_config = {.data=0x00000000};
+    sl_config_reg sl_config = {.data=0x00000000};
+    sl_config2_reg sl_config2 = {.data=0x00000000};
+
+    alt_u8 sl_no_altern = 0;
+    alt_u8 sl_l_overlay = 0, sl_c_overlay = 0;
+    alt_u32 sl_l_str_arr = 0, sl_c_str_arr = 0;
+
     alt_u8 h_opt_scale = cm.sample_mult;
     alt_u16 h_opt_startoffs = 0;
     alt_u16 h_synclen = video_modes[cm.id].h_synclen;
@@ -380,17 +384,66 @@ void set_videoinfo()
     alt_u16 v_active = video_modes[cm.id].v_active;
     alt_u16 v_backporch = video_modes[cm.id].v_backporch;
 
-    if (cm.cc.sl_mode == 2) {    //manual
-        sl_mode_fpga = 1+cm.cc.sl_type;
-    } else if (cm.cc.sl_mode == 1) {   //auto
-        if (video_modes[cm.id].flags & MODE_INTERLACED)
-            sl_mode_fpga = cm.fpga_vmultmode ? FPGA_SCANLINEMODE_ALT : FPGA_SCANLINEMODE_OFF;
-        else if ((cm.fpga_vmultmode) && (video_modes[cm.id].group != GROUP_480P))
-            sl_mode_fpga = FPGA_SCANLINEMODE_H;
+    int i;
+
+    // construct default scanline overlay
+    if ((cm.cc.sl_type == 0) || (cm.cc.sl_type == 2)) {
+        if (cm.cc.sl_altiv) {
+            sl_l_overlay = 1<<(cm.cc.sl_id);
+        } else {
+            switch (cm.fpga_vmultmode) {
+                case FPGA_V_MULTMODE_3X:
+                    sl_l_overlay = 1<<(2*(cm.cc.sl_id));
+                    break;
+                case FPGA_V_MULTMODE_4X:
+                    sl_l_overlay = 3<<(2*(cm.cc.sl_id));
+                    break;
+                case FPGA_V_MULTMODE_5X:
+                    sl_l_overlay = 3<<(3*(cm.cc.sl_id));
+                    break;
+                default: //1x, 2x
+                    sl_l_overlay = 1<<(cm.cc.sl_id);
+                    break;
+            }
+        }
+    }
+    if ((cm.cc.sl_type == 1) || (cm.cc.sl_type == 2)) {
+        if (cm.sample_mult <= 4)
+            sl_c_overlay = (1<<((cm.sample_mult-1)*(cm.cc.sl_id)));
         else
-            sl_mode_fpga = FPGA_SCANLINEMODE_OFF;
-    } else {
-        sl_mode_fpga = FPGA_SCANLINEMODE_OFF;
+            sl_c_overlay = (3<<((cm.sample_mult-2)*(cm.cc.sl_id)));
+    }
+    // construct custom scanline overlay and strength arrays
+    for (i=0; i<5; i++) {
+        if (cm.cc.sl_type == 3) {
+            sl_l_str_arr |= ((cm.cc.sl_cust_l_str[i]-1)&0xf)<<(4*i);
+            sl_l_overlay |= (cm.cc.sl_cust_l_str[i]!=0)<<i;
+        } else {
+            sl_l_str_arr |= cm.cc.sl_str<<(4*i);
+        }
+    }
+    for (i=0; i<6; i++) {
+        if (cm.cc.sl_type == 3) {
+            sl_c_str_arr |= ((cm.cc.sl_cust_c_str[i]-1)&0xf)<<(4*i);
+            sl_c_overlay |= (cm.cc.sl_cust_c_str[i]!=0)<<i;
+        } else {
+            sl_c_str_arr |= cm.cc.sl_str<<(4*i);
+        }
+    }
+    // enable/disable alternating scanlines
+    if ((video_modes[cm.id].flags & MODE_INTERLACED) && (cm.fpga_vmultmode))
+        sl_no_altern = !cm.cc.sl_altern;
+    // oevrride scanline mode
+    if (cm.cc.sl_mode == 1) {   //auto
+        //disable scanlines
+        if ((cm.fpga_vmultmode==0) || (video_modes[cm.id].group == GROUP_480P)) {
+            sl_l_overlay = 0;
+            sl_c_overlay = 0;
+        }
+    } else if (cm.cc.sl_mode == 0) { //off
+        //disable scanlines
+        sl_l_overlay = 0;
+        sl_c_overlay = 0;
     }
 
     switch (cm.target_lm) {
@@ -446,29 +499,44 @@ void set_videoinfo()
     h_opt_startoffs = h_border + (cm.sample_mult-h_opt_scale)*(h_synclen+(alt_u16)video_modes[cm.id].h_backporch);
     printf("h_border: %u, h_opt_startoffs: %u\n", h_border, h_opt_startoffs);
 
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, (cm.fpga_hmultmode<<30) |
-                                            ((cm.cc.l5_fmt!=L5FMT_1600x1200)<<29) |
-                                            ((cm.target_lm==MODE_L3_240x360)<<28) |
-                                            (((cm.sample_mult*h_synclen)&0xff)<<20) |
-                                            (((cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch)&0x1ff)<<11) |
-                                            ((cm.sample_mult*video_modes[cm.id].h_active)&0x7ff));
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_4_BASE, (h_mask<<19) |
-                                            (h_opt_scale<<16) |
-                                            (cm.sample_sel<<13) |
-                                            (cm.sample_mult<<10) |
-                                            h_opt_startoffs);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, (cm.fpga_vmultmode<<29) |
-                                            (sl_mode_fpga<<27) |
-                                            (cm.cc.sl_id<<26) |
-                                            (cm.cc.v_mask<<20) |
-                                            (video_modes[cm.id].v_synclen<<17) |
-                                            (v_backporch<<11) |
-                                            v_active);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_6_BASE, (cm.cc.reverse_lpf<<14) |
-                                            (cm.cc.mask_br<<10) |
-                                            (cm.cc.sl_method << 9) |
-                                            (cm.cc.sl_hybr_str << 4) |
-                                             cm.cc.sl_str);
+    h_config.h_multmode = cm.fpga_hmultmode;
+    h_config.h_l5fmt = (cm.cc.l5_fmt!=L5FMT_1600x1200);
+    h_config.h_l3_240x360 = (cm.target_lm==MODE_L3_240x360);
+    h_config.h_synclen = (cm.sample_mult*h_synclen);
+    h_config.h_backporch = (cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch);
+    h_config.h_active = (cm.sample_mult*video_modes[cm.id].h_active);
+
+    h_config2.h_mask = h_mask;
+    h_config2.h_opt_scale = h_opt_scale;
+    h_config2.h_opt_sample_sel = cm.sample_sel;
+    h_config2.h_opt_sample_mult = cm.sample_mult;
+    h_config2.h_opt_startoff = h_opt_startoffs;
+
+    v_config.v_multmode = cm.fpga_vmultmode;
+    v_config.v_mask = cm.cc.v_mask;
+    v_config.v_synclen = video_modes[cm.id].v_synclen;
+    v_config.v_backporch = v_backporch;
+    v_config.v_active = v_active;
+
+    misc_config.rev_lpf_str = cm.cc.reverse_lpf;
+    misc_config.mask_br = cm.cc.mask_br;
+
+    sl_config.sl_l_str_arr = sl_l_str_arr;
+    sl_config.sl_l_overlay = sl_l_overlay;
+    sl_config.sl_hybr_str = cm.cc.sl_hybr_str;
+    sl_config.sl_method = cm.cc.sl_method;
+    sl_config.sl_no_altern = sl_no_altern;
+
+    sl_config2.sl_c_str_arr = sl_c_str_arr;
+    sl_config2.sl_c_overlay = sl_c_overlay;
+    sl_config2.sl_altiv = cm.cc.sl_altiv;
+
+    sc->h_config = h_config;
+    sc->h_config2 = h_config2;
+    sc->v_config = v_config;
+    sc->misc_config = misc_config;
+    sc->sl_config = sl_config;
+    sc->sl_config2 = sl_config2;
 }
 
 // Configure TVP7002 and scan converter logic based on the video mode
@@ -522,7 +590,7 @@ void program_mode()
     set_lpf(cm.cc.video_lpf);
     cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
 
-    set_videoinfo();
+    update_sc_config();
 
     TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
 
@@ -629,8 +697,8 @@ int init_hw()
     // Reset hardware
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x0000);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_3_BASE, 0x00000000);
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_5_BASE, 0x00000000);
+    sc->h_config.data = 0x00000000;
+    sc->v_config.data = 0x00000000;
     usleep(10000);
 
     // unreset hw
@@ -705,8 +773,9 @@ int init_hw()
 }
 
 int latency_test() {
-    alt_u32 lt_status, btn_vec, btn_vec_prev=1;
+    lt_status_reg lt_status;
     alt_u16 latency_ms_x100, stb_ms_x100;
+    alt_u32 btn_vec, btn_vec_prev=1;
     alt_u8 position = lt_sel+1;
 
     sys_ctrl |= LT_ACTIVE|(position<<LT_MODE_OFFS);
@@ -726,16 +795,17 @@ int latency_test() {
                 usleep(400000);
                 sys_ctrl |= LT_ARMED|(position<<LT_MODE_OFFS);
                 IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
-                //while (!((lt_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_7_BASE)) & (1<<31))) {} //Hangs if sync is lost
+                //while (!sc->lt_status.lt_finished) {} //Hangs if sync is lost
                 SPI_Timer_On(1000);
                 while ((SPI_Timer_Status()==TRUE)) {
-                    lt_status = IORD_ALTERA_AVALON_PIO_DATA(PIO_7_BASE);
-                    if (lt_status & (1<<31))
+                    lt_status = sc->lt_status;
+                    if (lt_status.lt_finished)
                         break;
                 }
                 SPI_Timer_Off();
-                latency_ms_x100 = lt_status & 0xffff;
-                stb_ms_x100 = (lt_status >> 16) & 0xfff;
+                latency_ms_x100 = lt_status.lt_lat_result;
+                stb_ms_x100 = lt_status.lt_stb_result;
+
                 if (latency_ms_x100 == 0)
                     sniprintf(menu_row2, LCD_ROW_LEN+1, "False trigger");
                 else if (latency_ms_x100 == 0xffff)
@@ -1009,10 +1079,10 @@ int main()
                     program_mode();
                 }
                 break;
-            case INFO_CHANGE:
+            case SC_CONFIG_CHANGE:
                 if (cm.sync_active) {
-                    printf("Info change\n");
-                    set_videoinfo();
+                    printf("Scanconverter config change\n");
+                    update_sc_config();
                 }
                 break;
             default:

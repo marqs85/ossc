@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -59,10 +59,10 @@ wire [15:0] sys_ctrl;
 wire h_unstable;
 wire [1:0] pclk_lock;
 wire [1:0] pll_lock_lost;
-wire [31:0] h_info, h_info2, v_info, extra_info;
+wire [31:0] h_config, h_config2, v_config, misc_config, sl_config, sl_config2;
 wire [10:0] vmax, vmax_tvp;
 wire [1:0] fpga_vsyncgen;
-wire ilace_flag;
+wire ilace_flag, vsync_flag;
 wire [19:0] pcnt_frame;
 
 wire [15:0] ir_code;
@@ -242,13 +242,15 @@ sys sys_inst(
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
     .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
-    .pio_2_status_in_export                 ({VSYNC_out, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
-    .pio_3_h_info_out_export                (h_info),
-    .pio_4_h_info2_out_export               (h_info2),
-    .pio_5_v_info_out_export                (v_info),
-    .pio_6_extra_info_out_export            (extra_info),
-    .pio_7_lt_results_in_export             ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
-    .pio_8_pcnt_vhz_in_export               ({12'h000, pcnt_frame})
+    .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
+    .sc_config_0_sc_if_sc_status2_i         ({12'h000, pcnt_frame}),
+    .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
+    .sc_config_0_sc_if_h_config_o           (h_config),
+    .sc_config_0_sc_if_h_config2_o          (h_config2),
+    .sc_config_0_sc_if_v_config_o           (v_config),
+    .sc_config_0_sc_if_misc_config_o        (misc_config),
+    .sc_config_0_sc_if_sl_config_o          (sl_config),
+    .sc_config_0_sc_if_sl_config2_o         (sl_config2)
 );
 
 scanconverter scanconverter_inst (
@@ -261,10 +263,12 @@ scanconverter scanconverter_inst (
     .R_in           (R_in_L),
     .G_in           (G_in_L),
     .B_in           (B_in_L),
-    .h_info         (h_info),
-    .h_info2        (h_info2),
-    .v_info         (v_info),
-    .extra_info     (extra_info),
+    .h_config       (h_config),
+    .h_config2      (h_config2),
+    .v_config       (v_config),
+    .misc_config    (misc_config),
+    .sl_config      (sl_config),
+    .sl_config2     (sl_config2),
     .R_out          (R_out),
     .G_out          (G_out),
     .B_out          (B_out),
@@ -280,6 +284,7 @@ scanconverter scanconverter_inst (
     .vmax_tvp       (vmax_tvp),
     .pcnt_frame     (pcnt_frame),
     .ilace_flag     (ilace_flag),
+    .vsync_flag     (vsync_flag),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced)
 );
