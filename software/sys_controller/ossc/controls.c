@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -37,7 +37,7 @@ const alt_u16 rc_keymap_default[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3E
 alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
-extern const mode_data_t video_modes[];
+extern mode_data_t video_modes[];
 extern avmode_t cm;
 extern avconfig_t tc;
 extern avinput_t target_input;
@@ -45,6 +45,7 @@ extern alt_u8 menu_active;
 extern alt_u16 sys_ctrl;
 extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
+extern alt_u8 update_cur_vm;
 extern volatile sc_regs *sc;
 
 alt_u32 remote_code;
@@ -215,8 +216,8 @@ int parse_control()
             lcd_write_status();
             menu_active = 0;
             break;
-        case RC_PHASE_PLUS: tc.sampler_phase = (tc.sampler_phase < SAMPLER_PHASE_MAX) ? (tc.sampler_phase + 1) : 0; break;
-        case RC_PHASE_MINUS: tc.sampler_phase = tc.sampler_phase ? (tc.sampler_phase - 1) : SAMPLER_PHASE_MAX; break;
+        case RC_PHASE_PLUS: video_modes[cm.id].sampler_phase = (video_modes[cm.id].sampler_phase < SAMPLER_PHASE_MAX) ? (video_modes[cm.id].sampler_phase + 1) : 0; update_cur_vm = 1; break;
+        case RC_PHASE_MINUS: video_modes[cm.id].sampler_phase = video_modes[cm.id].sampler_phase ? (video_modes[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX; update_cur_vm = 1; break;
         case RC_PROF_HOTKEY:
             strncpy(menu_row1, "Profile load:", LCD_ROW_LEN+1);
             strncpy(menu_row2, "press 0-9", LCD_ROW_LEN+1);

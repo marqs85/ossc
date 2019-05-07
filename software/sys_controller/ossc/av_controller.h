@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -103,8 +103,6 @@ typedef struct {
 inline void lcd_write_menu();
 inline void lcd_write_status();
 
-void vm_select();
-void vm_tweak(alt_u16 v);
 int load_profile();
 int save_profile();
 

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -63,15 +63,15 @@ extern alt_u32 remote_code;
 extern alt_u32 btn_code, btn_code_prev;
 extern alt_u8 remote_rpt, remote_rpt_prev;
 extern avconfig_t tc, tc_default;
+extern alt_u8 vm_sel;
 
 alt_u8 target_typemask;
 alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
-alt_u8 vm_sel, vm_edit, profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
+alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
 alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
-alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
@@ -292,6 +292,7 @@ status_t get_status(tvp_input_t input, video_format format)
 
         if (update_cur_vm) {
             tvp_setup_hpll(cm.sample_mult*video_modes[cm.id].h_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
+            cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
             status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
         }
 
@@ -316,11 +317,6 @@ status_t get_status(tvp_input_t input, video_format format)
         (tc.ar_256col != cm.cc.ar_256col) ||
         (tc.reverse_lpf != cm.cc.reverse_lpf))
         status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
-
-    if (tc.sampler_phase != cm.cc.sampler_phase) {
-        cm.sample_sel = tvp_set_hpll_phase(tc.sampler_phase, cm.sample_mult);
-        status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
-    }
 
     if (tc.sync_vth != cm.cc.sync_vth)
         tvp_set_sog_thold(tc.sync_vth);
@@ -588,7 +584,7 @@ void program_mode()
                      cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
                      (alt_u8)h_synclen_px);
     set_lpf(cm.cc.video_lpf);
-    cm.sample_sel = tvp_set_hpll_phase(cm.cc.sampler_phase, cm.sample_mult);
+    cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
 
     update_sc_config();
 
@@ -654,39 +650,6 @@ int save_profile() {
     }
 
     return retval;
-}
-
-void vm_select() {
-    vm_edit = vm_sel;
-    tc_h_samplerate = video_modes[vm_edit].h_total;
-    tc_h_synclen = (alt_u16)video_modes[vm_edit].h_synclen;
-    tc_h_bporch = (alt_u16)video_modes[vm_edit].h_backporch;
-    tc_h_active = video_modes[vm_edit].h_active;
-    tc_v_synclen = (alt_u16)video_modes[vm_edit].v_synclen;
-    tc_v_bporch = (alt_u16)video_modes[vm_edit].v_backporch;
-    tc_v_active = video_modes[vm_edit].v_active;
-}
-
-void vm_tweak(alt_u16 v) {
-    if (cm.sync_active && (cm.id == vm_edit)) {
-        if ((video_modes[cm.id].h_total != tc_h_samplerate) ||
-            (video_modes[cm.id].h_synclen != tc_h_synclen) ||
-            (video_modes[cm.id].h_backporch != (alt_u8)tc_h_bporch) ||
-            (video_modes[cm.id].h_active != tc_h_active) ||
-            (video_modes[cm.id].v_synclen != tc_v_synclen) ||
-            (video_modes[cm.id].v_backporch != (alt_u8)tc_v_bporch) ||
-            (video_modes[cm.id].v_active != tc_v_active))
-            update_cur_vm = 1;
-    }
-    video_modes[vm_edit].h_total = tc_h_samplerate;
-    video_modes[vm_edit].h_synclen = (alt_u8)tc_h_synclen;
-    video_modes[vm_edit].h_backporch = (alt_u8)tc_h_bporch;
-    video_modes[vm_edit].h_active = tc_h_active;
-    video_modes[vm_edit].v_synclen = (alt_u8)tc_v_synclen;
-    video_modes[vm_edit].v_backporch = (alt_u8)tc_v_bporch;
-    video_modes[vm_edit].v_active = tc_v_active;
-
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", v);
 }
 
 // Initialize hardware

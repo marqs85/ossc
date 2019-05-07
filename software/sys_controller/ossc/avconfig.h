@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -95,7 +95,6 @@ typedef struct {
     alt_u8 tx_mode;
     alt_u8 hdmi_itc;
     alt_u8 s480p_mode;
-    alt_u8 sampler_phase;
     alt_u8 tvp_hpll2x;
     alt_u8 upsample2x;
     alt_u8 ypbpr_cs;

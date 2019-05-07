@@ -115,5 +115,8 @@ typedef struct {
 } menunavi;
 
 void display_menu(alt_u8 forcedisp);
+static void vm_select();
+static void vm_tweak(alt_u16 v);
+static void sampler_phase_tweak(alt_u8 v);
 
 #endif
