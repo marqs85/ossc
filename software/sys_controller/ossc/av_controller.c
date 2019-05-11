@@ -175,6 +175,18 @@ void set_lpf(alt_u8 lpf)
     }
 }
 
+void set_csc(alt_u8 csc)
+{
+    if (csc > 1) {
+        if (target_type == VIDEO_HDTV)
+            csc = 1;
+        else
+            csc = 0;
+    }
+
+    tvp_sel_csc(&csc_coeffs[csc]);
+}
+
 inline int check_linecnt(alt_u8 progressive, alt_u32 totlines) {
     if (progressive)
         return (totlines >= MIN_LINES_PROGRESSIVE);
@@ -331,7 +343,7 @@ status_t get_status(tvp_input_t input, video_format format)
         tvp_set_hpllcoast(tc.pre_coast, tc.post_coast);
 
     if (tc.ypbpr_cs != cm.cc.ypbpr_cs)
-        tvp_sel_csc(&csc_coeffs[tc.ypbpr_cs]);
+        set_csc(tc.ypbpr_cs);
 
     if (tc.video_lpf != cm.cc.video_lpf)
         set_lpf(tc.video_lpf);
@@ -584,6 +596,7 @@ void program_mode()
                      cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
                      (alt_u8)h_synclen_px);
     set_lpf(cm.cc.video_lpf);
+    set_csc(cm.cc.ypbpr_cs);
     cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
 
     update_sc_config();
@@ -833,7 +846,7 @@ int main()
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
-        strncpy(row2, "2014-2018  marqs", LCD_ROW_LEN+1);
+        strncpy(row2, "2014-2019  marqs", LCD_ROW_LEN+1);
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif
