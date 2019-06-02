@@ -303,7 +303,8 @@ status_t get_status(tvp_input_t input, video_format format)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
-            tvp_setup_hpll(cm.sample_mult*video_modes[cm.id].h_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
+            cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + (video_modes[cm.id].h_total_adj % cm.sample_mult);
+            tvp_setup_hpll(cm.h_mult_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
             cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
             status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
         }
@@ -585,13 +586,15 @@ void program_mode()
     }
     vm_sel = cm.id;
 
+    cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + (video_modes[cm.id].h_total_adj % cm.sample_mult);
+
     target_type = target_typemask & video_modes[cm.id].type;
-    h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)video_modes[cm.id].h_total*cm.sample_mult) / cm.clkcnt;
+    h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)cm.h_mult_total) / cm.clkcnt;
 
     printf("Mode %s selected - hsync width: %upx\n", video_modes[cm.id].name, (unsigned)h_synclen_px);
 
     tvp_source_setup(target_type,
-                     cm.sample_mult*video_modes[cm.id].h_total,
+                     cm.h_mult_total,
                      cm.clkcnt,
                      cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
                      (alt_u8)h_synclen_px);
@@ -603,7 +606,7 @@ void program_mode()
 
     TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
 
-    pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*video_modes[cm.id].h_total*cm.sample_mult*(cm.fpga_vmultmode+1);
+    pclk_out = (TVP_EXTCLK_HZ/cm.clkcnt)*cm.h_mult_total*(cm.fpga_vmultmode+1);
     pclk_out *= 1+cm.tx_pixelrep;
     if (cm.fpga_hmultmode == FPGA_H_MULTMODE_OPTIMIZED_1X)
         pclk_out /= 2;

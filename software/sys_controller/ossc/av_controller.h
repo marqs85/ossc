@@ -94,6 +94,7 @@ typedef struct {
     alt_u8 sample_mult;
     alt_u8 sample_sel;
     alt_u8 hsync_cut;
+    alt_u16 h_mult_total;
     mode_flags target_lm;
     avinput_t avinput;
     // Current configuration

@@ -46,7 +46,7 @@ extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 update_cur_vm;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 
-alt_u16 tc_h_samplerate, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
+alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
 alt_u8 tc_sampler_phase;
 alt_u8 menu_active;
 alt_u8 vm_sel, vm_edit;
@@ -99,6 +99,7 @@ static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-
 
 MENU(menu_advtiming, P99_PROTECT({ \
     { LNG("H. samplerate","H. ｻﾝﾌﾟﾙﾚｰﾄ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
+    { "H. s.rate adj",                           OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate_adj, 0,  H_TOTAL_ADJ_MAX, vm_tweak } } },
     { LNG("H. synclen","H. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_synclen,    H_SYNCLEN_MIN, H_SYNCLEN_MAX, vm_tweak } } },
     { LNG("H. backporch","H. ﾊﾞｯｸﾎﾟｰﾁ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_bporch,     H_BPORCH_MIN,  H_BPORCH_MAX, vm_tweak } } },
     { LNG("H. active","H. ｱｸﾃｨﾌﾞ"),             OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_MAX, vm_tweak } } },
@@ -385,6 +386,7 @@ void display_menu(alt_u8 forcedisp)
 static void vm_select() {
     vm_edit = vm_sel;
     tc_h_samplerate = video_modes[vm_edit].h_total;
+    tc_h_samplerate_adj = (alt_u16)video_modes[vm_edit].h_total_adj;
     tc_h_synclen = (alt_u16)video_modes[vm_edit].h_synclen;
     tc_h_bporch = (alt_u16)video_modes[vm_edit].h_backporch;
     tc_h_active = video_modes[vm_edit].h_active;
@@ -397,6 +399,7 @@ static void vm_select() {
 static void vm_tweak(alt_u16 v) {
     if (cm.sync_active && (cm.id == vm_edit)) {
         if ((video_modes[cm.id].h_total != tc_h_samplerate) ||
+            (video_modes[cm.id].h_total_adj != (alt_u8)tc_h_samplerate_adj) ||
             (video_modes[cm.id].h_synclen != tc_h_synclen) ||
             (video_modes[cm.id].h_backporch != (alt_u8)tc_h_bporch) ||
             (video_modes[cm.id].h_active != tc_h_active) ||
@@ -406,6 +409,7 @@ static void vm_tweak(alt_u16 v) {
             update_cur_vm = 1;
     }
     video_modes[vm_edit].h_total = tc_h_samplerate;
+    video_modes[vm_edit].h_total_adj = (alt_u8)tc_h_samplerate_adj;
     video_modes[vm_edit].h_synclen = (alt_u8)tc_h_synclen;
     video_modes[vm_edit].h_backporch = (alt_u8)tc_h_bporch;
     video_modes[vm_edit].h_active = tc_h_active;
