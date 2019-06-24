@@ -303,7 +303,7 @@ status_t get_status(tvp_input_t input, video_format format)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
-            cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + (video_modes[cm.id].h_total_adj % cm.sample_mult);
+            cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + ((cm.sample_mult*video_modes[cm.id].h_total_adj*5 + 50) / 100);
             tvp_setup_hpll(cm.h_mult_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
             cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
             status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
@@ -586,7 +586,7 @@ void program_mode()
     }
     vm_sel = cm.id;
 
-    cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + (video_modes[cm.id].h_total_adj % cm.sample_mult);
+    cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + ((cm.sample_mult*video_modes[cm.id].h_total_adj*5 + 50) / 100);
 
     target_type = target_typemask & video_modes[cm.id].type;
     h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)cm.h_mult_total) / cm.clkcnt;

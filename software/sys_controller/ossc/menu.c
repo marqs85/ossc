@@ -46,8 +46,7 @@ extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 update_cur_vm;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 
-alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active;
-alt_u8 tc_sampler_phase;
+alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active, tc_sampler_phase;
 alt_u8 menu_active;
 alt_u8 vm_sel, vm_edit;
 
@@ -106,7 +105,7 @@ MENU(menu_advtiming, P99_PROTECT({ \
     { LNG("V. synclen","V. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_synclen,    V_SYNCLEN_MIN, V_SYNCLEN_MAX, vm_tweak } } },
     { LNG("V. backporch","V. ﾊﾞｯｸﾎﾟｰﾁ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_bporch,     V_BPORCH_MIN,  V_BPORCH_MAX, vm_tweak } } },
     { LNG("V. active","V. ｱｸﾃｨﾌﾞ"),            OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_active,     V_ACTIVE_MIN,  V_ACTIVE_MAX, vm_tweak } } },
-    { LNG("Sampling phase","ｻﾝﾌﾟﾘﾝｸﾞﾌｪｰｽﾞ"),     OPT_AVCONFIG_NUMVALUE,  { .num = { &tc_sampler_phase, OPT_WRAP, 0, SAMPLER_PHASE_MAX, sampler_phase_tweak } } },
+    { LNG("Sampling phase","ｻﾝﾌﾟﾘﾝｸﾞﾌｪｰｽﾞ"),     OPT_AVCONFIG_NUMVAL_U16,  { .num_u16 = { &tc_sampler_phase, 0, SAMPLER_PHASE_MAX, vm_tweak } } },
 }))
 
 MENU(menu_cust_sl, P99_PROTECT({ \
@@ -360,7 +359,7 @@ void display_menu(alt_u8 forcedisp)
             navi[navlvl].m->items[navi[navlvl].mp].num.df(*(navi[navlvl].m->items[navi[navlvl].mp].num.data));
             break;
         case OPT_AVCONFIG_NUMVAL_U16:
-            navi[navlvl].m->items[navi[navlvl].mp].num_u16.df(*(navi[navlvl].m->items[navi[navlvl].mp].num_u16.data));
+            navi[navlvl].m->items[navi[navlvl].mp].num_u16.df(navi[navlvl].m->items[navi[navlvl].mp].num_u16.data);
             break;
         case OPT_SUBMENU:
             if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info)
@@ -396,7 +395,7 @@ static void vm_select() {
     tc_sampler_phase = video_modes[vm_edit].sampler_phase;
 }
 
-static void vm_tweak(alt_u16 v) {
+static void vm_tweak(alt_u16 *v) {
     if (cm.sync_active && (cm.id == vm_edit)) {
         if ((video_modes[cm.id].h_total != tc_h_samplerate) ||
             (video_modes[cm.id].h_total_adj != (alt_u8)tc_h_samplerate_adj) ||
@@ -405,7 +404,8 @@ static void vm_tweak(alt_u16 v) {
             (video_modes[cm.id].h_active != tc_h_active) ||
             (video_modes[cm.id].v_synclen != tc_v_synclen) ||
             (video_modes[cm.id].v_backporch != (alt_u8)tc_v_bporch) ||
-            (video_modes[cm.id].v_active != tc_v_active))
+            (video_modes[cm.id].v_active != tc_v_active) ||
+            (video_modes[cm.id].sampler_phase != tc_sampler_phase))
             update_cur_vm = 1;
     }
     video_modes[vm_edit].h_total = tc_h_samplerate;
@@ -416,14 +416,12 @@ static void vm_tweak(alt_u16 v) {
     video_modes[vm_edit].v_synclen = (alt_u8)tc_v_synclen;
     video_modes[vm_edit].v_backporch = (alt_u8)tc_v_bporch;
     video_modes[vm_edit].v_active = tc_v_active;
-
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", v);
-}
-
-static void sampler_phase_tweak(alt_u8 v) {
-    if (cm.sync_active && (cm.id == vm_edit) && (video_modes[cm.id].sampler_phase != tc_sampler_phase))
-        update_cur_vm = 1;
-
     video_modes[vm_edit].sampler_phase = tc_sampler_phase;
-    sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), (v*1125)/100);
+
+    if (v == &tc_sampler_phase)
+        sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), ((*v)*1125)/100);
+    else if (v == &tc_h_samplerate_adj)
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u", video_modes[vm_edit].h_total, (*v)*5);
+    else
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", *v);
 }

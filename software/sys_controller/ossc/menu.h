@@ -34,7 +34,7 @@ typedef enum {
 typedef int (*func_call)(void);
 typedef void (*arg_func)(void);
 typedef void (*disp_func)(alt_u8);
-typedef void (*disp_func_u16)(alt_u16);
+typedef void (*disp_func_u16)(alt_u16*);
 
 typedef struct {
     alt_u8 *data;
@@ -116,7 +116,7 @@ typedef struct {
 
 void display_menu(alt_u8 forcedisp);
 static void vm_select();
-static void vm_tweak(alt_u16 v);
+static void vm_tweak(alt_u16 *v);
 static void sampler_phase_tweak(alt_u8 v);
 
 #endif

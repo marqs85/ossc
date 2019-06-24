@@ -25,7 +25,7 @@
 
 #define H_TOTAL_MIN 300
 #define H_TOTAL_MAX 2800
-#define H_TOTAL_ADJ_MAX 5
+#define H_TOTAL_ADJ_MAX 19
 #define H_SYNCLEN_MIN 10
 #define H_SYNCLEN_MAX 255
 #define H_BPORCH_MIN 1
@@ -93,9 +93,9 @@ typedef struct {
     char name[10];
     alt_u16 h_active;
     alt_u16 v_active;
-    alt_u16 h_total:12;
-    alt_u8  h_total_adj:4;
-    alt_u16 v_total;
+    alt_u16 h_total;
+    alt_u8  h_total_adj:5;
+    alt_u16 v_total:11;
     alt_u8 h_backporch;
     alt_u8 v_backporch;
     alt_u8 h_synclen;
