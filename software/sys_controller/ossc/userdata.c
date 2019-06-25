@@ -59,12 +59,12 @@ int write_userdata(alt_u8 entry)
     }
 
     strncpy(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8);
-    ((ude_hdr*)databuf)->version_major = FW_VER_MAJOR;
-    ((ude_hdr*)databuf)->version_minor = FW_VER_MINOR;
     ((ude_hdr*)databuf)->type = (entry > MAX_PROFILE) ? UDE_INITCFG : UDE_PROFILE;
 
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
+        ((ude_hdr*)databuf)->version_major = INITCFG_VER_MAJOR;
+        ((ude_hdr*)databuf)->version_minor = INITCFG_VER_MINOR;
         ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
         memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
         ((ude_initcfg*)databuf)->last_input = target_input;
@@ -83,6 +83,8 @@ int write_userdata(alt_u8 entry)
         printf("Initconfig data written (%u bytes)\n", sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile));
         break;
     case UDE_PROFILE:
+        ((ude_hdr*)databuf)->version_major = PROFILE_VER_MAJOR;
+        ((ude_hdr*)databuf)->version_minor = PROFILE_VER_MINOR;
         vm_to_write = VIDEO_MODES_SIZE;
         ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
         ((ude_profile*)databuf)->vm_data_len = vm_to_write;
@@ -143,13 +145,12 @@ int read_userdata(alt_u8 entry, int dry_run)
         return 1;
     }
 
-    if ((((ude_hdr*)databuf)->version_major != FW_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != FW_VER_MINOR)) {
-        printf("Data version %u.%u does not match fw\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
-        return 2;
-    }
-
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
+        if ((((ude_hdr*)databuf)->version_major != INITCFG_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != INITCFG_VER_MINOR)) {
+            printf("Initconfig version %u.%u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
+            return 2;
+        }
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
             if (dry_run)
                 return 0;
@@ -174,6 +175,10 @@ int read_userdata(alt_u8 entry, int dry_run)
         }
         break;
     case UDE_PROFILE:
+        if ((((ude_hdr*)databuf)->version_major != PROFILE_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != PROFILE_VER_MINOR)) {
+            printf("Profile version %u.%u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
+            return 2;
+        }
         if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == VIDEO_MODES_SIZE)) {
             strncpy(target_profile_name, ((ude_profile*)databuf)->name, PROFILE_NAME_LEN+1);
             if (dry_run)

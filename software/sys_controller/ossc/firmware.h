@@ -26,6 +26,12 @@
 #define FW_VER_MAJOR            0
 #define FW_VER_MINOR            84
 
+#define PROFILE_VER_MAJOR       0
+#define PROFILE_VER_MINOR       84
+
+#define INITCFG_VER_MAJOR       0
+#define INITCFG_VER_MINOR       83
+
 #ifdef ENABLE_AUDIO
 #define FW_SUFFIX1              "a"
 #else
