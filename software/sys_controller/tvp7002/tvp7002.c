@@ -385,27 +385,19 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per
     tvp_setup_hpll(h_samplerate, refclks_per_line, plldivby2);
 }
 
-void tvp_source_sel(tvp_input_t input, video_format fmt)
+void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format fmt)
 {
     alt_u8 sync_status;
-    alt_u8 sog_ch;
-
-    if ((fmt == FORMAT_RGsB) || (fmt == FORMAT_YPbPr))
-        sog_ch = (input == TVP_INPUT3) ? 2 : 0;
-    else if ((input == TVP_INPUT1) && (fmt == FORMAT_RGBS))
-        sog_ch = 1;
-    else
-        sog_ch = 2;
 
     // RGB+SOG input select
-    tvp_writereg(TVP_INPMUX1, (sog_ch<<6) | (input<<4) | (input<<2) | input);
+    tvp_writereg(TVP_INPMUX1, (((syncinput <= TVP_SOG3) ? syncinput : 0)<<6) | (input<<4) | (input<<2) | input);
 
     // Clamp setup
     tvp_set_clamp(fmt);
 
     // HV/SOG sync select
-    if ((input == TVP_INPUT3) && ((fmt == FORMAT_RGBHV) || (fmt == FORMAT_RGBS))) {
-        if (fmt == FORMAT_RGBHV)
+    if (syncinput > TVP_SOG3) {
+        if (syncinput < TVP_CS_A)
             tvp_writereg(TVP_SYNCCTRL1, 0x52);
         else // RGBS
             tvp_writereg(TVP_SYNCCTRL1, 0x53);
@@ -444,16 +436,16 @@ void tvp_source_sel(tvp_input_t input, video_format fmt)
     printf("\n");
 }
 
-alt_u8 tvp_check_sync(tvp_input_t input, video_format fmt)
+alt_u8 tvp_check_sync(tvp_sync_input_t syncinput)
 {
     alt_u8 sync_status;
 
     sync_status = tvp_readreg(TVP_SYNCSTAT);
 
-    if ((input == TVP_INPUT3) && (fmt == FORMAT_RGBHV))
-        return ((sync_status & 0x90) == 0x90);
-    else if ((input == TVP_INPUT3) && (fmt == FORMAT_RGBS))
+    if (syncinput >= TVP_CS_A)
         return ((sync_status & 0x88) == 0x88);
+    else if (syncinput >= TVP_HV_A)
+        return ((sync_status & 0x90) == 0x90);
     else
         return !!(sync_status & (1<<1));
 }

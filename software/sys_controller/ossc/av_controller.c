@@ -195,7 +195,7 @@ inline int check_linecnt(alt_u8 progressive, alt_u32 totlines) {
 }
 
 // Check if input video status / target configuration has changed
-status_t get_status(tvp_input_t input, video_format format)
+status_t get_status(tvp_sync_input_t syncinput)
 {
     alt_u32 data1, data2;
     alt_u32 totlines, clkcnt;
@@ -221,7 +221,7 @@ status_t get_status(tvp_input_t input, video_format format)
         }
     }
 
-    sync_active = tvp_check_sync(input, format);
+    sync_active = tvp_check_sync(syncinput);
     vsyncmode = cm.sync_active ? sc->sc_status.fpga_vsyncgen : 0;
 
     // Read sync information from TVP7002 status registers
@@ -827,6 +827,7 @@ void enable_outputs()
 int main()
 {
     tvp_input_t target_tvp = 0;
+    tvp_sync_input_t target_tvp_sync = 0;
     ths_input_t target_ths = 0;
     pcm_input_t target_pcm = 0;
     video_format target_format = 0;
@@ -947,12 +948,13 @@ int main()
             auto_input_changed = 0;
         }
 
-        if (target_input != cm.avinput) {
+        if ((target_input != cm.avinput) || ((target_tvp_sync >= TVP_HV_A) && ((tc.av3_alt_rgb != cm.cc.av3_alt_rgb)))) {
 
             target_tvp = TVP_INPUT1;
+            target_tvp_sync = TVP_SOG1;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
 
-            if (target_input <= AV1_YPBPR) {
+            if ((target_input <= AV1_YPBPR) || (tc.av3_alt_rgb && ((target_input == AV3_RGBHV) || (target_input == AV3_RGBs)))) {
                 target_ths = THS_INPUT_B;
                 target_pcm = PCM_INPUT4;
             } else if (target_input <= AV2_RGsB) {
@@ -981,7 +983,26 @@ int main()
                 break;
             case AV3_RGBHV:
                 target_format = FORMAT_RGBHV;
-                target_typemask = VIDEO_PC;
+                if (!tc.av3_alt_rgb)
+                    target_typemask = VIDEO_PC;
+                break;
+            default:
+                break;
+            }
+
+            switch (target_input) {
+            case AV1_RGBs:
+                target_tvp_sync = TVP_SOG2;
+                break;
+            case AV3_RGBHV:
+                target_tvp_sync = TVP_HV_A;
+                break;
+            case AV3_RGBs:
+                target_tvp_sync = TVP_CS_A;
+                break;
+            case AV3_RGsB:
+            case AV3_YPBPR:
+                target_tvp_sync = TVP_SOG3;
                 break;
             default:
                 break;
@@ -998,7 +1019,7 @@ int main()
             if (pcm1862_active)
                 pcm_source_sel(target_pcm);
 #endif
-            tvp_source_sel(target_tvp, target_format);
+            tvp_source_sel(target_tvp, target_tvp_sync, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate
             strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
@@ -1027,9 +1048,13 @@ int main()
             HDMITX_SetAVIInfoFrame(HDMI_Unkown, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
+        if (tc.av3_alt_rgb != cm.cc.av3_alt_rgb) {
+            printf("Changing AV3 RGB source\n");
+            cm.cc.av3_alt_rgb = tc.av3_alt_rgb;
+        }
 
         if (cm.avinput != AV_TESTPAT) {
-            status = get_status(target_tvp, target_format);
+            status = get_status(target_tvp_sync);
 
             switch (status) {
             case ACTIVITY_CHANGE:

@@ -45,6 +45,16 @@ typedef enum {
 } tvp_input_t;
 
 typedef enum {
+    TVP_SOG1 = 0,
+    TVP_SOG2 = 1,
+    TVP_SOG3 = 2,
+    TVP_HV_A = 3,
+    TVP_HV_B = 4,
+    TVP_CS_A = 5,
+    TVP_CS_B = 6
+} tvp_sync_input_t;
+
+typedef enum {
     REFCLK_EXT27    = 0,
     REFCLK_INTCLK   = 1
 } tvp_refclk_t;
@@ -111,8 +121,8 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen);
 
 void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen);
 
-void tvp_source_sel(tvp_input_t input, video_format fmt);
+void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format fmt);
 
-alt_u8 tvp_check_sync(tvp_input_t input, video_format fmt);
+alt_u8 tvp_check_sync(tvp_sync_input_t syncinput);
 
 #endif /* TVP7002_H_ */
