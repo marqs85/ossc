@@ -129,7 +129,7 @@ inline void TX_enable(tx_mode_t mode)
     EnableVideoOutput(cm.hdmitx_pclk_level ? PCLK_HIGH : PCLK_MEDIUM, COLOR_RGB444, (mode == TX_HDMI_YCBCR444) ? COLOR_YUV444 : COLOR_RGB444, (mode != TX_DVI));
 
     if (mode != TX_DVI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
@@ -626,7 +626,7 @@ void program_mode()
         cm.hdmitx_pclk_level = hdmitx_pclk_level;
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode!=TX_DVI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
 #ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
@@ -746,6 +746,7 @@ int init_hw()
         setup_rc();
 
     // init always in HDMI mode (fixes yellow screen bug)
+    cm.hdmitx_vic = HDMI_480p60;
     TX_enable(TX_HDMI_RGB);
 
     return 0;
@@ -1037,7 +1038,7 @@ int main()
 
         // Check here to enable regardless of input
         if (tc.tx_mode != cm.cc.tx_mode) {
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, F_MODE_RGB444, 0, 0, 0, 0);
+            HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, F_MODE_RGB444, 0, 0, 0, 0);
             TX_enable(tc.tx_mode);
             cm.cc.tx_mode = tc.tx_mode;
             cm.clkcnt = 0; //TODO: proper invalidate
@@ -1045,7 +1046,7 @@ int main()
         if ((tc.tx_mode != TX_DVI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
         if (tc.av3_alt_rgb != cm.cc.av3_alt_rgb) {

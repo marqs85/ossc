@@ -220,7 +220,7 @@ HDMITX_ChangeDisplayOption(HDMI_Video_Type OutputVideoTiming, HDMI_OutputColorMo
         aspec = HDMI_16x9 ;
         Colorimetry = HDMI_ITU709 ;
         break ;
-    case HDMI_1080p24:
+/*    case HDMI_1080p24:
         VIC = 32 ;
         VideoPixelClock = 74250000 ;
         pixelrep = 0 ;
@@ -247,7 +247,7 @@ HDMITX_ChangeDisplayOption(HDMI_Video_Type OutputVideoTiming, HDMI_OutputColorMo
         pixelrep = 0 ;
         aspec = HDMI_16x9 ;
         Colorimetry = HDMI_ITU601 ;
-        break ;
+        break ;*/
         
         
     default:

@@ -91,6 +91,7 @@ typedef struct {
     alt_u8 tx_pixelrep;
     alt_u8 hdmitx_pixr_ifr;
     alt_u8 hdmitx_pclk_level;
+    HDMI_Video_Type hdmitx_vic;
     alt_u8 sample_mult;
     alt_u8 sample_sel;
     alt_u8 hsync_cut;

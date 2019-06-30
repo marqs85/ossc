@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef enum tagHDMI_Video_Type {
-    HDMI_Unkown = 0 ,
+    HDMI_Unknown = 0 ,
     HDMI_640x480p60 = 1 ,
     HDMI_480p60,
     HDMI_480p60_16x9,
@@ -13,6 +13,7 @@ typedef enum tagHDMI_Video_Type {
     HDMI_1080i60,
     HDMI_480i60,
     HDMI_480i60_16x9,
+    HDMI_240p60,
     HDMI_1080p60 = 16,
     HDMI_576p50,
     HDMI_576p50_16x9,
@@ -20,11 +21,12 @@ typedef enum tagHDMI_Video_Type {
     HDMI_1080i50,
     HDMI_576i50,
     HDMI_576i50_16x9,
+    HDMI_288p50,
     HDMI_1080p50 = 31,
-    HDMI_1080p24,
+    /*HDMI_1080p24,
     HDMI_1080p25,
     HDMI_1080p30,
-    HDMI_1080i120 = 46, // richard add
+    HDMI_1080i120 = 46,*/ // richard add
 } HDMI_Video_Type ;
 
 typedef enum tagHDMI_Aspec {
