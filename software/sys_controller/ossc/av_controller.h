@@ -87,6 +87,7 @@ typedef struct {
     alt_u8 fpga_hmultmode;
     alt_u8 tx_pixelrep;
     alt_u8 hdmitx_pixr_ifr;
+    alt_u8 hdmitx_vic;
     alt_u8 sample_mult;
     alt_u8 sample_sel;
     alt_u8 hsync_cut;

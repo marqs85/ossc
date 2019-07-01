@@ -129,7 +129,7 @@ inline void TX_enable(tx_mode_t mode)
     EnableVideoOutput(PCLK_MEDIUM, COLOR_RGB444, COLOR_RGB444, !mode);
 
     if (mode == TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
@@ -572,7 +572,7 @@ void program_mode()
     if (cm.cc.full_tx_setup) {
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode==TX_HDMI) {
-        HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
 #ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
@@ -725,6 +725,7 @@ int init_hw()
         setup_rc();
 
     // init always in HDMI mode (fixes yellow screen bug)
+    cm.hdmitx_vic = HDMI_Unknown;
     TX_enable(TX_HDMI);
 
     return 0;
@@ -842,7 +843,7 @@ int main()
         while (1) {}
     }
 
-    set_videoinfo_vg();
+    cm.cc.vgen_mode = -1;
 
     // Mainloop
     while(1) {
@@ -940,7 +941,7 @@ int main()
 
         // Check here to enable regardless of input
         if (tc.tx_mode != cm.cc.tx_mode) {
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, 0, 0);
+            HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, 0, 0, 0, 0);
             TX_enable(tc.tx_mode);
             cm.cc.tx_mode = tc.tx_mode;
             cm.clkcnt = 0; //TODO: proper invalidate
@@ -948,27 +949,25 @@ int main()
         if ((tc.tx_mode == TX_HDMI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
 
         if ((tc.vgen_mode != cm.cc.vgen_mode) || (tc.vgen_spd != cm.cc.vgen_spd)) {
             cm.cc.vgen_mode = tc.vgen_mode;
             cm.cc.vgen_spd = tc.vgen_spd;
+            cm.hdmitx_vic = video_modes_vgen[cm.cc.vgen_mode].vic;
             set_videoinfo_vg();
-            /*if (cm.hdmitx_pixr_ifr != !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED)) {
-                cm.hdmitx_pixr_ifr = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED);
-                TX_SetPixelRepetition(TX_PIXELREP_DISABLE, 0);
-                HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
-            }*/
             tx_pixelrep = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED) | (video_modes_vgen[cm.cc.vgen_mode].type == VIDEO_HDTV);
             hdmitx_pixr_ifr = !!(video_modes_vgen[cm.cc.vgen_mode].flags & MODE_INTERLACED);
             if (cm.tx_pixelrep != tx_pixelrep) {
                 cm.tx_pixelrep = tx_pixelrep;
                 cm.hdmitx_pixr_ifr = hdmitx_pixr_ifr;
+                if (cm.cc.full_tx_setup)
+                    TX_enable(tc.tx_mode);
                 TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode==TX_HDMI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
                 if (cm.cc.tx_mode==TX_HDMI)
-                    HDMITX_SetAVIInfoFrame(HDMI_Unkown, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+                    HDMITX_SetAVIInfoFrame(cm.hdmitx_vic, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
             }
         }
 
