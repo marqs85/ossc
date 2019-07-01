@@ -94,7 +94,8 @@ typedef union {
     struct {
         alt_u8 mask_br:4;
         alt_u8 rev_lpf_str:5;
-        alt_u32 misc_rsv:23;
+        alt_u8 panasonic_hack:1;
+        alt_u32 misc_rsv:22;
     } __attribute__((packed, __may_alias__));
     alt_u32 data;
 } misc_config_reg;

@@ -198,6 +198,7 @@ reg SL_METHOD;
 reg SL_NO_ALTERN;
 reg SL_ALTIV;
 reg X_REV_LPF_ENABLE;
+reg X_PANASONIC_HACK;
 
 // constants for each frame to be calculated off config-registers
 reg CALC_CONSTS;
@@ -897,6 +898,7 @@ begin
             X_REV_LPF_ENABLE <= (misc_config[8:4] != 5'b00000);
             X_REV_LPF_STR <= (misc_config[8:4] + 6'd16);
             X_MASK_BR <= misc_config[3:0];
+            X_PANASONIC_HACK <= misc_config[9];
 
             SL_NO_ALTERN <= sl_config[31];
             SL_METHOD  <= sl_config[30];
@@ -1007,7 +1009,7 @@ begin
 
         HSYNC_2x <= (hcnt_2x < H_SYNCLEN) ? `HSYNC_POL : ~`HSYNC_POL;
         VSYNC_2x <= (vcnt_2x < V_SYNCLEN) ? `VSYNC_POL : ~`VSYNC_POL;
-        DE_2x <= ((hcnt_2x >= H_AVIDSTART) & (hcnt_2x < H_AVIDSTOP)) & ((vcnt_2x >= V_AVIDSTART) & (vcnt_2x < V_AVIDSTOP));
+        DE_2x <= ((hcnt_2x >= H_AVIDSTART) & (hcnt_2x < ((X_PANASONIC_HACK & (vcnt_2x == V_AVIDSTOP-1'b1) & (line_out_idx_2x==2'h1)) ? (H_AVIDSTOP-12'd98) : H_AVIDSTOP))) & ((vcnt_2x >= V_AVIDSTART) & (vcnt_2x < V_AVIDSTOP));
     end
 end
 

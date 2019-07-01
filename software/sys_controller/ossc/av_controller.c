@@ -328,7 +328,8 @@ status_t get_status(tvp_sync_input_t syncinput)
         (tc.v_mask != cm.cc.v_mask) ||
         (tc.mask_br != cm.cc.mask_br) ||
         (tc.ar_256col != cm.cc.ar_256col) ||
-        (tc.reverse_lpf != cm.cc.reverse_lpf))
+        (tc.reverse_lpf != cm.cc.reverse_lpf) ||
+        (tc.panasonic_hack != cm.cc.panasonic_hack))
         status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
 
     if (tc.sync_vth != cm.cc.sync_vth)
@@ -529,6 +530,7 @@ void update_sc_config()
 
     misc_config.rev_lpf_str = cm.cc.reverse_lpf;
     misc_config.mask_br = cm.cc.mask_br;
+    misc_config.panasonic_hack = cm.cc.panasonic_hack;
 
     sl_config.sl_l_str_arr = sl_l_str_arr;
     sl_config.sl_l_overlay = sl_l_overlay;

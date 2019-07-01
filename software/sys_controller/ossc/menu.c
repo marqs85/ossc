@@ -191,6 +191,7 @@ MENU(menu_compatibility, P99_PROTECT({ \
     { LNG("Full TX setup","ﾌﾙTXｾｯﾄｱｯﾌﾟ"),         OPT_AVCONFIG_SELECTION, { .sel = { &tc.full_tx_setup,    OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("AV3 interlacefix","AV3ｲﾝﾀｰﾚｰｽｼｭｳｾｲ"),  OPT_AVCONFIG_SELECTION, { .sel = { &tc.vga_ilace_fix,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "AV3 use AV1 RGB",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.av3_alt_rgb,     OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "Panasonic hack",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.panasonic_hack,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 
 #ifdef ENABLE_AUDIO
