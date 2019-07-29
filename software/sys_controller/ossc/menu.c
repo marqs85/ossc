@@ -246,7 +246,7 @@ void display_menu(alt_u8 forcedisp)
     menucode_id code = NO_ACTION;
     menuitem_type type;
     alt_u8 *val, val_wrap, val_min, val_max;
-    alt_u16 *val_u16;
+    alt_u16 *val_u16, val_u16_min, val_u16_max;
     int i, func_called = 0, retval = 0;
 
     for (i=RC_OK; i < RC_INFO; i++) {
@@ -315,10 +315,13 @@ void display_menu(alt_u8 forcedisp)
                 break;
             case OPT_AVCONFIG_NUMVAL_U16:
                 val_u16 = navi[navlvl].m->items[navi[navlvl].mp].num_u16.data;
+                val_u16_min = navi[navlvl].m->items[navi[navlvl].mp].num_u16.min;
+                val_u16_max = navi[navlvl].m->items[navi[navlvl].mp].num_u16.max;
+                val_wrap = (val_u16_min == 0);
                 if (code == VAL_MINUS)
-                    *val_u16 = (*val_u16 > navi[navlvl].m->items[navi[navlvl].mp].num_u16.min) ? (*val_u16-1) : *val_u16;
+                    *val_u16 = (*val_u16 > val_u16_min) ? (*val_u16-1) : (val_wrap ? val_u16_max : val_u16_min);
                 else
-                    *val_u16 = (*val_u16 < navi[navlvl].m->items[navi[navlvl].mp].num_u16.max) ? (*val_u16+1) : *val_u16;
+                    *val_u16 = (*val_u16 < val_u16_max) ? (*val_u16+1) : (val_wrap ? val_u16_min : val_u16_max);
                 break;
             case OPT_SUBMENU:
                 val = navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->data;
@@ -422,8 +425,8 @@ static void vm_tweak(alt_u16 *v) {
 
     if (v == &tc_sampler_phase)
         sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), ((*v)*1125)/100);
-    else if (v == &tc_h_samplerate_adj)
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u", video_modes[vm_edit].h_total, (*v)*5);
+    else if ((v == &tc_h_samplerate) || (v == &tc_h_samplerate_adj))
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u", video_modes[vm_edit].h_total, video_modes[vm_edit].h_total_adj*5);
     else
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", *v);
 }

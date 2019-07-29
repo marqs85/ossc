@@ -43,9 +43,10 @@ extern avconfig_t tc;
 extern avinput_t target_input;
 extern alt_u8 menu_active;
 extern alt_u16 sys_ctrl;
+extern alt_u16 tc_sampler_phase;
 extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
-extern alt_u8 update_cur_vm;
+extern alt_u8 update_cur_vm, vm_edit;
 extern volatile sc_regs *sc;
 
 alt_u32 remote_code;
@@ -108,8 +109,8 @@ void setup_rc()
 
 int parse_control()
 {
-    int i, ret=0;
-    alt_u32 btn_vec;
+    int i, prof_x10=0, ret=0, retval;
+    alt_u32 btn_vec, btn_vec_prev=1;
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
 
@@ -216,28 +217,49 @@ int parse_control()
             lcd_write_status();
             menu_active = 0;
             break;
-        case RC_PHASE_PLUS: video_modes[cm.id].sampler_phase = (video_modes[cm.id].sampler_phase < SAMPLER_PHASE_MAX) ? (video_modes[cm.id].sampler_phase + 1) : 0; update_cur_vm = 1; break;
-        case RC_PHASE_MINUS: video_modes[cm.id].sampler_phase = video_modes[cm.id].sampler_phase ? (video_modes[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX; update_cur_vm = 1; break;
+        case RC_PHASE_PLUS:
+            video_modes[cm.id].sampler_phase = (video_modes[cm.id].sampler_phase < SAMPLER_PHASE_MAX) ? (video_modes[cm.id].sampler_phase + 1) : 0;
+            update_cur_vm = 1;
+            if (cm.id == vm_edit)
+                tc_sampler_phase = video_modes[vm_edit].sampler_phase;
+            break;
+        case RC_PHASE_MINUS: video_modes[cm.id].sampler_phase = video_modes[cm.id].sampler_phase ? (video_modes[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX;
+            update_cur_vm = 1;
+            if (cm.id == vm_edit)
+                tc_sampler_phase = video_modes[vm_edit].sampler_phase;
+            break;
         case RC_PROF_HOTKEY:
+Prof_Hotkey_Prompt:
             strncpy(menu_row1, "Profile load:", LCD_ROW_LEN+1);
-            strncpy(menu_row2, "press 0-9", LCD_ROW_LEN+1);
+            sniprintf(menu_row2, LCD_ROW_LEN+1, "press %u-%u", prof_x10*10, ((prof_x10*10+9) > MAX_PROFILE) ? MAX_PROFILE : (prof_x10*10+9));
             lcd_write_menu();
 
             while (1) {
                 btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-                for (i = RC_BTN1; i < REMOTE_MAX_KEYS; i++) {
-                    if (btn_vec == rc_keymap[i])
+
+                if ((btn_vec_prev == 0) && (btn_vec != 0)) {
+                    for (i = RC_BTN1; i < REMOTE_MAX_KEYS; i++) {
+                        if (btn_vec == rc_keymap[i])
+                            break;
+                    }
+
+                    if ((i == RC_BTN0) || (i < (RC_BTN1 + (prof_x10 == (MAX_PROFILE/10)) ? (MAX_PROFILE%10) : 9))) {
+                        profile_sel_menu = prof_x10*10 + ((i+1)%10);
+                        retval = load_profile();
+                        sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Done" : "Failed");
+                        lcd_write_menu();
+                        usleep(500000);
                         break;
+                    } else if (i == RC_PROF_HOTKEY) {
+                        prof_x10 = (prof_x10+1) % ((MAX_PROFILE/10)+1);
+                        btn_vec_prev = btn_vec;
+                        goto Prof_Hotkey_Prompt;
+                    } else if (i == RC_BACK) {
+                        break;
+                    }
                 }
 
-                if (i <= RC_BTN0) {
-                    profile_sel_menu = (i+1)%10;
-                    load_profile();
-                    break;
-                } else if (i == RC_BACK) {
-                    break;
-                }
-
+                btn_vec_prev = btn_vec;
                 usleep(WAITLOOP_SLEEP_US);
             }
             lcd_write_status();
