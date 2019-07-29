@@ -296,7 +296,8 @@ status_t get_status(tvp_sync_input_t syncinput)
             (tc.l5_fmt != cm.cc.l5_fmt) ||
             (tc.tvp_hpll2x != cm.cc.tvp_hpll2x) ||
             (tc.upsample2x != cm.cc.upsample2x) ||
-            (tc.vga_ilace_fix != cm.cc.vga_ilace_fix))
+            (tc.vga_ilace_fix != cm.cc.vga_ilace_fix) ||
+            (tc.default_vic != cm.cc.default_vic))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].v_total == 525))

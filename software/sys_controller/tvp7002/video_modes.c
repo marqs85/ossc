@@ -239,6 +239,9 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     break;
             }
 
+            if (cm.hdmitx_vic == HDMI_Unknown)
+                cm.hdmitx_vic = cm.cc.default_vic;
+
             return i;
         }
     }

@@ -113,6 +113,7 @@ typedef struct {
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
     alt_u8 audio_gain;
+    alt_u8 default_vic;
     color_setup_t col;
     avinput_t link_av;
 } __attribute__((packed)) avconfig_t;
