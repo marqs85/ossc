@@ -303,6 +303,9 @@ status_t get_status(tvp_sync_input_t syncinput)
         if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].v_total == 525))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
+        if ((tc.s400p_mode != cm.cc.s400p_mode) && (video_modes[cm.id].v_total == 449))
+            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+
         if (update_cur_vm) {
             cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + ((cm.sample_mult*video_modes[cm.id].h_total_adj*5 + 50) / 100);
             tvp_setup_hpll(cm.h_mult_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));

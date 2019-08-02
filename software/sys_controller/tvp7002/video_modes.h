@@ -131,7 +131,11 @@ typedef struct {
     { "240x360",   HDMI_Unknown,      256,  360,   300, 0, 375,   24, 10,   18, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV),              GROUP_384P,     (MODE_L2_240x360 | MODE_L3_240x360) },                                                          \
     /* 384p: Sega Model 2 */ \
     { "384p",      HDMI_Unknown,      496,  384,   640, 0, 423,   50, 29,   62, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV),              GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
-    /* 640x400, VGA Mode 13h */ \
+    /* 400p line3x */ \
+    { "1600x400",  HDMI_Unknown,     1600,  400,  2000, 0, 449,  120, 36,  240, 2,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                  GROUP_384P,     (MODE_L3_GEN_16_9) },                                                                          \
+    /* 720x400@70Hz, VGA Mode 3+/7+ */ \
+    { "720x400",   HDMI_Unknown,      720,  400,   900, 0, 449,   57, 36,   96, 2,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2) },                                                                          \
+    /* 640x400@70Hz, VGA Mode 13h */ \
     { "640x400",   HDMI_Unknown,      640,  400,   800, 0, 449,   48, 36,   96, 2,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2) },                                                                          \
     /* 384p: X68k @ 24kHz */ \
     { "640x384",   HDMI_Unknown,      640,  384,   800, 0, 492,   48, 63,   96, 2,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                  GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \

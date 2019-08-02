@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "system.h"
 #include "av_controller.h"
 #include "video_modes.h"
@@ -54,6 +55,16 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                 //fixed Line2x/3x mode for 240x360p
                 valid_lm[2] = MODE_L2_240x360;
                 valid_lm[3] = MODE_L3_240x360;
+                valid_lm[4] = MODE_L3_GEN_16_9;
+                if (video_modes[i].v_total == 449) {
+                    if (!strncmp(video_modes[i].name, "720x400", 7)) {
+                        if (cm.cc.s400p_mode == 0)
+                            continue;
+                    } else if (!strncmp(video_modes[i].name, "640x400", 7)) {
+                        if (cm.cc.s400p_mode == 1)
+                            continue;
+                    }
+                }
                 break;
             case GROUP_480I:
                 //fixed Line3x/4x mode for 480i
