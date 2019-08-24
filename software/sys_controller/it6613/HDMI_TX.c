@@ -326,12 +326,16 @@ void HDMITX_SetAudioInfoFrame(BYTE bAudioDwSampling)
     }
 
     AudioInfo.info.AudioChannelCount = 1; // 2 channels
-    AudioInfo.info.AudioCodingType = 1; // PCM
-    AudioInfo.info.SampleSize = 3; // 24bit
-    AudioInfo.info.SampleFreq = bAudioDwSampling ? 3 : 5; //48kHz or 96kHz
-    AudioInfo.info.SpeakerPlacement = 0; // Front left and front right
-    AudioInfo.info.LevelShiftValue = 0;
-    AudioInfo.info.DM_INH = 0; // Down-mix Inhibit Flag; 0=Permitted or no information about any assertion of this
+
+    // HDMI requires that CT, SS and SF fields are set to 0
+    //AudioInfo.info.AudioCodingType = 1; // PCM
+    //AudioInfo.info.SampleSize = 3; // 24bit
+    //AudioInfo.info.SampleFreq = bAudioDwSampling ? 3 : 5; //48kHz or 96kHz
+
+    // default value assignments omitted
+    //AudioInfo.info.SpeakerPlacement = 0; // Front left and front right
+    //AudioInfo.info.LevelShiftValue = 0;
+    //AudioInfo.info.DM_INH = 0; // Down-mix Inhibit Flag; 0=Permitted or no information about any assertion of this
 
     EnableAudioInfoFrame(TRUE, (BYTE *) &AudioInfo);
 }
