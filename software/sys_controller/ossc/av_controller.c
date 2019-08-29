@@ -461,7 +461,6 @@ void update_sc_config()
     }
 
     switch (cm.target_lm) {
-        case MODE_L2_320_COL:
         case MODE_L2_240x360:
             h_opt_scale = 4;
             break;
@@ -477,14 +476,8 @@ void update_sc_config()
         case MODE_L3_240x360:
             h_opt_scale = 6;
             break;
-        case MODE_L4_320_COL:
-            h_opt_scale = 4;
-            break;
         case MODE_L4_256_COL:
             h_opt_scale = 5-cm.cc.ar_256col;
-            break;
-        case MODE_L5_320_COL:
-            h_opt_scale = 5;
             break;
         case MODE_L5_256_COL:
             h_opt_scale = 6-cm.cc.ar_256col;

@@ -71,23 +71,27 @@ typedef enum {
     MODE_PT             = (1<<2),
     MODE_L2             = (1<<3),
     MODE_L2_512_COL     = (1<<4),
-    MODE_L2_320_COL     = (1<<5),
-    MODE_L2_256_COL     = (1<<6),
-    MODE_L2_240x360     = (1<<7),
-    MODE_L3_GEN_16_9    = (1<<8),
-    MODE_L3_GEN_4_3     = (1<<9),
-    MODE_L3_512_COL     = (1<<10),
-    MODE_L3_320_COL     = (1<<11),
-    MODE_L3_256_COL     = (1<<12),
-    MODE_L3_240x360     = (1<<13),
-    MODE_L4_GEN_4_3     = (1<<14),
-    MODE_L4_512_COL     = (1<<15),
-    MODE_L4_320_COL     = (1<<16),
-    MODE_L4_256_COL     = (1<<17),
-    MODE_L5_GEN_4_3     = (1<<18),
-    MODE_L5_512_COL     = (1<<19),
-    MODE_L5_320_COL     = (1<<20),
-    MODE_L5_256_COL     = (1<<21),
+    MODE_L2_384_COL     = (1<<5),
+    MODE_L2_320_COL     = (1<<6),
+    MODE_L2_256_COL     = (1<<7),
+    MODE_L2_240x360     = (1<<8),
+    MODE_L3_GEN_16_9    = (1<<9),
+    MODE_L3_GEN_4_3     = (1<<10),
+    MODE_L3_512_COL     = (1<<11),
+    MODE_L3_384_COL     = (1<<12),
+    MODE_L3_320_COL     = (1<<13),
+    MODE_L3_256_COL     = (1<<14),
+    MODE_L3_240x360     = (1<<15),
+    MODE_L4_GEN_4_3     = (1<<16),
+    MODE_L4_512_COL     = (1<<17),
+    MODE_L4_384_COL     = (1<<18),
+    MODE_L4_320_COL     = (1<<19),
+    MODE_L4_256_COL     = (1<<20),
+    MODE_L5_GEN_4_3     = (1<<21),
+    MODE_L5_512_COL     = (1<<22),
+    MODE_L5_384_COL     = (1<<23),
+    MODE_L5_320_COL     = (1<<24),
+    MODE_L5_256_COL     = (1<<25),
 } mode_flags;
 
 typedef struct {
@@ -115,6 +119,7 @@ typedef struct {
     { "1280x240",  HDMI_Unknown,     1280,  240,  1560, 0, 262,  170, 15,   72, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x240",   HDMI_Unknown,      960,  240,  1170, 0, 262,  128, 15,   54, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "512x240",   HDMI_Unknown,      512,  240,   682, 0, 262,   77, 14,   50, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
+    { "384x240",   HDMI_Unknown,      384,  240,   512, 0, 262,   59, 14,   37, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_384_COL | MODE_L3_384_COL | MODE_L4_384_COL | MODE_L5_384_COL) },                      \
     { "320x240",   HDMI_Unknown,      320,  240,   426, 0, 262,   49, 14,   31, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240",   HDMI_Unknown,      256,  240,   341, 0, 262,   39, 14,   25, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "240p",      HDMI_240p60,       720,  240,   858, 0, 262,   57, 15,   62, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
@@ -123,6 +128,7 @@ typedef struct {
     { "1280x288",  HDMI_Unknown,     1280,  288,  1560, 0, 312,  170, 15,   72, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2) },                                        \
     { "960x288",   HDMI_Unknown,      960,  288,  1170, 0, 312,  128, 15,   54, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L3_GEN_4_3 | MODE_PLLDIVBY2) },                                                           \
     { "512x240LB", HDMI_Unknown,      512,  240,   682, 0, 312,   77, 41,   50, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_512_COL | MODE_L3_512_COL | MODE_L4_512_COL | MODE_L5_512_COL) },                      \
+    { "384x240LB", HDMI_Unknown,      384,  240,   512, 0, 312,   59, 41,   37, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_384_COL | MODE_L3_384_COL | MODE_L4_384_COL | MODE_L5_384_COL) },                      \
     { "320x240LB", HDMI_Unknown,      320,  240,   426, 0, 312,   49, 41,   31, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_320_COL | MODE_L3_320_COL | MODE_L4_320_COL | MODE_L5_320_COL) },                      \
     { "256x240LB", HDMI_Unknown,      256,  240,   341, 0, 312,   39, 41,   25, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_L2_256_COL | MODE_L3_256_COL | MODE_L4_256_COL | MODE_L5_256_COL) },                      \
     { "288p",      HDMI_288p50,       720,  288,   864, 0, 312,   69, 19,   63, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_240P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \

@@ -150,6 +150,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.sample_mult = 6;
                     break;
                 case MODE_L2_320_COL:
+                case MODE_L2_384_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED_1X;
                     cm.sample_mult = 4;
@@ -178,6 +179,11 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 2;
+                    break;
+                case MODE_L3_384_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 3;
                     break;
                 case MODE_L3_320_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
@@ -211,6 +217,11 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 2;
                     break;
+                case MODE_L4_384_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 3;
+                    break;
                 case MODE_L4_320_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
@@ -231,6 +242,12 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 3;
                     cm.hsync_cut = 40;
+                    break;
+                case MODE_L5_384_COL:
+                    cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
+                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
+                    cm.sample_mult = 4;
+                    cm.hsync_cut = 30;
                     break;
                 case MODE_L5_320_COL:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_5X;
