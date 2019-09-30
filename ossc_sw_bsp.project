@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ossc_sw_bsp" InternalType="" Version="10.0.0">
+  <Reconciliation>
+    <Regexes/>
+    <Excludepaths/>
+    <Ignorefiles/>
+    <Extensions>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
+    </Extensions>
+    <Topleveldir>/home/markus/Code/ossc/software</Topleveldir>
+  </Reconciliation>
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -30,6 +39,9 @@
     <VirtualDirectory Name="sys_controller_bsp">
       <VirtualDirectory Name="drivers">
         <VirtualDirectory Name="inc">
+          <File Name="software/sys_controller_bsp/drivers/inc/sc_config_regs.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_timer_regs.h"/>
+          <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_timer.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_jtag_uart.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_jtag_uart_regs.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/ci_crc.h"/>
@@ -43,6 +55,9 @@
           <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_pio_regs.h"/>
         </VirtualDirectory>
         <VirtualDirectory Name="src">
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_timer_vars.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_timer_ts.c"/>
+          <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_timer_sc.c"/>
           <File Name="software/sys_controller_bsp/drivers/src/altera_epcq_controller_mod.c"/>
           <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_read.c"/>
           <File Name="software/sys_controller_bsp/drivers/src/altera_avalon_jtag_uart_ioctl.c"/>
@@ -189,62 +204,6 @@
       <File Name="software/sys_controller_bsp/linker.h"/>
       <File Name="software/sys_controller_bsp/alt_sys_init.c"/>
       <File Name="software/sys_controller_bsp/system.h"/>
-    </VirtualDirectory>
-  </VirtualDirectory>
-  <VirtualDirectory Name="ip">
-    <VirtualDirectory Name="i2c_opencores">
-      <VirtualDirectory Name="HAL">
-        <VirtualDirectory Name="inc">
-          <File Name="ip/i2c_opencores/HAL/inc/i2c_opencores.h"/>
-        </VirtualDirectory>
-        <VirtualDirectory Name="src">
-          <File Name="ip/i2c_opencores/HAL/src/i2c_opencores.c"/>
-        </VirtualDirectory>
-      </VirtualDirectory>
-      <VirtualDirectory Name="Docs">
-        <File Name="ip/i2c_opencores/Docs/I2C_tests.c"/>
-      </VirtualDirectory>
-      <VirtualDirectory Name="inc">
-        <File Name="ip/i2c_opencores/inc/i2c_opencores_regs.h"/>
-      </VirtualDirectory>
-    </VirtualDirectory>
-    <VirtualDirectory Name="nios2_hw_crc">
-      <VirtualDirectory Name="HAL">
-        <VirtualDirectory Name="doc">
-          <File Name="ip/nios2_hw_crc/HAL/doc/crc_main.c"/>
-        </VirtualDirectory>
-        <VirtualDirectory Name="inc">
-          <File Name="ip/nios2_hw_crc/HAL/inc/ci_crc.h"/>
-          <File Name="ip/nios2_hw_crc/HAL/inc/crc.h"/>
-        </VirtualDirectory>
-        <VirtualDirectory Name="src">
-          <File Name="ip/nios2_hw_crc/HAL/src/ci_crc.c"/>
-          <File Name="ip/nios2_hw_crc/HAL/src/crc.c"/>
-        </VirtualDirectory>
-      </VirtualDirectory>
-    </VirtualDirectory>
-    <VirtualDirectory Name="altera_up_sd_card_avalon_interface_mod">
-      <VirtualDirectory Name="HAL">
-        <VirtualDirectory Name="inc">
-          <File Name="ip/altera_up_sd_card_avalon_interface_mod/HAL/inc/Altera_UP_SD_Card_Avalon_Interface_mod.h"/>
-        </VirtualDirectory>
-        <VirtualDirectory Name="src">
-          <File Name="ip/altera_up_sd_card_avalon_interface_mod/HAL/src/Altera_UP_SD_Card_Avalon_Interface_mod.c"/>
-        </VirtualDirectory>
-      </VirtualDirectory>
-    </VirtualDirectory>
-    <VirtualDirectory Name="altera_epcq_controller_mod">
-      <VirtualDirectory Name="HAL">
-        <VirtualDirectory Name="inc">
-          <File Name="ip/altera_epcq_controller_mod/HAL/inc/altera_epcq_controller_mod.h"/>
-        </VirtualDirectory>
-        <VirtualDirectory Name="src">
-          <File Name="ip/altera_epcq_controller_mod/HAL/src/altera_epcq_controller_mod.c"/>
-        </VirtualDirectory>
-      </VirtualDirectory>
-      <VirtualDirectory Name="inc">
-        <File Name="ip/altera_epcq_controller_mod/inc/altera_epcq_controller_mod_regs.h"/>
-      </VirtualDirectory>
     </VirtualDirectory>
   </VirtualDirectory>
   <Description/>

@@ -92,6 +92,7 @@ typedef struct {
     alt_u8 h_mask;
     alt_u8 v_mask;
     alt_u8 mask_br;
+    alt_u8 mask_color;
     alt_u8 tx_mode;
     alt_u8 hdmi_itc;
     alt_u8 s480p_mode;

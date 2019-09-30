@@ -188,6 +188,7 @@ reg [9:0] H_L5BORDER;
 reg [9:0] H_L3BORDER;
 reg [6:0] H_L3_OPT_SAMPLE_COMP;
 reg [3:0] X_MASK_BR;
+reg [2:0] X_MASK_COLOR;
 reg [5:0] X_REV_LPF_STR;
 reg [3:0] SL_L_STR[4:0] /* synthesis ramstyle = "logic" */;
 reg [3:0] SL_C_STR[5:0] /* synthesis ramstyle = "logic" */;
@@ -690,9 +691,9 @@ begin
         G_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
         B_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
     end else if (border_enable_pp[`PP_PIPELINE_LENGTH]) begin
-        R_out <= {2{X_MASK_BR}};
-        G_out <= {2{X_MASK_BR}};
-        B_out <= {2{X_MASK_BR}};
+        R_out <= X_MASK_COLOR[2] ? {2{X_MASK_BR}} : 8'h00;
+        G_out <= X_MASK_COLOR[1] ? {2{X_MASK_BR}} : 8'h00;
+        B_out <= X_MASK_COLOR[0] ? {2{X_MASK_BR}} : 8'h00;
     end
 end
 
@@ -895,10 +896,11 @@ begin
             H_OPT_SAMPLE_MULT <= h_config2[12:10];
             H_OPT_STARTOFF <= h_config2[9:0];
 
-            X_REV_LPF_ENABLE <= (misc_config[8:4] != 5'b00000);
-            X_REV_LPF_STR <= (misc_config[8:4] + 6'd16);
+            X_PANASONIC_HACK <= misc_config[12];
+            X_REV_LPF_ENABLE <= (misc_config[11:7] != 5'b00000);
+            X_REV_LPF_STR <= (misc_config[11:7] + 6'd16);
+            X_MASK_COLOR <= misc_config[6:4];
             X_MASK_BR <= misc_config[3:0];
-            X_PANASONIC_HACK <= misc_config[9];
 
             SL_NO_ALTERN <= sl_config[31];
             SL_METHOD  <= sl_config[30];
