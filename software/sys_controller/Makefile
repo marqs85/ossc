@@ -1132,7 +1132,7 @@ ossc/menu_sjis.c: ossc/menu.c
 
 mem_init/sys_onchip_memory2_0.hex: sys_controller.elf
 	$(RV_OBJCOPY) --change-addresses -0x10000 -O binary --gap-fill 0 $< mem_init/sys_onchip_memory2_0.bin
-	../../tools/bin2hex mem_init/sys_onchip_memory2_0.bin mem_init/sys_onchip_memory2_0.hex
+	../../tools/bin2hex 4 mem_init/sys_onchip_memory2_0.bin mem_init/sys_onchip_memory2_0.hex
 
 .PHONY: mem_init_generate_new
 mem_init_generate_new: mem_init/sys_onchip_memory2_0.hex

@@ -283,11 +283,11 @@
 #define JTAG_UART_0_IRQ 1
 #define JTAG_UART_0_IRQ_INTERRUPT_CONTROLLER_ID 0
 #define JTAG_UART_0_NAME "/dev/jtag_uart_0"
-#define JTAG_UART_0_READ_DEPTH 64
+#define JTAG_UART_0_READ_DEPTH 16
 #define JTAG_UART_0_READ_THRESHOLD 8
 #define JTAG_UART_0_SPAN 8
 #define JTAG_UART_0_TYPE "altera_avalon_jtag_uart"
-#define JTAG_UART_0_WRITE_DEPTH 64
+#define JTAG_UART_0_WRITE_DEPTH 16
 #define JTAG_UART_0_WRITE_THRESHOLD 8
 
 
@@ -389,6 +389,15 @@
 #define ALT_MODULE_CLASS_sc_config_0 sc_config
 #define SC_CONFIG_0_BASE 0x22000
 #define SC_CONFIG_0_SPAN 16
+
+/*
+ * osd_generator configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_osd_generator_0 osd_generator
+#define OSD_GENERATOR_0_BASE 0x24000
+#define OSD_GENERATOR_0_SPAN 16
 
 
 /*

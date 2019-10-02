@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ossc_sw_bsp" InternalType="" Version="10.0.0">
-  <Reconciliation>
-    <Regexes/>
-    <Excludepaths/>
-    <Ignorefiles/>
-    <Extensions>
-      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
-    </Extensions>
-    <Topleveldir>/home/markus/Code/ossc/software</Topleveldir>
-  </Reconciliation>
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -35,10 +26,20 @@
  }]]]>
     </Plugin>
   </Plugins>
+  <Reconciliation>
+    <Regexes/>
+    <Excludepaths/>
+    <Ignorefiles/>
+    <Extensions>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
+    </Extensions>
+    <Topleveldir>/home/markus/Code/ossc/software</Topleveldir>
+  </Reconciliation>
   <VirtualDirectory Name="software">
     <VirtualDirectory Name="sys_controller_bsp">
       <VirtualDirectory Name="drivers">
         <VirtualDirectory Name="inc">
+          <File Name="software/sys_controller_bsp/drivers/inc/osd_generator_regs.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/sc_config_regs.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_timer_regs.h"/>
           <File Name="software/sys_controller_bsp/drivers/inc/altera_avalon_timer.h"/>

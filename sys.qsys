@@ -177,6 +177,27 @@
          type = "String";
       }
    }
+   element osd_generator_0
+   {
+      datum _sortIndex
+      {
+         value = "13";
+         type = "int";
+      }
+   }
+   element osd_generator_0.avalon_s
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "147456";
+         type = "String";
+      }
+   }
    element pio_0
    {
       datum _sortIndex
@@ -315,6 +336,11 @@
    type="reset"
    dir="start" />
  <interface
+   name="osd_generator_0_osd_if"
+   internal="osd_generator_0.osd_if"
+   type="conduit"
+   dir="end" />
+ <interface
    name="pio_0_sys_ctrl_out"
    internal="pio_0.external_connection"
    type="conduit"
@@ -378,14 +404,14 @@
   <parameter name="avalonSpec" value="2.0" />
   <parameter name="clkFreq" value="27000000" />
   <parameter name="hubInstanceID" value="0" />
-  <parameter name="readBufferDepth" value="64" />
+  <parameter name="readBufferDepth" value="16" />
   <parameter name="readIRQThreshold" value="8" />
   <parameter name="simInputCharacterStream" value="" />
   <parameter name="simInteractiveOptions">NO_INTERACTIVE_WINDOWS</parameter>
   <parameter name="useRegistersForReadBuffer" value="true" />
   <parameter name="useRegistersForWriteBuffer" value="true" />
   <parameter name="useRelativePathForSimFile" value="false" />
-  <parameter name="writeBufferDepth" value="64" />
+  <parameter name="writeBufferDepth" value="16" />
   <parameter name="writeIRQThreshold" value="8" />
  </module>
  <module
@@ -434,6 +460,7 @@
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
  </module>
+ <module name="osd_generator_0" kind="osd_generator" version="1.0" enabled="1" />
  <module name="pio_0" kind="altera_avalon_pio" version="17.1" enabled="1">
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
@@ -512,6 +539,15 @@
    end="sc_config_0.avalon_s">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x00022000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="17.1"
+   start="pulpino_0.avalon_master_lsu"
+   end="osd_generator_0.avalon_s">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00024000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -654,6 +690,11 @@
    start="clk_27.clk"
    end="sc_config_0.clock_sink" />
  <connection
+   kind="clock"
+   version="17.1"
+   start="clk_27.clk"
+   end="osd_generator_0.clock_sink" />
+ <connection
    kind="interrupt"
    version="17.1"
    start="pulpino_0.interrupt_receiver"
@@ -748,6 +789,11 @@
    version="17.1"
    start="clk_27.clk_reset"
    end="sc_config_0.reset_sink" />
+ <connection
+   kind="reset"
+   version="17.1"
+   start="clk_27.clk_reset"
+   end="osd_generator_0.reset_sink" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="false" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />

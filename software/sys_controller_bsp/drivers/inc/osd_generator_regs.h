@@ -1,0 +1,1 @@
+../../../../ip/osd_generator/inc/osd_generator_regs.h

@@ -105,6 +105,11 @@ reg remove_event_prev;
 reg [14:0] to_ctr, to_ctr_ms;
 wire lcd_bl_timeout;
 
+wire osd_color, osd_enable_pre;
+wire osd_enable = osd_enable_pre & ~lt_active;
+wire [10:0] xpos, xpos_sc, xpos_vg;
+wire [10:0] ypos, ypos_sc, ypos_vg;
+
 
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
 always @(posedge PCLK_in or negedge hw_reset_n)
@@ -187,6 +192,8 @@ assign HDMI_TX_HS = videogen_sel ? HSYNC_out_videogen : HSYNC_out;
 assign HDMI_TX_VS = videogen_sel ? VSYNC_out_videogen : VSYNC_out;
 assign HDMI_TX_PCLK = videogen_sel ? PCLK_out_videogen : PCLK_out;
 assign HDMI_TX_DE = videogen_sel ? DE_out_videogen : DE_out;
+assign xpos = videogen_sel ? xpos_vg : xpos_sc;
+assign ypos = videogen_sel ? ypos_vg : ypos_sc;
 `else
 wire videogen_sel;
 assign videogen_sel = 1'b0;
@@ -197,6 +204,8 @@ assign HDMI_TX_HS = HSYNC_out;
 assign HDMI_TX_VS = VSYNC_out;
 assign HDMI_TX_PCLK = PCLK_out;
 assign HDMI_TX_DE = DE_out;
+assign xpos = xpos_sc;
+assign ypos = ypos_sc;
 `endif
 
 // LCD backlight timeout counters
@@ -250,7 +259,12 @@ sys sys_inst(
     .sc_config_0_sc_if_v_config_o           (v_config),
     .sc_config_0_sc_if_misc_config_o        (misc_config),
     .sc_config_0_sc_if_sl_config_o          (sl_config),
-    .sc_config_0_sc_if_sl_config2_o         (sl_config2)
+    .sc_config_0_sc_if_sl_config2_o         (sl_config2),
+    .osd_generator_0_osd_if_vclk            (HDMI_TX_PCLK),
+    .osd_generator_0_osd_if_xpos            (xpos),
+    .osd_generator_0_osd_if_ypos            (ypos),
+    .osd_generator_0_osd_if_osd_enable      (osd_enable_pre),
+    .osd_generator_0_osd_if_osd_color       (osd_color)
 );
 
 scanconverter scanconverter_inst (
@@ -286,7 +300,11 @@ scanconverter scanconverter_inst (
     .ilace_flag     (ilace_flag),
     .vsync_flag     (vsync_flag),
     .lt_active      (lt_active),
-    .lt_mode        (lt_mode_synced)
+    .lt_mode        (lt_mode_synced),
+    .osd_enable     (osd_enable),
+    .osd_color      (osd_color),
+    .xpos           (xpos_sc),
+    .ypos           (ypos_sc)
 );
 
 ir_rcv ir0 (
@@ -319,13 +337,17 @@ videogen vg0 (
     .reset_n        (po_reset_n & videogen_sel),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
+    .osd_enable     (osd_enable),
+    .osd_color      (osd_color),
     .R_out          (R_out_videogen),
     .G_out          (G_out_videogen),
     .B_out          (B_out_videogen),
     .HSYNC_out      (HSYNC_out_videogen),
     .VSYNC_out      (VSYNC_out_videogen),
     .PCLK_out       (PCLK_out_videogen),
-    .ENABLE_out     (DE_out_videogen)
+    .ENABLE_out     (DE_out_videogen),
+    .xpos           (xpos_vg),
+    .ypos           (ypos_vg)
 );
 `endif
 

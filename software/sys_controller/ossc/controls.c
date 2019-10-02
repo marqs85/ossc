@@ -48,6 +48,7 @@ extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
 extern alt_u8 update_cur_vm, vm_edit;
 extern volatile sc_regs *sc;
+extern volatile osd_regs *osd;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -149,6 +150,7 @@ int parse_control()
         case RC_BTN0: man_target_input = AV3_YPBPR; break;
         case RC_MENU:
             menu_active = !menu_active;
+            osd->osd_config.menu_active = menu_active;
             profile_sel_menu = profile_sel;
 
             if (menu_active)
@@ -173,6 +175,7 @@ int parse_control()
                                                                      sc_status.fpga_vsyncgen ? '*' : ' ',
                                                                      (unsigned long)sc_status2.pcnt_frame);
             }
+            osd->osd_config.menu_active = 1;
             lcd_write_menu();
             break;
         case RC_LCDBL:
@@ -185,6 +188,7 @@ int parse_control()
         case RC_LM_MODE:
             strncpy(menu_row1, "Linemult mode:", LCD_ROW_LEN+1);
             strncpy(menu_row2, "press 1-5", LCD_ROW_LEN+1);
+            osd->osd_config.menu_active = 1;
             lcd_write_menu();
 
             while (1) {
@@ -214,6 +218,7 @@ int parse_control()
 
                 usleep(WAITLOOP_SLEEP_US);
             }
+            osd->osd_config.menu_active = 0;
             lcd_write_status();
             menu_active = 0;
             break;
@@ -232,6 +237,7 @@ int parse_control()
 Prof_Hotkey_Prompt:
             strncpy(menu_row1, "Profile load:", LCD_ROW_LEN+1);
             sniprintf(menu_row2, LCD_ROW_LEN+1, "press %u-%u", prof_x10*10, ((prof_x10*10+9) > MAX_PROFILE) ? MAX_PROFILE : (prof_x10*10+9));
+            osd->osd_config.menu_active = 1;
             lcd_write_menu();
 
             while (1) {
@@ -262,6 +268,8 @@ Prof_Hotkey_Prompt:
                 btn_vec_prev = btn_vec;
                 usleep(WAITLOOP_SLEEP_US);
             }
+
+            osd->osd_config.menu_active = 0;
             lcd_write_status();
             menu_active = 0;
             break;

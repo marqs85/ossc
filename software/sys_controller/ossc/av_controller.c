@@ -71,6 +71,7 @@ alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
 alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
+alt_u8 osd_enable, osd_enable_pre=1, osd_status_timeout, osd_status_timeout_pre;
 alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -84,13 +85,18 @@ alt_u32 pclk_out;
 alt_u32 read_it2(alt_u32 regaddr);
 
 volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
+volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
 
 inline void lcd_write_menu()
 {
+    strncpy((char*)osd->osd_chars.row1, menu_row1, LCD_ROW_LEN);
+    strncpy((char*)osd->osd_chars.row2, menu_row2, LCD_ROW_LEN);
     lcd_write((char*)&menu_row1, (char*)&menu_row2);
 }
 
 inline void lcd_write_status() {
+    strncpy((char*)osd->osd_chars.row1, row1, LCD_ROW_LEN);
+    strncpy((char*)osd->osd_chars.row2, row2, LCD_ROW_LEN);
     lcd_write((char*)&row1, (char*)&row2);
 }
 
@@ -552,7 +558,7 @@ void update_sc_config()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level;
+    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size;
     alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
@@ -575,8 +581,10 @@ void program_mode()
 
     sniprintf(row1, LCD_ROW_LEN+1, "%s %u%c", avinput_str[cm.avinput], (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
-    if (!menu_active)
+    if (!menu_active) {
+        osd->osd_config.status_refresh = 1;
         lcd_write_status();
+    }
 
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
     cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, target_typemask);
@@ -602,6 +610,16 @@ void program_mode()
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
     cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
+
+    if (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X) {
+        osd_x_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;
+        osd_y_size = osd_x_size;
+    } else {
+        osd_x_size = 1 - cm.tx_pixelrep;
+        osd_y_size = 0;
+    }
+    osd->osd_config.x_size = osd_x_size;
+    osd->osd_config.y_size = osd_y_size;
 
     update_sc_config();
 
@@ -742,6 +760,16 @@ int init_hw()
     read_userdata(INIT_CONFIG_SLOT, 0);
     read_userdata(profile_sel, 0);
 
+    // Setup OSD
+    osd_enable = osd_enable_pre;
+    osd_status_timeout = osd_status_timeout_pre;
+    osd->osd_config.x_size = 0;
+    osd->osd_config.y_size = 0;
+    osd->osd_config.x_offset = 3;
+    osd->osd_config.y_offset = 3;
+    osd->osd_config.enable = osd_enable;
+    osd->osd_config.status_timeout = osd_status_timeout;
+
     // Setup remote keymap
     if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
         setup_rc();
@@ -856,11 +884,13 @@ int main()
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif
+        osd->osd_config.status_refresh = 1;
         lcd_write_status();
         usleep(500000);
     } else {
         sniprintf(row1, LCD_ROW_LEN+1, "Init error  %d", init_stat);
         strncpy(row2, "", LCD_ROW_LEN+1);
+        osd->osd_config.status_refresh = 1;
         lcd_write_status();
         while (1) {}
     }
@@ -1025,8 +1055,10 @@ int main()
             cm.clkcnt = 0; //TODO: proper invalidate
             strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
-            if (!menu_active)
+            if (!menu_active) {
+                osd->osd_config.status_refresh = 1;
                 lcd_write_status();
+            }
             if (man_input_change) {
                 // record last input if it was selected manually
                 if (def_input == AV_LAST)
@@ -1054,6 +1086,12 @@ int main()
             printf("Changing AV3 RGB source\n");
             cm.cc.av3_alt_rgb = tc.av3_alt_rgb;
         }
+        if ((osd_enable != osd_enable_pre) || (osd_status_timeout != osd_status_timeout_pre)) {
+            osd_enable = osd_enable_pre;
+            osd_status_timeout = osd_status_timeout_pre;
+            osd->osd_config.enable = osd_enable;
+            osd->osd_config.status_timeout = osd_status_timeout;
+        }
 
         if (cm.avinput != AV_TESTPAT) {
             status = get_status(target_tvp_sync);
@@ -1072,8 +1110,10 @@ int main()
                     //ths_source_sel(THS_STANDBY, 0);
                     strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
                     strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
-                    if (!menu_active)
+                    if (!menu_active) {
+                        osd->osd_config.status_refresh = 1;
                         lcd_write_status();
+                    }
                     alt_timestamp_start();// reset auto input timer
                     auto_input_ctr = 0;
                     auto_input_current_ctr = 0;

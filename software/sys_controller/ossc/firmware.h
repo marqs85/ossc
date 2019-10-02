@@ -24,13 +24,13 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            0
-#define FW_VER_MINOR            84
+#define FW_VER_MINOR            85
 
 #define PROFILE_VER_MAJOR       0
-#define PROFILE_VER_MINOR       84
+#define PROFILE_VER_MINOR       85
 
 #define INITCFG_VER_MAJOR       0
-#define INITCFG_VER_MINOR       83
+#define INITCFG_VER_MINOR       85
 
 #ifdef ENABLE_AUDIO
 #define FW_SUFFIX1              "a"

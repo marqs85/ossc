@@ -23,6 +23,7 @@
 #include "avconfig.h"
 #include "sysconfig.h"
 #include "sc_config_regs.h"
+#include "osd_generator_regs.h"
 
 // sys_ctrl bits
 #define LT_ACTIVE                   (1<<15)

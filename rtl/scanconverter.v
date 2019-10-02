@@ -105,7 +105,11 @@ module scanconverter (
     output ilace_flag,
     output vsync_flag,
     input lt_active,
-    input [1:0] lt_mode
+    input [1:0] lt_mode,
+    input osd_enable,
+    input osd_color,
+    output reg [10:0] xpos,
+    output reg [10:0] ypos
 );
 
 //clock-related signals
@@ -534,6 +538,7 @@ mux5 mux5_inst (
 // |       |       |       |       |       |  SLG  |  SLG  |  SLG  |  SLG  |  SLG  |       |
 // |       |       |       |       |       |       |       |       |       |       | MASK  |
 // |       |       |       |       |       |       |       |       |       |       | LTBOX |
+// |       |       |       |       |       |       |       |       |       |       | OSD   |
 integer pp_idx;
 always @(posedge pclk_act)
 begin
@@ -546,6 +551,8 @@ begin
 
     hcnt_pp <= hcnt_act;
     vcnt_pp <= vcnt_act;
+    xpos <= hcnt_pp - H_AVIDSTART;
+    ypos <= vcnt_pp - V_AVIDSTART;
     border_enable_pp[2] <= ((hcnt_pp < H_AVIDMASK_START) | (hcnt_pp >= H_AVIDMASK_STOP) | (vcnt_pp < V_AVIDMASK_START) | (vcnt_pp >= V_AVIDMASK_STOP));
     for(pp_idx = 3; pp_idx <= `PP_PIPELINE_LENGTH; pp_idx = pp_idx+1) begin
         border_enable_pp[pp_idx] <= border_enable_pp[pp_idx-1];
@@ -686,7 +693,11 @@ begin
     end
 
     // apply LT box / mask
-    if (lt_active) begin
+    if (osd_enable) begin
+        R_out <= {8{osd_color}};
+        G_out <= {8{osd_color}};
+        B_out <= 8'hff;
+    end else if (lt_active) begin
         R_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
         G_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
         B_out <= {8{lt_box_enable_pp[`PP_PIPELINE_LENGTH]}};
