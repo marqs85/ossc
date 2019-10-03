@@ -416,7 +416,7 @@
  </module>
  <module
    name="master_0"
-   kind="altera_jtag_avalon_master"
+   kind="altera_jtag_avalon_master_mod"
    version="17.1"
    enabled="1">
   <parameter name="AUTO_DEVICE" value="EP4CE15E22C8" />
@@ -427,6 +427,7 @@
   <parameter name="FIFO_DEPTHS" value="2" />
   <parameter name="PLI_PORT" value="50000" />
   <parameter name="USE_PLI" value="0" />
+  <parameter name="USE_MEMORY_BLOCKS" value="0" />
  </module>
  <module
    name="onchip_memory2_0"
