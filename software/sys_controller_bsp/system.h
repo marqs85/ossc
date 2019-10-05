@@ -399,6 +399,14 @@
 #define OSD_GENERATOR_0_BASE 0x24000
 #define OSD_GENERATOR_0_SPAN 16
 
+/*
+ * pll_reconfig configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_pll_reconfig_0 pll_reconfig
+#define PLL_RECONFIG_0_BASE 0x28000
+#define PLL_RECONFIG_0_SPAN 8
 
 /*
  * timer_0 configuration

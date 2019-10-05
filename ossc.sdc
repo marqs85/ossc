@@ -16,28 +16,31 @@ create_clock -period 33MHz -name pclk_4x_source [get_ports PCLK_in] -add
 create_clock -period 33MHz -name pclk_5x_source [get_ports PCLK_in] -add
 
 #derive_pll_clocks
-create_generated_clock -master_clock pclk_2x_source -source {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 2 -duty_cycle 50.00 -name pclk_2x {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[0]}
-create_generated_clock -master_clock pclk_3x_source -source {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 3 -duty_cycle 50.00 -name pclk_3x {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[0]}
-create_generated_clock -master_clock pclk_4x_source -source {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 4 -duty_cycle 50.00 -name pclk_4x {scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[1]}
-create_generated_clock -master_clock pclk_5x_source -source {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 5 -duty_cycle 50.00 -name pclk_5x {scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[1]}
+create_generated_clock -name pclk_2x -master_clock pclk_2x_source -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[1]} -multiply_by 2 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[0]} -add
+create_generated_clock -name pclk_3x -master_clock pclk_3x_source -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[1]} -multiply_by 3 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[0]} -add
+create_generated_clock -name pclk_4x -master_clock pclk_4x_source -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[1]} -multiply_by 4 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[1]} -add
+create_generated_clock -name pclk_5x -master_clock pclk_5x_source -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[1]} -multiply_by 5 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[1]} -add
+create_generated_clock -name pclk_27mhz -master_clock clk27 -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[0]} -multiply_by 1 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[0]} -add
 
 # retrieve post-mapping clkmux output pin
-set clkmux_output [get_pins scanconverter_inst|mux5_inst|LPM_MUX_component|auto_generated|muxlut_result*|combout]
+set clkmux_output [get_pins scanconverter_inst|clkctrl1|outclk]
 
 # specify postmux clocks which clock postprocess pipeline
-create_generated_clock -master_clock pclk_1x -source [get_ports PCLK_in] -multiply_by 1 -name pclk_1x_postmux $clkmux_output
-create_generated_clock -master_clock pclk_2x -source [get_pins scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[0]] -multiply_by 1 -name pclk_2x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_3x -source [get_pins scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[0]] -multiply_by 1 -name pclk_3x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_4x -source [get_pins scanconverter_inst|pll_linetriple|altpll_component|auto_generated|pll1|clk[1]] -multiply_by 1 -name pclk_4x_postmux $clkmux_output -add
-create_generated_clock -master_clock pclk_5x -source [get_pins scanconverter_inst|pll_linedouble|altpll_component|auto_generated|pll1|clk[1]] -multiply_by 1 -name pclk_5x_postmux $clkmux_output -add
+create_generated_clock -name pclk_1x_postmux -master_clock pclk_1x -source [get_pins scanconverter_inst|clkctrl1|inclk[0]] -multiply_by 1 $clkmux_output
+create_generated_clock -name pclk_2x_postmux -master_clock pclk_2x -source [get_pins scanconverter_inst|clkctrl1|inclk[2]] -multiply_by 1 $clkmux_output -add
+create_generated_clock -name pclk_3x_postmux -master_clock pclk_3x -source [get_pins scanconverter_inst|clkctrl1|inclk[2]] -multiply_by 1 $clkmux_output -add
+create_generated_clock -name pclk_4x_postmux -master_clock pclk_4x -source [get_pins scanconverter_inst|clkctrl1|inclk[3]] -multiply_by 1 $clkmux_output -add
+create_generated_clock -name pclk_5x_postmux -master_clock pclk_5x -source [get_pins scanconverter_inst|clkctrl1|inclk[3]] -multiply_by 1 $clkmux_output -add
+create_generated_clock -name pclk_27mhz_postmux -master_clock pclk_27mhz -source [get_pins scanconverter_inst|clkctrl1|inclk[2]] -multiply_by 1 $clkmux_output -add
 
 # specify output clocks that drive PCLK output pin
 set pclk_out_port [get_ports HDMI_TX_PCLK]
-create_generated_clock -master_clock pclk_1x_postmux -source $clkmux_output -multiply_by 1 -name pclk_1x_out $pclk_out_port
-create_generated_clock -master_clock pclk_2x_postmux -source $clkmux_output -multiply_by 1 -name pclk_2x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_3x_postmux -source $clkmux_output -multiply_by 1 -name pclk_3x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_4x_postmux -source $clkmux_output -multiply_by 1 -name pclk_4x_out $pclk_out_port -add
-create_generated_clock -master_clock pclk_5x_postmux -source $clkmux_output -multiply_by 1 -name pclk_5x_out $pclk_out_port -add
+create_generated_clock -name pclk_1x_out -master_clock pclk_1x_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port
+create_generated_clock -name pclk_2x_out -master_clock pclk_2x_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port -add
+create_generated_clock -name pclk_3x_out -master_clock pclk_3x_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port -add
+create_generated_clock -name pclk_4x_out -master_clock pclk_4x_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port -add
+create_generated_clock -name pclk_5x_out -master_clock pclk_5x_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port -add
+create_generated_clock -name pclk_27mhz_out -master_clock pclk_27mhz_postmux -source $clkmux_output -multiply_by 1 $pclk_out_port -add
 
 derive_clock_uncertainty
 
@@ -65,7 +68,7 @@ set_false_path -to [remove_from_collection [all_outputs] $critoutputs_hdmi]
 
 # Treat CPU clock asynchronous to pixel clocks 
 set_clock_groups -asynchronous -group \
-                            {clk27} \
+                            {clk27 pclk_27mhz pclk_27mhz_postmux pclk_27mhz_out} \
                             {pclk_1x pclk_1x_postmux pclk_1x_out} \
                             {pclk_2x_source pclk_2x pclk_2x_postmux pclk_2x_out} \
                             {pclk_3x_source pclk_3x pclk_3x_postmux pclk_3x_out} \
@@ -73,10 +76,10 @@ set_clock_groups -asynchronous -group \
                             {pclk_5x_source pclk_5x pclk_5x_postmux pclk_5x_out}
 
 # Ignore paths from registers which are updated only at leading edge of vsync
-set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|SL_* scanconverter_inst|LT_POS_* scanconverter_inst|FID_1x}]
+set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V_* scanconverter_inst|X_* scanconverter_inst|SL_* scanconverter_inst|LT_POS_*}]
 
 # Ignore paths from registers which are updated only at leading edge of hsync
-set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
+#set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
 
 # Ignore paths to latency tester sync regs
 set_false_path -to [get_registers {lat_tester:lt0|mode_synced* lat_tester:lt0|VSYNC_in_* lat_tester:lt0|trigger_*}]

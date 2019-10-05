@@ -33,11 +33,11 @@
 `define V_MULTMODE_4X           3'd3
 `define V_MULTMODE_5X           3'd4
 
-`define PCLK_MUX_1X             3'd0
-`define PCLK_MUX_2X             3'd1
-`define PCLK_MUX_3X             3'd2
-`define PCLK_MUX_4X             3'd3
-`define PCLK_MUX_5X             3'd4
+`define PCLK_MUX_1X             2'd0
+`define PCLK_MUX_2X             2'd2
+`define PCLK_MUX_3X             2'd2
+`define PCLK_MUX_4X             2'd3
+`define PCLK_MUX_5X             2'd3
 
 `define H_MULTMODE_FULLWIDTH    2'h0
 `define H_MULTMODE_ASPECTFIX    2'h1
@@ -82,23 +82,23 @@ module scanconverter (
     input HSYNC_in,
     input PCLK_in,
     input clk27,
+    input enable_sc,
     input [31:0] h_config,
     input [31:0] h_config2,
     input [31:0] v_config,
     input [31:0] misc_config,
     input [31:0] sl_config,
     input [31:0] sl_config2,
+    output PCLK_out,
     output reg [7:0] R_out,
     output reg [7:0] G_out,
     output reg [7:0] B_out,
     output reg HSYNC_out,
     output reg VSYNC_out,
-    output PCLK_out,
     output reg DE_out,
     output h_unstable,
     output reg [1:0] fpga_vsyncgen,
-    output [1:0] pclk_lock,
-    output [1:0] pll_lock_lost,
+    output pll_lock_lost,
     output reg [10:0] vmax,
     output reg [10:0] vmax_tvp,
     output reg [19:0] pcnt_frame,
@@ -109,14 +109,20 @@ module scanconverter (
     input osd_enable,
     input osd_color,
     output reg [10:0] xpos,
-    output reg [10:0] ypos
+    output reg [10:0] ypos,
+    input pll_areset,
+    input pll_scanclk,
+    input pll_scanclkena,
+    input pll_configupdate,
+    input pll_scandata,
+    output pll_scandone
 );
 
 //clock-related signals
 wire pclk_act;
 wire pclk_1x, pclk_2x, pclk_3x, pclk_4x, pclk_5x;
-wire pclk_2x_lock, pclk_3x_lock;
-wire [2:0] pclk_mux_sel;
+wire [1:0] pclk_mux_sel;
+wire pll_lock;
 
 //RGB signals&registers: 8 bits per component -> 16.7M colors
 wire [7:0] R_act, G_act, B_act;
@@ -148,7 +154,7 @@ reg [11:0] hmax[0:1];
 reg line_idx;
 reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_4x;
 reg [2:0] line_out_idx_5x;
-reg [23:0] warn_h_unstable, warn_pll_lock_lost, warn_pll_lock_lost_3x;
+reg [23:0] warn_h_unstable, warn_pll_lock_lost;
 
 // post-processing pipeline
 reg HSYNC_pp[1:`PP_PIPELINE_LENGTH] /* synthesis ramstyle = "logic" */;
@@ -234,7 +240,6 @@ reg [19:0] pcnt_ctr;
 
 assign pclk_1x = PCLK_in;
 assign PCLK_out = pclk_act;
-assign pclk_lock = {pclk_2x_lock, pclk_3x_lock};
 assign ilace_flag = (FID_cur != FID_last);
 
 //Scanline generation
@@ -481,22 +486,41 @@ case (V_MULTMODE)
     end
 endcase
 
-//TODO: use single PLL and ALTPLL_RECONFIG
-pll_2x pll_linedouble (
-    .areset ( (V_MULTMODE != `V_MULTMODE_2X) & (V_MULTMODE != `V_MULTMODE_5X) ),
-    .inclk0 ( PCLK_in ),
-    .c0 ( pclk_2x ),
-    .c1 ( pclk_5x ),
-    .locked ( pclk_2x_lock )
+pll_2x pll_pclk (
+    .areset(pll_areset),
+    .clkswitch(enable_sc),
+    .configupdate(pll_configupdate),
+    .inclk0(clk27), // set videogen clock to primary (power-on default) since both reference clocks must be running during switchover
+    .inclk1(PCLK_in), // is the secondary input clock fully compensated?
+    .scanclk(pll_scanclk),
+    .scanclkena(pll_scanclkena),
+    .scandata(pll_scandata),
+    .c0(pclk_2x), // pclk_3x in secondary config
+    .c1(pclk_5x), // pclk_4x in secondary config
+    .locked(pll_lock),
+    .scandataout(),
+    .scandone(pll_scandone)
 );
 
-pll_3x pll_linetriple (
-    .areset ( (V_MULTMODE != `V_MULTMODE_3X) & (V_MULTMODE != `V_MULTMODE_4X) ),
-    .inclk0 ( PCLK_in ),
-    .c0 ( pclk_3x ),
-    .c1 ( pclk_4x ),
-    .locked ( pclk_3x_lock )
+assign pclk_3x = pclk_2x;
+assign pclk_4x = pclk_5x;
+
+cycloneive_clkctrl   clkctrl1 ( 
+    .clkselect(enable_sc ? pclk_mux_sel : 2'h2),
+    .ena(1'b1),
+    .inclk({pclk_5x, pclk_2x, 1'b0, pclk_1x}), // fitter forbids using both clk27 and pclk_1x here since they're on opposite sides
+    .outclk(pclk_act)
+// synopsys translate_off
+    ,
+    .devclrn(1'b1),
+    .devpor(1'b1)
+// synopsys translate_on
 );
+defparam
+    clkctrl1.clock_type = "Global Clock",
+    clkctrl1.ena_register_mode = "falling edge",
+    clkctrl1.lpm_type = "cycloneive_clkctrl";
+
 
 wire [11:0] linebuf_rdaddr = linebuf_hoffset-H_AVIDSTART;
 wire [11:0] linebuf_wraddr = hcnt_1x-H_AVIDSTART;
@@ -512,15 +536,6 @@ linebuf linebuf_rgb (
     .q ( {R_lbuf, G_lbuf, B_lbuf} )
 );
 
-mux5 mux5_inst (
-    .data0 ( pclk_1x ),
-    .data1 ( pclk_2x ),
-    .data2 ( pclk_3x ),
-    .data3 ( pclk_4x ),
-    .data4 ( pclk_5x ),
-    .sel ( pclk_mux_sel ),
-    .result ( pclk_act )
-);
 
 //Postprocess pipeline
 //
@@ -714,27 +729,21 @@ begin
     if (!reset_n) begin
         warn_h_unstable <= 1'b0;
         warn_pll_lock_lost <= 1'b0;
-        warn_pll_lock_lost_3x <= 1'b0;
     end else begin
         if (hmax[0] != hmax[1])
             warn_h_unstable <= 1;
         else if (warn_h_unstable != 0)
             warn_h_unstable <= warn_h_unstable + 1'b1;
     
-        if (((V_MULTMODE == `V_MULTMODE_2X) | (V_MULTMODE == `V_MULTMODE_5X)) & ~pclk_2x_lock)
+        if ((V_MULTMODE > `V_MULTMODE_1X) & ~pll_lock)
             warn_pll_lock_lost <= 1;
         else if (warn_pll_lock_lost != 0)
             warn_pll_lock_lost <= warn_pll_lock_lost + 1'b1;
-            
-        if (((V_MULTMODE == `V_MULTMODE_3X) | (V_MULTMODE == `V_MULTMODE_4X)) & ~pclk_3x_lock)
-            warn_pll_lock_lost_3x <= 1;
-        else if (warn_pll_lock_lost_3x != 0)
-            warn_pll_lock_lost_3x <= warn_pll_lock_lost_3x + 1'b1;
     end
 end
 
 assign h_unstable = (warn_h_unstable != 0);
-assign pll_lock_lost = {(warn_pll_lock_lost != 0), (warn_pll_lock_lost_3x != 0)};
+assign pll_lock_lost = (warn_pll_lock_lost != 0);
 
 //Detect if TVP7002 is skipping VSYNCs. This occurs for interlaced signals fed via digital sync inputs,
 //causing TVP7002 not to regenerate VSYNC for field 1. Moreover, if leading edges of HSYNC and VSYNC are

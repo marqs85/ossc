@@ -3,10 +3,18 @@
 <pinplan intended_family="Cyclone IV E" variation_name="pll_2x" megafunction_name="ALTPLL" specifies="all_ports">
 <global>
 <pin name="areset" direction="input" scope="external"  />
+<pin name="clkswitch" direction="input" scope="external"  />
+<pin name="configupdate" direction="input" scope="external"  />
 <pin name="inclk0" direction="input" scope="external" source="clock"  />
+<pin name="inclk1" direction="input" scope="external" source="clock"  />
+<pin name="scanclk" direction="input" scope="external" source="clock"  />
+<pin name="scanclkena" direction="input" scope="external"  />
+<pin name="scandata" direction="input" scope="external"  />
 <pin name="c0" direction="output" scope="external" source="clock"  />
 <pin name="c1" direction="output" scope="external" source="clock"  />
 <pin name="locked" direction="output" scope="external"  />
+<pin name="scandataout" direction="output" scope="external"  />
+<pin name="scandone" direction="output" scope="external"  />
 
 </global>
 </pinplan>

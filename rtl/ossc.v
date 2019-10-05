@@ -18,7 +18,6 @@
 //
 
 //`define DEBUG
-`define VIDEOGEN
 `define PO_RESET_WIDTH 27  //1us
 
 module ossc (
@@ -34,13 +33,13 @@ module ossc (
     input VSYNC_in,
     input HSYNC_in,
     input PCLK_in,
-    output [7:0] HDMI_TX_RD,
-    output [7:0] HDMI_TX_GD,
-    output [7:0] HDMI_TX_BD,
-    output HDMI_TX_DE,
-    output HDMI_TX_HS,
-    output HDMI_TX_VS,
     output HDMI_TX_PCLK,
+    output reg [7:0] HDMI_TX_RD,
+    output reg [7:0] HDMI_TX_GD,
+    output reg [7:0] HDMI_TX_BD,
+    output reg HDMI_TX_DE,
+    output reg HDMI_TX_HS,
+    output reg HDMI_TX_VS,
     input HDMI_TX_INT_N,
     input HDMI_TX_MODE,
     output hw_reset_n,
@@ -56,9 +55,7 @@ module ossc (
 
 
 wire [15:0] sys_ctrl;
-wire h_unstable;
-wire [1:0] pclk_lock;
-wire [1:0] pll_lock_lost;
+wire h_unstable, pll_lock_lost;
 wire [31:0] h_config, h_config2, v_config, misc_config, sl_config, sl_config2;
 wire [10:0] vmax, vmax_tvp;
 wire [1:0] fpga_vsyncgen;
@@ -68,17 +65,16 @@ wire [19:0] pcnt_frame;
 wire [15:0] ir_code;
 wire [7:0] ir_code_cnt;
 
-wire [7:0] R_out, G_out, B_out;
-wire HSYNC_out;
-wire VSYNC_out;
+wire [7:0] R_out_sc, G_out_sc, B_out_sc;
+wire HSYNC_out_sc;
+wire VSYNC_out_sc;
 wire PCLK_out;
-wire DE_out;
+wire DE_out_sc;
 
-wire [7:0] R_out_videogen, G_out_videogen, B_out_videogen;
-wire HSYNC_out_videogen;
-wire VSYNC_out_videogen;
-wire PCLK_out_videogen;
-wire DE_out_videogen;
+wire [7:0] R_out_vg, G_out_vg, B_out_vg;
+wire HSYNC_out_vg;
+wire VSYNC_out_vg;
+wire DE_out_vg;
 
 
 reg [7:0] po_reset_ctr = 0;
@@ -109,6 +105,8 @@ wire osd_color, osd_enable_pre;
 wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos, xpos_sc, xpos_vg;
 wire [10:0] ypos, ypos_sc, ypos_vg;
+
+wire pll_areset, pll_scanclk, pll_scanclkena, pll_configupdate, pll_scandata, pll_scandone;
 
 
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
@@ -171,7 +169,7 @@ assign hw_reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 assign LED_R = HSYNC_in_L;
 assign LED_G = VSYNC_in_L;
 `else
-assign LED_R = videogen_sel ? 1'b0 : ((pll_lock_lost != 2'h0)|h_unstable);
+assign LED_R = (pll_lock_lost|h_unstable);
 assign LED_G = (ir_code == 0);
 `endif
 
@@ -182,31 +180,19 @@ wire lcd_bl_on = sys_ctrl[4];    //hw_reset_n in v1.2 PCB
 wire [1:0] lcd_bl_time = sys_ctrl[3:2];
 assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 
-`ifdef VIDEOGEN
-wire videogen_sel;
-assign videogen_sel = ~sys_ctrl[1];
-assign HDMI_TX_RD = videogen_sel ? R_out_videogen : R_out;
-assign HDMI_TX_GD = videogen_sel ? G_out_videogen : G_out;
-assign HDMI_TX_BD = videogen_sel ? B_out_videogen : B_out;
-assign HDMI_TX_HS = videogen_sel ? HSYNC_out_videogen : HSYNC_out;
-assign HDMI_TX_VS = videogen_sel ? VSYNC_out_videogen : VSYNC_out;
-assign HDMI_TX_PCLK = videogen_sel ? PCLK_out_videogen : PCLK_out;
-assign HDMI_TX_DE = videogen_sel ? DE_out_videogen : DE_out;
-assign xpos = videogen_sel ? xpos_vg : xpos_sc;
-assign ypos = videogen_sel ? ypos_vg : ypos_sc;
-`else
-wire videogen_sel;
-assign videogen_sel = 1'b0;
-assign HDMI_TX_RD = R_out;
-assign HDMI_TX_GD = G_out;
-assign HDMI_TX_BD = B_out;
-assign HDMI_TX_HS = HSYNC_out;
-assign HDMI_TX_VS = VSYNC_out;
+wire enable_sc = sys_ctrl[1];
+assign xpos = enable_sc ? xpos_sc : xpos_vg;
+assign ypos = enable_sc ? ypos_sc : ypos_vg;
 assign HDMI_TX_PCLK = PCLK_out;
-assign HDMI_TX_DE = DE_out;
-assign xpos = xpos_sc;
-assign ypos = ypos_sc;
-`endif
+
+always @(posedge PCLK_out) begin
+    HDMI_TX_RD <= enable_sc ? R_out_sc : R_out_vg;
+    HDMI_TX_GD <= enable_sc ? G_out_sc : G_out_vg;
+    HDMI_TX_BD <= enable_sc ? B_out_sc : B_out_vg;
+    HDMI_TX_HS <= enable_sc ? HSYNC_out_sc : HSYNC_out_vg;
+    HDMI_TX_VS <= enable_sc ? VSYNC_out_sc : VSYNC_out_vg;
+    HDMI_TX_DE <= enable_sc ? DE_out_sc : DE_out_vg;
+end
 
 // LCD backlight timeout counters
 always @(posedge clk27)
@@ -260,17 +246,24 @@ sys sys_inst(
     .sc_config_0_sc_if_misc_config_o        (misc_config),
     .sc_config_0_sc_if_sl_config_o          (sl_config),
     .sc_config_0_sc_if_sl_config2_o         (sl_config2),
-    .osd_generator_0_osd_if_vclk            (HDMI_TX_PCLK),
+    .osd_generator_0_osd_if_vclk            (PCLK_out),
     .osd_generator_0_osd_if_xpos            (xpos),
     .osd_generator_0_osd_if_ypos            (ypos),
     .osd_generator_0_osd_if_osd_enable      (osd_enable_pre),
-    .osd_generator_0_osd_if_osd_color       (osd_color)
+    .osd_generator_0_osd_if_osd_color       (osd_color),
+    .pll_reconfig_0_pll_reconfig_if_areset       (pll_areset),
+    .pll_reconfig_0_pll_reconfig_if_scanclk      (pll_scanclk),
+    .pll_reconfig_0_pll_reconfig_if_scanclkena   (pll_scanclkena),
+    .pll_reconfig_0_pll_reconfig_if_configupdate (pll_configupdate),
+    .pll_reconfig_0_pll_reconfig_if_scandata     (pll_scandata),
+    .pll_reconfig_0_pll_reconfig_if_scandone     (pll_scandone)
 );
 
 scanconverter scanconverter_inst (
     .reset_n        (hw_reset_n),
     .PCLK_in        (PCLK_in),
     .clk27          (clk27),
+    .enable_sc      (enable_sc),
     .HSYNC_in       (HSYNC_in_L),
     .VSYNC_in       (VSYNC_in_L),
     .FID_in         (FID_in_L),
@@ -283,16 +276,15 @@ scanconverter scanconverter_inst (
     .misc_config    (misc_config),
     .sl_config      (sl_config),
     .sl_config2     (sl_config2),
-    .R_out          (R_out),
-    .G_out          (G_out),
-    .B_out          (B_out),
-    .HSYNC_out      (HSYNC_out),
-    .VSYNC_out      (VSYNC_out),
+    .R_out          (R_out_sc),
+    .G_out          (G_out_sc),
+    .B_out          (B_out_sc),
     .PCLK_out       (PCLK_out),
-    .DE_out         (DE_out),
+    .HSYNC_out      (HSYNC_out_sc),
+    .VSYNC_out      (VSYNC_out_sc),
+    .DE_out         (DE_out_sc),
     .h_unstable     (h_unstable),
     .fpga_vsyncgen  (fpga_vsyncgen),
-    .pclk_lock      (pclk_lock),
     .pll_lock_lost  (pll_lock_lost),
     .vmax           (vmax),
     .vmax_tvp       (vmax_tvp),
@@ -304,7 +296,13 @@ scanconverter scanconverter_inst (
     .osd_enable     (osd_enable),
     .osd_color      (osd_color),
     .xpos           (xpos_sc),
-    .ypos           (ypos_sc)
+    .ypos           (ypos_sc),
+    .pll_areset       (pll_areset),
+    .pll_scanclk      (pll_scanclk),
+    .pll_scanclkena   (pll_scanclkena),
+    .pll_configupdate (pll_configupdate),
+    .pll_scandata     (pll_scandata),
+    .pll_scandone     (pll_scandone)
 );
 
 ir_rcv ir0 (
@@ -318,7 +316,7 @@ ir_rcv ir0 (
 
 lat_tester lt0 (
     .clk27          (clk27),
-    .pclk           (HDMI_TX_PCLK),
+    .pclk           (PCLK_out),
     .active         (lt_active),
     .armed          (lt_armed),
     .sensor         (btn_LL[1]),
@@ -331,24 +329,21 @@ lat_tester lt0 (
     .finished       (lt_finished)
 );
 
-`ifdef VIDEOGEN
 videogen vg0 (
-    .clk27          (clk27),
-    .reset_n        (po_reset_n & videogen_sel),
+    .clk27          (PCLK_out),
+    .reset_n        (po_reset_n & ~enable_sc),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
     .osd_enable     (osd_enable),
     .osd_color      (osd_color),
-    .R_out          (R_out_videogen),
-    .G_out          (G_out_videogen),
-    .B_out          (B_out_videogen),
-    .HSYNC_out      (HSYNC_out_videogen),
-    .VSYNC_out      (VSYNC_out_videogen),
-    .PCLK_out       (PCLK_out_videogen),
-    .ENABLE_out     (DE_out_videogen),
+    .R_out          (R_out_vg),
+    .G_out          (G_out_vg),
+    .B_out          (B_out_vg),
+    .HSYNC_out      (HSYNC_out_vg),
+    .VSYNC_out      (VSYNC_out_vg),
+    .DE_out         (DE_out_vg),
     .xpos           (xpos_vg),
     .ypos           (ypos_vg)
 );
-`endif
 
 endmodule

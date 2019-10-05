@@ -24,6 +24,7 @@
 #include "sysconfig.h"
 #include "sc_config_regs.h"
 #include "osd_generator_regs.h"
+#include "pll_reconfig_regs.h"
 
 // sys_ctrl bits
 #define LT_ACTIVE                   (1<<15)
@@ -64,6 +65,10 @@
 #define AUTO_MAX_COUNT            100
 #define AUTO_CURRENT_MAX_COUNT      6
 
+#define PLL_CONFIG_VG               0
+#define PLL_CONFIG_2X_5X            1
+#define PLL_CONFIG_3X_4X            2
+
 // In reverse order of importance
 typedef enum {
     NO_CHANGE           = 0,
@@ -99,6 +104,7 @@ typedef struct {
     alt_u16 h_mult_total;
     mode_flags target_lm;
     avinput_t avinput;
+    alt_u8 pll_config;
     // Current configuration
     avconfig_t cc;
 } avmode_t;

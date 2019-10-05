@@ -84,8 +84,25 @@ alt_u8 pcm1862_active;
 alt_u32 pclk_out;
 alt_u32 read_it2(alt_u32 regaddr);
 
+// Manually (see cyiv-51005.pdf) or automatically (MIF/HEX from PLL megafunction) generated config may not
+// provide fully correct scan chain data (e.g. mismatches in C3) and lead to incorrect PLL configuration.
+// To get correct scan chain data, do the following:
+//   1. Create a ALTPLL_RECONFIG instance with initial value read from your MIF/HEX file
+//   2. Connect ALTPLL_RECONFIG to your PLL and set its reconfig input to something you can control easily (e.g. button)
+//   3. Create a signaltap file and add all PLL signals to capture. Set sample depth to 256 and clock to scanclk
+//   4. Compile the design and program the FPGA
+//   5. Open signaltap and set trigger to scanclkena rising edge
+//   6. Run signaltap and trigger PLL reconfiguration
+//   7. Export VCD file for analysis
+//   8. Compare your MIF/HEX to the captured scan chain and update it accordingly
+//   9. Dump the updated scan chain data to an array like below (last 16 bits are 0)
+//  10. PLL can be then reconfigured with custom pll_reconfig as shown in program_mode()
+const alt_u32 pll_config_2x_5x_data[] = {0x0dc06000, 0x00783c11, 0x070180e0, 0x0000180e, 0x00000000};
+const alt_u32 pll_config_3x_4x_data[] = {0x0d806000, 0x00301804, 0x02014060, 0x00001406, 0x00000000};
+
 volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
+volatile pll_reconfig_regs *pll_reconfig = (volatile pll_reconfig_regs*)PLL_RECONFIG_0_BASE;
 
 inline void lcd_write_menu()
 {
@@ -558,7 +575,7 @@ void update_sc_config()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size;
+    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size, pll_config;
     alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
@@ -610,6 +627,31 @@ void program_mode()
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
     cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
+
+    switch (cm.fpga_vmultmode) {
+    case FPGA_V_MULTMODE_2X:
+    case FPGA_V_MULTMODE_5X:
+        pll_config = PLL_CONFIG_2X_5X;
+        break;
+    case FPGA_V_MULTMODE_3X:
+    case FPGA_V_MULTMODE_4X:
+        pll_config = PLL_CONFIG_3X_4X;
+        break;
+    default:
+        pll_config = cm.pll_config;
+        break;
+    }
+
+    while (pll_reconfig->pll_config_status.busy) {}
+    pll_reconfig->pll_config_status.reset = (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X);
+    if (cm.pll_config != pll_config) {
+        if (pll_config == PLL_CONFIG_2X_5X)
+            memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_2x_5x_data, sizeof(pll_config_2x_5x_data));
+        else
+            memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_3x_4x_data, sizeof(pll_config_3x_4x_data));
+        pll_reconfig->pll_config_status.update = 1;
+        cm.pll_config = pll_config;
+    }
 
     if (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X) {
         osd_x_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;

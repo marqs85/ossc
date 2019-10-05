@@ -31,8 +31,7 @@ module videogen (
     output reg [7:0] B_out,
     output reg HSYNC_out,
     output reg VSYNC_out,
-    output PCLK_out,
-    output reg ENABLE_out,
+    output reg DE_out,
     output reg [9:0] xpos,
     output reg [9:0] ypos
 );
@@ -66,8 +65,6 @@ parameter   Y_START     =   V_SYNCLEN + V_BACKPORCH;
 //Counters
 reg [9:0] h_cnt; //max. 1024
 reg [9:0] v_cnt; //max. 1024
-
-assign PCLK_out = clk27;
 
 //HSYNC gen (negative polarity)
 always @(posedge clk27 or negedge reset_n)
@@ -124,7 +121,7 @@ begin
         R_out <= 8'h00;
         G_out <= 8'h00;
         B_out <= 8'h00;
-        ENABLE_out <= 1'b0;
+        DE_out <= 1'b0;
     end else begin
         if (osd_enable) begin
             R_out <= {8{osd_color}};
@@ -156,7 +153,7 @@ begin
                 {R_out, G_out, B_out} <= {3{8'((xpos - (H_OVERSCAN+H_BORDER)) >> 1)}};
         end
 
-        ENABLE_out <= (h_cnt >= X_START && h_cnt < X_START + H_ACTIVE && v_cnt >= Y_START && v_cnt < Y_START + V_ACTIVE);
+        DE_out <= (h_cnt >= X_START && h_cnt < X_START + H_ACTIVE && v_cnt >= Y_START && v_cnt < Y_START + V_ACTIVE);
     end
 end
 

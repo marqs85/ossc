@@ -240,6 +240,27 @@
          type = "String";
       }
    }
+   element pll_reconfig_0
+   {
+      datum _sortIndex
+      {
+         value = "14";
+         type = "int";
+      }
+   }
+   element pll_reconfig_0.avalon_s
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "163840";
+         type = "String";
+      }
+   }
    element pulpino_0
    {
       datum _sortIndex
@@ -351,6 +372,11 @@
    type="conduit"
    dir="end" />
  <interface
+   name="pll_reconfig_0_pll_reconfig_if"
+   internal="pll_reconfig_0.pll_reconfig_if"
+   type="conduit"
+   dir="end" />
+ <interface
    name="pulpino_0_config"
    internal="pulpino_0.config"
    type="conduit"
@@ -426,8 +452,8 @@
   <parameter name="FAST_VER" value="0" />
   <parameter name="FIFO_DEPTHS" value="2" />
   <parameter name="PLI_PORT" value="50000" />
-  <parameter name="USE_PLI" value="0" />
   <parameter name="USE_MEMORY_BLOCKS" value="0" />
+  <parameter name="USE_PLI" value="0" />
  </module>
  <module
    name="onchip_memory2_0"
@@ -461,7 +487,9 @@
   <parameter name="useShallowMemBlocks" value="false" />
   <parameter name="writable" value="true" />
  </module>
- <module name="osd_generator_0" kind="osd_generator" version="1.0" enabled="1" />
+ <module name="osd_generator_0" kind="osd_generator" version="1.0" enabled="1">
+  <parameter name="USE_MEMORY_BLOCKS" value="1" />
+ </module>
  <module name="pio_0" kind="altera_avalon_pio" version="17.1" enabled="1">
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
@@ -490,6 +518,7 @@
   <parameter name="simDrivenValue" value="0" />
   <parameter name="width" value="32" />
  </module>
+ <module name="pll_reconfig_0" kind="pll_reconfig" version="1.0" enabled="1" />
  <module name="pulpino_0" kind="pulpino" version="1.0" enabled="1">
   <parameter name="AUTO_INTERRUPT_RECEIVER_INTERRUPTS_USED" value="31" />
   <parameter name="AXI_ADDR_WIDTH" value="32" />
@@ -549,6 +578,15 @@
    end="osd_generator_0.avalon_s">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x00024000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="17.1"
+   start="pulpino_0.avalon_master_lsu"
+   end="pll_reconfig_0.avalon_s">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00028000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -696,6 +734,11 @@
    start="clk_27.clk"
    end="osd_generator_0.clock_sink" />
  <connection
+   kind="clock"
+   version="17.1"
+   start="clk_27.clk"
+   end="pll_reconfig_0.clock_sink" />
+ <connection
    kind="interrupt"
    version="17.1"
    start="pulpino_0.interrupt_receiver"
@@ -795,6 +838,11 @@
    version="17.1"
    start="clk_27.clk_reset"
    end="osd_generator_0.reset_sink" />
+ <connection
+   kind="reset"
+   version="17.1"
+   start="clk_27.clk_reset"
+   end="pll_reconfig_0.reset_sink" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="false" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />

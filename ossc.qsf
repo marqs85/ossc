@@ -162,12 +162,6 @@ set_location_assignment PIN_129 -to btn[1]
 set_location_assignment PIN_128 -to btn[0]
 
 
-set_instance_assignment -name PLL_COMPENSATE ON -to G_in
-set_instance_assignment -name PLL_COMPENSATE ON -to FID_in
-set_instance_assignment -name PLL_COMPENSATE ON -to HSYNC_in
-set_instance_assignment -name PLL_COMPENSATE ON -to R_in
-set_instance_assignment -name PLL_COMPENSATE ON -to VSYNC_in
-set_instance_assignment -name PLL_COMPENSATE ON -to B_in
 
 
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
@@ -239,11 +233,9 @@ set_global_assignment -name QIP_FILE software/sys_controller/mem_init/meminit.qi
 set_global_assignment -name QIP_FILE rtl/linebuf.qip
 set_global_assignment -name QIP_FILE rtl/char_rom.qip
 set_global_assignment -name QIP_FILE rtl/pll_2x.qip
-set_global_assignment -name QIP_FILE rtl/pll_3x.qip
 set_global_assignment -name QIP_FILE rtl/lpm_mult_4_hybr_ref_pre.qip
 set_global_assignment -name QIP_FILE rtl/lpm_mult_4_hybr_ref.qip
 set_global_assignment -name QIP_FILE rtl/lpm_mult_4_sl.qip
-set_global_assignment -name QIP_FILE rtl/mux5.qip
 set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
