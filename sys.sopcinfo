@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 17.1 590 (Future versions may contain additional information.) -->
- <!-- 2019.10.03.23:37:09 -->
+ <!-- 2019.10.05.03:41:15 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1570135029</value>
+  <value>1570236075</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -5944,6 +5944,14 @@ parameters are a RESULT of the module parameters. -->
    path="osd_generator_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
+  <parameter name="USE_MEMORY_BLOCKS">
+   <type>int</type>
+   <value>1</value>
+   <derived>false</derived>
+   <enabled>true</enabled>
+   <visible>true</visible>
+   <valid>true</valid>
+  </parameter>
   <parameter name="deviceFamily">
    <type>java.lang.String</type>
    <value>UNKNOWN</value>

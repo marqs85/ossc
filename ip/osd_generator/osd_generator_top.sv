@@ -17,7 +17,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-module osd_generator_top(
+module osd_generator_top #(
+    parameter USE_MEMORY_BLOCKS = 0
+) (
     // common
     input clk_i,
     input rst_i,
@@ -45,13 +47,10 @@ localparam OSD_CONFIG_REGNUM =   4'h0;
 
 reg [31:0] osd_config;
 
-reg [7:0] char_ptr[CHAR_ROWS*CHAR_COLS-1:0], char_ptr_pp3[7:0] /* synthesis ramstyle = "logic" */;
 reg [10:0] xpos_scaled;
 reg [10:0] ypos_scaled;
 reg [7:0] x_ptr[2:5], y_ptr[2:5] /* synthesis ramstyle = "logic" */;
 reg osd_act_pp[2:5];
-reg [4:0] char_idx;
-reg [2:0] char_idx_lo;
 reg [14:0] to_ctr, to_ctr_ms;
 
 wire render_enable = osd_config[0];
@@ -63,11 +62,31 @@ wire [2:0] y_offset = osd_config[10:8];
 wire [1:0] x_size = osd_config[12:11];
 wire [1:0] y_size = osd_config[14:13];
 
-wire [7:0] rom_rdaddr = char_ptr_pp3[char_idx_lo];
+wire [7:0] rom_rdaddr;
 wire [0:7] char_data[7:0];
+wire [4:0] char_idx = CHAR_COLS*(ypos_scaled >> 3) + (xpos_scaled >> 3);
 
 assign avalon_s_waitrequest_n = 1'b1;
 
+generate
+    if (USE_MEMORY_BLOCKS == 1) begin
+        char_array char_array_inst (
+            .byteena_a(avalon_s_byteenable),
+            .data(avalon_s_writedata),
+            .rdaddress(char_idx),
+            .rdclock(vclk),
+            .wraddress(avalon_s_address-1'b1),
+            .wrclock(clk_i),
+            .wren(avalon_s_chipselect && avalon_s_write && (avalon_s_address > 4'h0)),
+            .q(rom_rdaddr)
+        );
+    end else begin
+        reg [7:0] char_ptr[CHAR_ROWS*CHAR_COLS-1:0], char_ptr_pp3[7:0] /* synthesis ramstyle = "logic" */;
+        reg [4:0] char_idx_pp[2:3];
+        
+        assign rom_rdaddr = char_ptr_pp3[char_idx_pp[3][2:0]];
+    end
+endgenerate
 
 char_rom char_rom_inst (
     .clock(vclk),
@@ -76,12 +95,12 @@ char_rom char_rom_inst (
 );
 
 // Pipeline structure
-// |      1      |     2      |      3      |    4    |    5    |     6      |
-// |-------------|------------|-------------|---------|---------|------------|
-// | xpos_scaled | x_ptr      | x_ptr       | x_ptr   | x_ptr   |            |
-// | ypos_scaled | y_ptr      | y_ptr       | y_ptr   | y_ptr   |            |
-// |             | osd_act    | osd_act     | osd_act | osd_act | osd_enable |
-// |             | char_idx   | char_idx_lo | CBUF    | CBUF    | osd_color  |
+// |      1      |     2      |     3    |    4    |    5    |     6      |
+// |-------------|------------|----------|---------|---------|------------|
+// | xpos_scaled | x_ptr      | x_ptr    | x_ptr   | x_ptr   |            |
+// | ypos_scaled | y_ptr      | y_ptr    | y_ptr   | y_ptr   |            |
+// |             | osd_act    | osd_act  | osd_act | osd_act | osd_enable |
+// |             | char_idx   | char_idx | CBUF    | CBUF    | osd_color  |
 integer idx, pp_idx;
 always @(posedge vclk) begin
     xpos_scaled <= (xpos >> x_size)-({3'h0, x_offset} << 3);
@@ -94,13 +113,6 @@ always @(posedge vclk) begin
         y_ptr[pp_idx] <= y_ptr[pp_idx-1];
     end
 
-    char_idx <= CHAR_COLS*(ypos_scaled >> 3) + (xpos_scaled >> 3);
-    char_idx_lo <= char_idx[2:0];
-
-    for(idx = 0; idx <= 7; idx = idx+1) begin
-        char_ptr_pp3[idx] <= char_ptr[{char_idx[4:3], 3'(idx)}];
-    end
-
     osd_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_scaled < 8*CHAR_COLS) && (ypos_scaled < 8*CHAR_ROWS));
     for(pp_idx = 3; pp_idx <= 5; pp_idx = pp_idx+1) begin
         osd_act_pp[pp_idx] <= osd_act_pp[pp_idx-1];
@@ -109,6 +121,19 @@ always @(posedge vclk) begin
     osd_enable <= osd_act_pp[5];
     osd_color = char_data[y_ptr[5]][x_ptr[5]];
 end
+
+generate
+    if (USE_MEMORY_BLOCKS == 0) begin
+        always @(posedge vclk) begin
+            char_idx_pp[2] <= char_idx;
+            char_idx_pp[3] <= char_idx_pp[2];
+
+            for(idx = 0; idx <= 7; idx = idx+1) begin
+                char_ptr_pp3[idx] <= char_ptr[{char_idx_pp[2][4:3], 3'(idx)}];
+            end
+        end
+    end
+endgenerate
 
 // OSD status timeout counters
 always @(posedge clk_i)
@@ -155,23 +180,25 @@ end
 
 genvar i;
 generate
-    for (i = 0; i < (CHAR_ROWS*CHAR_COLS); i = i + 4) begin : genreg
-        always @(posedge clk_i or posedge rst_i) begin
-            if (rst_i) begin
-                char_ptr[i] <= 0;
-                char_ptr[i+1] <= 0;
-                char_ptr[i+2] <= 0;
-                char_ptr[i+3] <= 0;
-            end else begin
-                if (avalon_s_chipselect && avalon_s_write && (avalon_s_address==1+(i/4))) begin
-                    if (avalon_s_byteenable[3])
-                        char_ptr[i+3] <= avalon_s_writedata[31:24];
-                    if (avalon_s_byteenable[2])
-                        char_ptr[i+2] <= avalon_s_writedata[23:16];
-                    if (avalon_s_byteenable[1])
-                        char_ptr[i+1] <= avalon_s_writedata[15:8];
-                    if (avalon_s_byteenable[0])
-                        char_ptr[i] <= avalon_s_writedata[7:0];
+    if (USE_MEMORY_BLOCKS == 0) begin
+        for (i = 0; i < (CHAR_ROWS*CHAR_COLS); i = i + 4) begin : genreg
+            always @(posedge clk_i or posedge rst_i) begin
+                if (rst_i) begin
+                    char_ptr[i] <= 0;
+                    char_ptr[i+1] <= 0;
+                    char_ptr[i+2] <= 0;
+                    char_ptr[i+3] <= 0;
+                end else begin
+                    if (avalon_s_chipselect && avalon_s_write && (avalon_s_address==1+(i/4))) begin
+                        if (avalon_s_byteenable[3])
+                            char_ptr[i+3] <= avalon_s_writedata[31:24];
+                        if (avalon_s_byteenable[2])
+                            char_ptr[i+2] <= avalon_s_writedata[23:16];
+                        if (avalon_s_byteenable[1])
+                            char_ptr[i+1] <= avalon_s_writedata[15:8];
+                        if (avalon_s_byteenable[0])
+                            char_ptr[i] <= avalon_s_writedata[7:0];
+                    end
                 end
             end
         end

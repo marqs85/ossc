@@ -20,6 +20,15 @@ set_module_property REPORT_TO_TALKBACK false
 set_module_property ALLOW_GREYBOX_GENERATION false
 set_module_property REPORT_HIERARCHY false
 
+#
+# parameters
+#
+add_parameter USE_MEMORY_BLOCKS INTEGER 1
+set_parameter_property USE_MEMORY_BLOCKS DISPLAY_NAME "Use memory blocks for character array"
+set_parameter_property USE_MEMORY_BLOCKS DISPLAY_HINT boolean
+set_parameter_property USE_MEMORY_BLOCKS UNITS None
+set_parameter_property USE_MEMORY_BLOCKS HDL_PARAMETER true
+
 # 
 # file sets
 # 
