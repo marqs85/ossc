@@ -24,8 +24,6 @@ module videogen (
     input reset_n,
     input lt_active,
     input [1:0] lt_mode,
-    input osd_enable,
-    input osd_color,
     output reg [7:0] R_out,
     output reg [7:0] G_out,
     output reg [7:0] B_out,
@@ -123,11 +121,7 @@ begin
         B_out <= 8'h00;
         DE_out <= 1'b0;
     end else begin
-        if (osd_enable) begin
-            R_out <= {8{osd_color}};
-            G_out <= {8{osd_color}};
-            B_out <= 8'hff;
-        end else if (lt_active) begin
+        if (lt_active) begin
             case (lt_mode)
                 default: begin
                     {R_out, G_out, B_out} <= {3{8'h00}};

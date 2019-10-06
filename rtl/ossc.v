@@ -186,9 +186,9 @@ assign ypos = enable_sc ? ypos_sc : ypos_vg;
 assign HDMI_TX_PCLK = PCLK_out;
 
 always @(posedge PCLK_out) begin
-    HDMI_TX_RD <= enable_sc ? R_out_sc : R_out_vg;
-    HDMI_TX_GD <= enable_sc ? G_out_sc : G_out_vg;
-    HDMI_TX_BD <= enable_sc ? B_out_sc : B_out_vg;
+    HDMI_TX_RD <= osd_enable ? {8{osd_color}} : (enable_sc ? R_out_sc : R_out_vg);
+    HDMI_TX_GD <= osd_enable ? {8{osd_color}} : (enable_sc ? G_out_sc : G_out_vg);
+    HDMI_TX_BD <= osd_enable ? 8'hff : (enable_sc ? B_out_sc : B_out_vg);
     HDMI_TX_HS <= enable_sc ? HSYNC_out_sc : HSYNC_out_vg;
     HDMI_TX_VS <= enable_sc ? VSYNC_out_sc : VSYNC_out_vg;
     HDMI_TX_DE <= enable_sc ? DE_out_sc : DE_out_vg;
@@ -293,8 +293,6 @@ scanconverter scanconverter_inst (
     .vsync_flag     (vsync_flag),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
-    .osd_enable     (osd_enable),
-    .osd_color      (osd_color),
     .xpos           (xpos_sc),
     .ypos           (ypos_sc),
     .pll_areset       (pll_areset),
@@ -334,8 +332,6 @@ videogen vg0 (
     .reset_n        (po_reset_n & ~enable_sc),
     .lt_active      (lt_active),
     .lt_mode        (lt_mode_synced),
-    .osd_enable     (osd_enable),
-    .osd_color      (osd_color),
     .R_out          (R_out_vg),
     .G_out          (G_out_vg),
     .B_out          (B_out_vg),
