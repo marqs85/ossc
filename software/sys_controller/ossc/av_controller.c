@@ -657,7 +657,7 @@ void program_mode()
         osd_x_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;
         osd_y_size = osd_x_size;
     } else {
-        osd_x_size = 1 - cm.tx_pixelrep;
+        osd_x_size = 1 - cm.tx_pixelrep + (cm.fpga_hmultmode == FPGA_H_MULTMODE_OPTIMIZED_1X);
         osd_y_size = 0;
     }
     osd->osd_config.x_size = osd_x_size;
