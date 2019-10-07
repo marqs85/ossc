@@ -52,12 +52,12 @@
 `define VSYNCGEN_GENMID_BIT     0
 `define VSYNCGEN_CHOPMID_BIT    1
 
-`define FID_EVEN                1'b0
-`define FID_ODD                 1'b1
+`define FID_ODD                 1'b0
+`define FID_EVEN                1'b1
 
 `define MIN_VALID_LINES         256     //power of 2 optimization -> ignore lower bits with comparison
 `define DBLFRAME_THOLD          5
-`define FALSE_FIELD             (fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] & (FID_in == `FID_ODD))
+`define FALSE_FIELD             (fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] & (FID_in == `FID_EVEN))
 
 `define HSYNC_LEADING_EDGE      ((HSYNC_in_L == `HI) & (HSYNC_in == `LO))
 `define VSYNC_LEADING_EDGE      ((VSYNC_in_L == `HI) & (VSYNC_in == `LO))
@@ -745,8 +745,8 @@ assign h_unstable = (warn_h_unstable != 0);
 assign pll_lock_lost = (warn_pll_lock_lost != 0);
 
 //Detect if TVP7002 is skipping VSYNCs. This occurs for interlaced signals fed via digital sync inputs,
-//causing TVP7002 not to regenerate VSYNC for field 1. Moreover, if leading edges of HSYNC and VSYNC are
-//too far from each other for field 0, no VSYNC is regenerated at all. This can be avoided by disabling
+//causing TVP7002 not to regenerate VSYNC for even field. Moreover, if leading edges of HSYNC and VSYNC are
+//too far from each other for odd field, no VSYNC is regenerated at all. This can be avoided by disabling
 //doubled sampling rates ("AV3 interlacefix") and/or minimizing VSYNC delay induced by RC filter on PCB.
 //However, TVP7002 datasheet warns that HSYNC/VSYNC should not change simultaneously, so leaving out the
 //filter may lead to stability issues and is not recommended. A combination of 220ohm resistor and 1nF
@@ -846,8 +846,8 @@ begin
         end
 
         if (`HSYNC_LEADING_EDGE) begin
-            if (`VSYNC_LEADING_EDGE) begin // non-interlace frame or even field (interlace) start
-                FID_cur <= 1'b0;
+            if (`VSYNC_LEADING_EDGE) begin // non-interlace frame or odd field (interlace) start
+                FID_cur <= `FID_ODD;
                 FID_last <= FID_cur;
                 vcnt_1x <= 0;
                 frame_change <= 1'b1;
@@ -858,9 +858,9 @@ begin
                 vcnt_1x <= vcnt_1x + 1'b1;
                 vcnt_tvp <= vcnt_tvp + 1'b1;
             end
-        end else if (`VSYNC_LEADING_EDGE) begin // odd field (interlace) start
+        end else if (`VSYNC_LEADING_EDGE) begin // even field (interlace) start
             if (!`FALSE_FIELD) begin
-                FID_cur <= 1'b1;
+                FID_cur <= `FID_EVEN;
                 FID_last <= FID_cur;
                 vcnt_1x <= 11'h7ff; // -1 for 11 bit word
                 frame_change <= 1'b1;
@@ -869,7 +869,7 @@ begin
             vcnt_tvp <= 0;
             vmax_tvp <= vcnt_tvp;
         end else if ((fpga_vsyncgen[`VSYNCGEN_GENMID_BIT]) && (vcnt_tvp == (vmax_tvp>>1)) && (hcnt_1x == (hmax[~line_idx]>>1))) begin //VSM=1
-            FID_cur <= 1'b1;
+            FID_cur <= `FID_EVEN;
             FID_last <= FID_cur;
             vcnt_1x <= 11'h7ff; // -1 for 11 bit word
             frame_change <= 1'b1;
@@ -879,11 +879,11 @@ begin
 
         if (`VSYNC_LEADING_EDGE) begin
             FID_prev <= FID_in;
-            // detect non-interlaced signal with odd-odd field signaling (TVP7002 detects it as interlaced with analog sync inputs).
+            // detect non-interlaced signal with consecutive even field signaling (TVP7002 detects it as interlaced with analog sync inputs).
             // FID is updated at leading edge of VSYNC
             if (FID_in == FID_prev)
                 fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] <= `FALSE;
-            else if (FID_in == `FID_ODD)   // TVP7002 falsely indicates field change with (vcnt < active_lines)
+            else if (FID_in == `FID_EVEN)   // TVP7002 falsely indicates field change with (vcnt < active_lines)
                 fpga_vsyncgen[`VSYNCGEN_CHOPMID_BIT] <= (vcnt_tvp < `MIN_VALID_LINES);
         end
 
@@ -987,7 +987,7 @@ begin
         G_1x <= G_in_LLL;
         B_1x <= B_in_LLL;
         HSYNC_1x <= (hcnt_1x < H_SYNCLEN) ? `HSYNC_POL : ~`HSYNC_POL;
-        if (FID_cur == `FID_EVEN)
+        if (FID_cur == `FID_ODD)
             VSYNC_1x <= (vcnt_1x < V_SYNCLEN) ? `VSYNC_POL : ~`VSYNC_POL;
         else
             VSYNC_1x <= (((vcnt_1x+1'b1) < V_SYNCLEN) | ((vcnt_1x+1'b1 == V_SYNCLEN) & (hcnt_1x <= (hmax[~line_idx]>>1)))) ? `VSYNC_POL : ~`VSYNC_POL;
@@ -1011,14 +1011,14 @@ begin
             line_out_idx_2x <= 0;
             if (frame_change)
                 vcnt_2x <= 11'h7ff; // -1 for 11 bit word
-            else if (line_change & (FID_cur == `FID_EVEN))
+            else if (line_change & (FID_cur == `FID_ODD))
                 vcnt_2x <= vcnt_2x + 1'b1;
         end else if (hcnt_2x == hmax[~line_idx]) begin
             hcnt_2x <= 0;
             line_out_idx_2x <= line_out_idx_2x + 1'b1;
             hcnt_2x_opt <= H_OPT_SAMPLE_SEL;
             hcnt_2x_opt_ctr <= 0;
-            if (FID_cur == `FID_ODD)
+            if (FID_cur == `FID_EVEN)
                 vcnt_2x <= vcnt_2x + 1'b1;
         end else begin
             hcnt_2x <= hcnt_2x + 1'b1;
@@ -1045,7 +1045,7 @@ begin
         line_out_idx_3x <= 0;
     end else begin
         if ((pclk_3x_cnt == 0) & (line_change | frame_change)) begin  //aligned with posedge of pclk_1x
-            if (!(frame_change & (FID_cur == `FID_ODD))) begin
+            if (!(frame_change & (FID_cur == `FID_EVEN))) begin
                 hcnt_3x <= 0;
                 hcnt_3x_opt <= H_OPT_SAMPLE_SEL + H_L3_OPT_SAMPLE_COMP;
                 hcnt_3x_opt_ctr <= 0;
@@ -1080,7 +1080,7 @@ begin
         pclk_1x_prev3x <= pclk_1x;
 
         HSYNC_3x <= (hcnt_3x < H_SYNCLEN) ? `HSYNC_POL : ~`HSYNC_POL;
-        if (FID_cur == `FID_EVEN)
+        if (FID_cur == `FID_ODD)
             VSYNC_3x <= (vcnt_3x < V_SYNCLEN) ? `VSYNC_POL : ~`VSYNC_POL;
         else begin
             if ((vcnt_3x+1'b1 == 11'd0) & (line_out_idx_3x == 1) & (hcnt_3x == (hmax[~line_idx]>>1)+1'b1))
@@ -1116,14 +1116,14 @@ begin
             line_out_idx_4x <= 0;
             if (frame_change)
                 vcnt_4x <= 11'h7ff; // -1 for 11 bit word
-            else if (line_change & (FID_cur == `FID_EVEN))
+            else if (line_change & (FID_cur == `FID_ODD))
                 vcnt_4x <= vcnt_4x + 1'b1;
         end else if (hcnt_4x == hmax[~line_idx]) begin
             hcnt_4x <= 0;
             line_out_idx_4x <= line_out_idx_4x + 1'b1;
             hcnt_4x_opt <= H_OPT_SAMPLE_SEL;
             hcnt_4x_opt_ctr <= 0;
-            if ((FID_cur == `FID_ODD) && (line_out_idx_4x == 1))
+            if ((FID_cur == `FID_EVEN) && (line_out_idx_4x == 1))
                 vcnt_4x <= vcnt_4x + 1'b1;
         end else begin
             hcnt_4x <= hcnt_4x + 1'b1;
