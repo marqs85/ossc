@@ -56,7 +56,7 @@ reg [1:0] state;
 reg scan_shift;
 reg scandone_prev;
 reg configupdate_pre;
-reg [7:0] shift_ctr;
+reg [7:0] ctr;
 
 wire pll_reset = pll_config_status[0];
 wire start_update = pll_config_status[1];
@@ -141,7 +141,7 @@ begin
                     if (start_update) begin
                         pll_config_status[31] <= 1'b1;
                         scanclkena <= 1'b1;
-                        shift_ctr <= PLL_CONFIG_DATA_BITS;
+                        ctr <= PLL_CONFIG_DATA_BITS;
                         state <= STATE_SHIFT;
                     end else begin
                         pll_config_status[31] <= 1'b0;
@@ -150,19 +150,21 @@ begin
             STATE_SHIFT:
                 begin
                     scan_shift <= 1'b1;
-                    if (shift_ctr > 0) begin
-                        shift_ctr <= shift_ctr - 1'b1;
+                    if (ctr > 0) begin
+                        ctr <= ctr - 1'b1;
                     end else begin
                         scan_shift <= 1'b0;
                         scanclkena <= 1'b0;
                         configupdate_pre <= 1'b1;
+                        ctr <= 8'hff;
                         state <= STATE_WAITRESP;
                     end
                 end    
             STATE_WAITRESP:
                 begin
                     configupdate_pre <= 1'b0;
-                    if (scandone_prev) begin
+                    ctr <= ctr - 1'b1;
+                    if (scandone_prev | (ctr == 8'h0)) begin
                         areset_strobe <= 1'b1;
                         state <= STATE_IDLE;
                     end
