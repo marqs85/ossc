@@ -47,10 +47,10 @@ localparam OSD_CONFIG_REGNUM =   4'h0;
 
 reg [31:0] osd_config;
 
-reg [10:0] xpos_scaled;
-reg [10:0] ypos_scaled;
+reg [10:0] xpos_osd_area_scaled, xpos_text_scaled;
+reg [10:0] ypos_osd_area_scaled, ypos_text_scaled;
 reg [7:0] x_ptr[2:5], y_ptr[2:5] /* synthesis ramstyle = "logic" */;
-reg osd_act_pp[2:5];
+reg osd_act_pp[2:5],osd_text_act_pp[2:5];
 reg [14:0] to_ctr, to_ctr_ms;
 
 wire render_enable = osd_config[0];
@@ -62,9 +62,11 @@ wire [2:0] y_offset = osd_config[10:8];
 wire [1:0] x_size = osd_config[12:11];
 wire [1:0] y_size = osd_config[14:13];
 
+wire [10:0] xpos_scaled_w = (xpos >> x_size)-({3'h0, x_offset} << 3);
+wire [10:0] ypos_scaled_w = (ypos >> y_size)-({3'h0, y_offset} << 3);
 wire [7:0] rom_rdaddr;
 wire [0:7] char_data[7:0];
-wire [4:0] char_idx = CHAR_COLS*(ypos_scaled >> 3) + (xpos_scaled >> 3);
+wire [4:0] char_idx = CHAR_COLS*(ypos_text_scaled >> 3) + (xpos_text_scaled >> 3);
 
 assign avalon_s_waitrequest_n = 1'b1;
 
@@ -103,23 +105,27 @@ char_rom char_rom_inst (
 // |             | char_idx   | char_idx | CBUF    | CBUF    | osd_color  |
 integer idx, pp_idx;
 always @(posedge vclk) begin
-    xpos_scaled <= (xpos >> x_size)-({3'h0, x_offset} << 3);
-    ypos_scaled <= (ypos >> y_size)-({3'h0, y_offset} << 3);
+    xpos_osd_area_scaled <= xpos_scaled_w + 3'h4;
+    ypos_osd_area_scaled <= ypos_scaled_w + 3'h4;
+    xpos_text_scaled <= xpos_scaled_w;
+    ypos_text_scaled <= ypos_scaled_w;
 
-    x_ptr[2] <= xpos_scaled[7:0];
-    y_ptr[2] <= ypos_scaled[7:0];
+    x_ptr[2] <= xpos_text_scaled[7:0];
+    y_ptr[2] <= ypos_text_scaled[7:0];
     for(pp_idx = 3; pp_idx <= 5; pp_idx = pp_idx+1) begin
         x_ptr[pp_idx] <= x_ptr[pp_idx-1];
         y_ptr[pp_idx] <= y_ptr[pp_idx-1];
     end
 
-    osd_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_scaled < 8*CHAR_COLS) && (ypos_scaled < 8*CHAR_ROWS));
+    osd_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_osd_area_scaled < 8*(CHAR_COLS+1)) && (ypos_osd_area_scaled < 8*(CHAR_ROWS+1)));
+    osd_text_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_text_scaled < 8*CHAR_COLS) && (ypos_text_scaled < 8*CHAR_ROWS));
     for(pp_idx = 3; pp_idx <= 5; pp_idx = pp_idx+1) begin
         osd_act_pp[pp_idx] <= osd_act_pp[pp_idx-1];
+        osd_text_act_pp[pp_idx] <= osd_text_act_pp[pp_idx-1];
     end
 
     osd_enable <= osd_act_pp[5];
-    osd_color = char_data[y_ptr[5]][x_ptr[5]];
+    osd_color = osd_text_act_pp[5] ? char_data[y_ptr[5]][x_ptr[5]] : 1'b0;
 end
 
 generate
