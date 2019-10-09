@@ -97,6 +97,7 @@ alt_u32 read_it2(alt_u32 regaddr);
 //   8. Compare your MIF/HEX to the captured scan chain and update it accordingly
 //   9. Dump the updated scan chain data to an array like below (last 16 bits are 0)
 //  10. PLL can be then reconfigured with custom pll_reconfig as shown in program_mode()
+const alt_u32 pll_config_default_data[] = {0x0d806000, 0x00402010, 0x08040220, 0x00004022, 0x00000000};
 const alt_u32 pll_config_2x_5x_data[] = {0x0dc06000, 0x00783c11, 0x070180e0, 0x0000180e, 0x00000000};
 const alt_u32 pll_config_3x_4x_data[] = {0x0d806000, 0x00301804, 0x02014060, 0x00001406, 0x00000000};
 
@@ -744,6 +745,11 @@ int init_hw()
     // unreset hw
     sys_ctrl = AV_RESET_N|LCD_BL|SD_SPI_SS_N|LCD_CS_N|REMOTE_EVENT;
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+
+    // Reload initial PLL config (needed after jtagm_reset_req if config has changed).
+    // Note that test pattern gets restored only if pclk was active before jtagm_reset_req assertion.
+    memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_default_data, sizeof(pll_config_default_data));
+    pll_reconfig->pll_config_status.update = 1;
 
     //wait >500ms for SD card interface to be stable
     //over 200ms and LCD may be buggy?

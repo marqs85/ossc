@@ -45,6 +45,7 @@ module pll_2x (
 	scanclk,
 	scanclkena,
 	scandata,
+	activeclock,
 	c0,
 	c1,
 	locked,
@@ -59,6 +60,7 @@ module pll_2x (
 	input	  scanclk;
 	input	  scanclkena;
 	input	  scandata;
+	output	  activeclock;
 	output	  c0;
 	output	  c1;
 	output	  locked;
@@ -76,34 +78,36 @@ module pll_2x (
 // synopsys translate_on
 `endif
 
-	wire [4:0] sub_wire0;
-	wire  sub_wire3;
+	wire  sub_wire0;
+	wire [4:0] sub_wire1;
 	wire  sub_wire4;
 	wire  sub_wire5;
-	wire  sub_wire8 = inclk1;
-	wire [1:1] sub_wire2 = sub_wire0[1:1];
-	wire [0:0] sub_wire1 = sub_wire0[0:0];
-	wire  c0 = sub_wire1;
-	wire  c1 = sub_wire2;
-	wire  locked = sub_wire3;
-	wire  scandataout = sub_wire4;
-	wire  scandone = sub_wire5;
-	wire  sub_wire6 = inclk0;
-	wire [1:0] sub_wire7 = {sub_wire8, sub_wire6};
+	wire  sub_wire6;
+	wire  sub_wire9 = inclk1;
+	wire  activeclock = sub_wire0;
+	wire [1:1] sub_wire3 = sub_wire1[1:1];
+	wire [0:0] sub_wire2 = sub_wire1[0:0];
+	wire  c0 = sub_wire2;
+	wire  c1 = sub_wire3;
+	wire  locked = sub_wire4;
+	wire  scandataout = sub_wire5;
+	wire  scandone = sub_wire6;
+	wire  sub_wire7 = inclk0;
+	wire [1:0] sub_wire8 = {sub_wire9, sub_wire7};
 
 	altpll	altpll_component (
 				.areset (areset),
 				.clkswitch (clkswitch),
 				.configupdate (configupdate),
-				.inclk (sub_wire7),
+				.inclk (sub_wire8),
 				.scanclk (scanclk),
 				.scanclkena (scanclkena),
 				.scandata (scandata),
-				.clk (sub_wire0),
-				.locked (sub_wire3),
-				.scandataout (sub_wire4),
-				.scandone (sub_wire5),
-				.activeclock (),
+				.activeclock (sub_wire0),
+				.clk (sub_wire1),
+				.locked (sub_wire4),
+				.scandataout (sub_wire5),
+				.scandone (sub_wire6),
 				.clkbad (),
 				.clkena ({6{1'b1}}),
 				.clkloss (),
@@ -147,7 +151,7 @@ module pll_2x (
 		altpll_component.lpm_type = "altpll",
 		altpll_component.operation_mode = "NORMAL",
 		altpll_component.pll_type = "AUTO",
-		altpll_component.port_activeclock = "PORT_UNUSED",
+		altpll_component.port_activeclock = "PORT_USED",
 		altpll_component.port_areset = "PORT_USED",
 		altpll_component.port_clkbad0 = "PORT_UNUSED",
 		altpll_component.port_clkbad1 = "PORT_UNUSED",
@@ -205,7 +209,7 @@ endmodule
 // ============================================================
 // CNX file retrieval info
 // ============================================================
-// Retrieval info: PRIVATE: ACTIVECLK_CHECK STRING "0"
+// Retrieval info: PRIVATE: ACTIVECLK_CHECK STRING "1"
 // Retrieval info: PRIVATE: BANDWIDTH STRING "1.000"
 // Retrieval info: PRIVATE: BANDWIDTH_FEATURE_ENABLED STRING "1"
 // Retrieval info: PRIVATE: BANDWIDTH_FREQ_UNIT STRING "MHz"
@@ -316,7 +320,7 @@ endmodule
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altpll"
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "NORMAL"
 // Retrieval info: CONSTANT: PLL_TYPE STRING "AUTO"
-// Retrieval info: CONSTANT: PORT_ACTIVECLOCK STRING "PORT_UNUSED"
+// Retrieval info: CONSTANT: PORT_ACTIVECLOCK STRING "PORT_USED"
 // Retrieval info: CONSTANT: PORT_ARESET STRING "PORT_USED"
 // Retrieval info: CONSTANT: PORT_CLKBAD0 STRING "PORT_UNUSED"
 // Retrieval info: CONSTANT: PORT_CLKBAD1 STRING "PORT_UNUSED"
@@ -363,6 +367,7 @@ endmodule
 // Retrieval info: CONSTANT: WIDTH_CLOCK NUMERIC "5"
 // Retrieval info: CONSTANT: scan_chain_mif_file STRING "pll_2x.hex"
 // Retrieval info: USED_PORT: @clk 0 0 5 0 OUTPUT_CLK_EXT VCC "@clk[4..0]"
+// Retrieval info: USED_PORT: activeclock 0 0 0 0 OUTPUT GND "activeclock"
 // Retrieval info: USED_PORT: areset 0 0 0 0 INPUT GND "areset"
 // Retrieval info: USED_PORT: c0 0 0 0 0 OUTPUT_CLK_EXT VCC "c0"
 // Retrieval info: USED_PORT: c1 0 0 0 0 OUTPUT_CLK_EXT VCC "c1"
@@ -384,6 +389,7 @@ endmodule
 // Retrieval info: CONNECT: @scanclk 0 0 0 0 scanclk 0 0 0 0
 // Retrieval info: CONNECT: @scanclkena 0 0 0 0 scanclkena 0 0 0 0
 // Retrieval info: CONNECT: @scandata 0 0 0 0 scandata 0 0 0 0
+// Retrieval info: CONNECT: activeclock 0 0 0 0 @activeclock 0 0 0 0
 // Retrieval info: CONNECT: c0 0 0 0 0 @clk 0 0 1 0
 // Retrieval info: CONNECT: c1 0 0 0 0 @clk 0 0 1 1
 // Retrieval info: CONNECT: locked 0 0 0 0 @locked 0 0 0 0

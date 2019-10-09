@@ -10,6 +10,7 @@
 <pin name="scanclk" direction="input" scope="external" source="clock"  />
 <pin name="scanclkena" direction="input" scope="external"  />
 <pin name="scandata" direction="input" scope="external"  />
+<pin name="activeclock" direction="output" scope="external"  />
 <pin name="c0" direction="output" scope="external" source="clock"  />
 <pin name="c1" direction="output" scope="external" source="clock"  />
 <pin name="locked" direction="output" scope="external"  />

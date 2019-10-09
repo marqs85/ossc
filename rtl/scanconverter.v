@@ -121,11 +121,13 @@ module scanconverter (
     output pll_scandone
 );
 
-//clock-related signals
+//clock-related signals and registers
 wire pclk_act;
 wire pclk_1x, pclk_2x, pclk_3x, pclk_4x, pclk_5x;
 wire [1:0] pclk_mux_sel;
 wire pll_lock;
+wire pll_activeclock;
+reg pll_clkswitch;
 
 //RGB signals&registers: 8 bits per component -> 16.7M colors
 wire [7:0] R_act, G_act, B_act;
@@ -492,13 +494,14 @@ endcase
 
 pll_2x pll_pclk (
     .areset(pll_areset),
-    .clkswitch(enable_sc),
+    .clkswitch(pll_clkswitch),
     .configupdate(pll_configupdate),
     .inclk0(clk27), // set videogen clock to primary (power-on default) since both reference clocks must be running during switchover
     .inclk1(PCLK_in), // is the secondary input clock fully compensated?
     .scanclk(pll_scanclk),
     .scanclkena(pll_scanclkena),
     .scandata(pll_scandata),
+    .activeclock(pll_activeclock),
     .c0(pclk_2x), // pclk_3x in secondary config
     .c1(pclk_5x), // pclk_4x in secondary config
     .locked(pll_lock),
@@ -805,6 +808,12 @@ begin
         frame_change_longpulse_cc_LL <= frame_change_longpulse_cc_L;
         frame_change_longpulse_cc_LLL <= frame_change_longpulse_cc_LL;
     end
+end
+
+// Control PLL reference clock switchover
+always @(posedge clk27)
+begin
+    pll_clkswitch <= (pll_activeclock != enable_sc);
 end
 
 //Forward status flag to CPU
