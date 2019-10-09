@@ -50,7 +50,7 @@ reg [31:0] osd_config;
 reg [10:0] xpos_osd_area_scaled, xpos_text_scaled;
 reg [10:0] ypos_osd_area_scaled, ypos_text_scaled;
 reg [7:0] x_ptr[2:5], y_ptr[2:5] /* synthesis ramstyle = "logic" */;
-reg osd_act_pp[2:5],osd_text_act_pp[2:5];
+reg osd_text_act_pp[2:5], osd_act_pp[3:5];
 reg [14:0] to_ctr, to_ctr_ms;
 
 wire render_enable = osd_config[0];
@@ -97,18 +97,20 @@ char_rom char_rom_inst (
 );
 
 // Pipeline structure
-// |      1      |     2      |     3    |    4    |    5    |     6      |
-// |-------------|------------|----------|---------|---------|------------|
-// | xpos_scaled | x_ptr      | x_ptr    | x_ptr   | x_ptr   |            |
-// | ypos_scaled | y_ptr      | y_ptr    | y_ptr   | y_ptr   |            |
-// |             | osd_act    | osd_act  | osd_act | osd_act | osd_enable |
-// |             | char_idx   | char_idx | CBUF    | CBUF    | osd_color  |
+// |    0     |    1     |    2    |    3    |    4    |   5    |
+// |----------|----------|---------|---------|---------|--------|
+// > POS_TEXT | POS_AREA |         |         |         |        |
+// >          |   PTR    |   PTR   |   PTR   |   PTR   |        |
+// >          |  ENABLE  | ENABLE  | ENABLE  | ENABLE  | ENABLE |
+// >          |  INDEX   |  INDEX  |         |         |        |
+// >          |          |         | CHARROM | CHARROM | COLOR  |
 integer idx, pp_idx;
 always @(posedge vclk) begin
-    xpos_osd_area_scaled <= xpos_scaled_w + 3'h4;
-    ypos_osd_area_scaled <= ypos_scaled_w + 3'h4;
     xpos_text_scaled <= xpos_scaled_w;
     ypos_text_scaled <= ypos_scaled_w;
+
+    xpos_osd_area_scaled <= xpos_text_scaled + 3'h4;
+    ypos_osd_area_scaled <= ypos_text_scaled + 3'h4;
 
     x_ptr[2] <= xpos_text_scaled[7:0];
     y_ptr[2] <= ypos_text_scaled[7:0];
@@ -117,11 +119,14 @@ always @(posedge vclk) begin
         y_ptr[pp_idx] <= y_ptr[pp_idx-1];
     end
 
-    osd_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_osd_area_scaled < 8*(CHAR_COLS+1)) && (ypos_osd_area_scaled < 8*(CHAR_ROWS+1)));
     osd_text_act_pp[2] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_text_scaled < 8*CHAR_COLS) && (ypos_text_scaled < 8*CHAR_ROWS));
     for(pp_idx = 3; pp_idx <= 5; pp_idx = pp_idx+1) begin
-        osd_act_pp[pp_idx] <= osd_act_pp[pp_idx-1];
         osd_text_act_pp[pp_idx] <= osd_text_act_pp[pp_idx-1];
+    end
+
+    osd_act_pp[3] <= render_enable & (menu_active || (to_ctr_ms > 0)) & ((xpos_osd_area_scaled < 8*(CHAR_COLS+1)) && (ypos_osd_area_scaled < 8*(CHAR_ROWS+1)));
+    for(pp_idx = 4; pp_idx <= 5; pp_idx = pp_idx+1) begin
+        osd_act_pp[pp_idx] <= osd_act_pp[pp_idx-1];
     end
 
     osd_enable <= osd_act_pp[5];
