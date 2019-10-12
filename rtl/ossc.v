@@ -106,7 +106,7 @@ wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos, xpos_sc, xpos_vg;
 wire [10:0] ypos, ypos_sc, ypos_vg;
 
-wire pll_areset, pll_scanclk, pll_scanclkena, pll_configupdate, pll_scandata, pll_scandone;
+wire pll_areset, pll_scanclk, pll_scanclkena, pll_configupdate, pll_scandata, pll_scandone, pll_activeclock;
 
 
 // Latch inputs from TVP7002 (synchronized to PCLK_in)
@@ -236,7 +236,7 @@ sys sys_inst(
     .i2c_opencores_1_export_sda_pad_io      (SD_CMD),
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
-    .pio_1_controls_in_export               ({ir_code_cnt, 5'b00000, HDMI_TX_MODE_LL, btn_LL, ir_code}),
+    .pio_1_controls_in_export               ({ir_code_cnt, 4'b0000, pll_activeclock, HDMI_TX_MODE_LL, btn_LL, ir_code}),
     .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
     .sc_config_0_sc_if_sc_status2_i         ({12'h000, pcnt_frame}),
     .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
@@ -300,7 +300,8 @@ scanconverter scanconverter_inst (
     .pll_scanclkena   (pll_scanclkena),
     .pll_configupdate (pll_configupdate),
     .pll_scandata     (pll_scandata),
-    .pll_scandone     (pll_scandone)
+    .pll_scandone     (pll_scandone),
+    .pll_activeclock  (pll_activeclock)
 );
 
 ir_rcv ir0 (

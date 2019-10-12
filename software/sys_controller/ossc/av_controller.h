@@ -44,6 +44,8 @@
 // HDMI_TX definitions
 #define HDMITX_MODE_MASK            0x00040000
 
+#define PLL_ACTIVECLK_MASK          0x00080000
+
 #define TX_PIXELREP_DISABLE         0
 #define TX_PIXELREP_2X              1
 #define TX_PIXELREP_4X              3
@@ -83,6 +85,10 @@ typedef enum {
     TX_HDMI_YCBCR444    = 1,
     TX_DVI              = 2
 } tx_mode_t;
+
+typedef struct {
+    alt_u32 data[5];
+} pll_config_t;
 
 //TODO: transform binary values into flags
 typedef struct {

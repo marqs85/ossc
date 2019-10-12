@@ -71,7 +71,7 @@ alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
 alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
-alt_u8 osd_enable, osd_enable_pre=1, osd_status_timeout, osd_status_timeout_pre;
+alt_u8 osd_enable, osd_enable_pre=1, osd_status_timeout, osd_status_timeout_pre=1;
 alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -97,9 +97,9 @@ alt_u32 read_it2(alt_u32 regaddr);
 //   8. Compare your MIF/HEX to the captured scan chain and update it accordingly
 //   9. Dump the updated scan chain data to an array like below (last 16 bits are 0)
 //  10. PLL can be then reconfigured with custom pll_reconfig as shown in program_mode()
-const alt_u32 pll_config_default_data[] = {0x0d806000, 0x00402010, 0x08040220, 0x00004022, 0x00000000};
-const alt_u32 pll_config_2x_5x_data[] = {0x0dc06000, 0x00783c11, 0x070180e0, 0x0000180e, 0x00000000};
-const alt_u32 pll_config_3x_4x_data[] = {0x0d806000, 0x00301804, 0x02014060, 0x00001406, 0x00000000};
+const pll_config_t pll_configs[] = { {{0x0d806000, 0x00402010, 0x08040220, 0x00004022, 0x00000000}},    // 1x, 1x (default)
+                                     {{0x0dc06000, 0x00783c11, 0x070180e0, 0x0000180e, 0x00000000}},    // 2x, 5x
+                                     {{0x0d806000, 0x00301804, 0x02014060, 0x00001406, 0x00000000}} };  // 3x, 4x
 
 volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
@@ -163,6 +163,41 @@ inline void TX_enable(tx_mode_t mode)
 
     // start TX
     SetAVMute(FALSE);
+}
+
+void pll_reconfigure(alt_u8 id)
+{
+    if ((id < sizeof(pll_configs)/sizeof(pll_config_t)) && (id != pll_reconfig->pll_config_status.c_config_id)) {
+        memcpy((void*)pll_reconfig->pll_config_data.data, pll_configs[id].data, sizeof(pll_config_t));
+        pll_reconfig->pll_config_status.t_config_id = id;
+
+        printf("Reconfiguring PLL to config %u\n", id);
+
+        // Try switching to fixed reference clock as otherwise reconfig may hang or corrupt configuration
+        if (cm.avinput != AV_TESTPAT) {
+            sys_ctrl &= ~VIDGEN_OFF;
+            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+            usleep(10);
+        }
+
+        // Do not reconfigure if clock switch failed
+        if ((IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PLL_ACTIVECLK_MASK) == 0) {
+            // reset state machine if previous reconfigure hanged (should not occur with stable refclk)
+            if (pll_reconfig->pll_config_status.busy) {
+                pll_reconfig->pll_config_status.reset = 1;
+                usleep(1);
+            }
+
+            pll_reconfig->pll_config_status.reset = 0;
+            pll_reconfig->pll_config_status.update = 1;
+            usleep(10);
+        }
+
+        if (cm.avinput != AV_TESTPAT) {
+            sys_ctrl |= VIDGEN_OFF;
+            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+        }
+    }
 }
 
 void set_lpf(alt_u8 lpf)
@@ -328,6 +363,9 @@ status_t get_status(tvp_sync_input_t syncinput)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((tc.s400p_mode != cm.cc.s400p_mode) && (video_modes[cm.id].v_total == 449))
+            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
+
+        if (cm.pll_config != pll_reconfig->pll_config_status.c_config_id)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (update_cur_vm) {
@@ -576,7 +614,7 @@ void update_sc_config()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size, pll_config;
+    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size;
     alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
@@ -629,30 +667,21 @@ void program_mode()
     set_csc(cm.cc.ypbpr_cs);
     cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
 
+    pll_reconfig->pll_config_status.reset = (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X);
+
     switch (cm.fpga_vmultmode) {
     case FPGA_V_MULTMODE_2X:
     case FPGA_V_MULTMODE_5X:
-        pll_config = PLL_CONFIG_2X_5X;
+        cm.pll_config = PLL_CONFIG_2X_5X;
         break;
     case FPGA_V_MULTMODE_3X:
     case FPGA_V_MULTMODE_4X:
-        pll_config = PLL_CONFIG_3X_4X;
+        cm.pll_config = PLL_CONFIG_3X_4X;
         break;
     default:
-        pll_config = cm.pll_config;
         break;
     }
-
-    while (pll_reconfig->pll_config_status.busy) {}
-    pll_reconfig->pll_config_status.reset = (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X);
-    if (cm.pll_config != pll_config) {
-        if (pll_config == PLL_CONFIG_2X_5X)
-            memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_2x_5x_data, sizeof(pll_config_2x_5x_data));
-        else
-            memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_3x_4x_data, sizeof(pll_config_3x_4x_data));
-        pll_reconfig->pll_config_status.update = 1;
-        cm.pll_config = pll_config;
-    }
+    pll_reconfigure(cm.pll_config);
 
     if (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X) {
         osd_x_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;
@@ -748,8 +777,7 @@ int init_hw()
 
     // Reload initial PLL config (needed after jtagm_reset_req if config has changed).
     // Note that test pattern gets restored only if pclk was active before jtagm_reset_req assertion.
-    memcpy((void*)pll_reconfig->pll_config_data.data, pll_config_default_data, sizeof(pll_config_default_data));
-    pll_reconfig->pll_config_status.update = 1;
+    pll_reconfigure(PLL_CONFIG_VG);
 
     //wait >500ms for SD card interface to be stable
     //over 200ms and LCD may be buggy?
@@ -893,10 +921,10 @@ int latency_test() {
 // Enable chip outputs
 void enable_outputs()
 {
-    // program video mode
-    program_mode();
     // enable TVP output
     tvp_enable_output();
+    // program video mode
+    program_mode();
 
     // enable and unmute TX
     TX_enable(tc.tx_mode);

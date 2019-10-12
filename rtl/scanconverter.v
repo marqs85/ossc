@@ -118,7 +118,8 @@ module scanconverter (
     input pll_scanclkena,
     input pll_configupdate,
     input pll_scandata,
-    output pll_scandone
+    output pll_scandone,
+    output pll_activeclock
 );
 
 //clock-related signals and registers
@@ -126,7 +127,6 @@ wire pclk_act;
 wire pclk_1x, pclk_2x, pclk_3x, pclk_4x, pclk_5x;
 wire [1:0] pclk_mux_sel;
 wire pll_lock;
-wire pll_activeclock;
 reg pll_clkswitch;
 
 //RGB signals&registers: 8 bits per component -> 16.7M colors

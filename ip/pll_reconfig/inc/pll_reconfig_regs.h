@@ -26,7 +26,9 @@ typedef union {
     struct {
         alt_u8 reset:1;
         alt_u8 update:1;
-        alt_u32 pll_reconfig_rsv:29;
+        alt_u8 t_config_id:4;
+        alt_u32 pll_reconfig_rsv:21;
+        alt_u8 c_config_id:4;
         alt_u8 busy:1;
     } __attribute__((packed, __may_alias__));
     alt_u32 data;
