@@ -67,6 +67,7 @@ void lcd_write(char *row1, char *row2)
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
     lcd_cmd(0x01,CLEARDELAY); // clear display
+    usleep(400); // additional delay for copycat lcd module
 
     // Set RS to enter data write mode
     sys_ctrl |= LCD_RS;
