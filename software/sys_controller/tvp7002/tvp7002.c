@@ -25,7 +25,6 @@
 #include "tvp7002.h"
 
 //#define SYNCBYPASS    // Bypass VGA syncs (for debug - needed for interlace?)
-//#define EXTADCCLK     // Use external ADC clock (external osc)
 //#define ADCPOWERDOWN  // Power-down ADCs
 //#define PLLPOSTDIV    // Double-rate PLL with div-by-2 (decrease jitter?)
 
@@ -159,8 +158,8 @@ void tvp_init()
 
     // Set default configuration (skip those which match register reset values)
 
-    // Configure external refclk
-    tvp_sel_clk(REFCLK_EXT27);
+    // Configure external refclk, HPLL generated pclk
+    tvp_sel_clk(REFCLK_EXT27, 0);
 
     // Hsync input->output delay (horizontal shift)
     // Default is 13, which maintains alignment of RGB and hsync at output
@@ -261,20 +260,21 @@ void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldi
     tvp_writereg(TVP_HPLLCTRL, ((vco_range << 6) | (cp_current << 3)));
 }
 
-void tvp_sel_clk(tvp_refclk_t refclk)
+void tvp_sel_clk(tvp_refclk_t refclk, alt_u8 ext_pclk)
 {
-    alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0xFA;
+    alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0xF5;
 
     //TODO: set SOG and CLP LPF based on mode
-    if (refclk == REFCLK_INTCLK) {
-        tvp_writereg(TVP_INPMUX2, status|0x2);
+    if (refclk == REFCLK_EXT27) {
+        status |= 0x8;
+
+        if (!ext_pclk)
+            status |= 0x2;
     } else {
-#ifdef EXTADCCLK
-        tvp_writereg(TVP_INPMUX2, status|0x8);
-#else
-        tvp_writereg(TVP_INPMUX2, status|0xA);
-#endif
+        status |= 0x2;
     }
+
+    tvp_writereg(TVP_INPMUX2, status);
 }
 
 void tvp_sel_csc(const ypbpr_to_rgb_csc_t *csc)
@@ -313,6 +313,13 @@ void tvp_set_sync_lpf(alt_u8 val)
     alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0x3F;
     tvp_writereg(TVP_INPMUX2, status|(val<<6));
     printf("Sync LPF value set to 0x%x\n", val);
+}
+
+void tvp_set_clp_lpf(alt_u8 val)
+{
+    alt_u8 status = tvp_readreg(TVP_INPMUX2) & 0xCF;
+    tvp_writereg(TVP_INPMUX2, status|(val<<4));
+    printf("CLP LPF value set to 0x%x\n", val);
 }
 
 alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult)
@@ -360,8 +367,17 @@ void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen)
     }
 }
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen)
+void tvp_set_alcfilt(alt_u8 nsv, alt_u8 nsh) {
+    tvp_writereg(TVP_ALCFILT, (nsv<<3)|nsh);
+}
+
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_8 clampoffset)
 {
+    if (((alt_16)h_syncinlen + clampoffset) < 0)
+        h_syncinlen = 0;
+    else
+        h_syncinlen += clampoffset;
+
     // Clamp position and ALC
     tvp_set_clamp_position(type, h_syncinlen);
     tvp_set_alc(1, type, h_syncinlen);
