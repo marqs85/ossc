@@ -62,6 +62,9 @@ const avconfig_t tc_default = {
         .c_gain = DEFAULT_COARSE_GAIN,
     },
     .link_av = AV_LAST,
+    .clamp_offset = SIGNED_NUMVAL_ZERO,
+    .alc_h_filter = DEFAULT_ALC_H_FILTER,
+    .alc_v_filter = DEFAULT_ALC_V_FILTER,
 };
 
 int set_default_avconfig()

@@ -23,6 +23,8 @@
 #include "alt_types.h"
 #include "tvp7002.h"
 
+#define SIGNED_NUMVAL_ZERO  128
+
 #define SCANLINESTR_MAX     15
 #define SL_HYBRIDSTR_MAX    28
 #define H_MASK_MAX          255
@@ -37,6 +39,10 @@
 #define PLL_COAST_MAX       5
 #define REVERSE_LPF_MAX     31
 #define COARSE_GAIN_MAX     15
+#define ALC_H_FILTER_MAX    7
+#define ALC_V_FILTER_MAX    10
+#define CLAMP_OFFSET_MIN    (SIGNED_NUMVAL_ZERO-100)
+#define CLAMP_OFFSET_MAX    (SIGNED_NUMVAL_ZERO+100)
 
 #define SL_MODE_MAX         2
 #define SL_TYPE_MAX         2
@@ -104,6 +110,7 @@ typedef struct {
     alt_u8 linelen_tol;
     alt_u8 vsync_thold;
     alt_u8 sync_lpf;
+    alt_u8 stc_lpf;
     alt_u8 video_lpf;
     alt_u8 pre_coast;
     alt_u8 post_coast;
@@ -116,6 +123,9 @@ typedef struct {
     alt_u8 audio_swap_lr;
     alt_u8 audio_gain;
     alt_u8 default_vic;
+    alt_u8 clamp_offset;
+    alt_u8 alc_h_filter;
+    alt_u8 alc_v_filter;
     color_setup_t col;
     avinput_t link_av;
 } __attribute__((packed)) avconfig_t;

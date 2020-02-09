@@ -356,7 +356,8 @@ status_t get_status(tvp_sync_input_t syncinput)
             (tc.tvp_hpll2x != cm.cc.tvp_hpll2x) ||
             (tc.upsample2x != cm.cc.upsample2x) ||
             (tc.vga_ilace_fix != cm.cc.vga_ilace_fix) ||
-            (tc.default_vic != cm.cc.default_vic))
+            (tc.default_vic != cm.cc.default_vic) ||
+            (tc.clamp_offset != cm.cc.clamp_offset))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].v_total == 525))
@@ -419,6 +420,12 @@ status_t get_status(tvp_sync_input_t syncinput)
 
     if (tc.sync_lpf != cm.cc.sync_lpf)
         tvp_set_sync_lpf(tc.sync_lpf);
+
+    if (tc.stc_lpf != cm.cc.stc_lpf)
+        tvp_set_clp_lpf(tc.stc_lpf);
+
+    if ((tc.alc_h_filter != cm.cc.alc_h_filter) || (tc.alc_v_filter != cm.cc.alc_v_filter))
+        tvp_set_alcfilt(tc.alc_v_filter, tc.alc_h_filter);
 
     if (memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
         tvp_set_gain_offset(&tc.col);
@@ -662,7 +669,8 @@ void program_mode()
                      cm.h_mult_total,
                      cm.clkcnt,
                      cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2),
-                     (alt_u8)h_synclen_px);
+                     (alt_u8)h_synclen_px,
+                     (alt_8)(cm.cc.clamp_offset-SIGNED_NUMVAL_ZERO));
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
     cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
@@ -1062,10 +1070,10 @@ int main()
             target_tvp_sync = TVP_SOG1;
             target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
 
-            if ((target_input <= AV1_YPBPR) || (tc.av3_alt_rgb && ((target_input == AV3_RGBHV) || (target_input == AV3_RGBs)))) {
+            if ((target_input <= AV1_YPBPR) || (tc.av3_alt_rgb==1 && ((target_input == AV3_RGBHV) || (target_input == AV3_RGBs)))) {
                 target_ths = THS_INPUT_B;
                 target_pcm = PCM_INPUT4;
-            } else if (target_input <= AV2_RGsB) {
+            } else if ((target_input <= AV2_RGsB) || (tc.av3_alt_rgb==2 && ((target_input == AV3_RGBHV) || (target_input == AV3_RGBs)))) {
                 target_ths = THS_INPUT_A;
                 target_pcm = PCM_INPUT3;
             } else  { // if (target_input <= AV3_YPBPR) {
