@@ -88,12 +88,15 @@ reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
 reg [1:0] btn_L, btn_LL;
 reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL, HDMI_TX_MODE_L, HDMI_TX_MODE_LL;
 
+wire lt_sensor = btn_LL[1];
 wire lt_active = sys_ctrl[15];
 wire lt_armed = sys_ctrl[14];
+wire lt_trigger = HDMI_TX_DE & HDMI_TX_GD[0];
 wire [1:0] lt_mode = sys_ctrl[13:12];
 wire [1:0] lt_mode_synced;
 wire [15:0] lt_lat_result;
 wire [11:0] lt_stb_result;
+wire lt_trig_waiting;
 wire lt_finished;
 
 wire remote_event = sys_ctrl[8];
@@ -169,8 +172,8 @@ assign hw_reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 assign LED_R = HSYNC_in_L;
 assign LED_G = VSYNC_in_L;
 `else
-assign LED_R = (pll_lock_lost|h_unstable);
-assign LED_G = (ir_code == 0);
+assign LED_R = lt_active ? lt_trig_waiting : (pll_lock_lost|h_unstable);
+assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0);
 `endif
 
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
@@ -318,13 +321,14 @@ lat_tester lt0 (
     .pclk           (PCLK_out),
     .active         (lt_active),
     .armed          (lt_armed),
-    .sensor         (btn_LL[1]),
-    .trigger        (HDMI_TX_DE & HDMI_TX_GD[0]),
+    .sensor         (lt_sensor),
+    .trigger        (lt_trigger),
     .VSYNC_in       (HDMI_TX_VS),
     .mode_in        (lt_mode),
     .mode_synced    (lt_mode_synced),
     .lat_result     (lt_lat_result),
     .stb_result     (lt_stb_result),
+    .trig_waiting   (lt_trig_waiting),
     .finished       (lt_finished)
 );
 

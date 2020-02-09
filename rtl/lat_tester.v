@@ -34,12 +34,15 @@ module lat_tester (
     output reg [2:0] mode_synced,
     output reg [15:0] lat_result,
     output reg [11:0] stb_result,
+    output trig_waiting,
     output reg finished
 );
 
 reg VSYNC_in_L, VSYNC_in_LL, trigger_L, trigger_LL;
 reg [8:0] clk27_ctr;
 reg [1:0] state;
+
+assign trig_waiting = (state == `LT_STATE_LAT_MEAS);
 
 always @(posedge pclk) begin
     VSYNC_in_L <= VSYNC_in;
