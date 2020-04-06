@@ -189,7 +189,7 @@ reg [2:0] pclk_5x_cnt;
 reg [10:0] H_ACTIVE;    //max. 2047
 reg [9:0] H_AVIDSTART;  //max. 1023
 reg [10:0] V_ACTIVE;    //max. 2047
-reg [6:0] V_AVIDSTART;  //max. 127
+reg [7:0] V_AVIDSTART;  //max. 255
 reg [7:0] H_SYNCLEN;
 reg [2:0] V_SYNCLEN;
 reg [5:0] V_MASK;
@@ -227,11 +227,11 @@ reg [7:0] V_AVIDMASK_START;
 reg [10:0] V_AVIDMASK_STOP;
 
 reg [11:0] LT_POS_TOPLEFT_BOX_H_STOP;
-reg [10:0] LT_POS_TOPLEFT_BOX_V_STOP;
+reg [11:0] LT_POS_TOPLEFT_BOX_V_STOP;
 reg [11:0] LT_POS_CENTER_BOX_H_START;
 reg [11:0] LT_POS_CENTER_BOX_H_STOP;
-reg [10:0] LT_POS_CENTER_BOX_V_START;
-reg [10:0] LT_POS_CENTER_BOX_V_STOP;
+reg [11:0] LT_POS_CENTER_BOX_V_START;
+reg [11:0] LT_POS_CENTER_BOX_V_STOP;
 reg [11:0] LT_POS_BOTTOMRIGHT_H_START;
 reg [10:0] LT_POS_BOTTOMRIGHT_V_START;
 
@@ -905,12 +905,12 @@ begin
             H_AVIDSTART <= h_config[19:11] + h_config[27:20];   // Horizontal sync+backporch length (0...1023)
             H_ACTIVE <= h_config[10:0];                       // Horizontal active length (0...2047)
 
-            V_SYNCLEN <= v_config[19:17];                     // Vertical sync length (0...7)
-            V_AVIDSTART <= v_config[16:11] + v_config[19:17];   // Vertical sync+backporch length (0...127)
+            V_SYNCLEN <= v_config[21:19];                     // Vertical sync length (0...7)
+            V_AVIDSTART <= v_config[18:11] + v_config[21:19];   // Vertical sync+backporch length (0...255)
             V_ACTIVE <= v_config[10:0];                       // Vertical active length (0...2047)
 
             H_MASK <= h_config2[29:19];
-            V_MASK <= v_config[25:20];
+            V_MASK <= v_config[27:22];
 
 //            H_L5BORDER <= h_config[29] ? (11'd1920-h_config[10:0])/2 : (11'd1600-h_config[10:0])/2;
             H_L5BORDER <= h_config[29] ? H_L5BORDER_1920_tmp[10:1] : H_L5BORDER_1600_tmp[10:1];

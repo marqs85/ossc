@@ -36,7 +36,7 @@
 #define V_SYNCLEN_MIN 1
 #define V_SYNCLEN_MAX 7
 #define V_BPORCH_MIN 1
-#define V_BPORCH_MAX 63
+#define V_BPORCH_MAX 236  // 255 - 12 for L5FMT_1920x1080 - 7 for V_SYNCLEN_MAX
 #define V_ACTIVE_MIN 160
 #define V_ACTIVE_MAX 1200
 
