@@ -81,10 +81,10 @@ typedef union {
 typedef union {
     struct {
         alt_u16 v_active:11;
-        alt_u8 v_backporch:6;
+        alt_u8 v_backporch:8;
         alt_u8 v_synclen:3;
         alt_u8 v_mask:6;
-        alt_u8 v_rsv:3;
+        alt_u8 v_rsv:1;
         alt_u8 v_multmode:3;
     } __attribute__((packed, __may_alias__));
     alt_u32 data;
