@@ -153,7 +153,7 @@ typedef struct {
     { "640x512",   HDMI_Unknown,      640,  512,   800, 0, 568,   48, 28,   96, 2,  DEFAULT_SAMPLER_PHASE, (VIDEO_PC | VIDEO_EDTV),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     /* ~625-line modes */ \
     { "576i",      HDMI_576i50,       720,  288,   864, 0, 625,   69, 19,   63, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_480I,     (MODE_PT | MODE_L2 | MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2 | MODE_INTERLACED) },  \
-    { "576p",      HDMI_576p50,       720,  576,   864, 0, 625,   68, 39,   64, 5,  DEFAULT_SAMPLER_PHASE, VIDEO_EDTV,                GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
+    { "576p",      HDMI_576p50,       720,  576,   864, 0, 625,   68, 39,   64, 5,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV | VIDEO_PC),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     { "800x600",   HDMI_Unknown,      800,  600,  1056, 0, 628,   88, 23,  128, 4,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                  GROUP_NONE,     MODE_PT },                                                                                      \
     /* 720p modes */ \
     { "720p",      HDMI_720p60,      1280,  720,  1650, 0, 750,  220, 20,   40, 5,  DEFAULT_SAMPLER_PHASE, (VIDEO_HDTV | VIDEO_PC),   GROUP_NONE,     MODE_PT },                                                                                      \

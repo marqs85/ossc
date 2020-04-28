@@ -84,6 +84,9 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                         else if (cm.cc.s480p_mode == 1) // DTV 480p
                             continue;
                     }
+                } else if (video_modes[i].v_total == 625) { // hit "576p" on the list
+                    if ((typemask & VIDEO_PC) && (hz >= 55))
+                        continue;
                 }
                 break;
             case GROUP_1080I:
