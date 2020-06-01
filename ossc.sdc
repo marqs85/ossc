@@ -81,6 +81,10 @@ set_false_path -from [get_registers {scanconverter_inst|H_* scanconverter_inst|V
 # Ignore paths from registers which are updated only at leading edge of hsync
 #set_false_path -from [get_registers {scanconverter:scanconverter_inst|line_idx scanconverter:scanconverter_inst|line_out_idx* scanconverter:scanconverter_inst|hmax*}]
 
+# Ignore paths that cross clock domains from 3x to 2x and 5x to 4x, since they share a clock line, but cannot co-occur.
+set_false_path -from [get_clocks {pclk_3x*}] -to [get_registers {scanconverter:scanconverter_inst|*_2x*}]
+set_false_path -from [get_clocks {pclk_5x*}] -to [get_registers {scanconverter:scanconverter_inst|*_4x*}]
+
 # Ignore paths to latency tester sync regs
 set_false_path -to [get_registers {lat_tester:lt0|mode_synced* lat_tester:lt0|VSYNC_in_* lat_tester:lt0|trigger_*}]
 
