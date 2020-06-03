@@ -74,15 +74,39 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
             case GROUP_480P:
                 if (video_modes[i].v_total == 525) {
                     if (video_modes[i-1].group == GROUP_480I) { // hit "480p" on the list
-                        if (cm.cc.s480p_mode == 0) // Auto
-                            mode_type &= ~VIDEO_PC;
-                        else if (cm.cc.s480p_mode == 2) // VESA 640x480@60
-                            continue;
+                        switch (cm.cc.s480p_mode) {
+                            case 0: // Auto
+                                mode_type &= ~VIDEO_PC;
+                                break;
+                            case 1: // DTV 480p
+                                break;
+                            case 2: // VESA 640x480@60
+                            case 3: // PSP 480x272
+                                continue;
+                        }
+                    } else if (video_modes[i].flags & MODE_L2_480x272) { // hit "480x272" on the list
+                        switch (cm.cc.s480p_mode) {
+                            case 0: // Auto
+                            case 1: // DTV 480p
+                            case 2: // VESA 640x480@60
+                                continue;
+                            case 3: // PSP 480x272
+                                // force optimized Line2x mode for 480x272
+                                valid_lm[1] = MODE_L2_480x272;
+                                break;
+                        }
                     } else { // "640x480" on the list
-                        if (cm.cc.s480p_mode == 0) // Auto
-                            mode_type &= ~VIDEO_EDTV;
-                        else if (cm.cc.s480p_mode == 1) // DTV 480p
-                            continue;
+                        switch (cm.cc.s480p_mode) {
+                            case 0: // Auto
+                                mode_type &= ~VIDEO_EDTV;
+                                break;
+                            case 1: // DTV 480p
+                                continue;
+                            case 2: // VESA 640x480@60
+                                break;
+                            case 3: // PSP 480x272
+                                continue;
+                        }
                     }
                 } else if (video_modes[i].v_total == 625) { // hit "576p" on the list
                     if ((typemask & VIDEO_PC) && (hz >= 55))
@@ -143,6 +167,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     }
                     break;
                 case MODE_L2_512_COL:
+                case MODE_L2_480x272:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_2X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 2;
