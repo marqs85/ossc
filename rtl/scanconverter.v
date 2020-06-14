@@ -149,7 +149,7 @@ reg frame_change, frame_change_longpulse, line_change;
 reg [11:0] linebuf_hoffset_pp; //Offset for line (max. 2047 pixels), MSB indicates which line is read/written
 wire [11:0] linebuf_hoffset_act;
 wire [11:0] hcnt_act;
-reg [11:0] hcnt_1x, hcnt_2x, hcnt_3x, hcnt_4x, hcnt_5x, hcnt_4x_aspfix, hcnt_2x_opt, hcnt_3x_opt, hcnt_4x_opt, hcnt_5x_opt, hcnt_5x_hscomp;
+reg [11:0] hcnt_1x, hcnt_2x, hcnt_3x, hcnt_4x, hcnt_5x, hcnt_4x_aspfix, hcnt_2x_opt, hcnt_3x_opt, hcnt_3x_lace_ref, hcnt_4x_opt, hcnt_5x_opt, hcnt_5x_hscomp;
 reg [2:0] hcnt_2x_opt_ctr, hcnt_3x_opt_ctr, hcnt_4x_opt_ctr, hcnt_5x_opt_ctr;
 wire [10:0] vcnt_act;
 reg [10:0] vcnt_tvp, vcnt_1x, vcnt_2x, vcnt_3x, vcnt_4x, vcnt_5x; //max. 2047
@@ -157,6 +157,7 @@ reg [10:0] vcnt_tvp, vcnt_1x, vcnt_2x, vcnt_3x, vcnt_4x, vcnt_5x; //max. 2047
 //other counters
 wire [2:0] line_id_act, col_id_act;
 reg [11:0] hmax[0:1];
+reg [11:0] hmax_3x;
 reg line_idx;
 reg [1:0] line_out_idx_2x, line_out_idx_3x, line_out_idx_4x;
 reg [2:0] line_out_idx_5x;
@@ -202,7 +203,7 @@ reg [2:0] H_OPT_SAMPLE_MULT;
 reg [2:0] H_OPT_SAMPLE_SEL;
 reg [9:0] H_L5BORDER;
 reg [9:0] H_L3BORDER;
-reg [6:0] H_L3_OPT_SAMPLE_COMP;
+reg [11:0] H_L3_OPT_START;
 reg [3:0] X_MASK_BR;
 reg [2:0] X_MASK_COLOR;
 reg [5:0] X_REV_LPF_STR;
@@ -917,7 +918,7 @@ begin
             // For Line3x 240x360
             H_L3BORDER <= h_config[28] ? H_L5BORDER_1920_tmp[10:1] : 10'd0;
 
-            H_L3_OPT_SAMPLE_COMP <= h_config[28] ? 7'd90 : 7'd0;
+            H_L3_OPT_START <= h_config2[15:13] + (h_config[28] ? 7'd90 : 7'd0);
 
             H_OPT_SCALE <= h_config2[18:16];
             H_OPT_SAMPLE_SEL <= h_config2[15:13];
@@ -1056,7 +1057,7 @@ begin
         if ((pclk_3x_cnt == 0) & (line_change | frame_change)) begin  //aligned with posedge of pclk_1x
             if (!(frame_change & (FID_cur == `FID_EVEN))) begin
                 hcnt_3x <= 0;
-                hcnt_3x_opt <= H_OPT_SAMPLE_SEL + H_L3_OPT_SAMPLE_COMP;
+                hcnt_3x_opt <= H_L3_OPT_START;
                 hcnt_3x_opt_ctr <= 0;
                 line_out_idx_3x <= 0;
             end
@@ -1064,10 +1065,10 @@ begin
                 vcnt_3x <= -11'b1-FID_cur;
             else if (line_change)
                 vcnt_3x <= vcnt_3x + 1'b1;
-        end else if (hcnt_3x == hmax[~line_idx]) begin
+        end else if (hcnt_3x == hmax_3x) begin
             hcnt_3x <= 0;
             line_out_idx_3x <= line_out_idx_3x + 1'b1;
-            hcnt_3x_opt <= H_OPT_SAMPLE_SEL + H_L3_OPT_SAMPLE_COMP;
+            hcnt_3x_opt <= H_L3_OPT_START;
             hcnt_3x_opt_ctr <= 0;
         end else begin
             hcnt_3x <= hcnt_3x + 1'b1;
@@ -1087,14 +1088,16 @@ begin
             pclk_3x_cnt <= pclk_3x_cnt + 1'b1;
 
         pclk_1x_prev3x <= pclk_1x;
+        hmax_3x <= hmax[~line_idx];
+        hcnt_3x_lace_ref <= (hmax_3x>>1)+1'b1;
 
         HSYNC_3x <= (hcnt_3x < H_SYNCLEN) ? `HSYNC_POL : ~`HSYNC_POL;
         if (FID_cur == `FID_ODD)
             VSYNC_3x <= (vcnt_3x < V_SYNCLEN) ? `VSYNC_POL : ~`VSYNC_POL;
         else begin
-            if ((vcnt_3x+1'b1 == 11'd0) & (line_out_idx_3x == 1) & (hcnt_3x == (hmax[~line_idx]>>1)+1'b1))
+            if ((vcnt_3x+1'b1 == 11'd0) & (line_out_idx_3x == 1) & (hcnt_3x == hcnt_3x_lace_ref))
                 VSYNC_3x <= `VSYNC_POL;
-            else if ((vcnt_3x+1'b1 == V_SYNCLEN) & (line_out_idx_3x == 1) & (hcnt_3x == (hmax[~line_idx]>>1)+1'b1))
+            else if ((vcnt_3x+1'b1 == V_SYNCLEN) & (line_out_idx_3x == 1) & (hcnt_3x == hcnt_3x_lace_ref))
                 VSYNC_3x <= ~`VSYNC_POL;
         end
         
