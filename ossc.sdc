@@ -10,8 +10,8 @@ set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
 ### Scanconverter clock constraints ###
 
 create_clock -period 108MHz -name pclk_1x [get_ports PCLK_in]
-create_clock -period 33MHz -name pclk_2x_source [get_ports PCLK_in] -add
-create_clock -period 33MHz -name pclk_3x_source [get_ports PCLK_in] -add
+create_clock -period 54MHz -name pclk_2x_source [get_ports PCLK_in] -add
+create_clock -period 54MHz -name pclk_3x_source [get_ports PCLK_in] -add
 create_clock -period 33MHz -name pclk_4x_source [get_ports PCLK_in] -add
 create_clock -period 33MHz -name pclk_5x_source [get_ports PCLK_in] -add
 
@@ -54,8 +54,8 @@ foreach_in_collection c [get_clocks "pclk_1x pclk_*_source"] {
 }
 
 # output delay constraints
-set IT_Tsu 1.0
-set IT_Th -0.5
+set IT_Tsu 1.5
+set IT_Th -0.3
 set critoutputs_hdmi [get_ports {HDMI_TX_RD* HDMI_TX_GD* HDMI_TX_BD* HDMI_TX_DE HDMI_TX_HS HDMI_TX_VS}]
 foreach_in_collection c [get_clocks pclk_*_out] {
     set_output_delay -clock $c -min $IT_Th $critoutputs_hdmi -add
