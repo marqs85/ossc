@@ -56,7 +56,7 @@
 #define L5FMT_1600x1200     1
 #define L5FMT_1920x1200     2
 
-static const char *avinput_str[] = { "Test pattern", "AV1: RGBS", "AV1: RGsB", "AV1: YPbPr", "AV2: YPbPr", "AV2: RGsB", "AV3: RGBHV", "AV3: RGBS", "AV3: RGsB", "AV3: YPbPr", "Last used" };
+static const char *avinput_str[] = { "Test pattern", "AV1_RGBS", "AV1_RGsB", "AV1_YPbPr", "AV2_YPbPr", "AV2_RGsB", "AV3_RGBHV", "AV3_RGBS", "AV3_RGsB", "AV3_YPbPr", "Last used" };
 
 typedef enum {
     AV_TESTPAT      = 0,

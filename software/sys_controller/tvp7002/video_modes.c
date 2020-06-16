@@ -139,8 +139,8 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_1X;
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_FULLWIDTH;
                     cm.hdmitx_vic = video_modes[i].vic;
-                    // Upsample / pixel-repeat horizontal resolution of 240p/480i modes to fulfill min. 25MHz TMDS clock requirement
-                    if ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_480I)) {
+                    // Upsample / pixel-repeat horizontal resolution of 240p/480i/384p modes to fulfill min. 25MHz TMDS clock requirement
+                    if ((video_modes[i].group == GROUP_240P) || (video_modes[i].group == GROUP_480I) || ((video_modes[i].group == GROUP_384P) && (video_modes[i].flags & MODE_PLLDIVBY2))) {
                         if (cm.cc.upsample2x)
                             cm.sample_mult = 2;
                         else

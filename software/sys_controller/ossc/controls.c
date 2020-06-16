@@ -170,7 +170,7 @@ int parse_control()
                                                                               ((fpga_status >> 16) & 0x3) ? '*' : ' ',
                                                                               fpga_v_hz_x100/100,
                                                                               fpga_v_hz_x100%100);*/
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu%c%c  %lu", (unsigned long)((sc_status.vmax+1)<<sc_status.interlace_flag)+sc_status.interlace_flag,
+                sniprintf(menu_row2, LCD_ROW_LEN+1, "%4lu-%c%c  %lu", (unsigned long)((sc_status.vmax+1)<<sc_status.interlace_flag)+sc_status.interlace_flag,
                                                                      sc_status.interlace_flag ? 'i' : 'p',
                                                                      sc_status.fpga_vsyncgen ? '*' : ' ',
                                                                      (unsigned long)sc_status2.pcnt_frame);
