@@ -83,17 +83,16 @@ typedef enum {
     MODE_L3_320_COL     = (1<<14),
     MODE_L3_256_COL     = (1<<15),
     MODE_L3_240x360     = (1<<16),
-    MODE_L3_480x272     = (1<<17),
-    MODE_L4_GEN_4_3     = (1<<18),
-    MODE_L4_512_COL     = (1<<19),
-    MODE_L4_384_COL     = (1<<20),
-    MODE_L4_320_COL     = (1<<21),
-    MODE_L4_256_COL     = (1<<22),
-    MODE_L5_GEN_4_3     = (1<<23),
-    MODE_L5_512_COL     = (1<<24),
-    MODE_L5_384_COL     = (1<<25),
-    MODE_L5_320_COL     = (1<<26),
-    MODE_L5_256_COL     = (1<<27),
+    MODE_L4_GEN_4_3     = (1<<17),
+    MODE_L4_512_COL     = (1<<18),
+    MODE_L4_384_COL     = (1<<19),
+    MODE_L4_320_COL     = (1<<20),
+    MODE_L4_256_COL     = (1<<21),
+    MODE_L5_GEN_4_3     = (1<<22),
+    MODE_L5_512_COL     = (1<<23),
+    MODE_L5_384_COL     = (1<<24),
+    MODE_L5_320_COL     = (1<<25),
+    MODE_L5_256_COL     = (1<<26),
 } mode_flags;
 
 typedef struct {
@@ -151,7 +150,7 @@ typedef struct {
     { "480i",      HDMI_480i60,       720,  240,   858, 0, 525,   57, 15,   62, 3,  DEFAULT_SAMPLER_PHASE, (VIDEO_SDTV | VIDEO_PC),   GROUP_480I,     (MODE_PT | MODE_L2 | MODE_L3_GEN_16_9 | MODE_L4_GEN_4_3 | MODE_PLLDIVBY2 | MODE_INTERLACED) },  \
     { "480p",      HDMI_480p60,       720,  480,   858, 0, 525,   60, 30,   62, 6,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV | VIDEO_PC),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     /* 480p PSP in-game */ \
-    { "480x272",   HDMI_480p60_16x9,  480,  272,   858, 0, 525,   177,134,  62, 6,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV),              GROUP_480P,     (MODE_PT | MODE_L2_480x272 | MODE_L3_480x272) },                                                 \
+    { "480x272",   HDMI_480p60_16x9,  480,  272,   858, 0, 525,   177,134,  62, 6,  DEFAULT_SAMPLER_PHASE, (VIDEO_EDTV),              GROUP_480P,     (MODE_PT | MODE_L2_480x272) },                                                 \
     { "640x480",   HDMI_640x480p60,   640,  480,   800, 0, 525,   48, 33,   96, 2,  DEFAULT_SAMPLER_PHASE, (VIDEO_PC | VIDEO_EDTV),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \
     /* X68k @ 31kHz */ \
     { "640x512",   HDMI_Unknown,      640,  512,   800, 0, 568,   48, 28,   96, 2,  DEFAULT_SAMPLER_PHASE, (VIDEO_PC | VIDEO_EDTV),   GROUP_480P,     (MODE_PT | MODE_L2) },                                                                          \

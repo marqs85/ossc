@@ -91,9 +91,8 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                             case 2: // VESA 640x480@60
                                 continue;
                             case 3: // PSP 480x272
-                                // force optimized Line2x/3x mode for 480x272
+                                // force optimized Line2x mode for 480x272
                                 valid_lm[1] = MODE_L2_480x272;
-                                valid_lm[2] = MODE_L3_480x272;
                                 break;
                         }
                     } else { // "640x480" on the list
@@ -229,15 +228,6 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                     cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
                     cm.sample_mult = 7;
                     cm.hsync_cut = 13;
-                    break;
-                case MODE_L3_480x272:
-                    cm.fpga_vmultmode = FPGA_V_MULTMODE_3X;
-                    cm.fpga_hmultmode = FPGA_H_MULTMODE_OPTIMIZED;
-                    if (cm.cc.upsample2x) {
-                        cm.sample_mult = 2;
-                    } else {
-                        cm.tx_pixelrep = TX_PIXELREP_2X;
-                    }
                     break;
                 case MODE_L4_GEN_4_3:
                     cm.fpga_vmultmode = FPGA_V_MULTMODE_4X;
