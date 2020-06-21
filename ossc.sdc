@@ -53,9 +53,10 @@ foreach_in_collection c [get_clocks "pclk_1x pclk_*_source"] {
     set_input_delay -clock $c -max $TVP_dmax $critinputs -add_delay
 }
 
-# output delay constraints
+# output delay constraints as documented in the IT6613 datasheet
+# -- increased IT_Tsu from 1.0 to 1.5 due to #52
 set IT_Tsu 1.5
-set IT_Th -0.3
+set IT_Th -0.5
 set critoutputs_hdmi [get_ports {HDMI_TX_RD* HDMI_TX_GD* HDMI_TX_BD* HDMI_TX_DE HDMI_TX_HS HDMI_TX_VS}]
 foreach_in_collection c [get_clocks pclk_*_out] {
     set_output_delay -clock $c -min $IT_Th $critoutputs_hdmi -add
