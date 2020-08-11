@@ -35,7 +35,7 @@
 #define DEFAULT_FINE_OFFSET     0x80
 #define DEFAULT_COARSE_GAIN     0x8
 #define DEFAULT_ALC_H_FILTER    0x3
-#define DEFAULT_ALC_V_FILTER    0xA
+#define DEFAULT_ALC_V_FILTER    0x9
 
 #define TVP_INTCLK_HZ           6500000UL
 #define TVP_EXTCLK_HZ           27000000UL
@@ -107,8 +107,6 @@ void tvp_set_gain_offset(color_setup_t *col);
 
 void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2);
 
-void tvp_sel_clk(tvp_refclk_t refclk, alt_u8 ext_pclk);
-
 void tvp_sel_csc(const ypbpr_to_rgb_csc_t *csc);
 
 void tvp_set_lpf(alt_u8 val);
@@ -121,11 +119,9 @@ alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult);
 
 void tvp_set_sog_thold(alt_u8 val);
 
-void tvp_set_alc(alt_u8 en_alc, video_type type, alt_u8 h_syncinlen);
-
 void tvp_set_alcfilt(alt_u8 nsv, alt_u8 nsh);
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_8 clampoffset);
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_8 clamp_user_offset);
 
 void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format fmt);
 
