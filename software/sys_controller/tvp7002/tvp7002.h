@@ -121,7 +121,7 @@ void tvp_set_sog_thold(alt_u8 val);
 
 void tvp_set_alcfilt(alt_u8 nsv, alt_u8 nsh);
 
-void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_syncinlen, alt_8 clamp_user_offset);
+void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per_line, alt_u8 plldivby2, alt_u8 h_synclen_px, alt_8 clamp_user_offset);
 
 void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format fmt);
 

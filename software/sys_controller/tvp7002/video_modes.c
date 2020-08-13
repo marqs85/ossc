@@ -32,11 +32,10 @@ const mode_data_t video_modes_default[] = VIDEO_MODES_DEF;
 mode_data_t video_modes[VIDEO_MODES_CNT];
 
 /* TODO: rewrite, check hz etc. */
-alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type typemask)
+alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syncinlen)
 {
     alt_8 i;
     alt_u8 num_modes = sizeof(video_modes)/sizeof(mode_data_t);
-    video_type mode_type;
     mode_flags valid_lm[] = { MODE_PT, (MODE_L2 | (MODE_L2<<cm.cc.l2_mode)), (MODE_L3_GEN_16_9<<cm.cc.l3_mode), (MODE_L4_GEN_4_3<<cm.cc.l4_mode), (MODE_L5_GEN_4_3<<cm.cc.l5_mode) };
     mode_flags target_lm;
     alt_u8 pt_only = 0;
@@ -45,12 +44,7 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
     alt_u8* group_ptr[] = { &pt_only, &cm.cc.pm_240p, &cm.cc.pm_384p, &cm.cc.pm_480i, &cm.cc.pm_480p, &cm.cc.pm_1080i };
 
     for (i=0; i<num_modes; i++) {
-        mode_type = video_modes[i].type;
-
         switch (video_modes[i].group) {
-            case GROUP_NONE:
-            case GROUP_240P:
-                break;
             case GROUP_384P:
                 //fixed Line2x/3x mode for 240x360p
                 valid_lm[2] = MODE_L2_240x360;
@@ -72,58 +66,53 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, video_type t
                 valid_lm[3] = MODE_L4_GEN_4_3;
                 break;
             case GROUP_480P:
-                if (video_modes[i].v_total == 525) {
-                    if (video_modes[i-1].group == GROUP_480I) { // hit "480p" on the list
-                        switch (cm.cc.s480p_mode) {
-                            case 0: // Auto
-                                mode_type &= ~VIDEO_PC;
-                                break;
-                            case 1: // DTV 480p
-                                break;
-                            case 2: // VESA 640x480@60
-                            case 3: // PSP 480x272
+                if (video_modes[i].vic == HDMI_480p60) {
+                    switch (cm.cc.s480p_mode) {
+                        case 0: // Auto
+                            if (h_syncinlen > 82)
                                 continue;
-                        }
-                    } else if (video_modes[i].flags & MODE_L2_480x272) { // hit "480x272" on the list
-                        switch (cm.cc.s480p_mode) {
-                            case 0: // Auto
-                            case 1: // DTV 480p
-                            case 2: // VESA 640x480@60
-                                continue;
-                            case 3: // PSP 480x272
-                                // force optimized Line2x mode for 480x272
-                                valid_lm[1] = MODE_L2_480x272;
-                                break;
-                        }
-                    } else { // "640x480" on the list
-                        switch (cm.cc.s480p_mode) {
-                            case 0: // Auto
-                                mode_type &= ~VIDEO_EDTV;
-                                break;
-                            case 1: // DTV 480p
-                                continue;
-                            case 2: // VESA 640x480@60
-                                break;
-                            case 3: // PSP 480x272
-                                continue;
-                        }
+                            break;
+                        case 1: // DTV 480p
+                            break;
+                        default:
+                            continue;
                     }
-                } else if (video_modes[i].v_total == 625) { // hit "576p" on the list
-                    if ((typemask & VIDEO_PC) && (hz >= 55))
-                        continue;
+                } else if (video_modes[i].flags & MODE_L2_480x272) { // hit "480x272" on the list
+                    switch (cm.cc.s480p_mode) {
+                        case 3: // PSP 480x272
+                            // force optimized Line2x mode for 480x272
+                            valid_lm[1] = MODE_L2_480x272;
+                            break;
+                        default:
+                            continue;
+                    }
+                } else if (video_modes[i].vic == HDMI_640x480p60) {
+                    switch (cm.cc.s480p_mode) {
+                        case 0: // Auto
+                        case 2: // VESA 640x480@60
+                            break;
+                        default:
+                            continue;
+                    }
                 }
                 break;
-            case GROUP_1080I:
-                break;
             default:
-                printf("WARNING: Corrupted mode (id %d)\n", i);
-                continue;
                 break;
+        }
+
+        // Skip potentially conflicting 50Hz presets if refresh rate is much higher
+        if ((video_modes[i].vic == HDMI_576p50) ||
+            (video_modes[i].vic == HDMI_720p50) ||
+            (video_modes[i].vic == HDMI_1080i50) ||
+            (video_modes[i].vic == HDMI_1080p50))
+        {
+            if (hz >= 55)
+                continue;
         }
 
         target_lm = valid_lm[*group_ptr[video_modes[i].group]];
 
-        if ((typemask & mode_type) && (target_lm & video_modes[i].flags) && (progressive == !(video_modes[i].flags & MODE_INTERLACED)) && (totlines <= (video_modes[i].v_total+LINECNT_MAX_TOLERANCE))) {
+        if ((target_lm & video_modes[i].flags) && (progressive == !(video_modes[i].flags & MODE_INTERLACED)) && (totlines <= (video_modes[i].v_total+LINECNT_MAX_TOLERANCE))) {
 
             // defaults
             cm.tx_pixelrep = TX_PIXELREP_DISABLE;

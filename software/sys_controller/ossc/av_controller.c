@@ -65,7 +65,8 @@ extern alt_u8 remote_rpt, remote_rpt_prev;
 extern avconfig_t tc, tc_default;
 extern alt_u8 vm_sel;
 
-alt_u8 target_typemask;
+tvp_input_t target_tvp;
+tvp_sync_input_t target_tvp_sync;
 alt_u8 target_type;
 alt_u8 stable_frames;
 alt_u8 update_cur_vm;
@@ -208,29 +209,35 @@ void set_lpf(alt_u8 lpf)
 
     //Auto
     if (lpf == 0) {
-        switch (target_type) {
-        case VIDEO_PC:
+        if (target_tvp == TVP_INPUT3) {
             tvp_set_lpf((pclk < 30000000) ? 0x0F : 0);
             ths_set_lpf(THS_LPF_BYPASS);
-            break;
-        case VIDEO_HDTV:
+        } else {
             tvp_set_lpf(0);
-            ths_set_lpf((pclk < 80000000) ? THS_LPF_35MHZ : THS_LPF_BYPASS);
-            break;
-        case VIDEO_EDTV:
-            tvp_set_lpf(0);
-            ths_set_lpf(THS_LPF_16MHZ);
-            break;
-        case VIDEO_SDTV:
-        case VIDEO_LDTV:
-        default:
-            tvp_set_lpf(0);
-            ths_set_lpf(THS_LPF_9MHZ);
-            break;
+
+            switch (target_type) {
+            case VIDEO_PC:
+            case VIDEO_HDTV:
+                ths_set_lpf((pclk < 80000000) ? THS_LPF_35MHZ : THS_LPF_BYPASS);
+                break;
+            case VIDEO_EDTV:
+                ths_set_lpf(THS_LPF_16MHZ);
+                break;
+            case VIDEO_SDTV:
+            case VIDEO_LDTV:
+            default:
+                ths_set_lpf(THS_LPF_9MHZ);
+                break;
+            }
         }
     } else {
-        tvp_set_lpf((tc.video_lpf == 2) ? 0x0F : 0);
-        ths_set_lpf((tc.video_lpf > 2) ? (VIDEO_LPF_MAX-tc.video_lpf) : THS_LPF_BYPASS);
+        if (target_tvp == TVP_INPUT3) {
+            tvp_set_lpf((lpf == 2) ? 0x0F : 0);
+            ths_set_lpf(THS_LPF_BYPASS);
+        } else {
+            tvp_set_lpf(0);
+            ths_set_lpf((lpf > 2) ? (VIDEO_LPF_MAX-lpf) : THS_LPF_BYPASS);
+        }
     }
 }
 
@@ -650,7 +657,7 @@ void program_mode()
     }
 
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
-    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, target_typemask);
+    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, h_syncinlen);
 
     if (cm.id == -1) {
         printf ("Error: no suitable mode found, defaulting to 240p\n");
@@ -660,7 +667,12 @@ void program_mode()
 
     cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + ((cm.sample_mult*video_modes[cm.id].h_total_adj*5 + 50) / 100);
 
-    target_type = target_typemask & video_modes[cm.id].type;
+    // Trilevel sync is used with HDTV modes using composite sync
+    if (video_modes[cm.id].type & VIDEO_HDTV)
+        target_type = (target_tvp_sync <= TVP_SOG3) ? VIDEO_HDTV : VIDEO_PC;
+    else
+        target_type = video_modes[cm.id].type;
+
     h_synclen_px = ((alt_u32)h_syncinlen * (alt_u32)cm.h_mult_total) / cm.clkcnt;
 
     printf("Mode %s selected - hsync width: %upx\n", video_modes[cm.id].name, (unsigned)h_synclen_px);
@@ -940,8 +952,6 @@ void enable_outputs()
 
 int main()
 {
-    tvp_input_t target_tvp = 0;
-    tvp_sync_input_t target_tvp_sync = 0;
     ths_input_t target_ths = 0;
     pcm_input_t target_pcm = 0;
     video_format target_format = 0;
@@ -1068,7 +1078,6 @@ int main()
 
             target_tvp = TVP_INPUT1;
             target_tvp_sync = TVP_SOG1;
-            target_typemask = VIDEO_LDTV|VIDEO_SDTV|VIDEO_EDTV|VIDEO_HDTV;
 
             if ((target_input <= AV1_YPBPR) || (tc.av3_alt_rgb==1 && ((target_input == AV3_RGBHV) || (target_input == AV3_RGBs)))) {
                 target_ths = THS_INPUT_B;
@@ -1099,8 +1108,6 @@ int main()
                 break;
             case AV3_RGBHV:
                 target_format = FORMAT_RGBHV;
-                if (!tc.av3_alt_rgb)
-                    target_typemask = VIDEO_PC;
                 break;
             default:
                 break;
