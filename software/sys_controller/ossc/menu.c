@@ -44,7 +44,7 @@ extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern alt_u8 vm_sel, profile_sel_menu, lt_sel, def_input, profile_link, lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 update_cur_vm;
-extern alt_u8 osd_enable_pre, osd_status_timeout_pre;
+extern alt_u8 osd_enable, osd_enable_pre, osd_status_timeout_pre;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 extern volatile osd_regs *osd;
 
@@ -76,6 +76,7 @@ static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") 
 static const char *audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
 static const char *lt_desc[] = { "Top-left", "Center", "Bottom-right" };
 static const char *lcd_bl_timeout_desc[] = { "Off", "3s", "10s", "30s" };
+static const char *osd_enable_desc[] = { "Off", "Full", "Simple" };
 static const char *osd_status_desc[] = { "2s", "5s", "10s", "Off" };
 static const char *rgsb_ypbpr_desc[] = { "RGsB", "YPbPr" };
 static const char *auto_input_desc[] = { "Off", "Current input", "All inputs" };
@@ -90,8 +91,8 @@ static void sl_cust_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u
 static void sl_hybr_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", (v*625)/100); }
 static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u lines","%u ﾗｲﾝ"), v); }
 static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u pixels","%u ﾄﾞｯﾄ"), v); }
-static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "    %u", v); }
-static void signed_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "    %d", (alt_8)(v-SIGNED_NUMVAL_ZERO)); }
+static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", v); }
+static void signed_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d", (alt_8)(v-SIGNED_NUMVAL_ZERO)); }
 static void lt_disp(alt_u8 v) { strncpy(menu_row2, lt_desc[v], LCD_ROW_LEN+1); }
 static void aud_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v-AUDIO_GAIN_0DB)); }
 static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes[v].name, LCD_ROW_LEN+1); }
@@ -108,7 +109,7 @@ static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-
 
 MENU(menu_advtiming, P99_PROTECT({ \
     { LNG("H. samplerate","H. ｻﾝﾌﾟﾙﾚｰﾄ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate, H_TOTAL_MIN,   H_TOTAL_MAX, vm_tweak } } },
-    { "H. s.rate adj",                           OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate_adj, 0,  H_TOTAL_ADJ_MAX, vm_tweak } } },
+    { "H. s.rate frac",                           OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate_adj, 0,  H_TOTAL_ADJ_MAX, vm_tweak } } },
     { LNG("H. synclen","H. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_synclen,    H_SYNCLEN_MIN, H_SYNCLEN_MAX, vm_tweak } } },
     { LNG("H. backporch","H. ﾊﾞｯｸﾎﾟｰﾁ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_bporch,     H_BPORCH_MIN,  H_BPORCH_MAX, vm_tweak } } },
     { LNG("H. active","H. ｱｸﾃｨﾌﾞ"),             OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_MAX, vm_tweak } } },
@@ -234,7 +235,7 @@ MENU(menu_settings, P99_PROTECT({ \
     { "Auto AV2 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av2_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
     { "Auto AV3 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av3_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
     { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
-    { "OSD enable",                             OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable_pre,   OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
+    { "OSD",                                    OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable_pre,   OPT_WRAP,   SETTING_ITEM(osd_enable_desc) } } },
     { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout_pre,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
 #ifndef DEBUG
     {     "<Import sett.  >",                     OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
@@ -260,10 +261,73 @@ menunavi navi[] = {{&menu_main, 0}, {NULL, 0}, {NULL, 0}};
 alt_u8 navlvl = 0;
 
 
+menunavi* get_current_menunavi() {
+    return &navi[navlvl];
+}
+
+void write_option_value(menuitem_t *item, int func_called, int retval)
+{
+    switch (item->type) {
+        case OPT_AVCONFIG_SELECTION:
+            strncpy(menu_row2, item->sel.setting_str[*(item->sel.data)], LCD_ROW_LEN+1);
+            break;
+        case OPT_AVCONFIG_NUMVALUE:
+            item->num.df(*(item->num.data));
+            break;
+        case OPT_AVCONFIG_NUMVAL_U16:
+            item->num_u16.df(item->num_u16.data);
+            break;
+        case OPT_SUBMENU:
+            if (item->sub.arg_info)
+                item->sub.arg_info->df(*item->sub.arg_info->data);
+            else
+                menu_row2[0] = 0;
+            break;
+        case OPT_FUNC_CALL:
+            if (func_called) {
+                if (retval == 0)
+                    strncpy(menu_row2, "Done", LCD_ROW_LEN+1);
+                else if (retval < 0)
+                    sniprintf(menu_row2, LCD_ROW_LEN+1, "Failed (%d)", retval);
+            } else if (item->fun.arg_info) {
+                item->fun.arg_info->df(*item->fun.arg_info->data);
+            } else {
+                menu_row2[0] = 0;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void render_osd_page() {
+    int i;
+    menuitem_t *item;
+    uint32_t row_mask[2] = {0, 0};
+
+    if (!menu_active || (osd_enable != 1))
+        return;
+
+    for (i=0; i < navi[navlvl].m->num_items; i++) {
+        item = &navi[navlvl].m->items[i];
+        strncpy((char*)osd->osd_array.data[i][0], item->name, OSD_CHAR_COLS);
+        row_mask[0] |= (1<<i);
+
+        if ((item->type != OPT_SUBMENU) && (item->type != OPT_FUNC_CALL)) {
+            write_option_value(item, 0, 0);
+            strncpy((char*)osd->osd_array.data[i][1], menu_row2, OSD_CHAR_COLS);
+            row_mask[1] |= (1<<i);
+        }
+    }
+
+    osd->osd_sec_enable[0].mask = row_mask[0];
+    osd->osd_sec_enable[1].mask = row_mask[1];
+}
+
 void display_menu(alt_u8 forcedisp)
 {
     menucode_id code = NO_ACTION;
-    menuitem_type type;
+    menuitem_t *item;
     alt_u8 *val, val_wrap, val_min, val_max;
     alt_u16 *val_u16, val_u16_min, val_u16_max;
     int i, func_called = 0, retval = 0;
@@ -278,40 +342,46 @@ void display_menu(alt_u8 forcedisp)
     if (!forcedisp && !remote_code)
         return;
 
-    type = navi[navlvl].m->items[navi[navlvl].mp].type;
+    item = &navi[navlvl].m->items[navi[navlvl].mp];
 
     // Parse menu control
     switch (code) {
     case PREV_PAGE:
-        navi[navlvl].mp = (navi[navlvl].mp == 0) ? navi[navlvl].m->num_items-1 : (navi[navlvl].mp-1);
-        break;
     case NEXT_PAGE:
-        navi[navlvl].mp = (navi[navlvl].mp+1) % navi[navlvl].m->num_items;
+        if ((item->type == OPT_FUNC_CALL) || (item->type == OPT_SUBMENU))
+            osd->osd_sec_enable[1].mask &= ~(1<<navi[navlvl].mp);
+
+        if (code == PREV_PAGE)
+            navi[navlvl].mp = (navi[navlvl].mp == 0) ? navi[navlvl].m->num_items-1 : (navi[navlvl].mp-1);
+        else
+            navi[navlvl].mp = (navi[navlvl].mp+1) % navi[navlvl].m->num_items;
         break;
     case PREV_MENU:
         if (navlvl > 0) {
             navlvl--;
+            render_osd_page();
         } else {
             menu_active = 0;
             osd->osd_config.menu_active = 0;
-            lcd_write_status();
+            ui_disp_status(0);
             return;
         }
         break;
     case OPT_SELECT:
-        switch (navi[navlvl].m->items[navi[navlvl].mp].type) {
+        switch (item->type) {
             case OPT_SUBMENU:
-                if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f)
-                    navi[navlvl].m->items[navi[navlvl].mp].sub.arg_f();
+                if (item->sub.arg_f)
+                    item->sub.arg_f();
 
-                if (navi[navlvl+1].m != navi[navlvl].m->items[navi[navlvl].mp].sub.menu)
+                if (navi[navlvl+1].m != item->sub.menu)
                     navi[navlvl+1].mp = 0;
-                navi[navlvl+1].m = navi[navlvl].m->items[navi[navlvl].mp].sub.menu;
+                navi[navlvl+1].m = item->sub.menu;
                 navlvl++;
+                render_osd_page();
 
                 break;
             case OPT_FUNC_CALL:
-                retval = navi[navlvl].m->items[navi[navlvl].mp].fun.f();
+                retval = item->fun.f();
                 func_called = 1;
                 break;
             default:
@@ -320,13 +390,13 @@ void display_menu(alt_u8 forcedisp)
         break;
     case VAL_MINUS:
     case VAL_PLUS:
-        switch (navi[navlvl].m->items[navi[navlvl].mp].type) {
+        switch (item->type) {
             case OPT_AVCONFIG_SELECTION:
             case OPT_AVCONFIG_NUMVALUE:
-                val = navi[navlvl].m->items[navi[navlvl].mp].sel.data;
-                val_wrap = navi[navlvl].m->items[navi[navlvl].mp].sel.wrap_cfg;
-                val_min = navi[navlvl].m->items[navi[navlvl].mp].sel.min;
-                val_max = navi[navlvl].m->items[navi[navlvl].mp].sel.max;
+                val = item->sel.data;
+                val_wrap = item->sel.wrap_cfg;
+                val_min = item->sel.min;
+                val_max = item->sel.max;
 
                 if (code == VAL_MINUS)
                     *val = (*val > val_min) ? (*val-1) : (val_wrap ? val_max : val_min);
@@ -334,9 +404,9 @@ void display_menu(alt_u8 forcedisp)
                     *val = (*val < val_max) ? (*val+1) : (val_wrap ? val_min : val_max);
                 break;
             case OPT_AVCONFIG_NUMVAL_U16:
-                val_u16 = navi[navlvl].m->items[navi[navlvl].mp].num_u16.data;
-                val_u16_min = navi[navlvl].m->items[navi[navlvl].mp].num_u16.min;
-                val_u16_max = navi[navlvl].m->items[navi[navlvl].mp].num_u16.max;
+                val_u16 = item->num_u16.data;
+                val_u16_min = item->num_u16.min;
+                val_u16_max = item->num_u16.max;
                 val_wrap = (val_u16_min == 0);
                 if (code == VAL_MINUS)
                     *val_u16 = (*val_u16 > val_u16_min) ? (*val_u16-1) : (val_wrap ? val_u16_max : val_u16_min);
@@ -344,10 +414,10 @@ void display_menu(alt_u8 forcedisp)
                     *val_u16 = (*val_u16 < val_u16_max) ? (*val_u16+1) : (val_wrap ? val_u16_min : val_u16_max);
                 break;
             case OPT_SUBMENU:
-                val = navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->data;
-                val_max = navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->max;
+                val = item->sub.arg_info->data;
+                val_max = item->sub.arg_info->max;
 
-                if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info) {
+                if (item->sub.arg_info) {
                     if (code == VAL_MINUS)
                         *val = (*val > 0) ? (*val-1) : 0;
                     else
@@ -355,10 +425,10 @@ void display_menu(alt_u8 forcedisp)
                 }
                 break;
             case OPT_FUNC_CALL:
-                val = navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->data;
-                val_max = navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->max;
+                val = item->fun.arg_info->data;
+                val_max = item->fun.arg_info->max;
 
-                if (navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info) {
+                if (item->fun.arg_info) {
                     if (code == VAL_MINUS)
                         *val = (*val > 0) ? (*val-1) : 0;
                     else
@@ -374,37 +444,15 @@ void display_menu(alt_u8 forcedisp)
     }
 
     // Generate menu text
-    type = navi[navlvl].m->items[navi[navlvl].mp].type;
-    strncpy(menu_row1, navi[navlvl].m->items[navi[navlvl].mp].name, LCD_ROW_LEN+1);
-    switch (navi[navlvl].m->items[navi[navlvl].mp].type) {
-        case OPT_AVCONFIG_SELECTION:
-            strncpy(menu_row2, navi[navlvl].m->items[navi[navlvl].mp].sel.setting_str[*(navi[navlvl].m->items[navi[navlvl].mp].sel.data)], LCD_ROW_LEN+1);
-            break;
-        case OPT_AVCONFIG_NUMVALUE:
-            navi[navlvl].m->items[navi[navlvl].mp].num.df(*(navi[navlvl].m->items[navi[navlvl].mp].num.data));
-            break;
-        case OPT_AVCONFIG_NUMVAL_U16:
-            navi[navlvl].m->items[navi[navlvl].mp].num_u16.df(navi[navlvl].m->items[navi[navlvl].mp].num_u16.data);
-            break;
-        case OPT_SUBMENU:
-            if (navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info)
-                navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->df(*navi[navlvl].m->items[navi[navlvl].mp].sub.arg_info->data);
-            else
-                menu_row2[0] = 0;
-            break;
-        case OPT_FUNC_CALL:
-            if (func_called)
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Done" : "Failed");
-            else if (navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info)
-                navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->df(*navi[navlvl].m->items[navi[navlvl].mp].fun.arg_info->data);
-            else
-                menu_row2[0] = 0;
-            break;
-        default:
-            break;
-    }
+    item = &navi[navlvl].m->items[navi[navlvl].mp];
+    strncpy(menu_row1, item->name, LCD_ROW_LEN+1);
+    write_option_value(item, func_called, retval);
+    strncpy((char*)osd->osd_array.data[navi[navlvl].mp][1], menu_row2, OSD_CHAR_COLS);
+    osd->osd_row_color.mask = (1<<navi[navlvl].mp);
+    if (func_called || ((item->type == OPT_FUNC_CALL) && item->fun.arg_info != NULL) || ((item->type == OPT_SUBMENU) && item->sub.arg_info != NULL))
+        osd->osd_sec_enable[1].mask |= (1<<navi[navlvl].mp);
 
-    lcd_write_menu();
+    ui_disp_menu(0);
 }
 
 static void vm_select() {
@@ -445,8 +493,10 @@ static void vm_tweak(alt_u16 *v) {
 
     if (v == &tc_sampler_phase)
         sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), ((*v)*1125)/100);
-    else if ((v == &tc_h_samplerate) || (v == &tc_h_samplerate_adj))
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u", video_modes[vm_edit].h_total, video_modes[vm_edit].h_total_adj*5);
+    else if (v == &tc_h_samplerate)
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", video_modes[vm_edit].h_total);
+    else if (v == &tc_h_samplerate_adj)
+        sniprintf(menu_row2, LCD_ROW_LEN+1, ".%.2u", video_modes[vm_edit].h_total_adj*5);
     else
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", *v);
 }

@@ -23,11 +23,11 @@ set_module_property REPORT_HIERARCHY false
 #
 # parameters
 #
-add_parameter USE_MEMORY_BLOCKS INTEGER 1
-set_parameter_property USE_MEMORY_BLOCKS DISPLAY_NAME "Use memory blocks for character array"
-set_parameter_property USE_MEMORY_BLOCKS DISPLAY_HINT boolean
-set_parameter_property USE_MEMORY_BLOCKS UNITS None
-set_parameter_property USE_MEMORY_BLOCKS HDL_PARAMETER true
+#add_parameter USE_MEMORY_BLOCKS INTEGER 1
+#set_parameter_property USE_MEMORY_BLOCKS DISPLAY_NAME "Use memory blocks for character array"
+#set_parameter_property USE_MEMORY_BLOCKS DISPLAY_HINT boolean
+#set_parameter_property USE_MEMORY_BLOCKS UNITS None
+#set_parameter_property USE_MEMORY_BLOCKS HDL_PARAMETER true
 
 # 
 # file sets
@@ -109,7 +109,7 @@ set_interface_property avalon_s PORT_NAME_MAP ""
 set_interface_property avalon_s CMSIS_SVD_VARIABLES ""
 set_interface_property avalon_s SVD_ADDRESS_GROUP ""
 
-add_interface_port avalon_s avalon_s_address address Input 4
+add_interface_port avalon_s avalon_s_address address Input 8
 add_interface_port avalon_s avalon_s_writedata writedata Input 32
 add_interface_port avalon_s avalon_s_readdata readdata Output 32
 add_interface_port avalon_s avalon_s_byteenable byteenable Input 4
@@ -156,4 +156,4 @@ add_interface_port osd_if vclk vclk Input 1
 add_interface_port osd_if xpos xpos Input 11
 add_interface_port osd_if ypos ypos Input 11
 add_interface_port osd_if osd_enable osd_enable Output 1
-add_interface_port osd_if osd_color osd_color Output 1
+add_interface_port osd_if osd_color osd_color Output 2

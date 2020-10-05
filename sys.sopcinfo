@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 19.1 670 (Future versions may contain additional information.) -->
- <!-- 2020.02.09.20:25:12 -->
+ <!-- 2020.10.03.18:14:20 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1581272712</value>
+  <value>1601738060</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -480,13 +480,13 @@ parameters are a RESULT of the module parameters. -->
  <module
    name="epcq_controller_0"
    kind="altera_epcq_controller_mod"
-   version="17.1"
+   version="19.1"
    path="epcq_controller_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
   <assignment>
    <name>embeddedsw.CMacro.FLASH_TYPE</name>
-   <value>EPCS64</value>
+   <value>EPCS16</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.IS_EPCS</name>
@@ -494,7 +494,7 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.NUMBER_OF_SECTORS</name>
-   <value>128</value>
+   <value>32</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.PAGE_SIZE</name>
@@ -579,7 +579,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="ADDR_WIDTH">
    <type>int</type>
-   <value>21</value>
+   <value>19</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -630,7 +630,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="FLASH_TYPE">
    <type>java.lang.String</type>
-   <value>EPCS64</value>
+   <value>EPCS16</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -1189,7 +1189,7 @@ parameters are a RESULT of the module parameters. -->
    </parameter>
    <parameter name="addressSpan">
     <type>java.math.BigInteger</type>
-    <value>8388608</value>
+    <value>2097152</value>
     <derived>true</derived>
     <enabled>true</enabled>
     <visible>false</visible>
@@ -1512,7 +1512,7 @@ parameters are a RESULT of the module parameters. -->
    <port>
     <name>avl_mem_addr</name>
     <direction>Input</direction>
-    <width>21</width>
+    <width>19</width>
     <role>address</role>
    </port>
    <port>
@@ -4109,7 +4109,7 @@ parameters are a RESULT of the module parameters. -->
  <module
    name="master_0"
    kind="altera_jtag_avalon_master_mod"
-   version="17.1"
+   version="19.1"
    path="master_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
@@ -5950,14 +5950,6 @@ parameters are a RESULT of the module parameters. -->
    path="osd_generator_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
-  <parameter name="USE_MEMORY_BLOCKS">
-   <type>int</type>
-   <value>1</value>
-   <derived>false</derived>
-   <enabled>true</enabled>
-   <visible>true</visible>
-   <valid>true</valid>
-  </parameter>
   <parameter name="deviceFamily">
    <type>java.lang.String</type>
    <value>UNKNOWN</value>
@@ -6102,7 +6094,7 @@ parameters are a RESULT of the module parameters. -->
    </parameter>
    <parameter name="addressSpan">
     <type>java.math.BigInteger</type>
-    <value>64</value>
+    <value>1024</value>
     <derived>true</derived>
     <enabled>true</enabled>
     <visible>false</visible>
@@ -6401,7 +6393,7 @@ parameters are a RESULT of the module parameters. -->
    <port>
     <name>avalon_s_address</name>
     <direction>Input</direction>
-    <width>4</width>
+    <width>8</width>
     <role>address</role>
    </port>
    <port>
@@ -6512,7 +6504,7 @@ parameters are a RESULT of the module parameters. -->
    <port>
     <name>osd_color</name>
     <direction>Output</direction>
-    <width>1</width>
+    <width>2</width>
     <role>osd_color</role>
    </port>
   </interface>
@@ -9622,7 +9614,7 @@ parameters are a RESULT of the module parameters. -->
     <slaveName>avalon_s</slaveName>
     <name>osd_generator_0.avalon_s</name>
     <baseAddress>147456</baseAddress>
-    <span>64</span>
+    <span>1024</span>
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
@@ -9670,7 +9662,7 @@ parameters are a RESULT of the module parameters. -->
     <slaveName>avl_mem</slaveName>
     <name>epcq_controller_0.avl_mem</name>
     <baseAddress>8388608</baseAddress>
-    <span>8388608</span>
+    <span>2097152</span>
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
@@ -13244,7 +13236,7 @@ parameters are a RESULT of the module parameters. -->
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IModule</subtype>
   <displayName>Altera Serial Flash Controller</displayName>
-  <version>17.1</version>
+  <version>19.1</version>
  </plugin>
  <plugin>
   <instanceCount>14</instanceCount>
@@ -13316,7 +13308,7 @@ parameters are a RESULT of the module parameters. -->
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IModule</subtype>
   <displayName>JTAG to Avalon Master Bridge (customized)</displayName>
-  <version>17.1</version>
+  <version>19.1</version>
  </plugin>
  <plugin>
   <instanceCount>3</instanceCount>

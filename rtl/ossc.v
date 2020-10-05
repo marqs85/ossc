@@ -104,7 +104,8 @@ reg remove_event_prev;
 reg [14:0] to_ctr, to_ctr_ms;
 wire lcd_bl_timeout;
 
-wire osd_color, osd_enable_pre;
+wire [1:0] osd_color;
+wire osd_enable_pre;
 wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos, xpos_sc, xpos_vg;
 wire [10:0] ypos, ypos_sc, ypos_vg;
@@ -189,9 +190,22 @@ assign ypos = enable_sc ? ypos_sc : ypos_vg;
 assign HDMI_TX_PCLK = PCLK_out;
 
 always @(posedge PCLK_out) begin
-    HDMI_TX_RD <= osd_enable ? {8{osd_color}} : (enable_sc ? R_out_sc : R_out_vg);
-    HDMI_TX_GD <= osd_enable ? {8{osd_color}} : (enable_sc ? G_out_sc : G_out_vg);
-    HDMI_TX_BD <= osd_enable ? 8'hff : (enable_sc ? B_out_sc : B_out_vg);
+    if (osd_enable) begin
+        if (osd_color == 2'h0) begin
+            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'h000000;
+        end else if (osd_color == 2'h1) begin
+            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'h0000ff;
+        end else if (osd_color == 2'h2) begin
+            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'hffff00;
+        end else begin
+            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'hffffff;
+        end
+    end else if (enable_sc) begin
+        {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= {R_out_sc, G_out_sc, B_out_sc};
+    end else begin
+        {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= {R_out_vg, G_out_vg, B_out_vg};
+    end
+
     HDMI_TX_HS <= enable_sc ? HSYNC_out_sc : HSYNC_out_vg;
     HDMI_TX_VS <= enable_sc ? VSYNC_out_sc : VSYNC_out_vg;
     HDMI_TX_DE <= enable_sc ? DE_out_sc : DE_out_vg;

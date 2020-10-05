@@ -27,6 +27,7 @@
 #include "av_controller.h"
 #include "lcd.h"
 #include "utils.h"
+#include "menu.h"
 #include "altera_avalon_pio_regs.h"
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -71,15 +72,14 @@ static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
 static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_u8 *tmpbuf)
 {
     alt_u32 crcval=0, i, bytes_to_read;
-    int retval;
+    SDRESULTS res;
 
     for (i=0; i<size; i=i+SD_BLK_SIZE) {
         bytes_to_read = ((size-i < SD_BLK_SIZE) ? (size-i) : SD_BLK_SIZE);
-        retval = SD_Read(&sdcard_dev, tmpbuf, (offset+i)/SD_BLK_SIZE, 0, bytes_to_read);
-        //retval = read_sd_block(offset+i, bytes_to_read, tmpbuf);
+        res = SD_Read(&sdcard_dev, tmpbuf, (offset+i)/SD_BLK_SIZE, 0, bytes_to_read);
 
-        if (retval != SD_OK)
-            return retval;
+        if (res != SD_OK)
+            return -res;
 
         crcval = crc32(tmpbuf, bytes_to_read, (i==0));
     }
@@ -106,14 +106,16 @@ int fw_update()
     asm volatile("mov %0, sp" : "=r"(sp));
     sniprintf(menu_row1, LCD_ROW_LEN+1, "Stack size:");
     sniprintf(menu_row2, LCD_ROW_LEN+1, "%lu bytes", (ONCHIP_MEMORY2_0_BASE+ONCHIP_MEMORY2_0_SIZE_VALUE)-sp);
-    lcd_write_menu();
+    ui_disp_menu(1);
     usleep(1000000);
 #endif
 
     retval = check_sdcard(databuf);
     SPI_CS_High();
-    if (retval != 0)
+    if (retval != 0) {
+        retval = -retval;
         goto failure;
+    }
 
     retval = check_fw_header(databuf, &fw_header);
     if (retval != 0)
@@ -121,14 +123,14 @@ int fw_update()
 
     sniprintf(menu_row1, LCD_ROW_LEN+1, "Validating data");
     sniprintf(menu_row2, LCD_ROW_LEN+1, "%u bytes", (unsigned)fw_header.data_len);
-    lcd_write_menu();
+    ui_disp_menu(1);
     retval = check_fw_image(512, fw_header.data_len, fw_header.data_crc, databuf);
     if (retval != 0)
         goto failure;
 
     sniprintf(menu_row1, LCD_ROW_LEN+1, "%u.%.2u%s%s", fw_header.version_major, fw_header.version_minor, (fw_header.version_suffix[0] == 0) ? "" : "-", fw_header.version_suffix);
     strncpy(menu_row2, "Update? 1=Y, 2=N", LCD_ROW_LEN+1);
-    lcd_write_menu();
+    ui_disp_menu(1);
 
     while (1) {
         btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
@@ -152,7 +154,7 @@ int fw_update()
     strncpy(menu_row1, "Updating FW", LCD_ROW_LEN+1);
 update_init:
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
+    ui_disp_menu(1);
 
     retval = copy_sd_to_flash(512/SD_BLK_SIZE, 0, fw_header.data_len, databuf);
     if (retval != 0)
@@ -160,7 +162,7 @@ update_init:
 
     strncpy(menu_row1, "Verifying flash", LCD_ROW_LEN+1);
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
+    ui_disp_menu(1);
     retval = verify_flash(0, fw_header.data_len, fw_header.data_crc, databuf);
     if (retval != 0)
         goto failure;
@@ -169,7 +171,7 @@ update_init:
 
     strncpy(menu_row1, "Firmware updated", LCD_ROW_LEN+1);
     strncpy(menu_row2, "please restart", LCD_ROW_LEN+1);
-    lcd_write_menu();
+    ui_disp_menu(1);
     while (1) {}
 
     return 0;
@@ -196,24 +198,15 @@ failure:
         case FW_UPD_CANCELLED:
             errmsg = "Update cancelled";
             break;
-        case -FLASH_READ_ERROR:
-            errmsg = "Flash read err";
-            break;
-        case -FLASH_ERASE_ERROR:
-            errmsg = "Flash erase err";
-            break;
-        case -FLASH_WRITE_ERROR:
-            errmsg = "Flash write err";
-            break;
         case -FLASH_VERIFY_ERROR:
             errmsg = "Flash verif fail";
             break;
         default:
-            errmsg = "Error";
+            errmsg = "SD/Flash error";
             break;
     }
     strncpy(menu_row2, errmsg, LCD_ROW_LEN+1);
-    lcd_write_menu();
+    ui_disp_menu(1);
     usleep(1000000);
 
     // Critical error, retry update
@@ -223,5 +216,6 @@ failure:
         goto update_init;
     }
 
+    render_osd_page();
     return -1;
 }

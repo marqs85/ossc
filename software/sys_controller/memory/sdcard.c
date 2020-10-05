@@ -22,7 +22,7 @@
 #include "flash.h"
 #include "lcd.h"
 
-extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
+extern alt_flash_dev *epcq_dev;
 
 SD_DEV sdcard_dev;
 
@@ -32,26 +32,33 @@ int check_sdcard(alt_u8 *databuf)
 
     res = SD_Init(&sdcard_dev);
     printf("SD det status: %u\n", res);
-    if (res != SD_OK)
-        return res;
+    if (res == SD_OK)
+        res = SD_Read(&sdcard_dev, databuf, 0, 0, 512);
 
-    return SD_Read(&sdcard_dev, databuf, 0, 0, 512);
+    return -res;
 }
 
 int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, alt_u8 *tmpbuf)
 {
+    SDRESULTS res;
     int retval;
     alt_u32 bytes_to_rw;
 
     while (length > 0) {
         bytes_to_rw = (length < SD_BLK_SIZE) ? length : SD_BLK_SIZE;
-        retval = SD_Read(&sdcard_dev, tmpbuf, sd_blknum, 0, bytes_to_rw);
-        if (retval != 0) {
+        res = SD_Read(&sdcard_dev, tmpbuf, sd_blknum, 0, bytes_to_rw);
+        if (res != SD_OK) {
             printf("Failed to read SD card\n");
-            return -retval;
+            return -res;
         }
 
-        retval = write_flash(tmpbuf, bytes_to_rw, flash_pagenum);
+        if ((flash_pagenum % PAGES_PER_SECTOR) == 0) {
+            retval = alt_epcq_controller_erase_block(epcq_dev, flash_pagenum*PAGESIZE);
+            if (retval != 0)
+                return retval;
+        }
+
+        retval = alt_epcq_controller_write_block(epcq_dev, ((flash_pagenum/PAGES_PER_SECTOR)*SECTORSIZE), flash_pagenum*PAGESIZE, tmpbuf, bytes_to_rw);
         if (retval != 0)
             return retval;
 

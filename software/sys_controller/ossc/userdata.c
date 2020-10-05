@@ -41,7 +41,8 @@ extern alt_u8 lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 osd_enable_pre, osd_status_timeout_pre;
 extern SD_DEV sdcard_dev;
-extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
+extern alt_flash_dev *epcq_dev;
+extern char menu_row2[LCD_ROW_LEN+1];
 
 char target_profile_name[PROFILE_NAME_LEN+1];
 
@@ -79,9 +80,9 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->osd_enable = osd_enable_pre;
         ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout_pre;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
-        retval = write_flash_page(databuf, sizeof(ude_initcfg), (USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE);
+        retval = alt_epcq_controller_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
         if (retval != 0)
-            return -1;
+            return retval;
 
         printf("Initconfig data written (%u bytes)\n", sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile));
         break;
@@ -103,15 +104,20 @@ int write_userdata(alt_u8 entry)
         memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
         pageoffset += sizeof(avconfig_t);
 
-        // write a full page first
+        // erase sector and write a full page first, assume sizeof(video_modes) >> PAGESIZE
         memcpy(databuf+pageoffset, (char*)video_modes, PAGESIZE-pageoffset);
         srcoffset = PAGESIZE-pageoffset;
         vm_to_write -= PAGESIZE-pageoffset;
-        write_flash_page(databuf, PAGESIZE, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE));
+        retval = alt_epcq_controller_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+        if (retval != 0)
+            return retval;
 
         // then write the rest
-        if (vm_to_write > 0)
-            write_flash((alt_u8*)video_modes+srcoffset, vm_to_write, ((USERDATA_OFFSET+entry*SECTORSIZE)/PAGESIZE) + 1);
+        if (vm_to_write > 0) {
+            retval = alt_epcq_controller_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+PAGESIZE), (alt_u8*)video_modes+srcoffset, vm_to_write);
+            if (retval != 0)
+                return retval;
+        }
 
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
         break;
@@ -137,11 +143,9 @@ int read_userdata(alt_u8 entry, int dry_run)
         return -1;
     }
 
-    retval = read_flash(USERDATA_OFFSET+(entry*SECTORSIZE), PAGESIZE, databuf);
-    if (retval != 0) {
-        printf("Flash read error\n");
-        return -1;
-    }
+    retval = alt_epcq_controller_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+    if (retval != 0)
+        return retval;
 
     if (strncmp(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8)) {
         printf("No userdata found on entry %u\n", entry);
@@ -207,7 +211,9 @@ int read_userdata(alt_u8 entry, int dry_run)
                     pageoffset = 0;
                     pageno++;
                     // check
-                    read_flash(USERDATA_OFFSET+(entry*SECTORSIZE)+pageno*PAGESIZE, PAGESIZE, databuf);
+                    retval = alt_epcq_controller_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
+                    if (retval != 0)
+                        return retval;
                 } else {
                     memcpy((char*)video_modes+dstoffset, databuf+pageoffset, vm_to_read);
                     pageoffset += vm_to_read;
@@ -229,6 +235,7 @@ int read_userdata(alt_u8 entry, int dry_run)
 
 int import_userdata()
 {
+    SDRESULTS res;
     int retval;
     int n, entries_imported=0;
     char *errmsg;
@@ -239,11 +246,10 @@ int import_userdata()
     retval = check_sdcard(databuf);
     SPI_CS_High();
     if (retval != 0)
-        goto failure;
+        goto sd_disable;
 
-    strncpy(menu_row1, "Import? 1=Y, 2=N", LCD_ROW_LEN+1);
-    *menu_row2 = '\0';
-    lcd_write_menu();
+    strncpy(menu_row2, "Import? 1=Y, 2=N", LCD_ROW_LEN+1);
+    ui_disp_menu(2);
 
     while (1) {
         btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
@@ -252,23 +258,23 @@ int import_userdata()
             break;
         } else if (btn_vec == rc_keymap[RC_BTN2]) {
             retval = UDATA_IMPT_CANCELLED;
-            goto failure;
+            strncpy(menu_row2, "Cancelled", LCD_ROW_LEN+1);
+            goto sd_disable;
         }
 
         usleep(WAITLOOP_SLEEP_US);
     }
 
-    strncpy(menu_row1, "Loading settings", LCD_ROW_LEN+1);
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    lcd_write_menu();
+    strncpy(menu_row2, "Loading...", LCD_ROW_LEN+1);
+    ui_disp_menu(2);
 
     // Import the userdata
     for (n=0; n<=MAX_USERDATA_ENTRY; ++n) {
-        retval = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
-        if (retval != 0) {
+        res = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
+        if (res != SD_OK) {
             printf("Failed to read SD card\n");
-            retval = -retval;
-            goto failure;
+            retval = -res;
+            goto sd_disable;
         }
 
         if (strncmp(header.userdata_key, "USRDATA", 8)) {
@@ -291,27 +297,21 @@ int import_userdata()
             (header.type == UDE_PROFILE) ? sizeof(ude_profile) : sizeof(ude_initcfg), databuf);
         if (retval != 0) {
             printf("Copy from SD to flash failed (error %d)\n", retval);
-            goto failure;
+            goto sd_disable;
         }
 
         entries_imported++;
     }
 
-    SPI_CS_High();
-
     read_userdata(INIT_CONFIG_SLOT, 0);
     profile_sel = input_profiles[target_input];
     read_userdata(profile_sel, 0);
 
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "%d entries", entries_imported);
-    strncpy(menu_row2, "imported", LCD_ROW_LEN+1);
-    lcd_write_menu();
-    usleep(1000000);
+    sniprintf(menu_row2, LCD_ROW_LEN+1, "%d slots loaded", entries_imported);
+    retval = 1;
 
-    return 0;
-
-failure:
+sd_disable:
     SPI_CS_High();
 
-    return -1;
+    return retval;
 }

@@ -20,7 +20,7 @@ package require -exact altera_terp 1.0
 # 
 set_module_property DESCRIPTION "This component is a serial flash controller which allows user to access Altera EPCQ devices"
 set_module_property NAME altera_epcq_controller_mod
-set_module_property VERSION 17.1
+set_module_property VERSION 19.1
 set_module_property INTERNAL false
 set_module_property OPAQUE_ADDRESS_MAP true
 set_module_property GROUP "Basic Functions/Configuration and Programming"

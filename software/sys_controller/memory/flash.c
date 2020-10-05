@@ -23,75 +23,23 @@
 #include "flash.h"
 #include "utils.h"
 
-extern alt_epcq_controller_dev epcq_controller_0;
+// save some code space
+#define SINGLE_FLASH_INSTANCE
 
-alt_epcq_controller_dev *epcq_controller_dev;
+alt_flash_dev *epcq_dev;
 
 
-int check_flash()
+int init_flash()
 {
-    epcq_controller_dev = &epcq_controller_0;
+#ifdef SINGLE_FLASH_INSTANCE
+    extern alt_llist alt_flash_dev_list;
+    epcq_dev = (alt_flash_dev*)alt_flash_dev_list.next;
+#else
+    epcq_dev = alt_flash_open_dev(EPCQ_CONTROLLER_0_AVL_MEM_NAME);
+#endif
 
-    if ((epcq_controller_dev == NULL) || !(epcq_controller_dev->is_epcs && (epcq_controller_dev->page_size == PAGESIZE)))
-        return -FLASH_DETECT_ERROR;
-
-    printf("Flash size in bytes: %lu\nSector size: %lu (%lu pages)\nPage size: %lu\n",
-            epcq_controller_dev->size_in_bytes, epcq_controller_dev->sector_size, epcq_controller_dev->sector_size/epcq_controller_dev->page_size, epcq_controller_dev->page_size);
-
-    return 0;
-}
-
-int read_flash(alt_u32 offset, alt_u32 length, alt_u8 *dstbuf)
-{
-    int retval, i;
-
-    retval = alt_epcq_controller_read(&epcq_controller_dev->dev, offset, dstbuf, length);
-    if (retval != 0)
-        return -FLASH_READ_ERROR;
-
-    return 0;
-}
-
-int write_flash_page(alt_u8 *pagedata, alt_u32 length, alt_u32 pagenum)
-{
-    int retval, i;
-
-    if ((pagenum % PAGES_PER_SECTOR) == 0) {
-        printf("Erasing sector %u\n", (unsigned)(pagenum/PAGES_PER_SECTOR));
-        retval = alt_epcq_controller_erase_block(&epcq_controller_dev->dev, pagenum*PAGESIZE);
-
-        if (retval != 0) {
-            printf("Flash erase error, sector %u\nRetval %d\n", (unsigned)(pagenum/PAGES_PER_SECTOR), retval);
-            return -FLASH_ERASE_ERROR;
-        }
-    }
-
-    retval = alt_epcq_controller_write_block(&epcq_controller_dev->dev, (pagenum/PAGES_PER_SECTOR)*PAGES_PER_SECTOR*PAGESIZE, pagenum*PAGESIZE, pagedata, length);
-
-    if (retval != 0) {
-        printf("Flash write error, page %u\nRetval %d\n", (unsigned)pagenum, retval);
-        return -FLASH_WRITE_ERROR;
-    }
-
-    return 0;
-}
-
-int write_flash(alt_u8 *buf, alt_u32 length, alt_u32 pagenum)
-{
-    int retval;
-    alt_u32 bytes_to_w;
-
-    while (length > 0) {
-        bytes_to_w = (length > PAGESIZE) ? PAGESIZE : length;
-
-        retval = write_flash_page(buf, bytes_to_w, pagenum);
-        if (retval != 0)
-            return retval;
-
-        buf += bytes_to_w;
-        length -= bytes_to_w;
-        ++pagenum;
-    }
+    if (epcq_dev == NULL)
+        return -1;
 
     return 0;
 }
@@ -104,7 +52,8 @@ int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmp
     for (i=0; i<length; i=i+PAGESIZE) {
         bytes_to_read = ((length-i < PAGESIZE) ? (length-i) : PAGESIZE);
 
-        retval = read_flash(i, bytes_to_read, tmpbuf);
+        //retval = read_flash(i, bytes_to_read, tmpbuf);
+        retval = alt_epcq_controller_read(epcq_dev, offset+i, tmpbuf, bytes_to_read);
         if (retval != 0)
             return retval;
 

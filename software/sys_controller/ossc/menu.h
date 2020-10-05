@@ -114,6 +114,8 @@ typedef struct {
     alt_u8 mp;
 } menunavi;
 
+menunavi* get_current_menunavi();
+void render_osd_page();
 void display_menu(alt_u8 forcedisp);
 static void vm_select();
 static void vm_tweak(alt_u16 *v);

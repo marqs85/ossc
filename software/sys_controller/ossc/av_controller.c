@@ -106,17 +106,38 @@ volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
 volatile pll_reconfig_regs *pll_reconfig = (volatile pll_reconfig_regs*)PLL_RECONFIG_0_BASE;
 
-inline void lcd_write_menu()
+void ui_disp_menu(alt_u8 osd_mode)
 {
-    strncpy((char*)osd->osd_chars.row1, menu_row1, LCD_ROW_LEN);
-    strncpy((char*)osd->osd_chars.row2, menu_row2, LCD_ROW_LEN);
+    alt_u8 menu_page;
+
+    if ((osd_mode == 1) || (osd_enable == 2)) {
+        strncpy((char*)osd->osd_array.data[0][0], menu_row1, OSD_CHAR_COLS);
+        strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
+        osd->osd_row_color.mask = 0;
+        osd->osd_sec_enable[0].mask = 3;
+        osd->osd_sec_enable[1].mask = 0;
+    } else if (osd_mode == 2) {
+        menu_page = get_current_menunavi()->mp;
+        strncpy((char*)osd->osd_array.data[menu_page][1], menu_row2, OSD_CHAR_COLS);
+        osd->osd_sec_enable[1].mask |= (1<<menu_page);
+    }
+
     lcd_write((char*)&menu_row1, (char*)&menu_row2);
 }
 
-inline void lcd_write_status() {
-    strncpy((char*)osd->osd_chars.row1, row1, LCD_ROW_LEN);
-    strncpy((char*)osd->osd_chars.row2, row2, LCD_ROW_LEN);
-    lcd_write((char*)&row1, (char*)&row2);
+void ui_disp_status(alt_u8 refresh_osd_timer) {
+    if (!menu_active) {
+        if (refresh_osd_timer)
+            osd->osd_config.status_refresh = 1;
+
+        strncpy((char*)osd->osd_array.data[0][0], row1, OSD_CHAR_COLS);
+        strncpy((char*)osd->osd_array.data[1][0], row2, OSD_CHAR_COLS);
+        osd->osd_row_color.mask = 0;
+        osd->osd_sec_enable[0].mask = 3;
+        osd->osd_sec_enable[1].mask = 0;
+
+        lcd_write((char*)&row1, (char*)&row2);
+    }
 }
 
 #ifdef ENABLE_AUDIO
@@ -651,10 +672,7 @@ void program_mode()
 
     sniprintf(row1, LCD_ROW_LEN+1, "%s %u-%c", avinput_str[cm.avinput], (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
-    if (!menu_active) {
-        osd->osd_config.status_refresh = 1;
-        lcd_write_status();
-    }
+    ui_disp_status(1);
 
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
     cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, h_syncinlen);
@@ -842,8 +860,8 @@ int init_hw()
     }
 #endif
 
-    if (check_flash() != 0) {
-        printf("Error: incorrect flash type detected\n");
+    if (init_flash() != 0) {
+        printf("Error: could not find flash\n");
         return -1;
     }
 
@@ -863,16 +881,17 @@ int init_hw()
     osd->osd_config.y_size = 0;
     osd->osd_config.x_offset = 3;
     osd->osd_config.y_offset = 3;
-    osd->osd_config.enable = osd_enable;
+    osd->osd_config.enable = !!osd_enable;
     osd->osd_config.status_timeout = osd_status_timeout;
-
-    // Setup remote keymap
-    if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
-        setup_rc();
+    osd->osd_config.border_color = 1;
 
     // init always in HDMI mode (fixes yellow screen bug)
     cm.hdmitx_vic = HDMI_480p60;
     TX_enable(TX_HDMI_RGB);
+
+    // Setup remote keymap
+    if (!(IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & PB1_BIT))
+        setup_rc();
 
     return 0;
 }
@@ -886,7 +905,7 @@ int latency_test() {
     sys_ctrl |= LT_ACTIVE|(position<<LT_MODE_OFFS);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
     sniprintf(menu_row2, LCD_ROW_LEN+1, "OK to init");
-    lcd_write_menu();
+    ui_disp_menu(0);
 
     while (1) {
         btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
@@ -896,7 +915,7 @@ int latency_test() {
                 sys_ctrl &= ~(3<<LT_MODE_OFFS);
                 IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
                 menu_row2[0] = 0;
-                lcd_write_menu();
+                ui_disp_menu(0);
                 usleep(400000);
                 sys_ctrl |= LT_ARMED|(position<<LT_MODE_OFFS);
                 IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
@@ -919,7 +938,7 @@ int latency_test() {
                     sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2ums", latency_ms_x100/100, latency_ms_x100%100);
                 else
                     sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2ums/%u.%.2ums", latency_ms_x100/100, latency_ms_x100%100, stb_ms_x100/100, stb_ms_x100%100);
-                lcd_write_menu();
+                ui_disp_menu(0);
             } else if (btn_vec == rc_keymap[RC_BACK]) {
                 break;
             }
@@ -978,14 +997,12 @@ int main()
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif
-        osd->osd_config.status_refresh = 1;
-        lcd_write_status();
+        ui_disp_status(1);
         usleep(500000);
     } else {
         sniprintf(row1, LCD_ROW_LEN+1, "Init error  %d", init_stat);
         strncpy(row2, "", LCD_ROW_LEN+1);
-        osd->osd_config.status_refresh = 1;
-        lcd_write_status();
+        ui_disp_status(1);
         while (1) {}
     }
 
@@ -1146,10 +1163,7 @@ int main()
             cm.clkcnt = 0; //TODO: proper invalidate
             strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
-            if (!menu_active) {
-                osd->osd_config.status_refresh = 1;
-                lcd_write_status();
-            }
+            ui_disp_status(1);
             if (man_input_change) {
                 // record last input if it was selected manually
                 if (def_input == AV_LAST)
@@ -1180,8 +1194,13 @@ int main()
         if ((osd_enable != osd_enable_pre) || (osd_status_timeout != osd_status_timeout_pre)) {
             osd_enable = osd_enable_pre;
             osd_status_timeout = osd_status_timeout_pre;
-            osd->osd_config.enable = osd_enable;
+            osd->osd_config.enable = !!osd_enable;
             osd->osd_config.status_timeout = osd_status_timeout;
+            if (menu_active) {
+                remote_code = 0;
+                render_osd_page();
+                display_menu(1);
+            }
         }
 
         if (cm.avinput != AV_TESTPAT) {
@@ -1201,10 +1220,7 @@ int main()
                     //ths_source_sel(THS_STANDBY, 0);
                     strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
                     strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
-                    if (!menu_active) {
-                        osd->osd_config.status_refresh = 1;
-                        lcd_write_status();
-                    }
+                    ui_disp_status(1);
                     alt_timestamp_start();// reset auto input timer
                     auto_input_ctr = 0;
                     auto_input_current_ctr = 0;

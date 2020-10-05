@@ -115,8 +115,8 @@ typedef struct {
     avconfig_t cc;
 } avmode_t;
 
-inline void lcd_write_menu();
-inline void lcd_write_status();
+void ui_disp_menu(alt_u8 osd_mode);
+void ui_disp_status(alt_u8 refresh_osd_timer);
 
 int load_profile();
 int save_profile();
