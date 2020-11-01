@@ -282,7 +282,7 @@ int import_userdata()
             continue;
         }
 
-        if ((header.version_major != FW_VER_MAJOR) || (header.version_minor != FW_VER_MINOR)) {
+        if ((header.version_major != PROFILE_VER_MAJOR) || (header.version_minor != PROFILE_VER_MINOR)) {
             printf("Data version %u.%u does not match fw\n", header.version_major, header.version_minor);
             continue;
         }

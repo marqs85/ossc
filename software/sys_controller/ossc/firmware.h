@@ -24,10 +24,10 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            0
-#define FW_VER_MINOR            87
+#define FW_VER_MINOR            88
 
 #define PROFILE_VER_MAJOR       0
-#define PROFILE_VER_MINOR       86
+#define PROFILE_VER_MINOR       88
 
 #define INITCFG_VER_MAJOR       0
 #define INITCFG_VER_MINOR       85
