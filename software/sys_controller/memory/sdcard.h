@@ -26,5 +26,6 @@
 
 int check_sdcard(alt_u8 *databuf);
 int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, alt_u8 *tmpbuf);
+int copy_flash_to_sd(alt_u32 flash_pagenum, alt_u32 sd_blknum, alt_u32 length, alt_u8 *tmpbuf);
 
 #endif /* SDCARD_H_ */
