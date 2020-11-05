@@ -160,15 +160,15 @@ SDRESULTS __SD_Write_Block(SD_DEV *dev, void *dat, BYTE token)
     WORD idx;
     BYTE line;
     // Send token (single or multiple)
-    SPI_RW(token);
+    SPI_WW(token);
     // Single block write?
     if(token != 0xFD)
     {
         // Send block data
-        for(idx=0; idx!=SD_BLK_SIZE; idx++) SPI_RW(*((BYTE*)dat + idx));
+        for(idx=0; idx!=SD_BLK_SIZE; idx++) SPI_WW(*((BYTE*)dat + idx));
         /* Dummy CRC */
-        SPI_RW(0xFF);
-        SPI_RW(0xFF);
+        SPI_WW(0xFF);
+        SPI_WW(0xFF);
         // If not accepted, returns the reject error
         if((SPI_RW(0xFF) & 0x1F) != 0x05) return(SD_REJECT);
     }
@@ -447,9 +447,13 @@ SDRESULTS SD_Write(SD_DEV *dev, void *dat, DWORD sector)
 #else   // uControllers
     // Query ok?
     if(sector > dev->last_sector) return(SD_PARERR);
+    // Convert sector number to byte address (sector * SD_BLK_SIZE) for SDC1
+    if (!(dev->cardtype & SDCT_BLOCK))
+        sector *= SD_BLK_SIZE;
+
     // Single block write (token <- 0xFE)
     // Convert sector number to bytes address (sector * SD_BLK_SIZE)
-    if(__SD_Send_Cmd(CMD24, sector * SD_BLK_SIZE)==0)
+    if(__SD_Send_Cmd(CMD24, sector)==0)
         return(__SD_Write_Block(dev, dat, 0xFE));
     else
         return(SD_ERROR);
