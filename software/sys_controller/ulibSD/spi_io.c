@@ -15,7 +15,7 @@ void SPI_Init (void) {
     I2C_init(SD_SPI_BASE,ALT_CPU_FREQ,400000);
 }
 
-void SPI_W(BYTE *wd, int len) {
+void SPI_W(const BYTE *wd, int len) {
     SPI_write(SD_SPI_BASE, wd, len);
 }
 

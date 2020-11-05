@@ -197,7 +197,7 @@ void SPI_read(alt_u32 base, alt_u8 *rdata, int len)
     }
 }
 
-void SPI_write(alt_u32 base, alt_u8 *wdata, int len)
+void SPI_write(alt_u32 base, const alt_u8 *wdata, int len)
 {
     int i;
 

@@ -33,7 +33,7 @@ void SPI_R (BYTE *rd, int len);
     \param *wd Pointer to array which holds the bytes.
     \param len Length of the array.
  */
-void SPI_W (BYTE *wd, int len);
+void SPI_W (const BYTE *wd, int len);
 
 /**
     \brief Read a single byte.
