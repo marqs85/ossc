@@ -23,6 +23,10 @@ void SPI_R(BYTE *rd, int len) {
     SPI_read(SD_SPI_BASE, rd, len);
 }
 
+void SPI_WW(BYTE d) {
+    SPI_W(&d, 1);
+}
+
 BYTE SPI_RW (BYTE d) {
     BYTE w;
     SPI_R(&w, 1);

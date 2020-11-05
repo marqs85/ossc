@@ -36,11 +36,17 @@ void SPI_R (BYTE *rd, int len);
 void SPI_W (BYTE *wd, int len);
 
 /**
-    \brief Read/Write a single byte.
-    \param d Byte to send.
+    \brief Read a single byte.
+    \param d Byte. Ignored.
     \return Byte that arrived.
  */
 BYTE SPI_RW (BYTE d);
+
+/**
+    \brief Write a single byte.
+    \param d Byte to write.
+ */
+void SPI_WW(BYTE d);
 
 /**
     \brief Flush of SPI buffer.
