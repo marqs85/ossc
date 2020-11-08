@@ -15,12 +15,16 @@ void SPI_Init (void) {
     I2C_init(SD_SPI_BASE,ALT_CPU_FREQ,400000);
 }
 
-void SPI_W(BYTE *wd, int len) {
+void SPI_W(const BYTE *wd, int len) {
     SPI_write(SD_SPI_BASE, wd, len);
 }
 
 void SPI_R(BYTE *rd, int len) {
     SPI_read(SD_SPI_BASE, rd, len);
+}
+
+void SPI_WW(BYTE d) {
+    SPI_W(&d, 1);
 }
 
 BYTE SPI_RW (BYTE d) {

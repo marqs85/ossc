@@ -33,14 +33,20 @@ void SPI_R (BYTE *rd, int len);
     \param *wd Pointer to array which holds the bytes.
     \param len Length of the array.
  */
-void SPI_W (BYTE *wd, int len);
+void SPI_W (const BYTE *wd, int len);
 
 /**
-    \brief Read/Write a single byte.
-    \param d Byte to send.
+    \brief Read a single byte.
+    \param d Byte. Ignored.
     \return Byte that arrived.
  */
 BYTE SPI_RW (BYTE d);
+
+/**
+    \brief Write a single byte.
+    \param d Byte to write.
+ */
+void SPI_WW(BYTE d);
 
 /**
     \brief Flush of SPI buffer.

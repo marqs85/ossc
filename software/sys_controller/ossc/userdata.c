@@ -17,6 +17,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include "userdata.h"
@@ -26,6 +27,7 @@
 #include "lcd.h"
 #include "controls.h"
 #include "av_controller.h"
+#include "menu.h"
 #include "altera_avalon_pio_regs.h"
 
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
@@ -42,7 +44,7 @@ extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 osd_enable_pre, osd_status_timeout_pre;
 extern SD_DEV sdcard_dev;
 extern alt_flash_dev *epcq_dev;
-extern char menu_row2[LCD_ROW_LEN+1];
+extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 char target_profile_name[PROFILE_NAME_LEN+1];
 
@@ -314,4 +316,74 @@ sd_disable:
     SPI_CS_High();
 
     return retval;
+}
+
+int export_userdata()
+{
+    int retval;
+    char *errmsg;
+    alt_u8 databuf[SD_BLK_SIZE];
+    alt_u32 btn_vec;
+
+    retval = check_sdcard(databuf);
+    SPI_CS_High();
+    if (retval != 0) {
+        retval = -retval;
+        goto failure;
+    }
+
+    strncpy(menu_row2, "Export? 1=Y, 2=N", LCD_ROW_LEN+1);
+    ui_disp_menu(2);
+
+    while (1) {
+        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+
+        if (btn_vec == rc_keymap[RC_BTN1]) {
+            break;
+        } else if (btn_vec == rc_keymap[RC_BTN2]) {
+            retval = UDATA_EXPT_CANCELLED;
+            goto failure;
+        }
+
+        usleep(WAITLOOP_SLEEP_US);
+    }
+
+    strncpy(menu_row2, "Exporting...", LCD_ROW_LEN+1);
+    ui_disp_menu(2);
+
+    /* This may wear the SD card a bit more than necessary... */
+    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE, 512/SD_BLK_SIZE, (MAX_USERDATA_ENTRY + 1) * SECTORSIZE, databuf);
+    if (retval != 0)
+        goto failure;
+
+    SPI_CS_High();
+
+    strncpy(menu_row2, "Success", LCD_ROW_LEN+1);
+
+    return 1;
+
+failure:
+    SPI_CS_High();
+
+    switch (retval) {
+        case SD_NOINIT:
+            errmsg = "No SD card det.";
+            break;
+        case -EINVAL:
+            errmsg = "Invalid params.";
+            break;
+        case UDATA_EXPT_CANCELLED:
+            errmsg = "Cancelled";
+            break;
+        default:
+            errmsg = "SD/Flash error";
+            break;
+    }
+    strncpy(menu_row2, errmsg, LCD_ROW_LEN+1);
+
+    /*
+     * We want the message above to remain on screen, so return a
+     * positive value which nevertheless stands out when debugging.
+     */
+    return 0x0dead;
 }

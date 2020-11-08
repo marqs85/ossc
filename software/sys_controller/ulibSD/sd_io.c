@@ -32,7 +32,7 @@ DWORD __SD_Sectors (SD_DEV *dev)
         return (((DWORD)(ftell(dev->fp)))/((DWORD)512)-1);
     }
 }
-#else   // For use with uControllers   
+#else   // For use with uControllers
 /******************************************************************************
  Private Methods Prototypes - Direct work with SD card
 ******************************************************************************/
@@ -160,15 +160,15 @@ SDRESULTS __SD_Write_Block(SD_DEV *dev, void *dat, BYTE token)
     WORD idx;
     BYTE line;
     // Send token (single or multiple)
-    SPI_RW(token);
+    SPI_WW(token);
     // Single block write?
     if(token != 0xFD)
     {
         // Send block data
-        for(idx=0; idx!=SD_BLK_SIZE; idx++) SPI_RW(*((BYTE*)dat + idx));
+        for(idx=0; idx!=SD_BLK_SIZE; idx++) SPI_WW(*((BYTE*)dat + idx));
         /* Dummy CRC */
-        SPI_RW(0xFF);
-        SPI_RW(0xFF);
+        SPI_WW(0xFF);
+        SPI_WW(0xFF);
         // If not accepted, returns the reject error
         if((SPI_RW(0xFF) & 0x1F) != 0x05) return(SD_REJECT);
     }
@@ -201,7 +201,7 @@ DWORD __SD_Sectors (SD_DEV *dev)
     BYTE READ_BL_LEN = 0;
     int timer_set;
 
-    if(__SD_Send_Cmd(CMD9, 0)==0) 
+    if(__SD_Send_Cmd(CMD9, 0)==0)
     {
         // Wait for response
         timer_set = SPI_Timer_On(5);  // Wait for data packet (timeout of 5ms)
@@ -262,7 +262,7 @@ DWORD __SD_Sectors (SD_DEV *dev)
 SDRESULTS SD_Init(SD_DEV *dev)
 {
     BYTE initdata[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-#if defined(_M_IX86)    // x86 
+#if defined(_M_IX86)    // x86
     dev->fp = fopen(dev->fn, "r+");
     if (dev->fp == NULL)
         return (SD_ERROR);
@@ -400,7 +400,7 @@ SDRESULTS SD_Read(SD_DEV *dev, void *dat, DWORD sector, WORD ofs, WORD cnt)
         } while((tkn==0xFF)&&(SPI_Timer_Status()==TRUE));
         SPI_Timer_Off();
         // Token of single block?
-        if(tkn==0xFE) { 
+        if(tkn==0xFE) {
             // Size block (512 bytes) + CRC (2 bytes) - offset - bytes to count
             remaining = SD_BLK_SIZE + 2 - ofs - cnt;
             // Skip offset
@@ -447,9 +447,13 @@ SDRESULTS SD_Write(SD_DEV *dev, void *dat, DWORD sector)
 #else   // uControllers
     // Query ok?
     if(sector > dev->last_sector) return(SD_PARERR);
+    // Convert sector number to byte address (sector * SD_BLK_SIZE) for SDC1
+    if (!(dev->cardtype & SDCT_BLOCK))
+        sector *= SD_BLK_SIZE;
+
     // Single block write (token <- 0xFE)
     // Convert sector number to bytes address (sector * SD_BLK_SIZE)
-    if(__SD_Send_Cmd(CMD24, sector * SD_BLK_SIZE)==0)
+    if(__SD_Send_Cmd(CMD24, sector)==0)
         return(__SD_Write_Block(dev, dat, 0xFE));
     else
         return(SD_ERROR);
