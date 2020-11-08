@@ -318,6 +318,32 @@ sd_disable:
     return retval;
 }
 
+static alt_u8 poll_yesno(const useconds_t useconds, alt_u32 *const btn_vec_out)
+{
+    alt_u32 btn_vec;
+    alt_u8 ret = 0U;
+    for (alt_u32 i = 0; i < (useconds/WAITLOOP_SLEEP_US); ++i) {
+        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+
+        for (alt_u32 j = RC_BTN1; j < (REMOTE_MAX_KEYS - 1); ++j) {
+            if (btn_vec == rc_keymap[j]) {
+                ret = 1U;
+                break;
+            }
+        }
+
+        if (ret)
+            break;
+
+        usleep(WAITLOOP_SLEEP_US);
+    }
+
+    if (ret) {
+        *btn_vec_out = btn_vec;
+    }
+    return ret;
+}
+
 int export_userdata()
 {
     int retval;
@@ -332,20 +358,35 @@ int export_userdata()
         goto failure;
     }
 
-    strncpy(menu_row2, "Export? 1=Y, 2=N", LCD_ROW_LEN+1);
-    ui_disp_menu(2);
-
+    usleep(100000U);
     while (1) {
-        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+        strncpy(menu_row2, "SD CARD WILL BE", LCD_ROW_LEN+1);
+        ui_disp_menu(2);
+        if (poll_yesno(1000000U, &btn_vec))
+            goto eval_button;
+        strncpy(menu_row2, "OVERWRITTEN!!!", LCD_ROW_LEN+1);
+        ui_disp_menu(2);
+        if (poll_yesno(1000000U, &btn_vec))
+            goto eval_button;
+        strncpy(menu_row2, "Export? 1=Y, 2=N", LCD_ROW_LEN+1);
+        ui_disp_menu(2);
+        if (poll_yesno(2000000U, &btn_vec))
+            goto eval_button;
 
+        continue;
+eval_button:
         if (btn_vec == rc_keymap[RC_BTN1]) {
             break;
-        } else if (btn_vec == rc_keymap[RC_BTN2]) {
+        } else if (btn_vec == rc_keymap[RC_BTN2] ||
+            btn_vec == rc_keymap[RC_BACK])
+        {
             retval = UDATA_EXPT_CANCELLED;
             goto failure;
         }
-
-        usleep(WAITLOOP_SLEEP_US);
+        strncpy(menu_row2, "Press 1 or 2", LCD_ROW_LEN+1);
+        ui_disp_menu(2);
+        if (poll_yesno(300000U, &btn_vec))
+            goto eval_button;
     }
 
     strncpy(menu_row2, "Exporting...", LCD_ROW_LEN+1);
