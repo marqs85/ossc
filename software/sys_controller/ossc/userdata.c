@@ -322,6 +322,7 @@ static alt_u8 poll_yesno(const useconds_t useconds, alt_u32 *const btn_vec_out)
 {
     alt_u32 btn_vec;
     alt_u8 ret = 0U;
+
     for (alt_u32 i = 0; i < (useconds/WAITLOOP_SLEEP_US); ++i) {
         btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
 
@@ -338,39 +339,45 @@ static alt_u8 poll_yesno(const useconds_t useconds, alt_u32 *const btn_vec_out)
         usleep(WAITLOOP_SLEEP_US);
     }
 
-    if (ret) {
+    if (ret)
         *btn_vec_out = btn_vec;
-    }
+
     return ret;
 }
 
 int export_userdata()
 {
     int retval;
-    char *errmsg;
+    const char *msg;
     alt_u8 databuf[SD_BLK_SIZE];
+    alt_u8 prompt_state = 0;
+    useconds_t prompt_delay;
+    const alt_u8 prompt_transitions[] = { 1, 2, 0, 0, };
+    const char *prompt_msgs[] = {
+        "SD CARD WILL BE",
+        "OVERWRITTEN!!!",
+        "Export? 1=Y, 2=N",
+        "Press 1 or 2",
+    };
     alt_u32 btn_vec;
 
     retval = check_sdcard(databuf);
     SPI_CS_High();
     if (retval != 0) {
         retval = -retval;
-        goto failure;
+        goto out;
     }
 
     usleep(100000U);
     while (1) {
-        strncpy(menu_row2, "SD CARD WILL BE", LCD_ROW_LEN+1);
+        msg = prompt_msgs[prompt_state];
+        prompt_delay = (prompt_state == 2) ? 2000000U
+            : ((prompt_state == 3) ? 300000U : 1000000U);
+        prompt_state = prompt_transitions[prompt_state];
+
+        strncpy(menu_row2, msg, LCD_ROW_LEN+1);
         ui_disp_menu(2);
-        if (poll_yesno(1000000U, &btn_vec))
-            goto eval_button;
-        strncpy(menu_row2, "OVERWRITTEN!!!", LCD_ROW_LEN+1);
-        ui_disp_menu(2);
-        if (poll_yesno(1000000U, &btn_vec))
-            goto eval_button;
-        strncpy(menu_row2, "Export? 1=Y, 2=N", LCD_ROW_LEN+1);
-        ui_disp_menu(2);
-        if (poll_yesno(2000000U, &btn_vec))
+        if (poll_yesno(prompt_delay, &btn_vec))
             goto eval_button;
 
         continue;
@@ -381,12 +388,9 @@ eval_button:
             btn_vec == rc_keymap[RC_BACK])
         {
             retval = UDATA_EXPT_CANCELLED;
-            goto failure;
+            goto out;
         }
-        strncpy(menu_row2, "Press 1 or 2", LCD_ROW_LEN+1);
-        ui_disp_menu(2);
-        if (poll_yesno(300000U, &btn_vec))
-            goto eval_button;
+        prompt_state = 3;
     }
 
     strncpy(menu_row2, "Exporting...", LCD_ROW_LEN+1);
@@ -394,37 +398,36 @@ eval_button:
 
     /* This may wear the SD card a bit more than necessary... */
     retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE, 512/SD_BLK_SIZE, (MAX_USERDATA_ENTRY + 1) * SECTORSIZE, databuf);
-    if (retval != 0)
-        goto failure;
 
-    SPI_CS_High();
-
-    strncpy(menu_row2, "Success", LCD_ROW_LEN+1);
-
-    return 1;
-
-failure:
+out:
     SPI_CS_High();
 
     switch (retval) {
+        case 0:
+            msg = "Success";
+            break;
         case SD_NOINIT:
-            errmsg = "No SD card det.";
+            msg = "No SD card det.";
             break;
         case -EINVAL:
-            errmsg = "Invalid params.";
+            msg = "Invalid params.";
             break;
         case UDATA_EXPT_CANCELLED:
-            errmsg = "Cancelled";
+            msg = "Cancelled";
             break;
         default:
-            errmsg = "SD/Flash error";
+            msg = "SD/Flash error";
             break;
     }
-    strncpy(menu_row2, errmsg, LCD_ROW_LEN+1);
+    strncpy(menu_row2, msg, LCD_ROW_LEN+1);
 
-    /*
-     * We want the message above to remain on screen, so return a
-     * positive value which nevertheless stands out when debugging.
-     */
-    return 0x0dead;
+    if (!retval) {
+        return 1;
+    } else {
+        /*
+         * We want the message above to remain on screen, so return a
+         * positive value which nevertheless stands out when debugging.
+         */
+        return 0x0dead;
+    }
 }
