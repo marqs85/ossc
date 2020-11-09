@@ -353,12 +353,12 @@ int export_userdata()
     alt_u8 prompt_state = 0;
     useconds_t prompt_delay;
     const alt_u8 prompt_transitions[] = { 1, 2, 0, 0, };
-    const char *prompt_msgs[] = {
-        "SD CARD WILL BE",
-        "OVERWRITTEN!!!",
-        "Export? 1=Y, 2=N",
-        "Press 1 or 2",
-    };
+    const alt_u8 prompt_ofs[] = { 0, 16, 31, 48, };
+    const char *prompt_msgs =
+        "SD CARD WILL BE" "\0" // [ 0..15]
+        "OVERWRITTEN!!!"  "\0" // [16..30]
+        "Export? 1=Y, 2=N""\0" // [31..47]
+        "Press 1 or 2";        // [48..60]
     alt_u32 btn_vec;
 
     retval = check_sdcard(databuf);
@@ -370,7 +370,7 @@ int export_userdata()
 
     usleep(100000U);
     while (1) {
-        msg = prompt_msgs[prompt_state];
+        msg = &prompt_msgs[prompt_ofs[prompt_state]];
         prompt_delay = (prompt_state == 2) ? 2000000U
             : ((prompt_state == 3) ? 300000U : 1000000U);
         prompt_state = prompt_transitions[prompt_state];
