@@ -35,7 +35,7 @@ int init_flash()
     extern alt_llist alt_flash_dev_list;
     epcq_dev = (alt_flash_dev*)alt_flash_dev_list.next;
 #else
-    epcq_dev = alt_flash_open_dev(EPCQ_CONTROLLER_0_AVL_MEM_NAME);
+    epcq_dev = alt_flash_open_dev(EPCQ_CONTROLLER2_0_AVL_MEM_NAME);
 #endif
 
     if (epcq_dev == NULL)
@@ -46,14 +46,16 @@ int init_flash()
 
 int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmpbuf)
 {
-    alt_u32 crcval=0, i, bytes_to_read;
+    alt_u32 crcval=0, i, j, bytes_to_read;
     int retval;
 
     for (i=0; i<length; i=i+PAGESIZE) {
         bytes_to_read = ((length-i < PAGESIZE) ? (length-i) : PAGESIZE);
 
         //retval = read_flash(i, bytes_to_read, tmpbuf);
-        retval = alt_epcq_controller_read(epcq_dev, offset+i, tmpbuf, bytes_to_read);
+        retval = alt_epcq_controller2_read(epcq_dev, offset+i, tmpbuf, bytes_to_read);
+        for (j=0; j<bytes_to_read; j++)
+            tmpbuf[j] = bitswap8(tmpbuf[j]);
         if (retval != 0)
             return retval;
 

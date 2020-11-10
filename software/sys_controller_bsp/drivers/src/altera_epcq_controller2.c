@@ -34,16 +34,15 @@
 #include <stddef.h>
 #include "sys/param.h"
 #include "alt_types.h"
-#include "altera_epcq_controller_mod_regs.h"
-#include "altera_epcq_controller_mod.h"
+#include "altera_epcq_controller2_regs.h"
+#include "altera_epcq_controller2.h"
 #include "priv/alt_busy_sleep.h"
 #include "sys/alt_debug.h"
 #include "sys/alt_cache.h"
 
 
-ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments(alt_epcq_controller_dev *flash_info,alt_u32 offset, alt_u32 length);
-alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller_dev* epcq_flash_info);
-ALT_INLINE unsigned char static bitswap8(unsigned char v);
+ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments(alt_epcq_controller2_dev *flash_info,alt_u32 offset, alt_u32 length);
+alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller2_dev* epcq_flash_info);
 
 /*
  *  Public API
@@ -55,7 +54,7 @@ ALT_INLINE unsigned char static bitswap8(unsigned char v);
 
 
  /**
-  * alt_epcq_controller_lock
+  * alt_epcq_controller2_lock
   *
   *  Locks the range of the memory sectors, which 
   *  protected from write and erase.
@@ -72,52 +71,52 @@ ALT_INLINE unsigned char static bitswap8(unsigned char v);
   * -ETIME  -> Time out and skipping the looping after 0.7 sec.
   * -ENOLCK -> Sectors lock failed.
 **/
-int alt_epcq_controller_lock(alt_flash_dev *flash_info, alt_u32 sectors_to_lock)
+int alt_epcq_controller2_lock(alt_flash_dev *flash_info, alt_u32 sectors_to_lock)
 {
     alt_u32 mem_op_value = 0; /* value to write to EPCQ_MEM_OP register */
-    alt_epcq_controller_dev* epcq_flash_info = NULL;
+    alt_epcq_controller2_dev* epcq_flash_info = NULL;
     alt_u32 result = 0;
     alt_32 status = 0;
 
     /* return -EINVAL if flash_info is NULL */
     if(NULL == flash_info || 0 > sectors_to_lock)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
-	
-    epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
+    
+    epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
 
     /* sector value should occupy bits 17:8 */
     mem_op_value = sectors_to_lock << 8;
 
     /* sector protect commands 0b11 occupies lower 2 bits */
-    mem_op_value |= ALTERA_EPCQ_CONTROLLER_MEM_OP_SECTOR_PROTECT_CMD;
+    mem_op_value |= ALTERA_EPCQ_CONTROLLER2_MEM_OP_SECTOR_PROTECT_CMD;
 
     /* write sector protect command to EPCQ_MEM_OP register to protect sectors */
-    IOWR_ALTERA_EPCQ_CONTROLLER_MEM_OP(epcq_flash_info->csr_base, mem_op_value);
+    IOWR_ALTERA_EPCQ_CONTROLLER2_MEM_OP(epcq_flash_info->csr_base, mem_op_value);
     
     /* poll write in progress to make sure no operation is in progress */
     status = alt_epcq_poll_for_write_in_progress(epcq_flash_info);
     if(status != 0)
     {
-    	return status;
+        return status;
     }
-	
-	status = IORD_ALTERA_EPCQ_CONTROLLER_STATUS(epcq_flash_info->csr_base);
-	result |= (status >> 2) & 0x07; /* extract out BP3 - BP0 */
-	result |= (status >> 3) & 0x08; /* extract out BP4 */
+    
+    status = IORD_ALTERA_EPCQ_CONTROLLER2_STATUS(epcq_flash_info->csr_base);
+    result |= (status >> 2) & 0x07; /* extract out BP3 - BP0 */
+    result |= (status >> 3) & 0x08; /* extract out BP4 */
     result |= (status >> 1) & 0x10; /* extract out TOP/BOTTOM bit */
 
-	if(result != sectors_to_lock)
-	{
-		return -ENOLCK;
-	}
+    if(result != sectors_to_lock)
+    {
+        /*return -ENOLCK;*/
+    }
 
     return 0;
 }
 
 /**
- * alt_epcq_controller_get_info
+ * alt_epcq_controller2_get_info
  *
  * Pass the table of erase blocks to the user. This flash will return a single
  * flash_region that gives the number and size of sectors for the device used.
@@ -134,19 +133,19 @@ int alt_epcq_controller_lock(alt_flash_dev *flash_info, alt_u32 sectors_to_lock)
  * -EINVAL -> Invalid arguments
  * -EIO -> Could be hardware problem.
 **/
-int alt_epcq_controller_get_info
+int alt_epcq_controller2_get_info
 (
     alt_flash_fd *fd, /** flash device descriptor */
     flash_region **info, /** pointer to flash_region will be stored here */
     int *number_of_regions /** number of regions will be stored here */
 )
 {
-	alt_flash_dev* flash = NULL;
-	
-	/* return -EINVAL if fd,info and number_of_regions are NULL */
-	if(NULL == fd || NULL == info || NULL == number_of_regions)
+    alt_flash_dev* flash = NULL;
+    
+    /* return -EINVAL if fd,info and number_of_regions are NULL */
+    if(NULL == fd || NULL == info || NULL == number_of_regions)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
 
     flash = (alt_flash_dev*)fd;
@@ -166,7 +165,7 @@ int alt_epcq_controller_get_info
 }
 
 /**
-  * alt_epcq_controller_erase_block
+  * alt_epcq_controller2_erase_block
   *
   * This function erases a single flash sector.
   *
@@ -179,20 +178,20 @@ int alt_epcq_controller_get_info
   * -EINVAL -> Invalid arguments
   * -EIO -> write failed, sector might be protected 
 **/
-int alt_epcq_controller_erase_block(alt_flash_dev *flash_info, int block_offset)
+int alt_epcq_controller2_erase_block(alt_flash_dev *flash_info, int block_offset)
 {
     alt_32 ret_code = 0;
     alt_u32 mem_op_value = 0; /* value to write to EPCQ_MEM_OP register */
-    alt_epcq_controller_dev* epcq_flash_info = NULL;
+    alt_epcq_controller2_dev* epcq_flash_info = NULL;
     alt_u32 sector_number = 0; 
 
     /* return -EINVAL if flash_info is NULL */
     if(NULL == flash_info)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
-	
-    epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
+    
+    epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
 
     /* 
      * Sanity checks that block_offset is within the flash memory span and that the 
@@ -203,38 +202,47 @@ int alt_epcq_controller_erase_block(alt_flash_dev *flash_info, int block_offset)
         || (block_offset >= epcq_flash_info->size_in_bytes)
         || (block_offset & (epcq_flash_info->sector_size - 1)) != 0)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
 
     /* calculate current sector/block number */
     sector_number = (block_offset/(epcq_flash_info->sector_size));
 
     /* sector value should occupy bits 23:8 */
-    mem_op_value = (sector_number << 8) & ALTERA_EPCQ_CONTROLLER_MEM_OP_SECTOR_VALUE_MASK;
-
-    /* sector erase commands 0b10 occupies lower 2 bits */
-    mem_op_value |= ALTERA_EPCQ_CONTROLLER_MEM_OP_SECTOR_ERASE_CMD;
+    mem_op_value = (sector_number << 8) & ALTERA_EPCQ_CONTROLLER2_MEM_OP_SECTOR_VALUE_MASK;
+    
+     /* write enable command */
+    mem_op_value |= ALTERA_EPCQ_CONTROLLER2_MEM_OP_WRITE_ENABLE_CMD;
 
     /* write sector erase command to EPCQ_MEM_OP register to erase sector "sector_number" */
-    IOWR_ALTERA_EPCQ_CONTROLLER_MEM_OP(epcq_flash_info->csr_base, mem_op_value);
-	
+    IOWR_ALTERA_EPCQ_CONTROLLER2_MEM_OP(epcq_flash_info->csr_base, mem_op_value);
+
+    /* sector value should occupy bits 23:8 */
+    mem_op_value = (sector_number << 8) & ALTERA_EPCQ_CONTROLLER2_MEM_OP_SECTOR_VALUE_MASK;
+
+    /* sector erase commands 0b10 occupies lower 2 bits */
+    mem_op_value |= ALTERA_EPCQ_CONTROLLER2_MEM_OP_SECTOR_ERASE_CMD;
+
+    /* write sector erase command to EPCQ_MEM_OP register to erase sector "sector_number" */
+    IOWR_ALTERA_EPCQ_CONTROLLER2_MEM_OP(epcq_flash_info->csr_base, mem_op_value);
+    
     /* check whether erase triggered a illegal erase interrupt  */
-    if((IORD_ALTERA_EPCQ_CONTROLLER_ISR(epcq_flash_info->csr_base) &
-            		ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_ERASE_MASK) ==
-            				ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_ERASE_ACTIVE)
+    if((IORD_ALTERA_EPCQ_CONTROLLER2_ISR(epcq_flash_info->csr_base) &
+                    ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_ERASE_MASK) ==
+                            ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_ERASE_ACTIVE)
     {
-	    /* clear register */
-	    /* EPCQ_ISR access is write one to clear (W1C) */
-    	IOWR_ALTERA_EPCQ_CONTROLLER_ISR(epcq_flash_info->csr_base,
-    		ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_ERASE_MASK );
-    	return -EIO; /* erase failed, sector might be protected */
+        /* clear register */
+        /* EPCQ_ISR access is write one to clear (W1C) */
+        IOWR_ALTERA_EPCQ_CONTROLLER2_ISR(epcq_flash_info->csr_base,
+            ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_ERASE_MASK );
+        return -EIO; /* erase failed, sector might be protected */
     }
 
     return ret_code;
 }
 
 /**
- * alt_epcq_controller_write_block
+ * alt_epcq_controller2_write_block
  *
  * This function writes one block/sector of data to flash. The length of the write can NOT 
  * spill into the adjacent sector.
@@ -254,7 +262,7 @@ int alt_epcq_controller_erase_block(alt_flash_dev *flash_info, int block_offset)
  * -EINVAL -> Invalid arguments
  * -EIO -> write failed, sector might be protected 
 **/
-int alt_epcq_controller_write_block
+int alt_epcq_controller2_write_block
 (
     alt_flash_dev *flash_info, /** flash device info */
     int block_offset, /** sector/block offset in byte addressing */
@@ -267,8 +275,8 @@ int alt_epcq_controller_write_block
     alt_u32 remaining_length = length; /** length left to write */
     alt_u32 write_offset = data_offset; /** offset into flash to write too */
 
-    alt_epcq_controller_dev *epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
-	
+    alt_epcq_controller2_dev *epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
+    
     /* 
      * Sanity checks that data offset is not larger then a sector, that block offset is 
      * sector aligned and within the valid flash memory range and a write doesn't spill into 
@@ -284,7 +292,7 @@ int alt_epcq_controller_write_block
         || length < 0
         || (block_offset & (epcq_flash_info->sector_size - 1)) != 0) 
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
 
     /*
@@ -294,20 +302,20 @@ int alt_epcq_controller_write_block
      */
     while (remaining_length > 0)
     {
-    	alt_u32 word_to_write = 0xFFFFFFFF; /** initialize word to write to blank word */
-    	alt_u32 padding = 0; /** bytes to pad the next word that is written */
-    	alt_u32 bytes_to_copy = sizeof(alt_u32); /** number of bytes from source to copy */
+        alt_u32 word_to_write = 0xFFFFFFFF; /** initialize word to write to blank word */
+        alt_u32 padding = 0; /** bytes to pad the next word that is written */
+        alt_u32 bytes_to_copy = sizeof(alt_u32); /** number of bytes from source to copy */
 
         /*
          * we need to make sure the write is word aligned
-    	 * this should only be true at most 1 time
-    	 */
+         * this should only be true at most 1 time
+         */
         if (0 != (write_offset & (sizeof(alt_u32) - 1)))
         {
-        	/*
-        	 * data is not word aligned
-        	 * calculate padding bytes need to add before start of a data offset
-        	 */
+            /*
+             * data is not word aligned
+             * calculate padding bytes need to add before start of a data offset
+             */
             padding = write_offset & (sizeof(alt_u32) - 1);
 
             /* update variables to account for padding being added */
@@ -315,46 +323,46 @@ int alt_epcq_controller_write_block
 
             if(bytes_to_copy > remaining_length)
             {
-            	bytes_to_copy = remaining_length;
+                bytes_to_copy = remaining_length;
             }
 
             write_offset = write_offset - padding;
             if(0 != (write_offset & (sizeof(alt_u32) - 1)))
             {
-            	return -EINVAL;
+                return -EINVAL;
             }
         }
         else
         {
             if(bytes_to_copy > remaining_length)
             {
-            	bytes_to_copy = remaining_length;
+                bytes_to_copy = remaining_length;
             }
         }
 
         /* prepare the word to be written */
         memcpy((((void*)&word_to_write)) + padding, ((void*)data) + buffer_offset, bytes_to_copy);
 
-        // Bit-reverse bytes for flash
-        for (int i=0; i<bytes_to_copy; i++)
-            *((unsigned char*)&word_to_write+i) = bitswap8(*((unsigned char*)&word_to_write+i));
-
         /* update offset and length variables */
         buffer_offset += bytes_to_copy;
         remaining_length -= bytes_to_copy;
-
+       
         /* write to flash 32 bits at a time */
         IOWR_32DIRECT(epcq_flash_info->data_base, write_offset, word_to_write);
-
-        /* check whether write triggered a illegal write interrupt */
-        if((IORD_ALTERA_EPCQ_CONTROLLER_ISR(epcq_flash_info->csr_base) &
-        		ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_WRITE_MASK) ==
-        				ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_WRITE_ACTIVE)
+        if (IORD_32DIRECT(epcq_flash_info->data_base, write_offset) != word_to_write)
         {
-		    /* clear register */
-        	IOWR_ALTERA_EPCQ_CONTROLLER_ISR(epcq_flash_info->csr_base,
-			ALTERA_EPCQ_CONTROLLER_ISR_ILLEGAL_WRITE_MASK );
-        	return -EIO; /** write failed, sector might be protected */
+            IOWR_32DIRECT(epcq_flash_info->data_base, write_offset, word_to_write);
+        }
+            
+        /* check whether write triggered a illegal write interrupt */
+        if((IORD_ALTERA_EPCQ_CONTROLLER2_ISR(epcq_flash_info->csr_base) &
+                ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_WRITE_MASK) ==
+                        ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_WRITE_ACTIVE)
+        {
+            /* clear register */
+            IOWR_ALTERA_EPCQ_CONTROLLER2_ISR(epcq_flash_info->csr_base,
+            ALTERA_EPCQ_CONTROLLER2_ISR_ILLEGAL_WRITE_MASK );
+            return -EIO; /** write failed, sector might be protected */
         }
 
         /* update current offset */
@@ -365,12 +373,12 @@ int alt_epcq_controller_write_block
 }
 
 /**
- * alt_epcq_controller_write
+ * alt_epcq_controller2_write
  *
  * Program the data into the flash at the selected address.
  *
- * The different between this function and alt_epcq_controller_write_block function
- * is that this function (alt_epcq_controller_write) will automatically erase a block as needed
+ * The different between this function and alt_epcq_controller2_write_block function
+ * is that this function (alt_epcq_controller2_write) will automatically erase a block as needed
  * Arguments:
  * - *flash_info: Pointer to EPCQ flash device structure.
  * - offset: Byte offset (unaligned access) of write to flash memory. For best performance, 
@@ -384,7 +392,7 @@ int alt_epcq_controller_write_block
  * -EIO -> write failed, sector might be protected 
  *
 **/
-int alt_epcq_controller_write(
+int alt_epcq_controller2_write(
     alt_flash_dev *flash_info, /** device info */
     int offset, /** offset of write from base address */
     const void *src_addr, /** source buffer */
@@ -393,7 +401,7 @@ int alt_epcq_controller_write(
 {
     alt_32 ret_code = 0;
 
-    alt_epcq_controller_dev *epcq_flash_info = NULL;
+    alt_epcq_controller2_dev *epcq_flash_info = NULL;
 
     alt_u32 write_offset = offset; /** address of next byte to write */
     alt_u32 remaining_length = length; /** length of write data left to be written */
@@ -401,20 +409,20 @@ int alt_epcq_controller_write(
     alt_u32 i = 0;
 
     /* return -EINVAL if flash_info and src_addr are NULL */
-	if(NULL == flash_info || NULL == src_addr)
+    if(NULL == flash_info || NULL == src_addr)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
-	
-	epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
-	
+    
+    epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
+    
     /* make sure the write parameters are within the bounds of the flash */
     ret_code = alt_epcq_validate_read_write_arguments(epcq_flash_info, offset, length);
 
-	if(0 != ret_code)
-	{
-		return ret_code;
-	}
+    if(0 != ret_code)
+    {
+        return ret_code;
+    }
 
     /*
      * This loop erases and writes data one sector at a time. We check for write completion 
@@ -423,13 +431,13 @@ int alt_epcq_controller_write(
     for(i = offset/epcq_flash_info->sector_size ; i < epcq_flash_info->number_of_sectors; i++)
     {
         alt_u32 block_offset = 0; /** block offset in byte addressing */
-    	alt_u32 offset_within_current_sector = 0; /** offset into current sector to write */
+        alt_u32 offset_within_current_sector = 0; /** offset into current sector to write */
         alt_u32 length_to_write = 0; /** length to write to current sector */
 
-    	if(0 >= remaining_length)
-    	{
-    		break; /* out of data to write */
-    	}
+        if(0 >= remaining_length)
+        {
+            break; /* out of data to write */
+        }
 
         /* calculate current sector/block offset in byte addressing */
         block_offset = write_offset & ~(epcq_flash_info->sector_size - 1);
@@ -441,7 +449,7 @@ int alt_epcq_controller_write(
         }
 
         /* erase sector */
-        ret_code = alt_epcq_controller_erase_block(flash_info, block_offset);
+        ret_code = alt_epcq_controller2_erase_block(flash_info, block_offset);
 
         if(0 != ret_code)
         {
@@ -453,7 +461,7 @@ int alt_epcq_controller_write(
                 remaining_length);
 
         /* write data to erased block */
-        ret_code = alt_epcq_controller_write_block(flash_info, block_offset, write_offset,
+        ret_code = alt_epcq_controller2_write_block(flash_info, block_offset, write_offset,
             src_addr + buffer_offset, length_to_write);
 
 
@@ -472,7 +480,7 @@ int alt_epcq_controller_write(
 }
 
 /**
- * alt_epcq_controller_read
+ * alt_epcq_controller2_read
  *
  * There's no real need to use this function as opposed to using memcpy directly. It does
  * do some sanity checks on the bounds of the read.
@@ -487,7 +495,7 @@ int alt_epcq_controller_write(
  * 0 -> success
  * -EINVAL -> Invalid arguments
 **/
-int alt_epcq_controller_read
+int alt_epcq_controller2_read
 (
     alt_flash_dev *flash_info, /** device info */
     int offset, /** offset of read from base address */
@@ -496,34 +504,30 @@ int alt_epcq_controller_read
 )
 {
     alt_32 ret_code = 0;
-	alt_epcq_controller_dev *epcq_flash_info = NULL;
-	
-	/* return -EINVAL if flash_info and dest_addr are NULL */
-	if(NULL == flash_info || NULL == dest_addr)
+    alt_epcq_controller2_dev *epcq_flash_info = NULL;
+    
+    /* return -EINVAL if flash_info and dest_addr are NULL */
+    if(NULL == flash_info || NULL == dest_addr)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
-	
-    epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
+    
+    epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
 
-	/* validate arguments */
-	ret_code = alt_epcq_validate_read_write_arguments(epcq_flash_info, offset, length);
+    /* validate arguments */
+    ret_code = alt_epcq_validate_read_write_arguments(epcq_flash_info, offset, length);
 
-	/* copy data from flash to destination address */
-	if(0 == ret_code)
-	{
-		memcpy(dest_addr, (alt_u8*)epcq_flash_info->data_base + offset, length);
-
-        // Bit-reverse bytes read from flash
-        for (int i=0; i<length; i++)
-            *((unsigned char*)dest_addr+i) = bitswap8(*((unsigned char*)dest_addr+i));
-	}
+    /* copy data from flash to destination address */
+    if(0 == ret_code)
+    {
+        memcpy(dest_addr, (alt_u8*)epcq_flash_info->data_base + offset, length);
+    }
 
     return ret_code;
 }
 
 /**
- * altera_epcq_controller_init
+ * altera_epcq_controller2_init
  *
  * alt_sys_init.c will call this function automatically through macro
  *
@@ -539,147 +543,147 @@ int alt_epcq_controller_read
  * -EINVAL -> Invalid arguments.
  * -ENODEV -> System is configured incorrectly.
 **/
-alt_32 altera_epcq_controller_init(alt_epcq_controller_dev *flash)
+alt_32 altera_epcq_controller2_init(alt_epcq_controller2_dev *flash)
 {
-	alt_u32 silicon_id = 0;
-	alt_u32 size_in_bytes = 0;
-	alt_u32 number_of_sectors = 0;
+    alt_u32 silicon_id = 0;
+    alt_u32 size_in_bytes = 0;
+    alt_u32 number_of_sectors = 0;
 
     /* return -EINVAL if flash is NULL */
-	if(NULL == flash)
+    if(NULL == flash)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
-	
-	/* return -ENODEV if CSR slave is not attached */
-	if(NULL == (void *)flash->csr_base)
-	{
-		return -ENODEV;
-	}
+    
+    /* return -ENODEV if CSR slave is not attached */
+    if(NULL == (void *)flash->csr_base)
+    {
+        return -ENODEV;
+    }
 
 
-	/*
-	 * If flash is an EPCQ device, we read the EPCQ_RD_RDID register for the ID
-	 * If flash is an EPCS device, we read the EPCQ_RD_SID register for the ID
-	 *
-	 * Whether or not the flash is a EPCQ or EPCS is indicated in the system.h. The system.h gets
-	 * this value from the hw.tcl of the IP. If this value is set incorrectly, then things will go
-	 * badly.
-	 *
-	 * In both cases, we can determine the number of sectors, which we can use
-	 * to calculate a size. We compare that size to the system.h value to make sure
-	 * the EPCQ soft IP was configured correctly.
-	 */
-	if(0 == flash->is_epcs)
-	{
-		/* If we're an EPCQ, we read EPCQ_RD_RDID for the silicon ID */
-		silicon_id = IORD_ALTERA_EPCQ_CONTROLLER_RDID(flash->csr_base);
-		silicon_id &= ALTERA_EPCQ_CONTROLLER_RDID_MASK;
+    /*
+     * If flash is an EPCQ device, we read the EPCQ_RD_RDID register for the ID
+     * If flash is an EPCS device, we read the EPCQ_RD_SID register for the ID
+     *
+     * Whether or not the flash is a EPCQ or EPCS is indicated in the system.h. The system.h gets
+     * this value from the hw.tcl of the IP. If this value is set incorrectly, then things will go
+     * badly.
+     *
+     * In both cases, we can determine the number of sectors, which we can use
+     * to calculate a size. We compare that size to the system.h value to make sure
+     * the EPCQ soft IP was configured correctly.
+     */
+    if(0 == flash->is_epcs)
+    {
+        /* If we're an EPCQ, we read EPCQ_RD_RDID for the silicon ID */
+        silicon_id = IORD_ALTERA_EPCQ_CONTROLLER2_RDID(flash->csr_base);
+        silicon_id &= ALTERA_EPCQ_CONTROLLER2_RDID_MASK;
 
-		/* Determine which EPCQ device so we can figure out the number of sectors */
-		/* EPCQ share the same ID for the same capacity*/
-		switch(silicon_id)
-		{
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ16:
-			{
-				number_of_sectors = 32;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ32:
-			{
-				number_of_sectors = 64;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ64:
-			{
-				number_of_sectors = 128;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ128:
-			{
-				number_of_sectors = 256;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ256:
-			{
-				number_of_sectors = 512;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ512:
-			{
-				number_of_sectors = 1024;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_RDID_EPCQ1024:
-			{
-				number_of_sectors = 2048;
-				break;
-			}
-			default:
-			{
-				return -ENODEV;
-			}
-		}
-	}
-	else {
-		/* If we're an EPCS, we read EPCQ_RD_SID for the silicon ID */
-		silicon_id = IORD_ALTERA_EPCQ_CONTROLLER_SID(flash->csr_base);
-		silicon_id &= ALTERA_EPCQ_CONTROLLER_SID_MASK;
+        /* Determine which EPCQ device so we can figure out the number of sectors */
+        /* EPCQ share the same ID for the same capacity*/
+        switch(silicon_id)
+        {
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ16:
+            {
+                number_of_sectors = 32;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ32:
+            {
+                number_of_sectors = 64;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ64:
+            {
+                number_of_sectors = 128;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ128:
+            {
+                number_of_sectors = 256;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ256:
+            {
+                number_of_sectors = 512;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ512:
+            {
+                number_of_sectors = 1024;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_RDID_EPCQ1024:
+            {
+                number_of_sectors = 2048;
+                break;
+            }
+            default:
+            {
+                return -ENODEV;
+            }
+        }
+    }
+    else {
+        /* If we're an EPCS, we read EPCQ_RD_SID for the silicon ID */
+        silicon_id = IORD_ALTERA_EPCQ_CONTROLLER2_SID(flash->csr_base);
+        silicon_id &= ALTERA_EPCQ_CONTROLLER2_SID_MASK;
 
-		/* Determine which EPCS device so we can figure out various properties */
-		switch(silicon_id)
-		{
-			case ALTERA_EPCQ_CONTROLLER_SID_EPCS16:
-			{
-				number_of_sectors = 32;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_SID_EPCS64:
-			{
-				number_of_sectors = 128;
-				break;
-			}
-			case ALTERA_EPCQ_CONTROLLER_SID_EPCS128:
-			{
-				number_of_sectors = 256;
-				break;
-			}
-			default:
-			{
-				return -ENODEV;
-			}
-		}
-	}
+        /* Determine which EPCS device so we can figure out various properties */
+        switch(silicon_id)
+        {
+            case ALTERA_EPCQ_CONTROLLER2_SID_EPCS16:
+            {
+                number_of_sectors = 32;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_SID_EPCS64:
+            {
+                number_of_sectors = 128;
+                break;
+            }
+            case ALTERA_EPCQ_CONTROLLER2_SID_EPCS128:
+            {
+                number_of_sectors = 256;
+                break;
+            }
+            default:
+            {
+                return -ENODEV;
+            }
+        }
+    }
 
-	/* Calculate size of flash based on number of sectors */
-	size_in_bytes = number_of_sectors * flash->sector_size;
+    /* Calculate size of flash based on number of sectors */
+    size_in_bytes = number_of_sectors * flash->sector_size;
 
-	/*
-	 * Make sure calculated size is the same size given in system.h
-	 * Also check number of sectors is the same number given in system.h
-	 * Otherwise the EPCQ IP was not configured correctly
-	 */
-	if(	size_in_bytes != flash->size_in_bytes ||
-			number_of_sectors != flash->number_of_sectors)
-	{
-		flash->dev.number_of_regions = 0;
-		return -ENODEV;
-	}
-	else
-	{
-		flash->silicon_id = silicon_id;
-		flash->number_of_sectors = number_of_sectors;
+    /*
+     * Make sure calculated size is the same size given in system.h
+     * Also check number of sectors is the same number given in system.h
+     * Otherwise the EPCQ IP was not configured correctly
+     */
+    if(    size_in_bytes != flash->size_in_bytes ||
+            number_of_sectors != flash->number_of_sectors)
+    {
+        flash->dev.number_of_regions = 0;
+        return -ENODEV;
+    }
+    else
+    {
+        flash->silicon_id = silicon_id;
+        flash->number_of_sectors = number_of_sectors;
 
-		/*
-		 * populate fields of region_info required to conform to HAL API
-		 * create 1 region that composed of "number_of_sectors" blocks
-		 */
-		flash->dev.number_of_regions = 1;
-		flash->dev.region_info[0].offset = 0;
-		flash->dev.region_info[0].region_size = size_in_bytes;
-		flash->dev.region_info[0].number_of_blocks = number_of_sectors;
-		flash->dev.region_info[0].block_size = flash->sector_size;
-	}
+        /*
+         * populate fields of region_info required to conform to HAL API
+         * create 1 region that composed of "number_of_sectors" blocks
+         */
+        flash->dev.number_of_regions = 1;
+        flash->dev.region_info[0].offset = 0;
+        flash->dev.region_info[0].region_size = size_in_bytes;
+        flash->dev.region_info[0].number_of_blocks = number_of_sectors;
+        flash->dev.region_info[0].block_size = flash->sector_size;
+    }
 
 
     /*
@@ -687,7 +691,7 @@ alt_32 altera_epcq_controller_init(alt_epcq_controller_dev *flash)
      *
      * Only register the device if it's configured correctly.
      */
-		alt_flash_device_register(&(flash->dev));
+        alt_flash_device_register(&(flash->dev));
 
 
     return 0;
@@ -695,9 +699,9 @@ alt_32 altera_epcq_controller_init(alt_epcq_controller_dev *flash)
 
 
 /*
- *	Private API
+ *    Private API
  *
- *	Helper functions used by Public API functions.
+ *    Helper functions used by Public API functions.
  *  
  * Arguments:
  * - *flash_info: Pointer to EPCQ flash device structure.
@@ -713,35 +717,35 @@ alt_32 altera_epcq_controller_init(alt_epcq_controller_dev *flash)
  */
 ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments
 (
-		alt_epcq_controller_dev *flash_info, /** device info */
-		alt_u32 offset, /** offset of read/write */
-		alt_u32 length /** length of read/write */
+        alt_epcq_controller2_dev *flash_info, /** device info */
+        alt_u32 offset, /** offset of read/write */
+        alt_u32 length /** length of read/write */
 )
 {
-    alt_epcq_controller_dev *epcq_flash_info = NULL;
+    alt_epcq_controller2_dev *epcq_flash_info = NULL;
     alt_u32 start_address = 0;
     alt_32 end_address = 0;
-	
+    
   /* return -EINVAL if flash_info is NULL */
    if(NULL == flash_info)
    {
-    	return -EINVAL;
+        return -EINVAL;
    }
-	
-  epcq_flash_info = (alt_epcq_controller_dev*)flash_info;
+    
+  epcq_flash_info = (alt_epcq_controller2_dev*)flash_info;
 
   start_address = epcq_flash_info->data_base + offset; /** first address of read or write */
   end_address = start_address + length; /** last address of read or write (not inclusive) */
 
   /* make sure start and end address is less then the end address of the flash */
   if(
-		  start_address >= epcq_flash_info->data_end ||
-		  end_address > epcq_flash_info->data_end ||
-		  offset < 0 ||
-		  length < 0
+          start_address >= epcq_flash_info->data_end ||
+          end_address > epcq_flash_info->data_end ||
+          offset < 0 ||
+          length < 0
   )
   {
-	  return -EINVAL;
+      return -EINVAL;
   }
 
   return 0;
@@ -751,14 +755,14 @@ ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments
  * Private function that polls write in progress bit EPCQ_RD_STATUS.
  *
  * Write in progress will be set if any of the following operations are in progress:
- * 	-WRITE STATUS REGISTER
- * 	-WRITE NONVOLATILE CONFIGURATION REGISTER
- * 	-PROGRAM
- * 	-ERASE
+ *     -WRITE STATUS REGISTER
+ *     -WRITE NONVOLATILE CONFIGURATION REGISTER
+ *     -PROGRAM
+ *     -ERASE
  *
  * Assumes EPCQ was configured correctly.
  *
- * If ALTERA_EPCQ_CONTROLLER_1US_TIMEOUT_VALUE is set, the function will time out after
+ * If ALTERA_EPCQ_CONTROLLER2_1US_TIMEOUT_VALUE is set, the function will time out after
  * a period of time determined by that value.
  *
  * Arguments:
@@ -769,44 +773,38 @@ ALT_INLINE alt_32 static alt_epcq_validate_read_write_arguments
  * -EINVAL -> Invalid arguments
  * -ETIME  -> Time out and skipping the looping after 0.7 sec.
  */
-alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller_dev* epcq_flash_info)
+alt_32 static alt_epcq_poll_for_write_in_progress(alt_epcq_controller2_dev* epcq_flash_info)
 {  
     /* we'll want to implement timeout if a timeout value is specified */
-#if ALTERA_EPCQ_CONTROLLER_1US_TIMEOUT_VALUE > 0
-	alt_u32 timeout = ALTERA_EPCQ_CONTROLLER_1US_TIMEOUT_VALUE;
-	alt_u16 counter = 0;
+#if ALTERA_EPCQ_CONTROLLER2_1US_TIMEOUT_VALUE > 0
+    alt_u32 timeout = ALTERA_EPCQ_CONTROLLER2_1US_TIMEOUT_VALUE;
+    alt_u16 counter = 0;
 #endif
 
     /* return -EINVAL if epcq_flash_info is NULL */
-	if(NULL == epcq_flash_info)
+    if(NULL == epcq_flash_info)
     {
-    	return -EINVAL;
+        return -EINVAL;
     }
 
-	/* while Write in Progress bit is set, we wait */
-	while((IORD_ALTERA_EPCQ_CONTROLLER_STATUS(epcq_flash_info->csr_base) &
-			ALTERA_EPCQ_CONTROLLER_STATUS_WIP_MASK) ==
-			ALTERA_EPCQ_CONTROLLER_STATUS_WIP_BUSY)
-	{
+    /* while Write in Progress bit is set, we wait */
+    while((IORD_ALTERA_EPCQ_CONTROLLER2_STATUS(epcq_flash_info->csr_base) &
+            ALTERA_EPCQ_CONTROLLER2_STATUS_WIP_MASK) ==
+            ALTERA_EPCQ_CONTROLLER2_STATUS_WIP_BUSY)
+    {
         alt_busy_sleep(1); /* delay 1us */
-#if ALTERA_EPCQ_CONTROLLER_1US_TIMEOUT_VALUE > 0
-		if(timeout <= counter )
-		{
-			return -ETIME;
-		}
-		
-		counter++;
+#if ALTERA_EPCQ_CONTROLLER2_1US_TIMEOUT_VALUE > 0
+        if(timeout <= counter )
+        {
+            return -ETIME;
+        }
+        
+        counter++;
 #endif
 
-	}
+    }
 
-	return 0;
-}
-
-ALT_INLINE unsigned char static bitswap8(unsigned char v)
-{
-    return ((v * 0x0802LU & 0x22110LU) |
-            (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+    return 0;
 }
 
 

@@ -1,1 +1,0 @@
-../../../../ip/altera_epcq_controller_mod/HAL/inc/altera_epcq_controller_mod.h

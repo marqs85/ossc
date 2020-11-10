@@ -28,6 +28,7 @@
 #include "controls.h"
 #include "av_controller.h"
 #include "menu.h"
+#include "utils.h"
 #include "altera_avalon_pio_regs.h"
 
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
@@ -55,7 +56,7 @@ int write_userdata(alt_u8 entry)
     alt_u16 pageoffset, srcoffset;
     alt_u8 pageno;
     alt_u32 bytes_to_w;
-    int retval;
+    int retval, i;
 
     if (entry > MAX_USERDATA_ENTRY) {
         printf("invalid entry\n");
@@ -82,7 +83,9 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->osd_enable = osd_enable_pre;
         ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout_pre;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
-        retval = alt_epcq_controller_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
+        for (i=0; i<sizeof(ude_initcfg); i++)
+            databuf[i] = bitswap8(databuf[i]);
+        retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
         if (retval != 0)
             return retval;
 
@@ -110,15 +113,25 @@ int write_userdata(alt_u8 entry)
         memcpy(databuf+pageoffset, (char*)video_modes, PAGESIZE-pageoffset);
         srcoffset = PAGESIZE-pageoffset;
         vm_to_write -= PAGESIZE-pageoffset;
-        retval = alt_epcq_controller_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+        for (i=0; i<PAGESIZE; i++)
+            databuf[i] = bitswap8(databuf[i]);
+        retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
         if (retval != 0)
             return retval;
 
-        // then write the rest
-        if (vm_to_write > 0) {
-            retval = alt_epcq_controller_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+PAGESIZE), (alt_u8*)video_modes+srcoffset, vm_to_write);
+        // then write the rest page by page
+        pageno = 1;
+        while (vm_to_write > 0) {
+            memcpy(databuf, (char*)video_modes+srcoffset, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
+            for (i=0; i<PAGESIZE; i++)
+                databuf[i] = bitswap8(databuf[i]);
+            retval = alt_epcq_controller2_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
             if (retval != 0)
                 return retval;
+
+            srcoffset += PAGESIZE;
+            vm_to_write = (vm_to_write < PAGESIZE) ? 0 : (vm_to_write - PAGESIZE);
+            pageno++;
         }
 
         printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
@@ -145,7 +158,9 @@ int read_userdata(alt_u8 entry, int dry_run)
         return -1;
     }
 
-    retval = alt_epcq_controller_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+    retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+    for (i=0; i<PAGESIZE; i++)
+        databuf[i] = bitswap8(databuf[i]);
     if (retval != 0)
         return retval;
 
@@ -213,7 +228,9 @@ int read_userdata(alt_u8 entry, int dry_run)
                     pageoffset = 0;
                     pageno++;
                     // check
-                    retval = alt_epcq_controller_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
+                    retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
+                    for (i=0; i<PAGESIZE; i++)
+                        databuf[i] = bitswap8(databuf[i]);
                     if (retval != 0)
                         return retval;
                 } else {

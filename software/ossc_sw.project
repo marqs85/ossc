@@ -31,9 +31,9 @@
     <Excludepaths/>
     <Ignorefiles/>
     <Extensions>
-      <![CDATA[cpp;c;h;hpp;xrc;wxcp;fbp]]>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
     </Extensions>
-    <Topleveldir>../software</Topleveldir>
+    <Topleveldir>/home/markus/Code/ossc/software</Topleveldir>
   </Reconciliation>
   <VirtualDirectory Name="sys_controller">
     <VirtualDirectory Name="ths7353">
@@ -74,6 +74,8 @@
       <File Name="sys_controller/memory/sdcard.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="ossc">
+      <File Name="sys_controller/ossc/utils.h"/>
+      <File Name="sys_controller/ossc/utils.c"/>
       <File Name="sys_controller/ossc/menu.c"/>
       <File Name="sys_controller/ossc/menu.h"/>
       <File Name="sys_controller/ossc/sysconfig.h"/>

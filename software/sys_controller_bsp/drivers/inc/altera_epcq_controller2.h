@@ -28,8 +28,8 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __ALT_EPCQ_CONTROLLER_H__
-#define __ALT_EPCQ_CONTROLLER_H__
+#ifndef __ALT_EPCQ_CONTROLLER2_H__
+#define __ALT_EPCQ_CONTROLLER2_H__
 
 #include "alt_types.h"
 #include "sys/alt_flash_dev.h"
@@ -43,7 +43,7 @@ extern "C"
 /**
  *  Description of the EPCQ controller
  */
-typedef struct alt_epcq_controller_dev
+typedef struct alt_epcq_controller2_dev
 {
     alt_flash_dev dev;
 
@@ -56,25 +56,25 @@ typedef struct alt_epcq_controller_dev
     alt_u32 sector_size; /** size of each flash sector */
     alt_u32 page_size; /** page size */
     alt_u32 silicon_id; /** ID of silicon used with EPCQ IP */
-} alt_epcq_controller_dev;
+} alt_epcq_controller2_dev;
 
 /**
 *   Macros used by alt_sys_init.c to create data storage for driver instance
 */
-#define ALTERA_EPCQ_CONTROLLER_MOD_AVL_MEM_AVL_CSR_INSTANCE(epcq_name, avl_mem, avl_csr, epcq_dev) \
-alt_epcq_controller_dev epcq_dev =                                                       \
+#define ALTERA_EPCQ_CONTROLLER2_AVL_MEM_AVL_CSR_INSTANCE(epcq_name, avl_mem, avl_csr, epcq_dev) \
+static alt_epcq_controller2_dev epcq_dev =                                                       \
 {                                                                                               \
   .dev = {                                                                                      \
             .llist = ALT_LLIST_ENTRY,                                                           \
             .name = avl_mem##_NAME,                                                             \
-            .write = alt_epcq_controller_write,                                                 \
-            .read = alt_epcq_controller_read,                                                   \
-            .get_info = alt_epcq_controller_get_info,                                           \
-            .erase_block = alt_epcq_controller_erase_block,                                     \
-            .write_block = alt_epcq_controller_write_block,                                     \
+            .write = alt_epcq_controller2_write,                                                 \
+            .read = alt_epcq_controller2_read,                                                   \
+            .get_info = alt_epcq_controller2_get_info,                                           \
+            .erase_block = alt_epcq_controller2_erase_block,                                     \
+            .write_block = alt_epcq_controller2_write_block,                                     \
             .base_addr = ((void*)(avl_mem##_BASE)),                                             \
             .length = ((int)(avl_mem##_SPAN)),                                                  \
-            .lock = alt_epcq_controller_lock ,                                                  \
+            .lock = alt_epcq_controller2_lock ,                                                  \
          },                                                                                     \
   .data_base = ((alt_u32)(avl_mem##_BASE)),   							\
   .data_end = ((alt_u32)(avl_mem##_BASE) + (alt_u32)(avl_mem##_SPAN)),	                        \
@@ -94,33 +94,33 @@ alt_epcq_controller_dev epcq_dev =                                              
     of the Nios II Software Developer's Handbook.
 
 */
-int alt_epcq_controller_read(alt_flash_dev *flash_info, int offset, void *dest_addr, int length);
+int alt_epcq_controller2_read(alt_flash_dev *flash_info, int offset, void *dest_addr, int length);
 
-int alt_epcq_controller_get_info(alt_flash_fd *fd, flash_region **info, int *number_of_regions);
+int alt_epcq_controller2_get_info(alt_flash_fd *fd, flash_region **info, int *number_of_regions);
 
-int alt_epcq_controller_erase_block(alt_flash_dev *flash_info, int block_offset);
+int alt_epcq_controller2_erase_block(alt_flash_dev *flash_info, int block_offset);
 
-int alt_epcq_controller_write_block(alt_flash_dev *flash_info, int block_offset, int data_offset, const void *data, int length);
+int alt_epcq_controller2_write_block(alt_flash_dev *flash_info, int block_offset, int data_offset, const void *data, int length);
 
-int alt_epcq_controller_write(alt_flash_dev *flash_info, int offset, const void *src_addr, int length);
+int alt_epcq_controller2_write(alt_flash_dev *flash_info, int offset, const void *src_addr, int length);
 
-int alt_epcq_controller_lock(alt_flash_dev *flash_info, alt_u32 sectors_to_lock);
+int alt_epcq_controller2_lock(alt_flash_dev *flash_info, alt_u32 sectors_to_lock);
 
 
 /*
  * Initialization function
  */
-extern alt_32 altera_epcq_controller_init(alt_epcq_controller_dev *dev);
+extern alt_32 altera_epcq_controller2_init(alt_epcq_controller2_dev *dev);
 
 /*
  * alt_sys_init.c will call this macro automatically initialize the driver instance
  */
-#define ALTERA_EPCQ_CONTROLLER_MOD_INIT(name, dev) 	\
-		altera_epcq_controller_init(&dev);
+#define ALTERA_EPCQ_CONTROLLER2_INIT(name, dev) 	\
+		altera_epcq_controller2_init(&dev);
 
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __ALT_EPCQ_CONTROLLER_H__ */
+#endif /* __ALT_EPCQ_CONTROLLER2_H__ */

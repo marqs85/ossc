@@ -21,7 +21,7 @@
 #include <string.h>
 #include "sdcard.h"
 #include "flash.h"
-#include "lcd.h"
+#include "utils.h"
 
 extern alt_flash_dev *epcq_dev;
 
@@ -42,7 +42,7 @@ int check_sdcard(alt_u8 *databuf)
 int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, alt_u8 *tmpbuf)
 {
     SDRESULTS res;
-    int retval;
+    int retval, i;
     alt_u32 bytes_to_rw;
 
     while (length > 0) {
@@ -54,12 +54,14 @@ int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, a
         }
 
         if ((flash_pagenum % PAGES_PER_SECTOR) == 0) {
-            retval = alt_epcq_controller_erase_block(epcq_dev, flash_pagenum*PAGESIZE);
+            retval = alt_epcq_controller2_erase_block(epcq_dev, flash_pagenum*PAGESIZE);
             if (retval != 0)
                 return retval;
         }
 
-        retval = alt_epcq_controller_write_block(epcq_dev, ((flash_pagenum/PAGES_PER_SECTOR)*SECTORSIZE), flash_pagenum*PAGESIZE, tmpbuf, bytes_to_rw);
+        for (i=0; i<bytes_to_rw; i++)
+            tmpbuf[i] = bitswap8(tmpbuf[i]);
+        retval = alt_epcq_controller2_write_block(epcq_dev, ((flash_pagenum/PAGES_PER_SECTOR)*SECTORSIZE), flash_pagenum*PAGESIZE, tmpbuf, bytes_to_rw);
         if (retval != 0)
             return retval;
 
@@ -74,12 +76,14 @@ int copy_sd_to_flash(alt_u32 sd_blknum, alt_u32 flash_pagenum, alt_u32 length, a
 int copy_flash_to_sd(alt_u32 flash_pagenum, alt_u32 sd_blknum, alt_u32 length, alt_u8 *tmpbuf)
 {
     SDRESULTS res;
-    int retval;
+    int retval, i;
     alt_u32 bytes_to_rw;
 
     while (length > 0) {
         bytes_to_rw = (length < SD_BLK_SIZE) ? length : SD_BLK_SIZE;
-        retval = alt_epcq_controller_read(epcq_dev, flash_pagenum*PAGESIZE, tmpbuf, bytes_to_rw);
+        retval = alt_epcq_controller2_read(epcq_dev, flash_pagenum*PAGESIZE, tmpbuf, bytes_to_rw);
+        for (i=0; i<bytes_to_rw; i++)
+            tmpbuf[i] = bitswap8(tmpbuf[i]);
         if (retval != 0)
             return retval;
 

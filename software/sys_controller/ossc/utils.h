@@ -24,7 +24,7 @@
 
 #define PRINTF_BUFSIZE 512
 
-unsigned char bitswap8(unsigned char v);
+inline unsigned char bitswap8(unsigned char v);
 
 alt_u32 bswap32(alt_u32 w);
 
