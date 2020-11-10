@@ -52,6 +52,7 @@ extern volatile sc_regs *sc;
 extern volatile osd_regs *osd;
 
 extern menu_t menu_scanlines, menu_advtiming;
+extern char target_profile_name[PROFILE_NAME_LEN+1];
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -174,8 +175,9 @@ int parse_control()
 
             if (!menu_active) {
                 memset((void*)osd->osd_array.data, 0, sizeof(osd_char_array));
+                read_userdata(profile_sel, 1);
                 sniprintf((char*)osd->osd_array.data[0][0], OSD_CHAR_COLS, "Profile:");
-                sniprintf((char*)osd->osd_array.data[0][1], OSD_CHAR_COLS, "%u", profile_sel);
+                sniprintf((char*)osd->osd_array.data[0][1], OSD_CHAR_COLS, "%u: %s", profile_sel, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name);
                 if (cm.sync_active) {
                     sniprintf((char*)osd->osd_array.data[1][0], OSD_CHAR_COLS, "Mode preset:");
                     sniprintf((char*)osd->osd_array.data[1][1], OSD_CHAR_COLS, "%s", video_modes[cm.id].name);
