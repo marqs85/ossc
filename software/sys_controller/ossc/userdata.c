@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "userdata.h"
+#include "fat16_export.h"
 #include "flash.h"
 #include "sdcard.h"
 #include "firmware.h"
@@ -413,8 +414,45 @@ eval_button:
     strncpy(menu_row2, "Exporting...", LCD_ROW_LEN+1);
     ui_disp_menu(2);
 
+    /* TODO: write FAT */
+    _Static_assert(SD_BLK_SIZE == FAT16_SECTOR_SIZE, "Sector size mismatch");
+
+    /* Generate and write the boot sector. */
+    memset(databuf, 0, SD_BLK_SIZE); /* Must be at least 512 bytes! */
+    generate_boot_sector_16(databuf);
+    SD_Write(&sdcard_dev, databuf, 0);
+    /* ERROR HANDLING */
+
+    /* Generate and write the file allocation tables. */
+    for (alt_u16 clusters_written = 0, sd_blk_idx = 0;
+        clusters_written < (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE);)
+    {
+        alt_u16 count;
+        memset(databuf, 0, SD_BLK_SIZE); /* Must be at least 512 bytes! */
+        count = generate_fat16(databuf, clusters_written);
+        SD_Write(&sdcard_dev, databuf,
+            (FAT16_1_OFS/SD_BLK_SIZE) + sd_blk_idx);
+        /* ERROR HANDLING */
+
+        SD_Write(&sdcard_dev, databuf,
+            (FAT16_2_OFS/SD_BLK_SIZE) + sd_blk_idx);
+        /* ERROR HANDLING */
+
+        ++sd_blk_idx;
+        clusters_written += count;
+    }
+
+    /* Write the directory entry of the settings file. */
+    memset(databuf, 0, SD_BLK_SIZE);
+    memcpy(databuf, prof_dirent_16, PROF_DIRENT_16_SIZE);
+    SD_Write(&sdcard_dev, databuf, PROF_DIRENT_16_OFS/SD_BLK_SIZE);
+    /* ERROR HANDLING */
+
     /* This may wear the SD card a bit more than necessary... */
-    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE, 512/SD_BLK_SIZE, (MAX_USERDATA_ENTRY + 1) * SECTORSIZE, databuf);
+    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE,
+        PROF_16_DATA_OFS/SD_BLK_SIZE,
+        (MAX_USERDATA_ENTRY + 1) * SECTORSIZE,
+        databuf);
 
 out:
     SPI_CS_High();

@@ -159,6 +159,7 @@ C_SRCS += ossc/av_controller.c
 C_SRCS += ossc/avconfig.c
 C_SRCS += ossc/controls.c
 C_SRCS += ossc/firmware.c
+C_SRCS += ossc/fat16_export.c
 ifeq ($(OSDLANG),JP)
 C_SRCS += ossc/menu_sjis.c
 else
