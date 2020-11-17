@@ -136,8 +136,8 @@ typedef struct {
     /* 360p: GBI */ \
     { "480x360",   HDMI_Unknown,      480,  360,   600, 0,  375,   63, 10,   38, 3,  DEFAULT_SAMPLER_PHASE, VIDEO_EDTV,                 GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     { "240x360",   HDMI_Unknown,      256,  360,   300, 0,  375,   24, 10,   18, 3,  DEFAULT_SAMPLER_PHASE, VIDEO_EDTV,                 GROUP_384P,     (MODE_L2_240x360 | MODE_L3_240x360) },                                                          \
-    /* 384p: Sega Model 2 (real vtotal=423) */ \
-    { "384p",      HDMI_Unknown,      496,  384,   640, 0,  413,   50, 29,   62, 3,  DEFAULT_SAMPLER_PHASE, VIDEO_EDTV,                 GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
+    /* 384p: Sega Model 2 (real vtotal=423, avoid collision with PC88/98 and VGA400p) */ \
+    { "384p",      HDMI_Unknown,      496,  384,   640, 0,  408,   50, 29,   62, 3,  DEFAULT_SAMPLER_PHASE, VIDEO_EDTV,                 GROUP_384P,     (MODE_PT | MODE_L2 | MODE_PLLDIVBY2) },                                                         \
     /* 400p line3x */ \
     { "1600x400",  HDMI_Unknown,     1600,  400,  2000, 0,  449,  120, 34,  240, 2,  DEFAULT_SAMPLER_PHASE, VIDEO_PC,                   GROUP_384P,     (MODE_L3_GEN_16_9) },                                                                           \
     /* 720x400@70Hz, VGA Mode 3+/7+ */ \
