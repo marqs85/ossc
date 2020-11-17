@@ -26,10 +26,10 @@
 
 /* Use a sector size of 512 bytes. */
 #define FAT16_SECTOR_SIZE 512U
-//#define FAT16_BOOT_SECTOR_SIZE FAT16_SECTOR_SIZE
 
 /* This volume has 2048-byte clusters. */
 #define FAT16_CLUSTER_SIZE 2048U
+#define FAT16_SECTORS_PER_CLUSTER (FAT16_CLUSTER_SIZE/FAT16_SECTOR_SIZE)
 
 /* Offsets of the two File Allocation Tables. */
 #define FAT16_1_OFS 0x10000UL
@@ -38,6 +38,7 @@
 /* Each FAT16 entry is a 16-bit little-endian integer. */
 #define FAT16_ENTRY_SIZE 2U
 #define FAT16_ENTRY_SHIFT 1U
+#define FAT16_ENTRIES_PER_SECTOR (FAT16_SECTOR_SIZE >> FAT16_ENTRY_SHIFT)
 
 /* On this volume, each FAT will be 16 kiB in size. */
 #define FAT16_SIZE 0x04000UL
@@ -53,6 +54,7 @@ extern const alt_u8 prof_dirent_16[PROF_DIRENT_16_SIZE];
 
 #define PROF_16_DATA_OFS  0x028000UL
 #define PROF_16_DATA_SIZE 0x100000UL
+#define PROF_16_CLUSTER_COUNT (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE)
 /* Profile file data starts at offset 0x00028000 */
 /* Profile file data  ends  at offset 0x00128000 */
 /* Profile file data is exactly 1 MiB long. */

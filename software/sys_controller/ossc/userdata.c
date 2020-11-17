@@ -417,7 +417,7 @@ eval_button:
     ui_disp_menu(2);
 
     /* Generate and write the boot sector. */
-    memset(databuf, 0, SD_BLK_SIZE); /* Must be at least 512 bytes! */
+    memset(databuf, 0, SD_BLK_SIZE);
     generate_boot_sector_16(databuf);
     retval = SD_Write(&sdcard_dev, databuf, 0);
     if (retval)
@@ -439,7 +439,7 @@ eval_button:
         clusters_written < (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE);)
     {
         alt_u16 count;
-        memset(databuf, 0, SD_BLK_SIZE); /* Must be at least 512 bytes! */
+        memset(databuf, 0, SD_BLK_SIZE);
         count = generate_fat16(databuf, clusters_written);
         retval = SD_Write(&sdcard_dev, databuf,
             (FAT16_1_OFS/SD_BLK_SIZE) + sd_blk_idx);
@@ -452,7 +452,7 @@ eval_button:
             goto out;
 
         ++sd_blk_idx;
-        clusters_written += count;
+        clusters_written = count;
     }
 
     /* Write the directory entry of the settings file. */

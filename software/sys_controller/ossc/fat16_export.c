@@ -83,15 +83,6 @@ static const alt_u8 fat16_preamble[4] = {
     0xf8, 0xff, 0xff, 0xff,
 };
 
-#if 0
-/*
- * To generate each FAT, we need 1040 bytes of memory.
- * The buffer is assumed to be zeroed out.
- * XXX: This is a problem!
- */
-#define FAT16_ALLOC_SIZE 0x420U
-#endif
-
 /*
  * Generate a FAT.
  * The buffer is assumed to be zeroed out and have a size of at least
@@ -105,12 +96,22 @@ static const alt_u8 fat16_preamble[4] = {
 alt_u16 generate_fat16(alt_u8 *const fat, const alt_u16 written) {
 	alt_u16 cur_ofs = 0;
     const alt_u16 start_cluster = 3U + written;
-    const alt_u16 clusters_to_write = !written
-        ? ((FAT16_SECTOR_SIZE - sizeof(fat16_preamble)) >> FAT16_ENTRY_SHIFT)
-        : (((514U - written) > (FAT16_SECTOR_SIZE >> FAT16_ENTRY_SHIFT))
-            ? (FAT16_SECTOR_SIZE >> FAT16_ENTRY_SHIFT)
-            : (514U - written));
+
+    /*
+     * The total number of FAT entries to write consists of:
+     * 1. The FAT "preamble" (2 entries),
+     * 2. The cluster chain of the file (512 entries).
+     *
+     * The latter needs to contain the chain terminator.
+     */
+    const alt_u16 clusters_remaining = PROF_16_CLUSTER_COUNT - written;
+    const alt_u16 preamble_compensation = written ? 0 : 2U;
+    const alt_u16 clusters_to_write =
+        ((clusters_remaining > FAT16_ENTRIES_PER_SECTOR)
+            ? FAT16_ENTRIES_PER_SECTOR
+            : clusters_remaining) - preamble_compensation;
     const alt_u16 end_cluster = start_cluster + clusters_to_write;
+    static const alt_u16 last_fat_cluster = PROF_16_CLUSTER_COUNT + 2U;
 
     if (!written) {
         memcpy(fat, fat16_preamble, sizeof(fat16_preamble));
@@ -119,15 +120,17 @@ alt_u16 generate_fat16(alt_u8 *const fat, const alt_u16 written) {
 
     for (alt_u16 cluster = start_cluster; cluster < end_cluster; ++cluster) {
         /* FAT16 entries are 16-bit little-endian. */
-        fat[cur_ofs++] = cluster & 0xffU;
-        fat[cur_ofs++] = (cluster >> 8U) & 0xffU;
+        if (cluster == last_fat_cluster) {
+            /* At the last cluster, write the chain terminator. */
+            fat[cur_ofs++] = 0xff;
+            fat[cur_ofs++] = 0xff;
+        }
+        else {
+            fat[cur_ofs++] = cluster & 0xffU;
+            fat[cur_ofs++] = (cluster >> 8U) & 0xffU;
+        }
     }
 
-    /* After the last cluster, write the chain terminator. */
-    if (end_cluster == 514U) {
-    	fat[cur_ofs++] = 0xff;
-    	fat[cur_ofs++] = 0xff;
-    }
     return end_cluster - 3U;
 }
 
