@@ -35,20 +35,19 @@
 #define FAT16_1_OFS 0x10000UL
 #define FAT16_2_OFS 0x14000UL
 
-
 /* Each FAT16 entry is a 16-bit little-endian integer. */
 #define FAT16_ENTRY_SIZE 2U
-#define FAT16_ENTRY_SHIFT 1
+#define FAT16_ENTRY_SHIFT 1U
 
 /* On this volume, each FAT will be 16 kiB in size. */
-#define FAT16_SIZE 0x4000U
+#define FAT16_SIZE 0x04000UL
 
 /*
  * Define the properties and contents of the directory entry for the
  * settings file.
  */
 #define PROF_DIRENT_16_OFS  0x18000UL
-#define PROF_DIRENT_16_SIZE 32UL
+#define PROF_DIRENT_16_SIZE 32U
 
 extern const alt_u8 prof_dirent_16[PROF_DIRENT_16_SIZE];
 

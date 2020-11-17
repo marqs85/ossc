@@ -107,8 +107,8 @@ alt_u16 generate_fat16(alt_u8 *const fat, const alt_u16 written) {
     const alt_u16 start_cluster = 3U + written;
     const alt_u16 clusters_to_write = !written
         ? ((FAT16_SECTOR_SIZE - sizeof(fat16_preamble)) >> FAT16_ENTRY_SHIFT)
-        : (((514U - written) > (512U >> FAT16_ENTRY_SHIFT))
-            ? (512U >> FAT16_ENTRY_SHIFT)
+        : (((514U - written) > (FAT16_SECTOR_SIZE >> FAT16_ENTRY_SHIFT))
+            ? (FAT16_SECTOR_SIZE >> FAT16_ENTRY_SHIFT)
             : (514U - written));
     const alt_u16 end_cluster = start_cluster + clusters_to_write;
 
