@@ -128,7 +128,7 @@ alt_u16 generate_fat16(alt_u8 *const fat, const alt_u16 written) {
     	fat[cur_ofs++] = 0xff;
     	fat[cur_ofs++] = 0xff;
     }
-	return end_cluster;
+    return end_cluster - 3U;
 }
 
 const alt_u8 prof_dirent_16[PROF_DIRENT_16_SIZE] = {
