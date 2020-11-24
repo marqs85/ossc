@@ -371,12 +371,18 @@ int export_userdata()
     alt_u8 prompt_state = 0;
     useconds_t prompt_delay;
     const alt_u8 prompt_transitions[] = { 1, 2, 0, 0, };
-    const alt_u8 prompt_ofs[] = { 0, 16, 31, 48, };
+    const alt_u8 prompt_ofs[] = { 0, 16, 31, LNG(48, 47), };
     const char *prompt_msgs =
+        LNG(
         "SD CARD WILL BE" "\0" // [ 0..15]
         "OVERWRITTEN!!!"  "\0" // [16..30]
         "Export? 1=Y, 2=N""\0" // [31..47]
-        "Press 1 or 2";        // [48..60]
+        "Press 1 or 2",        // [48..60]
+        "SDｶｰﾄﾞｦｳﾜｶﾞｷｼﾏｽ" "\0" // [ 0..15]
+        "ｺﾞﾁｭｳｲｸﾀﾞｻｲ!!!"  "\0" // [16..30]
+        "1=ｼﾞｯｺｳｽﾙ 2=ﾔﾒﾙ" "\0" // [31..46]
+        "ﾄﾞﾁﾗｶｴﾗﾝﾃﾞｸﾀﾞｻｲ"      // [47..60]
+        );
     alt_u32 btn_vec;
 
     _Static_assert(SD_BLK_SIZE == FAT16_SECTOR_SIZE, "Sector size mismatch");

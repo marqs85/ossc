@@ -29,12 +29,6 @@
 #define OPT_NOWRAP  0
 #define OPT_WRAP    1
 
-#ifdef OSDLANG_JP
-#define LNG(e, j) j
-#else
-#define LNG(e, j) e
-#endif
-
 extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern avmode_t cm;
 extern avconfig_t tc;

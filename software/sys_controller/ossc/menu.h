@@ -23,6 +23,12 @@
 #include "alt_types.h"
 #include "controls.h"
 
+#ifdef OSDLANG_JP
+#define LNG(e, j) j
+#else
+#define LNG(e, j) e
+#endif
+
 typedef enum {
     OPT_AVCONFIG_SELECTION,
     OPT_AVCONFIG_NUMVALUE,
