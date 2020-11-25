@@ -246,9 +246,9 @@ MENU(menu_main, P99_PROTECT({ \
     { LNG("Output opt.    >","ｼｭﾂﾘｮｸｵﾌﾟｼｮﾝ  >"),  OPT_SUBMENU,            { .sub = { &menu_output, NULL, NULL } } },
     { LNG("Scanline opt.  >","ｽｷｬﾝﾗｲﾝｵﾌﾟｼｮﾝ >"),  OPT_SUBMENU,            { .sub = { &menu_scanlines, NULL, NULL } } },
     { LNG("Post-proc.     >","ｱﾄｼｮﾘ         >"),  OPT_SUBMENU,            { .sub = { &menu_postproc, NULL, NULL } } },
-    { LNG("Compatibility  >","ｺﾞｶﾝｾｲ        >"), OPT_SUBMENU,             { .sub = { &menu_compatibility, NULL, NULL } } },
+    { LNG("Compatibility  >","ｺﾞｶﾝｾｲ        >"),  OPT_SUBMENU,            { .sub = { &menu_compatibility, NULL, NULL } } },
     AUDIO_MENU
-    { "Settings opt   >",                       OPT_SUBMENU,             { .sub = { &menu_settings, NULL, NULL } } },
+    { LNG("Settings opt   >","ｾｯﾃｲｶﾝﾘ       >"),  OPT_SUBMENU,            { .sub = { &menu_settings, NULL, NULL } } },
 }))
 
 // Max 3 levels currently
