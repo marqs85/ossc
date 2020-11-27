@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "userdata.h"
+#include "fat16_export.h"
 #include "flash.h"
 #include "sdcard.h"
 #include "firmware.h"
@@ -370,13 +371,21 @@ int export_userdata()
     alt_u8 prompt_state = 0;
     useconds_t prompt_delay;
     const alt_u8 prompt_transitions[] = { 1, 2, 0, 0, };
-    const alt_u8 prompt_ofs[] = { 0, 16, 31, 48, };
+    const alt_u8 prompt_ofs[] = { 0, 16, 31, LNG(48, 47), };
     const char *prompt_msgs =
+        LNG(
         "SD CARD WILL BE" "\0" // [ 0..15]
         "OVERWRITTEN!!!"  "\0" // [16..30]
         "Export? 1=Y, 2=N""\0" // [31..47]
-        "Press 1 or 2";        // [48..60]
+        "Press 1 or 2",        // [48..60]
+        "SDｶｰﾄﾞｦｳﾜｶﾞｷｼﾏｽ" "\0" // [ 0..15]
+        "ｺﾞﾁｭｳｲｸﾀﾞｻｲ!!!"  "\0" // [16..30]
+        "1=ｼﾞｯｺｳｽﾙ 2=ﾔﾒﾙ" "\0" // [31..46]
+        "ﾄﾞﾁﾗｶｴﾗﾝﾃﾞｸﾀﾞｻｲ"      // [47..60]
+        );
     alt_u32 btn_vec;
+
+    _Static_assert(SD_BLK_SIZE == FAT16_SECTOR_SIZE, "Sector size mismatch");
 
     retval = check_sdcard(databuf);
     SPI_CS_High();
@@ -410,30 +419,76 @@ eval_button:
         prompt_state = 3;
     }
 
-    strncpy(menu_row2, "Exporting...", LCD_ROW_LEN+1);
+    strncpy(menu_row2, LNG("Exporting...", "ｵﾏﾁｸﾀﾞｻｲ"), LCD_ROW_LEN+1);
     ui_disp_menu(2);
 
+    /* Zero out the boot sector, FATs and root directory. */
+    memset(databuf, 0, SD_BLK_SIZE);
+    for (alt_u32 sector = 0;
+        sector < (FAT16_ROOT_DIR_FIRST_SECTOR + FAT16_ROOT_DIR_SECTORS);
+        ++sector)
+    {
+        retval = SD_Write(&sdcard_dev, databuf, sector);
+        if (retval)
+            goto out;
+    }
+
+    /* Generate and write the boot sector. */
+    generate_boot_sector_16(databuf);
+    retval = SD_Write(&sdcard_dev, databuf, 0);
+    if (retval)
+        goto out;
+
+    /* Generate and write the file allocation tables. */
+    for (alt_u16 clusters_written = 0, sd_blk_idx = 0;
+        clusters_written < (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE);)
+    {
+        memset(databuf, 0, SD_BLK_SIZE);
+        clusters_written = generate_fat16(databuf, clusters_written);
+        retval = SD_Write(&sdcard_dev, databuf,
+            (FAT16_1_OFS/SD_BLK_SIZE) + sd_blk_idx);
+        if (retval)
+            goto out;
+
+        retval = SD_Write(&sdcard_dev, databuf,
+            (FAT16_2_OFS/SD_BLK_SIZE) + sd_blk_idx);
+        if (retval)
+            goto out;
+
+        ++sd_blk_idx;
+    }
+
+    /* Write the directory entry of the settings file. */
+    memset(databuf, 0, SD_BLK_SIZE);
+    memcpy(databuf, prof_dirent_16, PROF_DIRENT_16_SIZE);
+    retval = SD_Write(&sdcard_dev, databuf, PROF_DIRENT_16_OFS/SD_BLK_SIZE);
+    if (retval)
+        goto out;
+
     /* This may wear the SD card a bit more than necessary... */
-    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE, 512/SD_BLK_SIZE, (MAX_USERDATA_ENTRY + 1) * SECTORSIZE, databuf);
+    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE,
+        PROF_16_DATA_OFS/SD_BLK_SIZE,
+        (MAX_USERDATA_ENTRY + 1) * SECTORSIZE,
+        databuf);
 
 out:
     SPI_CS_High();
 
     switch (retval) {
         case 0:
-            msg = "Success";
+            msg = LNG("Success", "ｶﾝﾘｮｳｼﾏｼﾀ"); // Alternative: "ｶﾝﾘｮｳｲﾀｼﾏｼﾀ"
             break;
         case SD_NOINIT:
-            msg = "No SD card det.";
+            msg = LNG("No SD card det.", "SDｶｰﾄﾞｶﾞﾐﾂｶﾘﾏｾﾝ");
             break;
         case -EINVAL:
-            msg = "Invalid params.";
+            msg = LNG("Invalid params.", "ﾊﾟﾗﾒｰﾀｶﾞﾑｺｳﾃﾞｽ");
             break;
         case UDATA_EXPT_CANCELLED:
-            msg = "Cancelled";
+            msg = LNG("Cancelled", "ｷｬﾝｾﾙｻﾚﾏｼﾀ"); // Alternative: "ｷｬﾝｾﾙｻｾﾃｲﾀﾀﾞｷﾏｽ"
             break;
         default:
-            msg = "SD/Flash error";
+            msg = LNG("SD/Flash error", "SDｶFLASHﾉｴﾗｰ"); // ﾌﾗｯｼｭ would be NG.
             break;
     }
     strncpy(menu_row2, msg, LCD_ROW_LEN+1);
