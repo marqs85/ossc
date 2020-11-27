@@ -159,12 +159,17 @@ C_SRCS += ossc/av_controller.c
 C_SRCS += ossc/avconfig.c
 C_SRCS += ossc/controls.c
 C_SRCS += ossc/firmware.c
+C_SRCS += ossc/fat16_export.c
 ifeq ($(OSDLANG),JP)
 C_SRCS += ossc/menu_sjis.c
 else
 C_SRCS += ossc/menu.c
 endif
+ifeq ($(OSDLANG),JP)
+C_SRCS += ossc/userdata_sjis.c
+else
 C_SRCS += ossc/userdata.c
+endif
 C_SRCS += ossc/utils.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
@@ -970,7 +975,7 @@ clean : clean_elf_derived_files
 endif
 
 clean :
-	@$(RM) -r $(ELF) $(OBJDUMP_NAME) $(LINKER_MAP_NAME) $(OBJ_ROOT_DIR) $(RUNTIME_ROOT_DIR) $(FORCE_REBUILD_DEP_LIST) ossc/menu_sjis.c
+	@$(RM) -r $(ELF) $(OBJDUMP_NAME) $(LINKER_MAP_NAME) $(OBJ_ROOT_DIR) $(RUNTIME_ROOT_DIR) $(FORCE_REBUILD_DEP_LIST) ossc/menu_sjis.c ossc/userdata_sjis.c
 	@$(ECHO) [$(APP_NAME) clean complete]
 
 # Clean just the BSP.
@@ -1129,6 +1134,9 @@ print-elf-name:
 #------------------------------------------------------------------------------
 ossc/menu_sjis.c: ossc/menu.c
 	iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c > ossc/menu_sjis.c
+
+ossc/userdata_sjis.c: ossc/userdata.c
+	iconv -f UTF-8 -t SHIFT-JIS ossc/userdata.c > ossc/userdata_sjis.c
 
 mem_init/sys_onchip_memory2_0.hex: sys_controller.elf
 	$(RV_OBJCOPY) --change-addresses -0x10000 -O binary --gap-fill 0 $< mem_init/sys_onchip_memory2_0.bin
