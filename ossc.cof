@@ -10,7 +10,7 @@
 		<user_name>Page_0</user_name>
 		<page_flags>1</page_flags>
 		<bit0>
-			<sof_filename>output_files/ossc.sof</sof_filename> 
+			<sof_filename>output_files/ossc.sof<compress_bitstream>1</compress_bitstream></sof_filename> 
 		</bit0>
 	</sof_data>
 	<version>10</version>
