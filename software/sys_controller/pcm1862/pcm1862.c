@@ -44,8 +44,8 @@ inline void pcm1862_writereg(alt_u8 regaddr, alt_u8 data)
 void pcm_source_sel(pcm_input_t input) {
     alt_u8 adc_ch = 1<<input;
 
-    pcm1862_writereg(PCM1862_ADC1L, adc_ch);
-    pcm1862_writereg(PCM1862_ADC1R, adc_ch);
+    pcm1862_writereg(PCM1862_ADC1L, (1<<6)|adc_ch);
+    pcm1862_writereg(PCM1862_ADC1R, (1<<6)|adc_ch);
 }
 
 void pcm_set_gain(alt_8 db_gain) {
@@ -60,6 +60,8 @@ int pcm1862_init()
     if (pcm1862_readreg(0x05) != 0x86)
         return 0;
 
+    pcm1862_writereg(PCM1862_PWR_CTRL, 0x75);
+
     //pcm1862_writereg(0x00, 0xff);
     pcm1862_writereg(PCM1862_CLKCONFIG, 0x90);
 
@@ -67,7 +69,9 @@ int pcm1862_init()
     pcm1862_writereg(PCM1862_DSP2_CLKDIV, 0x00);
     pcm1862_writereg(PCM1862_ADC_CLKDIV,  0x03);
     pcm1862_writereg(PCM1862_PLLCONFIG, 0x00);
-    pcm1862_writereg(PCM1862_DSP_CTRL, 0x30);
+    pcm1862_writereg(PCM1862_DSP_CTRL, 0xB0);
+
+    pcm1862_writereg(PCM1862_PWR_CTRL, 0x70);
 
     return 1;
 }

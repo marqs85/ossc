@@ -53,6 +53,7 @@
 
 #define PCM1862_PLLCONFIG       0x28
 
+#define PCM1862_PWR_CTRL        0x70
 #define PCM1862_DSP_CTRL        0x71
 
 #endif /* PCM1862_REGS_H_ */
