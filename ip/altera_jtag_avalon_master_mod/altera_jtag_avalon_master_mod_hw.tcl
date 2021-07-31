@@ -5,7 +5,7 @@ package require -exact sopc 9.1
 # |
 set_module_property NAME altera_jtag_avalon_master_mod
 set_module_property DESCRIPTION "The JTAG to Avalon Master Bridge is a collection of pre-wired components that provide an Avalon Master using the new JTAG channel."
-set_module_property VERSION "19.1"
+set_module_property VERSION "20.1"
 set_module_property GROUP "Basic Functions/Bridges and Adaptors/Memory Mapped"
 set_module_property AUTHOR  "Altera Corporation"
 set_module_property DISPLAY_NAME "JTAG to Avalon Master Bridge (customized)"
@@ -108,7 +108,7 @@ proc compose {} {
     add_instance transacto   altera_avalon_packets_to_master
     add_instance b2p_adapter channel_adapter
     add_instance p2b_adapter channel_adapter
-    
+
     # altera_reset_bridge parameters
     set_instance_parameter clk_rst SYNCHRONOUS_EDGES none
     # altera_jtag_dc_streaming parameters
@@ -175,7 +175,7 @@ proc compose {} {
     set_instance_parameter transacto FIFO_DEPTHS            [ get_parameter_value FIFO_DEPTHS ]
     # |
     # +-----------------------------------
-    
+
     # +-----------------------------------
     # | connection point clk
     # |
@@ -217,7 +217,7 @@ proc compose {} {
     add_connection clk_src.out_clk transacto.clk
     add_connection clk_src.out_clk b2p_adapter.clk
     add_connection clk_src.out_clk p2b_adapter.clk
-    
+
     add_connection clk_rst.out_reset jtag_phy_embedded_in_jtag_master.clock_reset
     add_connection clk_rst.out_reset timing_adt.reset
     add_connection clk_rst.out_reset fifo.clk_reset
@@ -226,7 +226,7 @@ proc compose {} {
     add_connection clk_rst.out_reset transacto.clk_reset
     add_connection clk_rst.out_reset b2p_adapter.reset
     add_connection clk_rst.out_reset p2b_adapter.reset
-    
+
     add_connection jtag_phy_embedded_in_jtag_master.src                timing_adt.in
     add_connection timing_adt.out         fifo.in
     add_connection fifo.out               b2p.in_bytes_stream
