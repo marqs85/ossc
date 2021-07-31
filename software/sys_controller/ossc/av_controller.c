@@ -722,8 +722,8 @@ void program_mode()
     pll_reconfigure(cm.pll_config);
 
     if (cm.fpga_vmultmode == FPGA_V_MULTMODE_1X) {
-        osd_x_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;
-        osd_y_size = osd_x_size;
+        osd_y_size = (video_modes[cm.id].v_active > 700) ? 1 : 0;
+        osd_x_size = osd_y_size + !!(video_modes[cm.id].flags & MODE_INTERLACED);
     } else {
         osd_x_size = 1 - cm.tx_pixelrep + (cm.fpga_hmultmode == FPGA_H_MULTMODE_OPTIMIZED_1X) + (cm.fpga_vmultmode > FPGA_V_MULTMODE_3X);
         osd_y_size = 0;
