@@ -383,7 +383,7 @@ int export_userdata()
         "1=ｼﾞｯｺｳｽﾙ 2=ﾔﾒﾙ" "\0" // [31..46]
         "ﾄﾞﾁﾗｶｴﾗﾝﾃﾞｸﾀﾞｻｲ"      // [47..60]
         );
-    alt_u32 btn_vec;
+    alt_u32 btn_vec, sd_block_offset;
 
     _Static_assert(SD_BLK_SIZE == FAT16_SECTOR_SIZE, "Sector size mismatch");
 
@@ -419,8 +419,22 @@ eval_button:
         prompt_state = 3;
     }
 
+    usleep(100000U);
+    strncpy(menu_row1,"SD Format", LCD_ROW_LEN+1);
+    strncpy(menu_row2,"1=FAT16, 2=RAW", LCD_ROW_LEN+1);
+    ui_disp_menu(2);
+    if ((!poll_yesno(5000000U, &btn_vec)) || ((btn_vec != rc_keymap[RC_BTN1]) && (btn_vec != rc_keymap[RC_BTN2])))  {
+        retval = UDATA_EXPT_CANCELLED;
+        goto out;
+    }
+    sd_block_offset = (btn_vec == rc_keymap[RC_BTN1]) ? (PROF_16_DATA_OFS/SD_BLK_SIZE) : 1;
+
     strncpy(menu_row2, LNG("Exporting...", "ｵﾏﾁｸﾀﾞｻｲ"), LCD_ROW_LEN+1);
     ui_disp_menu(2);
+
+    // RAW copy
+    if (btn_vec == rc_keymap[RC_BTN2])
+        goto copy_start;
 
     /* Zero out the boot sector, FATs and root directory. */
     memset(databuf, 0, SD_BLK_SIZE);
@@ -465,9 +479,10 @@ eval_button:
     if (retval)
         goto out;
 
+copy_start:
     /* This may wear the SD card a bit more than necessary... */
     retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE,
-        PROF_16_DATA_OFS/SD_BLK_SIZE,
+        sd_block_offset,
         (MAX_USERDATA_ENTRY + 1) * SECTORSIZE,
         databuf);
 

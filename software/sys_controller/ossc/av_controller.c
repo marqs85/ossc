@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2022  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -993,7 +993,7 @@ int main()
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
-        strncpy(row2, "2014-2020  marqs", LCD_ROW_LEN+1);
+        strncpy(row2, "2014-2022  marqs", LCD_ROW_LEN+1);
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif

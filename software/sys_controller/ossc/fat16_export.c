@@ -24,17 +24,12 @@
 
 /*
  * The beginning of the boot sector, along with the BPB.
- * Volume offsets 0x003 to 0x01a, inclusive.
- * The BPB spans volume offsets 0x00b to 0x01c, inclusive.
- *
- * The jump instruction at volume offsets 0x000 to 0x002, inclusive,
- * is left zeroed out to save a tiny bit of space.
  */
-static const alt_u8 bootsec_beg_bpb_16[24] = {
-    /* Three zeros */ 0x4d, 0x53, 0x57, 0x49, 0x4e, /* 0x003...0x007 */
-    0x34, 0x2e, 0x31, 0x00, 0x02, 0x04, 0x80, 0x00, /* 0x008...0x00f */
-    0x02, 0x00, 0x08, 0x00, 0x80, 0xf8, 0x20, 0x00, /* 0x010...0x017 */
-    0x3f, 0x00, 0xff, /* Zeros until 0x024       */ /* 0x018...0x01a */
+static const alt_u8 bootsec_beg_bpb_16[27] = {
+    0xeb, 0x00, 0x90,                               /* 0x000: Code (x86 short jump + NOP) */
+    0x4d, 0x53, 0x57, 0x49, 0x4e, 0x34, 0x2e, 0x31, /* 0x003: OS Name */
+    0x00, 0x02, 0x04, 0x80, 0x00, 0x02, 0x00, 0x08, /* 0x00B: Bios Parameter Block */
+    0x00, 0x80, 0xf8, 0x20, 0x00, 0x3f, 0x00, 0xff,
 };
 
 /*
@@ -60,7 +55,7 @@ static const alt_u8 bootsec_after_bpb_16[26] = {
  */
 void generate_boot_sector_16(alt_u8 *const buf) {
     /* Initial FAT16 boot sector contents + the BPB. */
-    memcpy(buf + 3, bootsec_beg_bpb_16, 24);
+    memcpy(buf, bootsec_beg_bpb_16, sizeof(bootsec_beg_bpb_16));
 
     /*
      * Then the rest of the boot sector.
@@ -70,7 +65,7 @@ void generate_boot_sector_16(alt_u8 *const buf) {
      * be a deviation from the FAT16 spec, but should be harmless
      * for our purposes.
      */
-    memcpy(buf + 36, bootsec_after_bpb_16, 26);
+    memcpy(buf + 36, bootsec_after_bpb_16, sizeof(bootsec_after_bpb_16));
 
     /* RISC-V is little-endian, so do a 16-bit write instead. */
     *((alt_u16*)(buf + 510)) = 0xaa55U;
