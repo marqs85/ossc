@@ -59,11 +59,11 @@
 extern const alt_u8 prof_dirent_16[PROF_DIRENT_16_SIZE];
 
 #define PROF_16_DATA_OFS  0x028000UL
-#define PROF_16_DATA_SIZE 0x100000UL
-#define PROF_16_CLUSTER_COUNT (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE)
+#define PROF_16_DATA_SIZE 0x100200UL
+#define PROF_16_CLUSTER_COUNT ((PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE)+!!(PROF_16_DATA_SIZE%FAT16_CLUSTER_SIZE))
 /* Profile file data starts at offset 0x00028000 */
-/* Profile file data  ends  at offset 0x00128000 */
-/* Profile file data is exactly 1 MiB long. */
+/* Profile file data  ends  at offset 0x00128200 */
+/* Profile file data is 1049088 bytes long. */
 
 
 /* Generate a FAT16 boot sector.

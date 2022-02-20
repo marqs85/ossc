@@ -43,7 +43,7 @@ extern alt_u8 profile_sel;
 extern alt_u8 def_input, profile_link;
 extern alt_u8 lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
-extern alt_u8 osd_enable_pre, osd_status_timeout_pre;
+extern alt_u8 osd_enable, osd_status_timeout;
 extern SD_DEV sdcard_dev;
 extern alt_flash_dev *epcq_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -81,8 +81,8 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->auto_av1_ypbpr = auto_av1_ypbpr;
         ((ude_initcfg*)databuf)->auto_av2_ypbpr = auto_av2_ypbpr;
         ((ude_initcfg*)databuf)->auto_av3_ypbpr = auto_av3_ypbpr;
-        ((ude_initcfg*)databuf)->osd_enable = osd_enable_pre;
-        ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout_pre;
+        ((ude_initcfg*)databuf)->osd_enable = osd_enable;
+        ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         for (i=0; i<sizeof(ude_initcfg); i++)
             databuf[i] = bitswap8(databuf[i]);
@@ -192,8 +192,8 @@ int read_userdata(alt_u8 entry, int dry_run)
             auto_av1_ypbpr = ((ude_initcfg*)databuf)->auto_av1_ypbpr;
             auto_av2_ypbpr = ((ude_initcfg*)databuf)->auto_av2_ypbpr;
             auto_av3_ypbpr = ((ude_initcfg*)databuf)->auto_av3_ypbpr;
-            osd_enable_pre = ((ude_initcfg*)databuf)->osd_enable;
-            osd_status_timeout_pre = ((ude_initcfg*)databuf)->osd_status_timeout;
+            osd_enable = ((ude_initcfg*)databuf)->osd_enable;
+            osd_status_timeout = ((ude_initcfg*)databuf)->osd_status_timeout;
             profile_link = ((ude_initcfg*)databuf)->profile_link;
             profile_sel = input_profiles[AV_TESTPAT]; // Global profile
             lcd_bl_timeout = ((ude_initcfg*)databuf)->lcd_bl_timeout;
@@ -302,12 +302,13 @@ int import_userdata()
             continue;
         }
 
-        if ((header.version_major != PROFILE_VER_MAJOR) || (header.version_minor != PROFILE_VER_MINOR)) {
-            printf("Data version %u.%u does not match fw\n", header.version_major, header.version_minor);
+        if ((header.type == UDE_PROFILE) && ((header.version_major != PROFILE_VER_MAJOR) || (header.version_minor != PROFILE_VER_MINOR))) {
+            printf("Profile version %u.%u does not match current one\n", header.version_major, header.version_minor);
             continue;
-        }
-
-        if (header.type > UDE_PROFILE) {
+        } else if ((header.type == UDE_INITCFG) && ((header.version_major != INITCFG_VER_MAJOR) || (header.version_minor != INITCFG_VER_MINOR))) {
+            printf("Initconfig version %u.%u does not match current one\n", header.version_major, header.version_minor);
+            continue;
+        } else if (header.type > UDE_PROFILE) {
             printf("Unknown userdata entry type %u\n", header.type);
             continue;
         }
@@ -322,6 +323,9 @@ int import_userdata()
 
         entries_imported++;
     }
+
+    // flash read immediately after write might fail, add some delay
+    usleep(1000);
 
     read_userdata(INIT_CONFIG_SLOT, 0);
     profile_sel = input_profiles[target_input];
@@ -427,7 +431,7 @@ eval_button:
         retval = UDATA_EXPT_CANCELLED;
         goto out;
     }
-    sd_block_offset = (btn_vec == rc_keymap[RC_BTN1]) ? (PROF_16_DATA_OFS/SD_BLK_SIZE) : 1;
+    sd_block_offset = (btn_vec == rc_keymap[RC_BTN1]) ? (PROF_16_DATA_OFS/SD_BLK_SIZE) : 0;
 
     strncpy(menu_row2, LNG("Exporting...", "ｵﾏﾁｸﾀﾞｻｲ"), LCD_ROW_LEN+1);
     ui_disp_menu(2);
@@ -480,6 +484,12 @@ eval_button:
         goto out;
 
 copy_start:
+    // Zero out first 512 bytes (1 SD block) of the file
+    memset(databuf, 0, SD_BLK_SIZE);
+    retval = SD_Write(&sdcard_dev, databuf, sd_block_offset++);
+    if (retval)
+        goto out;
+
     /* This may wear the SD card a bit more than necessary... */
     retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE,
         sd_block_offset,

@@ -72,7 +72,7 @@ alt_u8 stable_frames;
 alt_u8 update_cur_vm;
 
 alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
-alt_u8 osd_enable, osd_enable_pre=1, osd_status_timeout, osd_status_timeout_pre=1;
+alt_u8 osd_enable=1, osd_status_timeout=1;
 alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -875,8 +875,6 @@ int init_hw()
     read_userdata(profile_sel, 0);
 
     // Setup OSD
-    osd_enable = osd_enable_pre;
-    osd_status_timeout = osd_status_timeout_pre;
     osd->osd_config.x_size = 0;
     osd->osd_config.y_size = 0;
     osd->osd_config.x_offset = 3;
@@ -1191,9 +1189,7 @@ int main()
             printf("Changing AV3 RGB source\n");
             cm.cc.av3_alt_rgb = tc.av3_alt_rgb;
         }
-        if ((osd_enable != osd_enable_pre) || (osd_status_timeout != osd_status_timeout_pre)) {
-            osd_enable = osd_enable_pre;
-            osd_status_timeout = osd_status_timeout_pre;
+        if ((!!osd_enable != osd->osd_config.enable) || (osd_status_timeout != osd->osd_config.status_timeout)) {
             osd->osd_config.enable = !!osd_enable;
             osd->osd_config.status_timeout = osd_status_timeout;
             if (menu_active) {
