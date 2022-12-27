@@ -5,9 +5,10 @@ package require -exact sopc 9.1
 # |
 set_module_property NAME altera_jtag_avalon_master_mod
 set_module_property DESCRIPTION "The JTAG to Avalon Master Bridge is a collection of pre-wired components that provide an Avalon Master using the new JTAG channel."
-set_module_property VERSION "20.1"
+#set_module_property VERSION "21.1"
+set_module_property INTERNAL false
 set_module_property GROUP "Basic Functions/Bridges and Adaptors/Memory Mapped"
-set_module_property AUTHOR  "Altera Corporation"
+#set_module_property AUTHOR  "Altera Corporation"
 set_module_property DISPLAY_NAME "JTAG to Avalon Master Bridge (customized)"
 set_module_property DATASHEET_URL "http://www.altera.com/literature/hb/nios2/qts_qii55011.pdf"
 set_module_property INSTANTIATE_IN_SYSTEM_MODULE true
