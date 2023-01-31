@@ -33,7 +33,7 @@
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern SD_DEV sdcard_dev;
-extern alt_u16 sys_ctrl;
+extern alt_u32 sys_ctrl;
 
 static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
 {

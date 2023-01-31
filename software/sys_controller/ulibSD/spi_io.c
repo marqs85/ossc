@@ -7,7 +7,7 @@
 #include "spi_io.h"
 #include "av_controller.h"
 
-extern alt_u16 sys_ctrl;
+extern alt_u32 sys_ctrl;
 
 alt_u32 sd_timer_ts;
 

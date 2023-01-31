@@ -43,7 +43,7 @@ extern avmode_t cm;
 extern avconfig_t tc;
 extern avinput_t target_input;
 extern alt_u8 menu_active;
-extern alt_u16 sys_ctrl;
+extern alt_u32 sys_ctrl;
 extern alt_u16 tc_sampler_phase;
 extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
@@ -182,7 +182,7 @@ int parse_control()
                     sniprintf((char*)osd->osd_array.data[1][0], OSD_CHAR_COLS, "Mode preset:");
                     sniprintf((char*)osd->osd_array.data[1][1], OSD_CHAR_COLS, "%s", video_modes[cm.id].name);
                     sniprintf((char*)osd->osd_array.data[2][0], OSD_CHAR_COLS, "Imode (FPGA):");
-                    sniprintf((char*)osd->osd_array.data[2][1], OSD_CHAR_COLS, "%lu-%c%c %lu.%.2luHz", (unsigned long)((sc_status.vmax+1)<<sc_status.interlace_flag)+sc_status.interlace_flag,
+                    sniprintf((char*)osd->osd_array.data[2][1], OSD_CHAR_COLS, "%lu-%c%c %lu.%.2luHz", (unsigned long)sc_status.vmax,
                                                                              sc_status.interlace_flag ? 'i' : 'p',
                                                                              sc_status.fpga_vsyncgen ? '*' : ' ',
                                                                              fpga_v_hz_x100/100,
