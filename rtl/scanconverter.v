@@ -88,9 +88,9 @@ module scanconverter (
     input PCLK_in,
     input clk27,
     input enable_sc,
-    input [31:0] h_config,
-    input [31:0] h_config2,
-    input [31:0] v_config,
+    input [31:0] hv_in_config,
+    input [31:0] hv_in_config2,
+    input [31:0] hv_in_config3,
     input [31:0] misc_config,
     input [31:0] sl_config,
     input [31:0] sl_config2,
@@ -821,8 +821,8 @@ end
 assign vsync_flag = ~VSYNC_in_cc_LL;
 
 
-wire [11:0] H_L5BORDER_1920_tmp = (11'd1920-h_config[10:0]);
-wire [11:0] H_L5BORDER_1600_tmp = (11'd1600-h_config[10:0]);
+wire [11:0] H_L5BORDER_1920_tmp = (11'd1920-hv_in_config[23:12]);
+wire [11:0] H_L5BORDER_1600_tmp = (11'd1600-hv_in_config[23:12]);
 
 //Buffer the inputs using input pixel clock and generate 1x signals
 always @(posedge pclk_1x or negedge reset_n)
@@ -899,31 +899,31 @@ begin
 
         if (frame_change) begin
             //Read configuration data from CPU
-            H_MULTMODE <= h_config[31:30];    // Horizontal scaling mode
-            V_MULTMODE <= v_config[31:29];    // Line multiply mode
+            H_MULTMODE <= misc_config[25:24];    // Horizontal scaling mode
+            V_MULTMODE <= misc_config[28:26];    // Line multiply mode
 
-            H_SYNCLEN <= h_config[27:20];                     // Horizontal sync length (0...255)
-            H_AVIDSTART <= h_config[19:11] + h_config[27:20];   // Horizontal sync+backporch length (0...1023)
-            H_ACTIVE <= h_config[10:0];                       // Horizontal active length (0...2047)
+            H_SYNCLEN <= hv_in_config[31:24];                     // Horizontal sync length (0...255)
+            H_AVIDSTART <= hv_in_config[31:24]+hv_in_config2[8:0];   // Horizontal sync+backporch length (0...1023)
+            H_ACTIVE <= hv_in_config[23:12];                       // Horizontal active length (0...2047)
 
-            V_SYNCLEN <= v_config[21:19];                     // Vertical sync length (0...7)
-            V_AVIDSTART <= v_config[18:11] + v_config[21:19];   // Vertical sync+backporch length (0...255)
-            V_ACTIVE <= v_config[10:0];                       // Vertical active length (0...2047)
+            V_SYNCLEN <= hv_in_config3[3:0];                     // Vertical sync length (0...7)
+            V_AVIDSTART <= hv_in_config3[3:0]+hv_in_config3[12:4];   // Vertical sync+backporch length (0...255)
+            V_ACTIVE <= hv_in_config2[30:20];                       // Vertical active length (0...2047)
 
-            H_MASK <= h_config2[29:19];
-            V_MASK <= v_config[27:22];
+            H_MASK <= 0;
+            V_MASK <= 0;
 
 //            H_L5BORDER <= h_config[29] ? (11'd1920-h_config[10:0])/2 : (11'd1600-h_config[10:0])/2;
-            H_L5BORDER <= h_config[29] ? H_L5BORDER_1920_tmp[10:1] : H_L5BORDER_1600_tmp[10:1];
+            H_L5BORDER <= H_L5BORDER_1920_tmp[10:1];
             // For Line3x 240x360
-            H_L3BORDER <= h_config[28] ? H_L5BORDER_1920_tmp[10:1] : 10'd0;
+            H_L3BORDER <= 0;
 
-            H_L3_OPT_START <= h_config2[15:13] + (h_config[28] ? 7'd90 : 7'd0);
+            H_L3_OPT_START <= 0;
 
-            H_OPT_SCALE <= h_config2[18:16];
-            H_OPT_SAMPLE_SEL <= h_config2[15:13];
-            H_OPT_SAMPLE_MULT <= h_config2[12:10];
-            H_OPT_STARTOFF <= h_config2[9:0];
+            H_OPT_SCALE <= misc_config[31:29];
+            H_OPT_SAMPLE_SEL <= hv_in_config3[31:28];
+            H_OPT_SAMPLE_MULT <= hv_in_config3[27:24];
+            H_OPT_STARTOFF <= misc_config[23:14];
 
             X_PANASONIC_HACK <= misc_config[12];
             X_REV_LPF_ENABLE <= (misc_config[11:7] != 5'b00000);

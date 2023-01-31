@@ -22,17 +22,22 @@
 
 module ossc (
     input clk27,
-    input ir_rx,
+
     inout scl,
     inout sda,
+
+    input ir_rx,
     input [1:0] btn,
-    input [7:0] R_in,
-    input [7:0] G_in,
-    input [7:0] B_in,
-    input FID_in,
-    input VSYNC_in,
-    input HSYNC_in,
-    input PCLK_in,
+
+    input TVP_PCLK_i,
+    input [7:0] TVP_R_i,
+    input [7:0] TVP_G_i,
+    input [7:0] TVP_B_i,
+    input TVP_HS_i,
+    input TVP_HSYNC_i,
+    input TVP_VSYNC_i,
+    input TVP_FID_i,
+
     output HDMI_TX_PCLK,
     output reg [7:0] HDMI_TX_RD,
     output reg [7:0] HDMI_TX_GD,
@@ -42,21 +47,29 @@ module ossc (
     output reg HDMI_TX_VS,
     input HDMI_TX_INT_N,
     input HDMI_TX_MODE,
+
     output hw_reset_n,
+
     output LED_G,
-    output LED_R,
+    //output LED_R,
+
     output LCD_RS,
     output LCD_CS_N,
     output LCD_BL,
+
     output SD_CLK,
     inout SD_CMD,
     inout [3:0] SD_DAT
 );
 
 
-wire [15:0] sys_ctrl;
+wire [31:0] sys_ctrl;
+wire tvp_hsync_pol = sys_ctrl[16];
+wire tvp_vsync_pol = sys_ctrl[17];
+wire tvp_vsync_type = sys_ctrl[18];
+
 wire h_unstable, pll_lock_lost;
-wire [31:0] h_config, h_config2, v_config, misc_config, sl_config, sl_config2;
+wire [31:0] hv_in_config, hv_in_config2, hv_in_config3, misc_config, sl_config, sl_config2;
 wire [10:0] vmax, vmax_tvp;
 wire [1:0] fpga_vsyncgen;
 wire ilace_flag, vsync_flag;
@@ -82,8 +95,11 @@ reg po_reset_n = 1'b0;
 wire jtagm_reset_req;
 wire sys_reset_n = (po_reset_n & ~jtagm_reset_req);
 
-reg [7:0] R_in_L, G_in_L, B_in_L;
-reg HSYNC_in_L, VSYNC_in_L, FID_in_L;
+reg [7:0] TVP_R, TVP_G, TVP_B;
+reg TVP_HS, TVP_VS, TVP_FID;
+reg TVP_VS_sync1_reg, TVP_VS_sync2_reg;
+reg TVP_HSYNC_sync1_reg, TVP_HSYNC_sync2_reg;
+reg TVP_VSYNC_sync1_reg, TVP_VSYNC_sync2_reg;
 
 reg [1:0] btn_L, btn_LL;
 reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL, HDMI_TX_MODE_L, HDMI_TX_MODE_LL;
@@ -113,25 +129,67 @@ wire [10:0] ypos, ypos_sc, ypos_vg;
 wire pll_areset, pll_scanclk, pll_scanclkena, pll_configupdate, pll_scandata, pll_scandone, pll_activeclock;
 
 
-// Latch inputs from TVP7002 (synchronized to PCLK_in)
-always @(posedge PCLK_in or negedge hw_reset_n)
-begin
-    if (!hw_reset_n) begin
-        R_in_L <= 8'h00;
-        G_in_L <= 8'h00;
-        B_in_L <= 8'h00;
-        HSYNC_in_L <= 1'b0;
-        VSYNC_in_L <= 1'b0;
-        FID_in_L <= 1'b0;
-    end else begin
-        R_in_L <= R_in;
-        G_in_L <= G_in;
-        B_in_L <= B_in;
-        HSYNC_in_L <= HSYNC_in;
-        VSYNC_in_L <= VSYNC_in;
-        FID_in_L <= FID_in;
-    end
+// TVP7002 RGB digitizer
+always @(posedge TVP_PCLK_i) begin
+    TVP_R <= TVP_R_i;
+    TVP_G <= TVP_G_i;
+    TVP_B <= TVP_B_i;
+    TVP_HS <= TVP_HS_i;
+    TVP_VS <= TVP_VSYNC_i;
+    TVP_FID <= TVP_FID_i;
+
+    // sync to pclk
+    TVP_VS_sync1_reg <= TVP_VSYNC_i;
+    TVP_VS_sync2_reg <= TVP_VS_sync1_reg;
 end
+always @(posedge clk27) begin
+    // sync to always-running fixed meas clk
+    TVP_HSYNC_sync1_reg <= TVP_HSYNC_i;
+    TVP_HSYNC_sync2_reg <= TVP_HSYNC_sync1_reg;
+    TVP_VSYNC_sync1_reg <= TVP_VSYNC_i;
+    TVP_VSYNC_sync2_reg <= TVP_VSYNC_sync1_reg;
+end
+
+wire [7:0] TVP_R_post, TVP_G_post, TVP_B_post;
+wire TVP_HSYNC_post, TVP_VSYNC_post, TVP_DE_post, TVP_FID_post, TVP_datavalid_post;
+wire TVP_fe_interlace, TVP_fe_frame_change, TVP_sof_scaler;
+wire [19:0] TVP_fe_pcnt_frame;
+wire [10:0] TVP_fe_vtotal, TVP_fe_xpos, TVP_fe_ypos;
+tvp7002_frontend u_tvp_frontend ( 
+    .PCLK_i(TVP_PCLK_i),
+    .CLK_MEAS_i(clk27),
+    .reset_n(sys_reset_n),
+    .R_i(TVP_R),
+    .G_i(TVP_G),
+    .B_i(TVP_B),
+    .HS_i(TVP_HS),
+    .VS_i(TVP_VS_sync2_reg),
+    .HSYNC_i(TVP_HSYNC_sync2_reg),
+    .VSYNC_i(TVP_VSYNC_sync2_reg),
+    .DE_i(1'b0),
+    .FID_i(1'b0),
+    .hsync_i_polarity(tvp_hsync_pol),
+    .vsync_i_polarity(tvp_vsync_pol),
+    .vsync_i_type(tvp_vsync_type),
+    .hv_in_config(hv_in_config),
+    .hv_in_config2(hv_in_config2),
+    .hv_in_config3(hv_in_config3),
+    .R_o(TVP_R_post),
+    .G_o(TVP_G_post),
+    .B_o(TVP_B_post),
+    .HSYNC_o(TVP_HSYNC_post),
+    .VSYNC_o(TVP_VSYNC_post),
+    .DE_o(TVP_DE_post),
+    .FID_o(TVP_FID_post),
+    .interlace_flag(TVP_fe_interlace),
+    .datavalid_o(TVP_datavalid_post),
+    .xpos_o(TVP_fe_xpos),
+    .ypos_o(TVP_fe_ypos),
+    .vtotal(TVP_fe_vtotal),
+    .frame_change(TVP_fe_frame_change),
+    .sof_scaler(TVP_sof_scaler),
+    .pcnt_frame(TVP_fe_pcnt_frame)
+);
 
 // Insert synchronizers to async inputs (synchronize to CPU clock)
 always @(posedge clk27 or negedge po_reset_n)
@@ -173,8 +231,8 @@ assign hw_reset_n = sys_ctrl[0];   //HDMI_TX_RST_N in v1.2 PCB
 assign LED_R = HSYNC_in_L;
 assign LED_G = VSYNC_in_L;
 `else
-assign LED_R = lt_active ? lt_trig_waiting : (pll_lock_lost|h_unstable);
-assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0);
+//assign LED_R = lt_active ? lt_trig_waiting : (pll_lock_lost|h_unstable);
+assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0) & ~(pll_lock_lost|h_unstable);
 `endif
 
 assign SD_DAT[3] = sys_ctrl[7]; //SD_SPI_SS_N
@@ -254,12 +312,12 @@ sys sys_inst(
     .i2c_opencores_1_export_spi_miso_pad_i  (SD_DAT[0]),
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
     .pio_1_controls_in_export               ({ir_code_cnt, 4'b0000, pll_activeclock, HDMI_TX_MODE_LL, btn_LL, ir_code}),
-    .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, ilace_flag, vmax}),
-    .sc_config_0_sc_if_sc_status2_i         ({12'h000, pcnt_frame}),
+    .sc_config_0_sc_if_sc_status_i          ({vsync_flag, 2'b00, vmax_tvp, fpga_vsyncgen, 4'h0, TVP_fe_interlace, TVP_fe_vtotal}),
+    .sc_config_0_sc_if_sc_status2_i         ({12'h000, TVP_fe_pcnt_frame}),
     .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
-    .sc_config_0_sc_if_h_config_o           (h_config),
-    .sc_config_0_sc_if_h_config2_o          (h_config2),
-    .sc_config_0_sc_if_v_config_o           (v_config),
+    .sc_config_0_sc_if_h_config_o           (hv_in_config),
+    .sc_config_0_sc_if_h_config2_o          (hv_in_config2),
+    .sc_config_0_sc_if_v_config_o           (hv_in_config3),
     .sc_config_0_sc_if_misc_config_o        (misc_config),
     .sc_config_0_sc_if_sl_config_o          (sl_config),
     .sc_config_0_sc_if_sl_config2_o         (sl_config2),
@@ -278,18 +336,18 @@ sys sys_inst(
 
 scanconverter scanconverter_inst (
     .reset_n        (hw_reset_n),
-    .PCLK_in        (PCLK_in),
+    .PCLK_in        (TVP_PCLK_i),
     .clk27          (clk27),
     .enable_sc      (enable_sc),
-    .HSYNC_in       (HSYNC_in_L),
-    .VSYNC_in       (VSYNC_in_L),
-    .FID_in         (FID_in_L),
-    .R_in           (R_in_L),
-    .G_in           (G_in_L),
-    .B_in           (B_in_L),
-    .h_config       (h_config),
-    .h_config2      (h_config2),
-    .v_config       (v_config),
+    .HSYNC_in       (TVP_HSYNC_post),
+    .VSYNC_in       (TVP_VSYNC_post),
+    .FID_in         (~TVP_FID_post),
+    .R_in           (TVP_R_post),
+    .G_in           (TVP_G_post),
+    .B_in           (TVP_B_post),
+    .hv_in_config   (hv_in_config),
+    .hv_in_config2  (hv_in_config2),
+    .hv_in_config3  (hv_in_config3),
     .misc_config    (misc_config),
     .sl_config      (sl_config),
     .sl_config2     (sl_config2),

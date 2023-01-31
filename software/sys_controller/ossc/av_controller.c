@@ -50,7 +50,9 @@
 #define SYNC_LOSS_THOLD         -5
 #define STATUS_TIMEOUT          100000
 
-alt_u16 sys_ctrl;
+#define PCNT_TOLERANCE 50
+
+alt_u32 sys_ctrl;
 
 // Current mode
 avmode_t cm;
@@ -285,7 +287,7 @@ inline int check_linecnt(alt_u8 progressive, alt_u32 totlines) {
 status_t get_status(tvp_sync_input_t syncinput)
 {
     alt_u32 data1, data2;
-    alt_u32 totlines, clkcnt;
+    alt_u32 totlines, clkcnt, pcnt_frame;
     alt_u8 progressive;
     //alt_u8 refclk;
     alt_u8 sync_active;
@@ -314,15 +316,19 @@ status_t get_status(tvp_sync_input_t syncinput)
     // Read sync information from TVP7002 status registers
     data1 = tvp_readreg(TVP_LINECNT1);
     data2 = tvp_readreg(TVP_LINECNT2);
-    totlines = ((data2 & 0x0f) << 8) | data1;
-    progressive = !!(data2 & (1<<5));
+    /*totlines = ((data2 & 0x0f) << 8) | data1;
+    progressive = !!(data2 & (1<<5));*/
+    totlines = sc->sc_status.vmax;
+    progressive = !sc->sc_status.interlace_flag;
     cm.macrovis = !!(data2 & (1<<6));
     data1 = tvp_readreg(TVP_CLKCNT1);
     data2 = tvp_readreg(TVP_CLKCNT2);
-    clkcnt = ((data2 & 0x0f) << 8) | data1;
+    //clkcnt = ((data2 & 0x0f) << 8) | data1;
+    pcnt_frame = (unsigned long)sc->sc_status2.pcnt_frame;
+    clkcnt = pcnt_frame/(totlines>>!progressive);
 
     // Read how many lines TVP7002 outputs in reality (valid only if output enabled)
-    totlines_tvp = sc->sc_status.vmax_tvp+1;
+    /*totlines_tvp = sc->sc_status.vmax_tvp+1;
 
     // NOTE: "progressive" may not have correct value if H-PLL is not locked (!cm.sync_active)
     if ((vsyncmode == 0x2) || (!cm.sync_active && (totlines < MIN_LINES_INTERLACED))) {
@@ -330,9 +336,10 @@ status_t get_status(tvp_sync_input_t syncinput)
     } else if (vsyncmode == 0x1) {
         progressive = 0;
         totlines = totlines_tvp; //compensate skipped vsync
-    }
+    }*/
 
-    valid_linecnt = check_linecnt(progressive, totlines);
+    //valid_linecnt = check_linecnt(progressive, totlines);
+    valid_linecnt = 1;
 
     // TVP7002 may randomly report "no sync" (especially with arcade boards),
     // thus disable output only after N consecutive "no sync"-events
@@ -360,8 +367,11 @@ status_t get_status(tvp_sync_input_t syncinput)
 
     if (valid_linecnt) {
         // Line count reported in TVP7002 status registers is sometimes +-1 line off and may alternate with correct value. Ignore these events
-        if ((totlines > cm.totlines+1) || (totlines+1 < cm.totlines) || (clkcnt != cm.clkcnt) || (progressive != cm.progressive)) {
-            printf("totlines: %lu (cur) / %lu (prev), clkcnt: %lu (cur) / %lu (prev). totlines_tvp: %u, VSM: %u\n", totlines, cm.totlines, clkcnt, cm.clkcnt, totlines_tvp, vsyncmode);
+        if ((totlines != cm.totlines) ||
+            (progressive != cm.progressive) ||
+            (pcnt_frame < (cm.pcnt_frame - PCNT_TOLERANCE)) ||
+            (pcnt_frame > (cm.pcnt_frame + PCNT_TOLERANCE))) {
+            printf("totlines: %lu (cur) / %lu (prev), pcnt_frame: %lu (cur) / %lu (prev). VSM: %u\n", totlines, cm.totlines, pcnt_frame, cm.pcnt_frame, vsyncmode);
             /*if (!cm.sync_active)
                 act_ctr = 0;*/
             stable_frames = 0;
@@ -399,13 +409,14 @@ status_t get_status(tvp_sync_input_t syncinput)
 
         if (update_cur_vm) {
             cm.h_mult_total = (video_modes[cm.id].h_total*cm.sample_mult) + ((cm.sample_mult*video_modes[cm.id].h_total_adj*5 + 50) / 100);
-            tvp_setup_hpll(cm.h_mult_total, clkcnt, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
+            tvp_setup_hpll(cm.h_mult_total, totlines, cm.cc.tvp_hpll2x && (video_modes[cm.id].flags & MODE_PLLDIVBY2));
             cm.sample_sel = tvp_set_hpll_phase(video_modes[cm.id].sampler_phase, cm.sample_mult);
             status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
         }
 
         cm.totlines = totlines;
         cm.clkcnt = clkcnt;
+        cm.pcnt_frame = pcnt_frame;
         cm.progressive = progressive;
     }
 
@@ -478,9 +489,9 @@ status_t get_status(tvp_sync_input_t syncinput)
 
 void update_sc_config()
 {
-    h_config_reg h_config = {.data=0x00000000};
-    h_config2_reg h_config2 = {.data=0x00000000};
-    v_config_reg v_config = {.data=0x00000000};
+    hv_config_reg hv_in_config = {.data=0x00000000};
+    hv_config2_reg hv_in_config2 = {.data=0x00000000};
+    hv_config3_reg hv_in_config3 = {.data=0x00000000};
     misc_config_reg misc_config = {.data=0x00000000};
     sl_config_reg sl_config = {.data=0x00000000};
     sl_config2_reg sl_config2 = {.data=0x00000000};
@@ -604,24 +615,27 @@ void update_sc_config()
     h_opt_startoffs = h_border + (cm.sample_mult-h_opt_scale)*(h_synclen+(alt_u16)video_modes[cm.id].h_backporch);
     printf("h_border: %u, h_opt_startoffs: %u\n", h_border, h_opt_startoffs);
 
-    h_config.h_multmode = cm.fpga_hmultmode;
-    h_config.h_l5fmt = (cm.cc.l5_fmt!=L5FMT_1600x1200);
-    h_config.h_l3_240x360 = (cm.target_lm==MODE_L3_240x360);
-    h_config.h_synclen = (cm.sample_mult*h_synclen);
-    h_config.h_backporch = (cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch);
-    h_config.h_active = (cm.sample_mult*video_modes[cm.id].h_active);
+    misc_config.h_multmode = cm.fpga_hmultmode;
+    //misc_config.h_l5fmt = (cm.cc.l5_fmt!=L5FMT_1600x1200);
+    misc_config.h_l3_240x360 = (cm.target_lm==MODE_L3_240x360);
 
-    h_config2.h_mask = h_mask;
-    h_config2.h_opt_scale = h_opt_scale;
-    h_config2.h_opt_sample_sel = cm.sample_sel;
-    h_config2.h_opt_sample_mult = cm.sample_mult;
-    h_config2.h_opt_startoff = h_opt_startoffs;
+    hv_in_config.h_total = video_modes[cm.id].h_total;
+    hv_in_config.h_synclen = (cm.sample_mult*h_synclen);
+    hv_in_config2.h_backporch = (cm.sample_mult*(alt_u16)video_modes[cm.id].h_backporch);
+    hv_in_config.h_active = (cm.sample_mult*video_modes[cm.id].h_active);
 
-    v_config.v_multmode = cm.fpga_vmultmode;
-    v_config.v_mask = cm.cc.v_mask;
-    v_config.v_synclen = video_modes[cm.id].v_synclen;
-    v_config.v_backporch = v_backporch;
-    v_config.v_active = v_active;
+    //h_config2.h_mask = h_mask;
+    misc_config.h_opt_scale = h_opt_scale;
+    hv_in_config3.h_sample_sel = cm.sample_sel;
+    hv_in_config3.h_skip = cm.sample_mult;
+    misc_config.h_opt_startoff = h_opt_startoffs;
+
+    misc_config.v_multmode = cm.fpga_vmultmode;
+    //v_config.v_mask = cm.cc.v_mask;
+    hv_in_config3.v_synclen = video_modes[cm.id].v_synclen;
+    hv_in_config3.v_backporch = v_backporch;
+    hv_in_config2.v_active = v_active;
+    //hv_in_config2.v_total = v_total;
 
     misc_config.rev_lpf_str = cm.cc.reverse_lpf;
     misc_config.mask_br = cm.cc.mask_br;
@@ -638,9 +652,9 @@ void update_sc_config()
     sl_config2.sl_c_overlay = sl_c_overlay;
     sl_config2.sl_altiv = cm.cc.sl_altiv;
 
-    sc->h_config = h_config;
-    sc->h_config2 = h_config2;
-    sc->v_config = v_config;
+    sc->hv_in_config = hv_in_config;
+    sc->hv_in_config2 = hv_in_config2;
+    sc->hv_in_config3 = hv_in_config3;
     sc->misc_config = misc_config;
     sc->sl_config = sl_config;
     sc->sl_config2 = sl_config2;
@@ -657,7 +671,7 @@ void program_mode()
 
     if ((cm.clkcnt != 0) && (cm.totlines != 0)) { //prevent div by 0
         h_hz = TVP_EXTCLK_HZ/cm.clkcnt;
-        v_hz_x100 = cm.progressive ? ((100*TVP_EXTCLK_HZ)/cm.totlines)/cm.clkcnt : (2*((100*TVP_EXTCLK_HZ)/cm.totlines))/cm.clkcnt;
+        v_hz_x100 = (100*TVP_EXTCLK_HZ)/cm.pcnt_frame;
     } else {
         h_hz = 15700;
         v_hz_x100 = 6000;
@@ -805,8 +819,9 @@ int init_hw()
     // Reset hardware
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, AV_RESET_N|LCD_BL);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, 0x0000);
-    sc->h_config.data = 0x00000000;
-    sc->v_config.data = 0x00000000;
+    sc->hv_in_config.data = 0x00000000;
+    sc->hv_in_config2.data = 0x00000000;
+    sc->hv_in_config3.data = 0x00000000;
     usleep(10000);
 
     // unreset hw
@@ -1159,6 +1174,10 @@ int main()
 #endif
             tvp_source_sel(target_tvp, target_tvp_sync, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate
+            sys_ctrl &= ~VSYNC_I_TYPE;
+            if (target_format == FORMAT_RGBHV)
+                sys_ctrl |= VSYNC_I_TYPE;
+            IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
             strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
             strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
             ui_disp_status(1);

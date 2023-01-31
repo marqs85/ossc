@@ -9,11 +9,11 @@ set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
 
 ### Scanconverter clock constraints ###
 
-create_clock -period 108MHz -name pclk_1x [get_ports PCLK_in]
-create_clock -period 54MHz -name pclk_2x_source [get_ports PCLK_in] -add
-create_clock -period 54MHz -name pclk_3x_source [get_ports PCLK_in] -add
-create_clock -period 33MHz -name pclk_4x_source [get_ports PCLK_in] -add
-create_clock -period 33MHz -name pclk_5x_source [get_ports PCLK_in] -add
+create_clock -period 108MHz -name pclk_1x [get_ports TVP_PCLK_i]
+create_clock -period 54MHz -name pclk_2x_source [get_ports TVP_PCLK_i] -add
+create_clock -period 54MHz -name pclk_3x_source [get_ports TVP_PCLK_i] -add
+create_clock -period 33MHz -name pclk_4x_source [get_ports TVP_PCLK_i] -add
+create_clock -period 33MHz -name pclk_5x_source [get_ports TVP_PCLK_i] -add
 
 #derive_pll_clocks
 create_generated_clock -name pclk_2x -master_clock pclk_2x_source -source {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|inclk[1]} -multiply_by 2 -duty_cycle 50.00 {scanconverter_inst|pll_pclk|altpll_component|auto_generated|pll1|clk[0]} -add
@@ -47,7 +47,7 @@ derive_clock_uncertainty
 # input delay constraints
 set TVP_dmin 0
 set TVP_dmax 1.5
-set critinputs [get_ports {R_in* G_in* B_in* HSYNC_in VSYNC_in FID_in}]
+set critinputs [get_ports {TVP_R_i* TVP_G_i* TVP_B_i* TVP_HS_i TVP_HSYNC_i TVP_VSYNC_i TVP_FID_i}]
 foreach_in_collection c [get_clocks "pclk_1x pclk_*_source"] {
     set_input_delay -clock $c -min $TVP_dmin $critinputs -add_delay
     set_input_delay -clock $c -max $TVP_dmax $critinputs -add_delay
@@ -67,7 +67,7 @@ set_false_path -to [remove_from_collection [all_outputs] $critoutputs_hdmi]
 
 ### CPU/scanconverter clock relations ###
 
-# Treat CPU clock asynchronous to pixel clocks 
+# Treat CPU clock asynchronous to pixel clocks
 set_clock_groups -asynchronous -group \
                             {clk27 pclk_27mhz pclk_27mhz_postmux pclk_27mhz_out} \
                             {pclk_1x pclk_1x_postmux pclk_1x_out} \

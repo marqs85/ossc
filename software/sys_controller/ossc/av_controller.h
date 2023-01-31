@@ -27,6 +27,7 @@
 #include "pll_reconfig_regs.h"
 
 // sys_ctrl bits
+#define VSYNC_I_TYPE                (1<<18)
 #define LT_ACTIVE                   (1<<15)
 #define LT_ARMED                    (1<<14)
 #define LT_MODE_OFFS                12
@@ -93,6 +94,7 @@ typedef struct {
 //TODO: transform binary values into flags
 typedef struct {
     alt_u32 totlines;
+    alt_u32 pcnt_frame;
     alt_u32 clkcnt;
     alt_u8 progressive;
     alt_u8 macrovis;
