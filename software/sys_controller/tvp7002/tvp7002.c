@@ -161,7 +161,7 @@ inline void tvp_enable_output()
     usleep(10000);
     tvp_writereg(TVP_MISCCTRL1, 0x11);
     usleep(10000);
-    tvp_writereg(TVP_MISCCTRL2, 0x02);
+    tvp_writereg(TVP_MISCCTRL2, 0x00);
     usleep(10000);
 }
 
@@ -381,14 +381,14 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per
     // Macrovision stripper filters out glitches and serration pulses that may occur outside of sync window (HSYNC_lead +- TVP_MVSWIDTH*37ns). Enabled for all inputs.
     switch (type) {
     case VIDEO_PC:
-        tvp_writereg(TVP_MISCCTRL4, 0x0C);
+        tvp_writereg(TVP_MISCCTRL4, 0x0D);
         break;
     case VIDEO_LDTV:
     case VIDEO_SDTV:
     case VIDEO_EDTV:
     case VIDEO_HDTV:
     default:
-        tvp_writereg(TVP_MISCCTRL4, 0x08);
+        tvp_writereg(TVP_MISCCTRL4, 0x09);
         break;
     }
 
