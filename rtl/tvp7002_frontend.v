@@ -30,8 +30,6 @@ module tvp7002_frontend (
     input VSYNC_i,
     input DE_i,
     input FID_i,
-    input hsync_i_polarity,
-    input vsync_i_polarity,
     input vsync_i_type,
     input [31:0] hv_in_config,
     input [31:0] hv_in_config2,
@@ -50,7 +48,8 @@ module tvp7002_frontend (
     output reg [10:0] vtotal,
     output reg frame_change,
     output reg sof_scaler,
-    output reg [19:0] pcnt_frame
+    output reg [19:0] pcnt_frame,
+    output reg sync_active
 );
 
 localparam FID_EVEN = 1'b0;
@@ -85,6 +84,7 @@ reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 // Measurement registers
 reg [20:0] pcnt_frame_ctr;
 reg [17:0] syncpol_det_ctr, hsync_hpol_ctr, vsync_hpol_ctr;
+reg [3:0] sync_inactive_ctr;
 reg [11:0] pcnt_line, pcnt_line_ctr, meas_h_cnt;
 reg pcnt_line_stored;
 reg [10:0] meas_v_cnt;
@@ -118,7 +118,7 @@ wire VSYNC_i_np = (VSYNC_i ^ ~vsync_i_pol);
 wire HSYNC_i_np = (HSYNC_i ^ ~hsync_i_pol);
 
 // Sample skip for low-res optimized modes
-wire [3:0] H_SKIP = hv_in_config3[27:24] - 1'b1;
+wire [3:0] H_SKIP = hv_in_config3[27:24];
 wire [3:0] H_SAMPLE_SEL = hv_in_config3[31:28];
 
 // SOF position for scaler
@@ -262,7 +262,7 @@ always @(posedge CLK_MEAS_i) begin
     VSYNC_i_np_prev <= VSYNC_i_np;
 end
 
-// Detect sync polarities
+// Detect sync polarities and activity
 always @(posedge CLK_MEAS_i) begin
     if (syncpol_det_ctr == 0) begin
         hsync_i_pol <= (hsync_hpol_ctr > 18'h1ffff);
@@ -270,6 +270,16 @@ always @(posedge CLK_MEAS_i) begin
 
         hsync_hpol_ctr <= 0;
         vsync_hpol_ctr <= 0;
+
+        if ((vsync_hpol_ctr == '0) | (vsync_hpol_ctr == '1)) begin
+            if (sync_inactive_ctr == '1)
+                sync_active <= 1'b0;
+            else
+                sync_inactive_ctr <= sync_inactive_ctr + 1'b1;
+        end else begin
+            sync_inactive_ctr <= 0;
+            sync_active <= 1'b1;
+        end
     end else begin
         if (HSYNC_i)
             hsync_hpol_ctr <= hsync_hpol_ctr + 1'b1;
