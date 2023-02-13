@@ -12,7 +12,6 @@
 <pin name="scandata" direction="input" scope="external"  />
 <pin name="activeclock" direction="output" scope="external"  />
 <pin name="c0" direction="output" scope="external" source="clock"  />
-<pin name="c1" direction="output" scope="external" source="clock"  />
 <pin name="locked" direction="output" scope="external"  />
 <pin name="scandataout" direction="output" scope="external"  />
 <pin name="scandone" direction="output" scope="external"  />

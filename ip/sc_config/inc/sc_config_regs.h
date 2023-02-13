@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2022  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -25,24 +25,21 @@
 // bit-fields coded as little-endian
 typedef union {
     struct {
-        uint16_t vmax:11;
+        uint16_t vtotal:11;
         uint8_t interlace_flag:1;
-        uint8_t sc_rsv2:4;
-        uint8_t fpga_vsyncgen:2;
-        uint16_t vmax_tvp:11;
-        uint8_t sc_rsv:2;
-        uint8_t vsync_flag:1;
+        uint8_t sync_active:1;
+        uint32_t fe_rsv:19;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
-} sc_status_reg;
+} fe_status_reg;
 
 typedef union {
     struct {
         uint32_t pcnt_frame:20;
-        uint16_t sc_rsv:12;
+        uint16_t fe_rsv:12;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
-} sc_status2_reg;
+} fe_status2_reg;
 
 typedef union {
     struct {
@@ -86,52 +83,84 @@ typedef union {
 
 typedef union {
     struct {
+        uint16_t x_size:12;
+        uint16_t y_size:11;
+        int16_t y_offset:9;
+    } __attribute__((packed, __may_alias__));
+    uint32_t data;
+} xy_config_reg;
+
+typedef union {
+    struct {
+        int16_t x_offset:10;
+        uint8_t x_start_lb:8;
+        int8_t y_start_lb:6;
+        int8_t x_rpt:4;
+        int8_t y_rpt:4;
+    } __attribute__((packed, __may_alias__));
+    uint32_t data;
+} xy_config2_reg;
+
+typedef union {
+    struct {
         uint8_t mask_br:4;
         uint8_t mask_color:3;
-        uint8_t rev_lpf_str:5;
-        uint8_t panasonic_hack:1;
-        /* temp */
-        uint8_t h_l3_240x360:1;
-        uint16_t h_opt_startoff:10;
-        //uint8_t h_l5fmt:1;
-        uint8_t h_multmode:2;
-        uint8_t v_multmode:3;
-        uint8_t h_opt_scale:3;
+        uint8_t reverse_lpf:5;
+        uint8_t lm_deint_mode:1;
+        uint8_t nir_even_offset:1;
+        uint8_t ypbpr_cs:1;
+        uint8_t vip_enable:1;
+        uint8_t bfi_str:4;
+        uint8_t bfi_enable:1;
+        uint32_t misc_rsv:11;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } misc_config_reg;
 
 typedef union {
     struct {
-        uint32_t sl_l_str_arr:20;
-        uint8_t sl_l_overlay:5;
-        uint8_t sl_hybr_str:5;
+        uint32_t sl_l_str_arr:24;
+        uint8_t sl_l_overlay:6;
         uint8_t sl_method:1;
-        uint8_t sl_no_altern:1;
+        uint8_t sl_altern:1;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } sl_config_reg;
 
 typedef union {
     struct {
-        uint32_t sl_c_str_arr:24;
-        uint8_t sl_c_overlay:6;
-        uint8_t sl_rsv:1;
-        uint8_t sl_altiv:1;
+        uint32_t sl_c_str_arr_l;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } sl_config2_reg;
 
+typedef union {
+    struct {
+        uint32_t sl_c_str_arr_h:8;
+        uint32_t sl_c_overlay:10;
+        uint8_t sl_iv_y:3;
+        uint8_t sl_iv_x:4;
+        uint32_t sl_rsv:7;
+    } __attribute__((packed, __may_alias__));
+    uint32_t data;
+} sl_config3_reg;
+
 typedef struct {
-    sc_status_reg sc_status;
-    sc_status2_reg sc_status2;
+    fe_status_reg fe_status;
+    fe_status2_reg fe_status2;
     lt_status_reg lt_status;
     hv_config_reg hv_in_config;
     hv_config2_reg hv_in_config2;
     hv_config3_reg hv_in_config3;
+    hv_config_reg hv_out_config;
+    hv_config2_reg hv_out_config2;
+    hv_config3_reg hv_out_config3;
+    xy_config_reg xy_out_config;
+    xy_config2_reg xy_out_config2;
     misc_config_reg misc_config;
     sl_config_reg sl_config;
     sl_config2_reg sl_config2;
-} __attribute__((packed, __may_alias__)) sc_regs;
+    sl_config3_reg sl_config3;
+} sc_regs;
 
 #endif //SC_CONFIG_REGS_H_

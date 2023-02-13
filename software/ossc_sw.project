@@ -33,7 +33,7 @@
     <Extensions>
       <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
     </Extensions>
-    <Topleveldir>/home/markus/Code/ossc/software</Topleveldir>
+    <Topleveldir>./</Topleveldir>
   </Reconciliation>
   <VirtualDirectory Name="sys_controller">
     <VirtualDirectory Name="ths7353">
@@ -61,9 +61,7 @@
       <File Name="sys_controller/spi_charlcd/lcd.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="tvp7002">
-      <File Name="sys_controller/tvp7002/video_modes.c"/>
       <File Name="sys_controller/tvp7002/tvp7002_regs.h"/>
-      <File Name="sys_controller/tvp7002/video_modes.h"/>
       <File Name="sys_controller/tvp7002/tvp7002.h"/>
       <File Name="sys_controller/tvp7002/tvp7002.c"/>
     </VirtualDirectory>
@@ -89,6 +87,9 @@
       <File Name="sys_controller/ossc/firmware.c"/>
       <File Name="sys_controller/ossc/userdata.h"/>
       <File Name="sys_controller/ossc/userdata.c"/>
+      <File Name="sys_controller/ossc/video_modes.h"/>
+      <File Name="sys_controller/ossc/video_modes.c"/>
+      <File Name="sys_controller/ossc/video_modes_list.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="ulibSD">
       <File Name="sys_controller/ulibSD/integer.h"/>
