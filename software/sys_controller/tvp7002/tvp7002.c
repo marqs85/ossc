@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -65,11 +65,11 @@ static void tvp_set_clamp_alc(video_type type, alt_u8 clamp_ref_offset, alt_8 cl
     alt_u8 clamp_width, alc_offset;
 
     switch (type) {
-    case VIDEO_LDTV:
+    /*case VIDEO_LDTV:
         clamp_pos += 2;
         clamp_width = 6;
         alc_offset = 1;
-        break;
+        break;*/
     case VIDEO_HDTV:
         clamp_pos += 50;
         clamp_width = 32;
@@ -145,24 +145,30 @@ inline void tvp_reset()
 
 inline void tvp_disable_output()
 {
-    alt_u8 syncproc_rst = tvp_readreg(TVP_MISCCTRL4) | (1<<7);
-
-    tvp_writereg(TVP_MISCCTRL1, 0x13);
-    usleep(10000);
     tvp_writereg(TVP_MISCCTRL2, 0x03);
-    usleep(10000);
-    tvp_writereg(TVP_MISCCTRL4, syncproc_rst);
-    usleep(1000);
-    tvp_writereg(TVP_MISCCTRL4, syncproc_rst & 0x7F);
 }
 
 inline void tvp_enable_output()
 {
-    usleep(10000);
-    tvp_writereg(TVP_MISCCTRL1, 0x11);
-    usleep(10000);
     tvp_writereg(TVP_MISCCTRL2, 0x00);
-    usleep(10000);
+}
+
+inline void tvp_powerdown()
+{
+    alt_u8 syncproc_rst = tvp_readreg(TVP_MISCCTRL4) | (1<<7);
+
+    tvp_writereg(TVP_MISCCTRL4, syncproc_rst);
+    usleep(1000);
+    tvp_writereg(TVP_MISCCTRL4, syncproc_rst & 0x7F);
+    usleep(1000);
+    tvp_writereg(TVP_MISCCTRL1, 0x13);
+    tvp_writereg(TVP_POWERCTRL, 0x07);
+}
+
+inline void tvp_powerup()
+{
+    tvp_writereg(TVP_MISCCTRL1, 0x11);
+    tvp_writereg(TVP_POWERCTRL, 0x00);
 }
 
 inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
@@ -192,9 +198,6 @@ void tvp_init()
         .c_gain = DEFAULT_COARSE_GAIN,
     };
 
-    // disable output
-    tvp_disable_output();
-
     // Set default configuration (skip those which match register reset values)
 
     // Configure external refclk, HPLL generated pclk
@@ -207,6 +210,9 @@ void tvp_init()
     // Hsync edge->Vsync edge delay
     // NOTE: Value 1 syncs the edges!
     tvp_writereg(TVP_VSOUTALIGN, 1);
+
+    // Bypass VSYNC processing
+    tvp_writereg(TVP_MISCCTRL4, 0x09);
 
     // Set default CSC coeffs.
     tvp_sel_csc(&csc_coeffs[0]);
@@ -242,6 +248,10 @@ void tvp_init()
     //set analog (coarse) gain to max recommended value (-> 91% of the ADC range with 0.7Vpp input)
     //set rest of the gain digitally (fine) to utilize 100% of the range at the output (0.91*(1+(26/256)) = 1)
     tvp_set_gain_offset(&def_gain_offs);
+
+    // Disable PLL and ADC but enable outputs to enable frontend mode detection
+    tvp_enable_output();
+    tvp_powerdown();
 }
 
 void tvp_set_gain_offset(color_setup_t *col) {
@@ -344,17 +354,12 @@ void tvp_set_clp_lpf(alt_u8 val)
     printf("CLP LPF value set to 0x%x\n", val);
 }
 
-alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult)
+void tvp_set_hpll_phase(alt_u8 val)
 {
-    alt_u8 sample_sel;
     alt_u8 status = tvp_readreg(TVP_HPLLPHASE) & 0x07;
 
-    sample_sel = (val*sample_mult)/32;
-    val = val*sample_mult % 32;
     tvp_writereg(TVP_HPLLPHASE, (val<<3)|status);
-    printf("Phase selection: %u/%u (FPGA), %u/32 (TVP)\n", sample_sel+1, sample_mult, val+1);
-
-    return sample_sel;
+    printf("TVP Phase set to %u/32 (%u deg)\n", val, (val*11250)/1000);
 }
 
 void tvp_set_sog_thold(alt_u8 val)
@@ -383,7 +388,7 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 refclks_per
     case VIDEO_PC:
         tvp_writereg(TVP_MISCCTRL4, 0x0D);
         break;
-    case VIDEO_LDTV:
+    //case VIDEO_LDTV:
     case VIDEO_SDTV:
     case VIDEO_EDTV:
     case VIDEO_HDTV:
@@ -412,7 +417,7 @@ void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format 
         else // RGBS
             tvp_writereg(TVP_SYNCCTRL1, 0x53);
 
-        usleep(1000);
+        usleep(100000);
         sync_status = tvp_readreg(TVP_SYNCSTAT);
         if (sync_status & (1<<7))
             printf("%s detected, %s polarity\n", (sync_status & (1<<3)) ? "Csync" : "Hsync", (sync_status & (1<<5)) ? "pos" : "neg");

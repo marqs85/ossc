@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -26,7 +26,6 @@
 
 #define DEFAULT_VSYNC_THOLD     0x44
 #define DEFAULT_LINELEN_TOL     0x06
-#define DEFAULT_SAMPLER_PHASE   0x10
 #define DEFAULT_PRE_COAST       1
 #define DEFAULT_POST_COAST      0
 #define DEFAULT_SYNC_LPF        0
@@ -74,16 +73,6 @@ typedef struct {
     alt_u16 B_Pr;
 } ypbpr_to_rgb_csc_t;
 
-typedef struct {
-    alt_u8 r_f_off;
-    alt_u8 g_f_off;
-    alt_u8 b_f_off;
-    alt_u8 r_f_gain;
-    alt_u8 g_f_gain;
-    alt_u8 b_f_gain;
-    alt_u8 c_gain;
-} __attribute__((packed)) color_setup_t;
-
 
 inline alt_u32 tvp_readreg(alt_u32 regaddr);
 
@@ -94,6 +83,10 @@ inline void tvp_reset();
 inline void tvp_disable_output();
 
 inline void tvp_enable_output();
+
+inline void tvp_powerdown();
+
+inline void tvp_powerup();
 
 inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
 
@@ -115,7 +108,7 @@ void tvp_set_sync_lpf(alt_u8 val);
 
 void tvp_set_clp_lpf(alt_u8 val);
 
-alt_u8 tvp_set_hpll_phase(alt_u8 val, alt_u8 sample_mult);
+void tvp_set_hpll_phase(alt_u8 val);
 
 void tvp_set_sog_thold(alt_u8 val);
 
