@@ -23,6 +23,9 @@
 #define PCM1862_BASE (0x94>>1)
 
 #define PCM1862_PAGESEL         0x00
+
+/* Page 0 registers */
+
 #define PCM1862_PGA1L           0x01
 #define PCM1862_PGA1R           0x02
 #define PCM1862_PGA2L           0x03
@@ -55,5 +58,18 @@
 
 #define PCM1862_PWR_CTRL        0x70
 #define PCM1862_DSP_CTRL        0x71
+
+
+/* Page 1 registers */
+
+#define PCM1862_DSP2_CFG        0x01
+#define PCM1862_DSP2_ADDR       0x02
+#define PCM1862_DSP2_WDATA0     0x04
+#define PCM1862_DSP2_WDATA1     0x05
+#define PCM1862_DSP2_WDATA2     0x06
+#define PCM1862_DSP2_RDATA0     0x08
+#define PCM1862_DSP2_RDATA1     0x09
+#define PCM1862_DSP2_RDATA2     0x0A
+
 
 #endif /* PCM1862_REGS_H_ */

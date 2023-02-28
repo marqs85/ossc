@@ -48,6 +48,41 @@ void pcm_source_sel(pcm_input_t input) {
     pcm1862_writereg(PCM1862_ADC1R, (1<<6)|adc_ch);
 }
 
+void pcm_set_stereo_mode(int mono_enable) {
+    uint32_t gain;
+    int i;
+    const uint8_t chregs[] = {0, 1, 6, 7};
+    uint32_t stereo_cfg[] = {0x100000, 0x0, 0x0, 0x100000};
+    uint32_t mono_cfg[] = {0x0804DC, 0x0804DC, 0x0804DC, 0x0804DC};
+    uint32_t *ch_cfg = mono_enable ? mono_cfg : stereo_cfg;
+
+    pcm1862_writereg(PCM1862_PAGESEL, 1);
+
+    for (i=0; i<sizeof(chregs); i++) {
+        pcm1862_writereg(PCM1862_DSP2_ADDR, chregs[i]);
+        pcm1862_writereg(PCM1862_DSP2_WDATA0, (ch_cfg[i] >> 16) & 0xff);
+        pcm1862_writereg(PCM1862_DSP2_WDATA1, (ch_cfg[i] >> 8) & 0xff);
+        pcm1862_writereg(PCM1862_DSP2_WDATA2, ch_cfg[i] & 0xff);
+        pcm1862_writereg(PCM1862_DSP2_CFG, (1<<0));
+        while ((pcm1862_readreg(PCM1862_DSP2_CFG) & ((1<<0)|(1<<2))) != 0) {}
+    }
+
+    /*for (i=0; i<12; i++) {
+        pcm1862_writereg(0x02, i);
+        pcm1862_writereg(0x01, (1<<1));
+
+        while ((pcm1862_readreg(0x01) & (1<<1)) != 0) {}
+
+        gain = pcm1862_readreg(0x08) << 16;
+        gain |= pcm1862_readreg(0x09) << 8;
+        gain |= pcm1862_readreg(0x0A);
+
+        printf("ch%u gain: 0x%x\n", i, gain);
+    }*/
+
+    pcm1862_writereg(PCM1862_PAGESEL, 0);
+}
+
 void pcm_set_gain(alt_8 db_gain) {
     alt_8 gain_val = 2*db_gain;
 
