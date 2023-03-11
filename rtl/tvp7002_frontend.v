@@ -30,6 +30,7 @@ module tvp7002_frontend (
     input VSYNC_i,
     input DE_i,
     input FID_i,
+    input sogref_update_i,
     input vsync_i_type,
     input [31:0] hv_in_config,
     input [31:0] hv_in_config2,
@@ -61,7 +62,7 @@ localparam VSYNC_RAW = 1'b1;
 localparam PP_PL_START  = 1;
 localparam PP_PL_END    = 4;
 
-reg [11:0] h_cnt;
+reg [11:0] h_cnt, h_cnt_sogref;
 reg [10:0] v_cnt;
 reg [10:0] vmax_cnt;
 reg HS_i_prev, VS_i_np_prev;
@@ -85,7 +86,7 @@ reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [20:0] pcnt_frame_ctr;
 reg [17:0] syncpol_det_ctr, hsync_hpol_ctr, vsync_hpol_ctr;
 reg [3:0] sync_inactive_ctr;
-reg [11:0] pcnt_line, pcnt_line_ctr, meas_h_cnt;
+reg [11:0] pcnt_line, pcnt_line_ctr, meas_h_cnt, meas_h_cnt_sogref;
 reg pcnt_line_stored;
 reg [10:0] meas_v_cnt;
 reg meas_hl_det, meas_fid;
@@ -100,15 +101,13 @@ wire [10:0] V_ACTIVE = hv_in_config2[30:20];
 wire [3:0] V_SYNCLEN = hv_in_config3[3:0];
 wire [8:0] V_BACKPORCH = hv_in_config3[12:4];
 
-wire [11:0] even_min_thold_hv = (H_TOTAL / 12'd4);
-wire [11:0] even_max_thold_hv = (H_TOTAL / 12'd2) + (H_TOTAL / 12'd4);
-wire [11:0] even_min_thold_ss = (H_TOTAL / 12'd2);
-wire [11:0] even_max_thold_ss = H_TOTAL;
-wire [11:0] even_min_thold = (vsync_i_type == VSYNC_SEPARATED) ? even_min_thold_ss : even_min_thold_hv;
-wire [11:0] even_max_thold = (vsync_i_type == VSYNC_SEPARATED) ? even_max_thold_ss : even_max_thold_hv;
+wire [11:0] h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? h_cnt_sogref : h_cnt;
+wire [11:0] even_min_thold = (H_TOTAL / 12'd4);
+wire [11:0] even_max_thold = (H_TOTAL / 12'd2) + (H_TOTAL / 12'd4);
 
-wire [11:0] meas_even_min_thold = (vsync_i_type == VSYNC_SEPARATED) ? (pcnt_line / 12'd2) : (pcnt_line / 12'd4);
-wire [11:0] meas_even_max_thold = (vsync_i_type == VSYNC_SEPARATED) ? pcnt_line : (pcnt_line / 12'd2) + (pcnt_line / 12'd4);
+wire [11:0] meas_h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? meas_h_cnt_sogref : meas_h_cnt;
+wire [11:0] meas_even_min_thold = (pcnt_line / 12'd4);
+wire [11:0] meas_even_max_thold = (pcnt_line / 12'd2) + (pcnt_line / 12'd4);
 wire meas_vblank_region = ((pcnt_frame_ctr < (pcnt_frame/8)) | (pcnt_frame_ctr > (pcnt_frame - (pcnt_frame/8))));
 wire [11:0] glitch_filt_thold = meas_vblank_region ? (pcnt_line/4) : (pcnt_line/8);
 
@@ -176,16 +175,21 @@ always @(posedge PCLK_i) begin
 
     // vsync leading edge processing per quadrant
     if (VS_i_np_prev & ~VS_i_np) begin
-        if (h_cnt < even_min_thold) begin
+        if (h_cnt_ref < even_min_thold) begin
             fid_next <= FID_ODD;
             fid_next_ctr <= 2'h1;
-        end else if ((h_cnt > even_max_thold) | ~interlace_flag) begin
+        end else if ((h_cnt_ref > even_max_thold) | ~interlace_flag) begin
             fid_next <= FID_ODD;
             fid_next_ctr <= 2'h2;
         end else begin
             fid_next <= FID_EVEN;
             fid_next_ctr <= 2'h2;
         end
+    end
+
+    // record starting position of csync leading edge for later FID detection
+    if (sogref_update_i) begin
+        h_cnt_sogref <= (h_cnt > even_max_thold) ? 0 : h_cnt;
     end
 
     if (((fid_next == FID_ODD) & (HS_i_prev & ~HS_i)) | ((fid_next == FID_EVEN) & (h_cnt == (H_TOTAL/2)-1'b1))) begin
@@ -308,6 +312,7 @@ always @(posedge CLK_MEAS_i) begin
             meas_h_cnt <= 0;
             meas_v_cnt <= meas_v_cnt + 1'b1;
         end
+        meas_h_cnt_sogref <= meas_h_cnt;
     end else if (meas_vblank_region & (meas_h_cnt > pcnt_line)) begin
         // hsync may be missing during vblank, force line change detect if pcnt_line is exceeded +-1/8 field around vsync edge
         meas_hl_det <= 1'b0;
@@ -318,7 +323,7 @@ always @(posedge CLK_MEAS_i) begin
     end
 
     if (VSYNC_i_np_prev & ~VSYNC_i_np) begin
-        if ((meas_h_cnt < meas_even_min_thold) | (meas_h_cnt > meas_even_max_thold)) begin
+        if ((meas_h_cnt_ref < meas_even_min_thold) | (meas_h_cnt_ref > meas_even_max_thold)) begin
             meas_fid <= FID_ODD;
             interlace_flag <= (meas_fid == FID_EVEN);
 

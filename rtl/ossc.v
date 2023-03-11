@@ -102,6 +102,7 @@ wire sys_reset_n = (po_reset_n & ~jtagm_reset_req);
 reg [7:0] TVP_R, TVP_G, TVP_B;
 reg TVP_HS, TVP_VS, TVP_FID;
 reg TVP_VS_sync1_reg, TVP_VS_sync2_reg;
+reg TVP_SOG_sync1_reg, TVP_SOG_sync2_reg, TVP_SOG_prev;
 reg TVP_HSYNC_sync1_reg, TVP_HSYNC_sync2_reg;
 reg TVP_VSYNC_sync1_reg, TVP_VSYNC_sync2_reg;
 
@@ -157,6 +158,9 @@ always @(posedge TVP_PCLK_i) begin
     TVP_FID <= TVP_FID_i;
 
     // sync to pclk
+    TVP_SOG_sync1_reg <= TVP_HSYNC_i;
+    TVP_SOG_sync2_reg <= TVP_SOG_sync1_reg;
+    TVP_SOG_prev <= TVP_SOG_sync2_reg;
     TVP_VS_sync1_reg <= TVP_VSYNC_i;
     TVP_VS_sync2_reg <= TVP_VS_sync1_reg;
 end
@@ -186,6 +190,7 @@ tvp7002_frontend u_tvp_frontend (
     .VSYNC_i(TVP_VSYNC_sync2_reg),
     .DE_i(1'b0),
     .FID_i(1'b0),
+    .sogref_update_i(TVP_SOG_prev & ~TVP_SOG_sync2_reg),
     .vsync_i_type(tvp_vsync_type),
     .hv_in_config(hv_in_config),
     .hv_in_config2(hv_in_config2),
