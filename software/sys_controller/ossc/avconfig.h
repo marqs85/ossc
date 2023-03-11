@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -21,7 +21,7 @@
 #define AVCONFIG_H_
 
 #include "alt_types.h"
-#include "tvp7002.h"
+#include "sysconfig.h"
 
 #define SIGNED_NUMVAL_ZERO  128
 
@@ -73,17 +73,27 @@ typedef enum {
 } avinput_t;
 
 typedef struct {
+    alt_u8 r_f_off;
+    alt_u8 g_f_off;
+    alt_u8 b_f_off;
+    alt_u8 r_f_gain;
+    alt_u8 g_f_gain;
+    alt_u8 b_f_gain;
+    alt_u8 c_gain;
+} __attribute__((packed)) color_setup_t;
+
+typedef struct {
     alt_u8 sl_mode;
     alt_u8 sl_type;
     alt_u8 sl_hybr_str;
     alt_u8 sl_method;
     alt_u8 sl_altern;
-    alt_u8 sl_altiv;
     alt_u8 sl_str;
     alt_u8 sl_id;
     alt_u8 sl_cust_l_str[5];
     alt_u8 sl_cust_c_str[6];
-    alt_u8 linemult_target;
+    alt_u8 sl_cust_iv_x;
+    alt_u8 sl_cust_iv_y;
     alt_u8 l2_mode;
     alt_u8 l3_mode;
     alt_u8 l4_mode;
@@ -103,7 +113,6 @@ typedef struct {
     alt_u8 hdmi_itc;
     alt_u8 s480p_mode;
     alt_u8 s400p_mode;
-    alt_u8 tvp_hpll2x;
     alt_u8 upsample2x;
     alt_u8 ypbpr_cs;
     alt_u8 sync_vth;
@@ -115,13 +124,12 @@ typedef struct {
     alt_u8 pre_coast;
     alt_u8 post_coast;
     alt_u8 full_tx_setup;
-    alt_u8 vga_ilace_fix;
     alt_u8 av3_alt_rgb;
-    alt_u8 panasonic_hack;
     alt_u8 reverse_lpf;
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
     alt_u8 audio_gain;
+    alt_u8 audio_mono;
     alt_u8 default_vic;
     alt_u8 clamp_offset;
     alt_u8 alc_h_filter;

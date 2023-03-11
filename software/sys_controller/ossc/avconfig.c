@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -26,7 +26,6 @@
 
 #define DEFAULT_ON              1
 
-extern mode_data_t video_modes[], video_modes_default[];
 extern alt_u8 update_cur_vm;
 
 // Target configuration
@@ -39,7 +38,6 @@ const avconfig_t tc_default = {
     .pm_384p = 1,
     .pm_480i = 1,
     .pm_1080i = 1,
-    .tvp_hpll2x = DEFAULT_ON,
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,
     .vsync_thold = DEFAULT_VSYNC_THOLD,
@@ -74,7 +72,7 @@ int set_default_avconfig()
     tc.tx_mode = (IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) ? TX_DVI : TX_HDMI_RGB;
 #endif
 
-    memcpy(video_modes, video_modes_default, VIDEO_MODES_SIZE);
+    set_default_vm_table();
     update_cur_vm = 1;
 
     return 0;

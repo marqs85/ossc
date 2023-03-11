@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -27,10 +27,11 @@
 #include "pll_reconfig_regs.h"
 
 // sys_ctrl bits
-#define VSYNC_I_TYPE                (1<<18)
 #define LT_ACTIVE                   (1<<15)
 #define LT_ARMED                    (1<<14)
 #define LT_MODE_OFFS                12
+#define VSYNC_I_TYPE                (1<<10)
+#define PLL_BYPASS                  (1<<9)
 #define REMOTE_EVENT                (1<<8)
 #define SD_SPI_SS_N                 (1<<7)
 #define LCD_CS_N                    (1<<6)
@@ -40,37 +41,18 @@
 #define VIDGEN_OFF                  (1<<1)
 #define AV_RESET_N                  (1<<0)
 
-#define LT_CTRL_MASK    0xf000
+#define LT_CTRL_MASK                0xf000
 
-// HDMI_TX definitions
 #define HDMITX_MODE_MASK            0x00040000
-
 #define PLL_ACTIVECLK_MASK          0x00080000
-
-#define TX_PIXELREP_DISABLE         0
-#define TX_PIXELREP_2X              1
-#define TX_PIXELREP_4X              3
-
-// FPGA macros
-#define FPGA_V_MULTMODE_1X          0
-#define FPGA_V_MULTMODE_2X          1
-#define FPGA_V_MULTMODE_3X          2
-#define FPGA_V_MULTMODE_4X          3
-#define FPGA_V_MULTMODE_5X          4
-
-#define FPGA_H_MULTMODE_FULLWIDTH   0
-#define FPGA_H_MULTMODE_ASPECTFIX   1
-#define FPGA_H_MULTMODE_OPTIMIZED   2
-#define FPGA_H_MULTMODE_OPTIMIZED_1X 3
+#define VSYNC_FLAG_MASK             0x00100000
 
 #define AUTO_OFF                    0
 #define AUTO_CURRENT_INPUT          1
-#define AUTO_MAX_COUNT            100
+#define AUTO_MAX_COUNT              100
 #define AUTO_CURRENT_MAX_COUNT      6
 
 #define PLL_CONFIG_VG               0
-#define PLL_CONFIG_2X_5X            1
-#define PLL_CONFIG_3X_4X            2
 
 // In reverse order of importance
 typedef enum {
@@ -97,22 +79,13 @@ typedef struct {
     alt_u32 pcnt_frame;
     alt_u32 clkcnt;
     alt_u8 progressive;
-    alt_u8 macrovis;
     alt_8 id;
     alt_u8 sync_active;
-    alt_u8 fpga_vmultmode;
-    alt_u8 fpga_hmultmode;
     alt_u8 tx_pixelrep;
     alt_u8 hdmitx_pixr_ifr;
     alt_u8 hdmitx_pclk_level;
-    HDMI_Video_Type hdmitx_vic;
-    alt_u8 sample_mult;
-    alt_u8 sample_sel;
-    alt_u8 hsync_cut;
-    alt_u16 h_mult_total;
-    mode_flags target_lm;
+    alt_u32 pclk_o_hz;
     avinput_t avinput;
-    alt_u8 pll_config;
     // Current configuration
     avconfig_t cc;
 } avmode_t;
@@ -123,6 +96,7 @@ void ui_disp_status(alt_u8 refresh_osd_timer);
 int load_profile();
 int save_profile();
 
+void print_vm_stats();
 int latency_test();
 
 #endif
