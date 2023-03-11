@@ -19,7 +19,7 @@
 	<auto_create_rpd>0</auto_create_rpd>
 	<rpd_little_endian>1</rpd_little_endian>
 	<options>
-		<map_file>1</map_file>
+		<map_file>0</map_file>
 	</options>
 	<advanced_options>
 		<ignore_epcs_id_check>0</ignore_epcs_id_check>

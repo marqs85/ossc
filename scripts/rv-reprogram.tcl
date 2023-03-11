@@ -1,5 +1,13 @@
 #Select the master service type and check for available service paths.
-set service_paths [get_service_paths master]
+while 1 {
+    set service_paths [get_service_paths master]
+    if {[llength $service_paths] > 0} {
+        break
+    }
+    puts "Refreshing connections..."
+    refresh_connections
+    after 100
+}
 
 #Set the master service path.
 set master_service_path [lindex $service_paths 0]
@@ -8,7 +16,7 @@ set master_service_path [lindex $service_paths 0]
 set claim_path [claim_service master $master_service_path mylib]
 
 puts "Halting CPU"
-master_write_32 $claim_path 0x0 0x1
+master_write_32 $claim_path 0x0 0x10000
 
 puts "Writing block RAM"
 master_write_from_file $claim_path mem_init/sys_onchip_memory2_0.bin 0x10000
