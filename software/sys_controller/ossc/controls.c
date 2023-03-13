@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -38,7 +38,7 @@ const alt_u16 rc_keymap_default[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3E
 alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
-extern mode_data_t video_modes[];
+extern mode_data_t video_modes_plm[];
 extern avmode_t cm;
 extern avconfig_t tc;
 extern avinput_t target_input;
@@ -47,16 +47,15 @@ extern alt_u32 sys_ctrl;
 extern alt_u16 tc_sampler_phase;
 extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 lcd_bl_timeout;
-extern alt_u8 update_cur_vm, vm_edit;
-extern volatile sc_regs *sc;
+extern alt_u8 vm_edit;
 extern volatile osd_regs *osd;
 
 extern menu_t menu_scanlines, menu_advtiming;
-extern char target_profile_name[PROFILE_NAME_LEN+1];
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
+alt_u8 phase_hotkey_enable;
 
 void setup_rc()
 {
@@ -122,13 +121,9 @@ int parse_control()
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
 
-    sc_status_reg sc_status;
-    sc_status2_reg sc_status2;
-    alt_u32 fpga_v_hz_x100;
-
     // one for each video_group
-    alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &tc.pm_1080i };
-    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x3, 0xf, 0x3, 0x3, 0x3 };
+    alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &pt_only, &tc.pm_1080i, &pt_only };
+    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x1f, 0x7, 0xf, 0xf, 0x3, 0x3, 0x1, 0x3, 0x1 };
 
     avinput_t next_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
 
@@ -169,34 +164,7 @@ int parse_control()
 
             break;
         case RC_INFO:
-            sc_status = sc->sc_status;
-            sc_status2 = sc->sc_status2;
-            fpga_v_hz_x100 = (100*TVP_EXTCLK_HZ)/sc_status2.pcnt_frame;
-
-            if (!menu_active) {
-                memset((void*)osd->osd_array.data, 0, sizeof(osd_char_array));
-                read_userdata(profile_sel, 1);
-                sniprintf((char*)osd->osd_array.data[0][0], OSD_CHAR_COLS, "Profile:");
-                sniprintf((char*)osd->osd_array.data[0][1], OSD_CHAR_COLS, "%u: %s", profile_sel, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name);
-                if (cm.sync_active) {
-                    sniprintf((char*)osd->osd_array.data[1][0], OSD_CHAR_COLS, "Mode preset:");
-                    sniprintf((char*)osd->osd_array.data[1][1], OSD_CHAR_COLS, "%s", video_modes[cm.id].name);
-                    sniprintf((char*)osd->osd_array.data[2][0], OSD_CHAR_COLS, "Imode (FPGA):");
-                    sniprintf((char*)osd->osd_array.data[2][1], OSD_CHAR_COLS, "%lu-%c%c %lu.%.2luHz", (unsigned long)sc_status.vmax,
-                                                                             sc_status.interlace_flag ? 'i' : 'p',
-                                                                             sc_status.fpga_vsyncgen ? '*' : ' ',
-                                                                             fpga_v_hz_x100/100,
-                                                                             fpga_v_hz_x100%100);
-                    sniprintf((char*)osd->osd_array.data[3][0], OSD_CHAR_COLS, "Ccnt / frame:");
-                    sniprintf((char*)osd->osd_array.data[3][1], OSD_CHAR_COLS, "%lu", (unsigned long)sc_status2.pcnt_frame);
-                }
-                sniprintf((char*)osd->osd_array.data[4][0], OSD_CHAR_COLS, "Firmware:");
-                sniprintf((char*)osd->osd_array.data[4][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
-                osd->osd_config.status_refresh = 1;
-                osd->osd_row_color.mask = 0;
-                osd->osd_sec_enable[0].mask = 0x1f;
-                osd->osd_sec_enable[1].mask = 0x1f;
-            }
+            print_vm_stats();
             break;
         case RC_LCDBL:
             sys_ctrl ^= LCD_BL;
@@ -217,8 +185,8 @@ int parse_control()
         case RC_SL_TYPE:
             tc.sl_type = (tc.sl_type < SL_TYPE_MAX) ? (tc.sl_type + 1) : 0;
             if (!menu_active) {
-                strncpy((char*)osd->osd_array.data[0][0], menu_scanlines.items[7].name, OSD_CHAR_COLS);
-                strncpy((char*)osd->osd_array.data[1][0], menu_scanlines.items[7].sel.setting_str[tc.sl_type], OSD_CHAR_COLS);
+                strncpy((char*)osd->osd_array.data[0][0], menu_scanlines.items[5].name, OSD_CHAR_COLS);
+                strncpy((char*)osd->osd_array.data[1][0], menu_scanlines.items[5].sel.setting_str[tc.sl_type], OSD_CHAR_COLS);
                 osd->osd_config.status_refresh = 1;
                 osd->osd_row_color.mask = 0;
                 osd->osd_sec_enable[0].mask = 3;
@@ -259,14 +227,14 @@ int parse_control()
                         break;
                 }
 
-                if (video_modes[cm.id].group > GROUP_1080I) {
+                if (video_modes_plm[cm.id].group > GROUP_1080P) {
                     printf("WARNING: Corrupted mode (id %d)\n", cm.id);
                     break;
                 }
 
                 if (i <= RC_BTN5) {
-                    if ((1<<i) & valid_pm[video_modes[cm.id].group]) {
-                        *pmcfg_ptr[video_modes[cm.id].group] = i;
+                    if ((1<<i) & valid_pm[video_modes_plm[cm.id].group]) {
+                        *pmcfg_ptr[video_modes_plm[cm.id].group] = i;
                     } else {
                         sniprintf(menu_row2, LCD_ROW_LEN+1, "%ux unsupported", i+1);
                         ui_disp_menu(1);
@@ -285,25 +253,28 @@ int parse_control()
             break;
         case RC_PHASE_MINUS:
         case RC_PHASE_PLUS:
-            if (i == RC_PHASE_MINUS)
-                video_modes[cm.id].sampler_phase = video_modes[cm.id].sampler_phase ? (video_modes[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX;
-            else
-                video_modes[cm.id].sampler_phase = (video_modes[cm.id].sampler_phase < SAMPLER_PHASE_MAX) ? (video_modes[cm.id].sampler_phase + 1) : 0;
+            if (phase_hotkey_enable) {
+                if (i == RC_PHASE_MINUS)
+                    video_modes_plm[cm.id].sampler_phase = video_modes_plm[cm.id].sampler_phase ? (video_modes_plm[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX;
+                else
+                    video_modes_plm[cm.id].sampler_phase = (video_modes_plm[cm.id].sampler_phase < SAMPLER_PHASE_MAX) ? (video_modes_plm[cm.id].sampler_phase + 1) : 0;
 
-            update_cur_vm = 1;
-            if (cm.id == vm_edit)
-                tc_sampler_phase = video_modes[vm_edit].sampler_phase;
+                if (cm.id == vm_edit)
+                    tc_sampler_phase = video_modes_plm[cm.id].sampler_phase;
 
-            if (!menu_active) {
-                strncpy((char*)osd->osd_array.data[0][0], menu_advtiming.items[8].name, OSD_CHAR_COLS);
-                sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg", (video_modes[cm.id].sampler_phase*1125)/100);
-                strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
-                osd->osd_config.status_refresh = 1;
-                osd->osd_row_color.mask = 0;
-                osd->osd_sec_enable[0].mask = 3;
-                osd->osd_sec_enable[1].mask = 0;
-            } else if (get_current_menunavi()->m == &menu_advtiming) {
-                render_osd_page();
+                set_sampler_phase(video_modes_plm[cm.id].sampler_phase);
+
+                if (!menu_active) {
+                    strncpy((char*)osd->osd_array.data[0][0], menu_advtiming.items[8].name, OSD_CHAR_COLS);
+                    sampler_phase_disp(video_modes_plm[cm.id].sampler_phase);
+                    strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
+                    osd->osd_config.status_refresh = 1;
+                    osd->osd_row_color.mask = 0;
+                    osd->osd_sec_enable[0].mask = 3;
+                    osd->osd_sec_enable[1].mask = 0;
+                } else if (get_current_menunavi()->m == &menu_advtiming) {
+                    render_osd_page();
+                }
             }
             break;
         case RC_PROF_HOTKEY:

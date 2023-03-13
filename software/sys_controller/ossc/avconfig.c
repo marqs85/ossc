@@ -33,23 +33,21 @@ avconfig_t tc;
 
 // Default configuration
 const avconfig_t tc_default = {
-    .l3_mode = 1,
     .pm_240p = 1,
     .pm_384p = 1,
     .pm_480i = 1,
     .pm_1080i = 1,
+    .l3_mode = 1,
+    .clamp_offset = SIGNED_NUMVAL_ZERO,
+    .sl_altern = 1,
     .sync_vth = DEFAULT_SYNC_VTH,
     .linelen_tol = DEFAULT_LINELEN_TOL,
     .vsync_thold = DEFAULT_VSYNC_THOLD,
-    .sync_lpf = DEFAULT_SYNC_LPF,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
-    .sl_altern = 1,
-#ifdef ENABLE_AUDIO
-    .audio_dw_sampl = DEFAULT_ON,
-    .tx_mode = TX_HDMI_RGB,
-    .audio_gain = AUDIO_GAIN_0DB,
-#endif
+    .sync_lpf = DEFAULT_SYNC_LPF,
+    .alc_h_filter = DEFAULT_ALC_H_FILTER,
+    .alc_v_filter = DEFAULT_ALC_V_FILTER,
     .col = {
         .r_f_gain = DEFAULT_FINE_GAIN,
         .g_f_gain = DEFAULT_FINE_GAIN,
@@ -59,10 +57,11 @@ const avconfig_t tc_default = {
         .b_f_off = DEFAULT_FINE_OFFSET,
         .c_gain = DEFAULT_COARSE_GAIN,
     },
+#ifdef ENABLE_AUDIO
+    .audio_dw_sampl = DEFAULT_ON,
+    .audio_gain = AUDIO_GAIN_0DB,
+#endif
     .link_av = AV_LAST,
-    .clamp_offset = SIGNED_NUMVAL_ZERO,
-    .alc_h_filter = DEFAULT_ALC_H_FILTER,
-    .alc_v_filter = DEFAULT_ALC_V_FILTER,
 };
 
 int set_default_avconfig()

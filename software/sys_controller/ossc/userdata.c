@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -32,10 +32,15 @@
 #include "utils.h"
 #include "altera_avalon_pio_regs.h"
 
+// include mode array definitions so that sizeof() can be used
+#define VM_STATIC_INCLUDE
+#include "video_modes_list.c"
+#undef VM_STATIC_INCLUDE
+
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern avmode_t cm;
 extern avconfig_t tc;
-extern mode_data_t video_modes[];
+extern mode_data_t video_modes_plm[];
 extern avinput_t target_input;
 extern alt_u8 update_cur_vm;
 extern alt_u8 input_profiles[AV_LAST];
@@ -43,7 +48,7 @@ extern alt_u8 profile_sel;
 extern alt_u8 def_input, profile_link;
 extern alt_u8 lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
-extern alt_u8 osd_enable, osd_status_timeout;
+extern alt_u8 osd_enable, osd_status_timeout, phase_hotkey_enable;
 extern SD_DEV sdcard_dev;
 extern alt_flash_dev *epcq_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -83,6 +88,7 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->auto_av3_ypbpr = auto_av3_ypbpr;
         ((ude_initcfg*)databuf)->osd_enable = osd_enable;
         ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout;
+        ((ude_initcfg*)databuf)->phase_hotkey_enable = phase_hotkey_enable;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         for (i=0; i<sizeof(ude_initcfg); i++)
             databuf[i] = bitswap8(databuf[i]);
@@ -95,7 +101,7 @@ int write_userdata(alt_u8 entry)
     case UDE_PROFILE:
         ((ude_hdr*)databuf)->version_major = PROFILE_VER_MAJOR;
         ((ude_hdr*)databuf)->version_minor = PROFILE_VER_MINOR;
-        vm_to_write = VIDEO_MODES_SIZE;
+        vm_to_write = sizeof(video_modes_plm_default);
         ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
         ((ude_profile*)databuf)->vm_data_len = vm_to_write;
 
@@ -110,8 +116,8 @@ int write_userdata(alt_u8 entry)
         memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
         pageoffset += sizeof(avconfig_t);
 
-        // erase sector and write a full page first, assume sizeof(video_modes) >> PAGESIZE
-        memcpy(databuf+pageoffset, (char*)video_modes, PAGESIZE-pageoffset);
+        // erase sector and write a full page first, assume sizeof(video_modes_plm) >> PAGESIZE
+        memcpy(databuf+pageoffset, (char*)video_modes_plm, PAGESIZE-pageoffset);
         srcoffset = PAGESIZE-pageoffset;
         vm_to_write -= PAGESIZE-pageoffset;
         for (i=0; i<PAGESIZE; i++)
@@ -123,7 +129,7 @@ int write_userdata(alt_u8 entry)
         // then write the rest page by page
         pageno = 1;
         while (vm_to_write > 0) {
-            memcpy(databuf, (char*)video_modes+srcoffset, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
+            memcpy(databuf, (char*)video_modes_plm+srcoffset, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
             for (i=0; i<PAGESIZE; i++)
                 databuf[i] = bitswap8(databuf[i]);
             retval = alt_epcq_controller2_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
@@ -135,7 +141,7 @@ int write_userdata(alt_u8 entry)
             pageno++;
         }
 
-        printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
+        printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+sizeof(video_modes_plm_default));
         break;
     default:
         break;
@@ -197,6 +203,7 @@ int read_userdata(alt_u8 entry, int dry_run)
             profile_link = ((ude_initcfg*)databuf)->profile_link;
             profile_sel = input_profiles[AV_TESTPAT]; // Global profile
             lcd_bl_timeout = ((ude_initcfg*)databuf)->lcd_bl_timeout;
+            phase_hotkey_enable = ((ude_initcfg*)databuf)->phase_hotkey_enable;
             memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
             printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
         }
@@ -206,7 +213,7 @@ int read_userdata(alt_u8 entry, int dry_run)
             printf("Profile version %u.%u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
             return 2;
         }
-        if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == VIDEO_MODES_SIZE)) {
+        if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == sizeof(video_modes_plm_default))) {
             strncpy(target_profile_name, ((ude_profile*)databuf)->name, PROFILE_NAME_LEN+1);
             if (dry_run)
                 return 0;
@@ -223,7 +230,7 @@ int read_userdata(alt_u8 entry, int dry_run)
             dstoffset = 0;
             while (vm_to_read > 0) {
                 if (vm_to_read >= PAGESIZE-pageoffset) {
-                    memcpy((char*)video_modes+dstoffset, databuf+pageoffset, PAGESIZE-pageoffset);
+                    memcpy((char*)video_modes_plm+dstoffset, databuf+pageoffset, PAGESIZE-pageoffset);
                     dstoffset += PAGESIZE-pageoffset;
                     vm_to_read -= PAGESIZE-pageoffset;
                     pageoffset = 0;
@@ -235,14 +242,14 @@ int read_userdata(alt_u8 entry, int dry_run)
                     if (retval != 0)
                         return retval;
                 } else {
-                    memcpy((char*)video_modes+dstoffset, databuf+pageoffset, vm_to_read);
+                    memcpy((char*)video_modes_plm+dstoffset, databuf+pageoffset, vm_to_read);
                     pageoffset += vm_to_read;
                     vm_to_read = 0;
                 }
             }
             update_cur_vm = 1;
 
-            printf("Profile %u data read (%u bytes)\n", entry, sizeof(avconfig_t)+VIDEO_MODES_SIZE);
+            printf("Profile %u data read (%u bytes)\n", entry, sizeof(avconfig_t)+sizeof(video_modes_plm_default));
         }
         break;
     default:

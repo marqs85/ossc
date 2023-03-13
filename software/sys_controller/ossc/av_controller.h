@@ -93,6 +93,8 @@ typedef struct {
 void ui_disp_menu(alt_u8 osd_mode);
 void ui_disp_status(alt_u8 refresh_osd_timer);
 
+void set_sampler_phase(uint8_t sampler_phase);
+
 int load_profile();
 int save_profile();
 

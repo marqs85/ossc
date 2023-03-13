@@ -349,32 +349,10 @@ status_t get_status(tvp_sync_input_t syncinput)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
         }
 
-        if ((tc.pm_240p != cm.cc.pm_240p) ||
-            (tc.pm_384p != cm.cc.pm_384p) ||
-            (tc.pm_480i != cm.cc.pm_480i) ||
-            (tc.pm_480p != cm.cc.pm_480p) ||
-            (tc.pm_1080i != cm.cc.pm_1080i) ||
-            (tc.l2_mode != cm.cc.l2_mode) ||
-            (tc.l3_mode != cm.cc.l3_mode) ||
-            (tc.l4_mode != cm.cc.l4_mode) ||
-            (tc.l5_mode != cm.cc.l5_mode) ||
-            (tc.l5_fmt != cm.cc.l5_fmt) ||
-            (tc.upsample2x != cm.cc.upsample2x) ||
-            (tc.ar_256col != cm.cc.ar_256col) ||
-            (tc.default_vic != cm.cc.default_vic) ||
-            (tc.clamp_offset != cm.cc.clamp_offset))
-            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
-
-        if ((tc.s480p_mode != cm.cc.s480p_mode) && (vmode_in.timings.v_total == 525))
-            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
-
-        if ((tc.s400p_mode != cm.cc.s400p_mode) && (vmode_in.timings.v_total == 449))
+        if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if ((vm_conf.si_pclk_mult > 1) && (pll_reconfig->pll_config_status.c_config_id != 5) && (vm_conf.si_pclk_mult-1 != pll_reconfig->pll_config_status.c_config_id))
-            status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
-
-        if (update_cur_vm)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         cm.totlines = totlines;
@@ -383,22 +361,7 @@ status_t get_status(tvp_sync_input_t syncinput)
         cm.progressive = progressive;
     }
 
-    if ((tc.sl_mode != cm.cc.sl_mode) ||
-        (tc.sl_type != cm.cc.sl_type) ||
-        (tc.sl_hybr_str != cm.cc.sl_hybr_str) ||
-        (tc.sl_method != cm.cc.sl_method) ||
-        (tc.sl_str != cm.cc.sl_str) ||
-        (tc.sl_cust_iv_x != cm.cc.sl_cust_iv_x) ||
-        (tc.sl_cust_iv_y != cm.cc.sl_cust_iv_y) ||
-        memcmp(tc.sl_cust_l_str, cm.cc.sl_cust_l_str, 5) ||
-        memcmp(tc.sl_cust_c_str, cm.cc.sl_cust_c_str, 6) ||
-        (tc.sl_altern != cm.cc.sl_altern) ||
-        (tc.sl_id != cm.cc.sl_id) ||
-        (tc.h_mask != cm.cc.h_mask) ||
-        (tc.v_mask != cm.cc.v_mask) ||
-        (tc.mask_br != cm.cc.mask_br) ||
-        (tc.mask_color != cm.cc.mask_color) ||
-        (tc.reverse_lpf != cm.cc.reverse_lpf))
+    if (memcmp(&tc.sl_mode, &cm.cc.sl_mode, offsetof(avconfig_t, sync_vth) - offsetof(avconfig_t, sl_mode)))
         status = (status < SC_CONFIG_CHANGE) ? SC_CONFIG_CHANGE : status;
 
     if (tc.sync_vth != cm.cc.sync_vth)
@@ -580,6 +543,7 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
+    int retval;
     alt_u8 h_syncinlen, v_syncinlen, macrovis, hdmitx_pclk_level, osd_x_size, osd_y_size;
     alt_u32 h_hz, h_synclen_px, pclk_i_hz, dotclk_hz, pll_h_total;
 
@@ -605,13 +569,14 @@ void program_mode()
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(vmode_in.timings.v_hz_x100/100), (unsigned)(vmode_in.timings.v_hz_x100%100));
     ui_disp_status(1);
 
-    cm.id = get_pure_lm_mode(&cm.cc, &vmode_in, &vmode_out, &vm_conf);
+    retval = get_pure_lm_mode(&cm.cc, &vmode_in, &vmode_out, &vm_conf);
 
-    if (cm.id == -1) {
+    if (retval == -1) {
         printf ("ERROR: no suitable mode preset found\n");
         vm_conf.si_pclk_mult = 0;
         return;
     }
+    cm.id = retval;
     vm_sel = cm.id;
 
     // Double TVP7002 PLL sampling rate when possible to minimize jitter

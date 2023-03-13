@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -146,7 +146,7 @@ int fw_update()
     }
 
     //disable video output
-    tvp_disable_output();
+    tvp_powerdown();
     sys_ctrl |= VIDGEN_OFF;
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
     usleep(10000);

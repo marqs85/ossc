@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2019  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -32,15 +32,17 @@
 extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern avmode_t cm;
 extern avconfig_t tc;
-extern mode_data_t video_modes[];
+extern mode_data_t video_modes_plm[];
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern alt_u8 vm_sel, profile_sel_menu, lt_sel, def_input, profile_link, lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 update_cur_vm;
-extern alt_u8 osd_enable, osd_status_timeout;
+extern alt_u8 osd_enable, osd_status_timeout, phase_hotkey_enable;
+extern uint8_t sl_def_iv_x, sl_def_iv_y;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 extern volatile osd_regs *osd;
+extern const int num_video_modes_plm;
 
 alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active, tc_sampler_phase;
 alt_u8 menu_active;
@@ -58,7 +60,7 @@ static const char *l2l4l5_mode_desc[] = { LNG("Generic 4:3","ｼﾞｪﾈﾘｯ�
 static const char *l5_fmt_desc[] = { "1920x1080", "1600x1200", "1920x1200" };
 static const char *pm_240p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x", "Line4x", "Line5x" };
 static const char *pm_480i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)", "Line3x (laced)", "Line4x (bob)" };
-static const char *pm_384p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line2x 240x360", "Line3x 240x360", "Line3x Generic" };
+static const char *pm_384p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x Generic", "Line2x 240x360", "Line3x 240x360" };
 static const char *pm_480p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x" };
 static const char *pm_1080i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)" };
 static const char *ar_256col_desc[] = { "Pseudo 4:3 DAR", "1:1 PAR" };
@@ -82,6 +84,8 @@ static void intclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1,
 static void extclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(TVP_EXTCLK_HZ/1000))/1000), (unsigned)((((1000000U*v)/(TVP_EXTCLK_HZ/1000))%1000)/10)); }
 static void sl_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((v+1)*625)/100); }
 static void sl_cust_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", ((v)*625)/100); }
+static void sl_cust_iv_x_disp(uint8_t v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%s%u%s", (v ? "" : "Auto ("), (v ? v : sl_def_iv_x)+1, (v ? "" : ")")); }
+static void sl_cust_iv_y_disp(uint8_t v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%s%u%s", (v ? "" : "Auto ("), (v ? v : sl_def_iv_y)+1, (v ? "" : ")")); }
 static void sl_hybr_str_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u%%", (v*625)/100); }
 static void lines_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u lines","%u ﾗｲﾝ"), v); }
 static void pixels_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u pixels","%u ﾄﾞｯﾄ"), v); }
@@ -89,14 +93,15 @@ static void value_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", v);
 static void signed_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d", (alt_8)(v-SIGNED_NUMVAL_ZERO)); }
 static void lt_disp(alt_u8 v) { strncpy(menu_row2, lt_desc[v], LCD_ROW_LEN+1); }
 static void aud_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v-AUDIO_GAIN_0DB)); }
-static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes[v].name, LCD_ROW_LEN+1); }
+static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes_plm[v].name, LCD_ROW_LEN+1); }
 static void link_av_desc (avinput_t v) { strncpy(menu_row2, v == AV_LAST ? "No link" : avinput_str[v], LCD_ROW_LEN+1); }
 static void profile_disp(alt_u8 v) { read_userdata(v, 1); sniprintf(menu_row2, LCD_ROW_LEN+1, "%u: %s", v, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name); }
 static void alc_v_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u lines","%u ﾗｲﾝ"), (1<<v)); }
 static void alc_h_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u pixels","%u ﾄﾞｯﾄ"), (1<<(v+1))); }
+void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg", (v*11250)/1000); }
 //static void coarse_gain_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%u", ((v*10)+50)/100, (((v*10)+50)%100)/10); }
 
-static const arg_info_t vm_arg_info = {&vm_sel, VIDEO_MODES_CNT-1, vm_display_name};
+static arg_info_t vm_arg_info = {&vm_sel, 0, vm_display_name};
 static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, profile_disp};
 static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-1, lt_disp};
 
@@ -106,7 +111,7 @@ MENU(menu_advtiming, P99_PROTECT({ \
     { "H. s.rate frac",                           OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_samplerate_adj, 0,  H_TOTAL_ADJ_MAX, vm_tweak } } },
     { LNG("H. synclen","H. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_synclen,    H_SYNCLEN_MIN, H_SYNCLEN_MAX, vm_tweak } } },
     { LNG("H. backporch","H. ﾊﾞｯｸﾎﾟｰﾁ"),        OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_bporch,     H_BPORCH_MIN,  H_BPORCH_MAX, vm_tweak } } },
-    { LNG("H. active","H. ｱｸﾃｨﾌﾞ"),             OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_MAX, vm_tweak } } },
+    { LNG("H. active","H. ｱｸﾃｨﾌﾞ"),             OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_active,     H_ACTIVE_MIN,  H_ACTIVE_SMP_MAX, vm_tweak } } },
     { LNG("V. synclen","V. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_synclen,    V_SYNCLEN_MIN, V_SYNCLEN_MAX, vm_tweak } } },
     { LNG("V. backporch","V. ﾊﾞｯｸﾎﾟｰﾁ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_bporch,     V_BPORCH_MIN,  V_BPORCH_MAX, vm_tweak } } },
     { LNG("V. active","V. ｱｸﾃｨﾌﾞ"),            OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_active,     V_ACTIVE_MIN,  V_ACTIVE_MAX, vm_tweak } } },
@@ -114,6 +119,8 @@ MENU(menu_advtiming, P99_PROTECT({ \
 }))
 
 MENU(menu_cust_sl, P99_PROTECT({ \
+    { "H interval",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_cust_iv_x,          OPT_NOWRAP, 0, 4, sl_cust_iv_x_disp } } },
+    { "V interval",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_cust_iv_y,          OPT_NOWRAP, 0, 5, sl_cust_iv_y_disp } } },
     { "Sub-line 1 str",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_cust_l_str[0],      OPT_NOWRAP, 0, SCANLINESTR_MAX+1, sl_cust_str_disp } } },
     { "Sub-line 2 str",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_cust_l_str[1],      OPT_NOWRAP, 0, SCANLINESTR_MAX+1, sl_cust_str_disp } } },
     { "Sub-line 3 str",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_cust_l_str[2],      OPT_NOWRAP, 0, SCANLINESTR_MAX+1, sl_cust_str_disp } } },
@@ -146,7 +153,6 @@ MENU(menu_vinputproc, P99_PROTECT({ \
 MENU(menu_sampling, P99_PROTECT({ \
     { LNG("480p in sampler","ｻﾝﾌﾟﾗｰﾃﾞ480p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
     { LNG("400p in sampler","ｻﾝﾌﾟﾗｰﾃﾞ400p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s400p_mode,    OPT_WRAP, SETTING_ITEM(s400p_mode_desc) } } },
-    { LNG("Allow TVP HPLL2x","TVP HPLL2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.tvp_hpll2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Allow upsample2x","ｱｯﾌﾟｻﾝﾌﾟﾙ2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.upsample2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("<Adv. timing   >","<ｶｸｼｭﾀｲﾐﾝｸﾞ>"),    OPT_SUBMENU,            { .sub = { &menu_advtiming, &vm_arg_info, vm_select } } },
 }))
@@ -180,36 +186,34 @@ MENU(menu_output, P99_PROTECT({ \
 MENU(menu_scanlines, P99_PROTECT({ \
     { LNG("Scanlines","ｽｷｬﾝﾗｲﾝ"),                  OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_mode,     OPT_WRAP,   SETTING_ITEM(sl_mode_desc) } } },
     { LNG("Sl. strength","ｽｷｬﾝﾗｲﾝﾂﾖｻ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_str,      OPT_NOWRAP, 0, SCANLINESTR_MAX, sl_str_disp } } },
-    { "Sl. hybrid str.",                          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_hybr_str, OPT_NOWRAP, 0, SL_HYBRIDSTR_MAX, sl_hybr_str_disp } } },
+    //{ "Sl. hybrid str.",                          OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.sl_hybr_str, OPT_NOWRAP, 0, SL_HYBRIDSTR_MAX, sl_hybr_str_disp } } },
     { "Sl. method",                               OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_method,   OPT_WRAP,   SETTING_ITEM(sl_method_desc) } } },
     { "Sl. alternating",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_altern,   OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
     { LNG("Sl. alignment","ｽｷｬﾝﾗｲﾝﾎﾟｼﾞｼｮﾝ"),        OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_id,       OPT_WRAP,   SETTING_ITEM(sl_id_desc) } } },
-    { "Sl. alt interval",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_altiv,    OPT_WRAP,   SETTING_ITEM(off_on_desc) } } },
     { LNG("Sl. type","ｽｷｬﾝﾗｲﾝﾙｲ"),                 OPT_AVCONFIG_SELECTION, { .sel = { &tc.sl_type,     OPT_WRAP,   SETTING_ITEM(sl_type_desc) } } },
     { "<  Custom Sl.  >",                         OPT_SUBMENU,            { .sub = { &menu_cust_sl, NULL, NULL } } },
 }))
 
 MENU(menu_postproc, P99_PROTECT({ \
-    { LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, H_MASK_MAX, pixels_disp } } },
-    { LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, V_MASK_MAX, pixels_disp } } },
+    //{ LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, H_MASK_MAX, pixels_disp } } },
+    //{ LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, V_MASK_MAX, pixels_disp } } },
     { "Mask color",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.mask_color,  OPT_NOWRAP,   SETTING_ITEM(mask_color_desc) } } },
     { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
-    { LNG("Reverse LPF","ｷﾞｬｸLPF"),              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
-    { LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
+    //{ LNG("Reverse LPF","ｷﾞｬｸLPF"),              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
+    //{ LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },
 }))
 
 MENU(menu_compatibility, P99_PROTECT({ \
     { LNG("Full TX setup","ﾌﾙTXｾｯﾄｱｯﾌﾟ"),         OPT_AVCONFIG_SELECTION, { .sel = { &tc.full_tx_setup,    OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { LNG("AV3 interlacefix","AV3ｲﾝﾀｰﾚｰｽｼｭｳｾｲ"),  OPT_AVCONFIG_SELECTION, { .sel = { &tc.vga_ilace_fix,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "AV3 use alt. RGB",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.av3_alt_rgb,     OPT_WRAP, SETTING_ITEM(av3_alt_rgb_desc) } } },
     { "Default HDMI VIC",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.default_vic,     OPT_NOWRAP, 0, HDMI_1080p50, value_disp } } },
-    { "Panasonic hack",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.panasonic_hack,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 
 #ifdef ENABLE_AUDIO
 MENU(menu_audio, P99_PROTECT({ \
     { LNG("Down-sampling","ﾀﾞｳﾝｻﾝﾌﾟﾘﾝｸﾞ"),       OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_dw_sampl, OPT_WRAP, SETTING_ITEM(audio_dw_sampl_desc) } } },
     { LNG("Swap left/right","ﾋﾀﾞﾘ/ﾐｷﾞｽﾜｯﾌﾟ"),    OPT_AVCONFIG_SELECTION, { .sel = { &tc.audio_swap_lr,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "Mono mode",                              OPT_AVCONFIG_SELECTION,  { .sel = { &tc.audio_mono,      OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "Pre-ADC gain",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.audio_gain,     OPT_NOWRAP, 0, AUDIO_GAIN_MAX, aud_db_disp } } },
 }))
 #define AUDIO_MENU { LNG("Audio options  >","ｵｰﾃﾞｨｵｵﾌﾟｼｮﾝ     >"),                  OPT_SUBMENU,            { .sub = { &menu_audio, NULL, NULL } } },
@@ -218,9 +222,6 @@ MENU(menu_audio, P99_PROTECT({ \
 #endif
 
 MENU(menu_settings, P99_PROTECT({ \
-    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"),   OPT_FUNC_CALL,         { .fun = { load_profile, &profile_arg_info } } },
-    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"),  OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
-    { LNG("<Reset settings>","<ｾｯﾃｲｦｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
     { LNG("Link prof->input","Link prof->input"), OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.link_av,  OPT_WRAP, AV1_RGBs, AV_LAST, link_av_desc } } },
     { LNG("Link input->prof","Link input->prof"),   OPT_AVCONFIG_SELECTION, { .sel = { &profile_link,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
@@ -231,6 +232,10 @@ MENU(menu_settings, P99_PROTECT({ \
     { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
     { "OSD",                                    OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable,   OPT_WRAP,   SETTING_ITEM(osd_enable_desc) } } },
     { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
+    { "Phase hotkey",                           OPT_AVCONFIG_SELECTION, { .sel = { &phase_hotkey_enable,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"),   OPT_FUNC_CALL,         { .fun = { load_profile, &profile_arg_info } } },
+    { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"),  OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
+    { LNG("<Reset settings>","<ｾｯﾃｲｦｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
 #ifndef DEBUG
     { LNG("<Import sett.  >","<ｾｯﾃｲﾖﾐｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
     { LNG("<Export sett.  >","<ｾｯﾃｲｶｷｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { export_userdata, NULL } } },
@@ -258,6 +263,21 @@ alt_u8 navlvl = 0;
 
 menunavi* get_current_menunavi() {
     return &navi[navlvl];
+}
+
+void init_menu() {
+    // Set max ids for adv timing
+    vm_arg_info.max = num_video_modes_plm-1;
+
+    // Setup OSD
+    osd->osd_config.x_size = 0;
+    osd->osd_config.y_size = 0;
+    osd->osd_config.x_offset = 3;
+    osd->osd_config.y_offset = 3;
+    osd->osd_config.enable = 1;
+    osd->osd_config.status_timeout = 1;
+    osd->osd_config.border_color = 1;
+
 }
 
 void write_option_value(menuitem_t *item, int func_called, int retval)
@@ -450,48 +470,68 @@ void display_menu(alt_u8 forcedisp)
     ui_disp_menu(0);
 }
 
-static void vm_select() {
-    vm_edit = vm_sel;
-    tc_h_samplerate = video_modes[vm_edit].h_total;
-    tc_h_samplerate_adj = (alt_u16)video_modes[vm_edit].h_total_adj;
-    tc_h_synclen = (alt_u16)video_modes[vm_edit].h_synclen;
-    tc_h_bporch = (alt_u16)video_modes[vm_edit].h_backporch;
-    tc_h_active = video_modes[vm_edit].h_active;
-    tc_v_synclen = (alt_u16)video_modes[vm_edit].v_synclen;
-    tc_v_bporch = (alt_u16)video_modes[vm_edit].v_backporch;
-    tc_v_active = video_modes[vm_edit].v_active;
-    tc_sampler_phase = video_modes[vm_edit].sampler_phase;
+void update_osd_size(mode_data_t *vm_out) {
+    uint8_t osd_size = vm_out->timings.v_active / 700;
+    uint8_t par = (((100*vm_out->timings.h_active*vm_out->ar.v)/((vm_out->timings.v_active<<vm_out->timings.interlaced)*vm_out->ar.h))+50)/100;
+    uint8_t par_log2 = 0;
+
+    while (par > 1) {
+        par >>= 1;
+        par_log2++;
+    }
+
+    osd->osd_config.x_size = osd_size + vm_out->timings.interlaced + par_log2;
+    osd->osd_config.y_size = osd_size;
+
+    if (cm.hdmitx_pixr_ifr)
+        osd->osd_config.x_size += (cm.hdmitx_pixr_ifr+1)/2;
+    if (cm.tx_pixelrep)
+        osd->osd_config.x_size -= (cm.tx_pixelrep+1)/2;
 }
 
-static void vm_tweak(alt_u16 *v) {
-    if (cm.sync_active && (cm.id == vm_edit)) {
-        if ((video_modes[cm.id].h_total != tc_h_samplerate) ||
-            (video_modes[cm.id].h_total_adj != (alt_u8)tc_h_samplerate_adj) ||
-            (video_modes[cm.id].h_synclen != tc_h_synclen) ||
-            (video_modes[cm.id].h_backporch != (alt_u8)tc_h_bporch) ||
-            (video_modes[cm.id].h_active != tc_h_active) ||
-            (video_modes[cm.id].v_synclen != tc_v_synclen) ||
-            (video_modes[cm.id].v_backporch != (alt_u8)tc_v_bporch) ||
-            (video_modes[cm.id].v_active != tc_v_active) ||
-            (video_modes[cm.id].sampler_phase != tc_sampler_phase))
+static void vm_select() {
+    vm_edit = vm_sel;
+    tc_h_samplerate = video_modes_plm[vm_edit].timings.h_total;
+    tc_h_samplerate_adj = (uint16_t)video_modes_plm[vm_edit].timings.h_total_adj;
+    tc_h_synclen = (uint16_t)video_modes_plm[vm_edit].timings.h_synclen;
+    tc_h_bporch = (uint16_t)video_modes_plm[vm_edit].timings.h_backporch;
+    tc_h_active = video_modes_plm[vm_edit].timings.h_active;
+    tc_v_synclen = (uint16_t)video_modes_plm[vm_edit].timings.v_synclen;
+    tc_v_bporch = (uint16_t)video_modes_plm[vm_edit].timings.v_backporch;
+    tc_v_active = video_modes_plm[vm_edit].timings.v_active;
+    tc_sampler_phase = video_modes_plm[vm_edit].sampler_phase;
+}
+
+static void vm_tweak(uint16_t *v) {
+    int active_mode = (cm.sync_active && (cm.id == vm_edit));
+
+    if (active_mode) {
+        if ((video_modes_plm[cm.id].timings.h_total != tc_h_samplerate) ||
+            (video_modes_plm[cm.id].timings.h_total_adj != (uint8_t)tc_h_samplerate_adj) ||
+            (video_modes_plm[cm.id].timings.h_synclen != tc_h_synclen) ||
+            (video_modes_plm[cm.id].timings.h_backporch != (uint8_t)tc_h_bporch) ||
+            (video_modes_plm[cm.id].timings.h_active != tc_h_active) ||
+            (video_modes_plm[cm.id].timings.v_synclen != tc_v_synclen) ||
+            (video_modes_plm[cm.id].timings.v_backporch != (uint8_t)tc_v_bporch) ||
+            (video_modes_plm[cm.id].timings.v_active != tc_v_active))
             update_cur_vm = 1;
+        if (video_modes_plm[cm.id].sampler_phase != tc_sampler_phase)
+            set_sampler_phase(tc_sampler_phase);
     }
-    video_modes[vm_edit].h_total = tc_h_samplerate;
-    video_modes[vm_edit].h_total_adj = (alt_u8)tc_h_samplerate_adj;
-    video_modes[vm_edit].h_synclen = (alt_u8)tc_h_synclen;
-    video_modes[vm_edit].h_backporch = (alt_u8)tc_h_bporch;
-    video_modes[vm_edit].h_active = tc_h_active;
-    video_modes[vm_edit].v_synclen = (alt_u8)tc_v_synclen;
-    video_modes[vm_edit].v_backporch = (alt_u8)tc_v_bporch;
-    video_modes[vm_edit].v_active = tc_v_active;
-    video_modes[vm_edit].sampler_phase = tc_sampler_phase;
+    video_modes_plm[vm_edit].timings.h_total = tc_h_samplerate;
+    video_modes_plm[vm_edit].timings.h_total_adj = (uint8_t)tc_h_samplerate_adj;
+    video_modes_plm[vm_edit].timings.h_synclen = (uint8_t)tc_h_synclen;
+    video_modes_plm[vm_edit].timings.h_backporch = (uint8_t)tc_h_bporch;
+    video_modes_plm[vm_edit].timings.h_active = tc_h_active;
+    video_modes_plm[vm_edit].timings.v_synclen = (uint8_t)tc_v_synclen;
+    video_modes_plm[vm_edit].timings.v_backporch = (uint8_t)tc_v_bporch;
+    video_modes_plm[vm_edit].timings.v_active = tc_v_active;
+    video_modes_plm[vm_edit].sampler_phase = tc_sampler_phase;
 
     if (v == &tc_sampler_phase)
-        sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%d deg","%d ﾄﾞ"), ((*v)*1125)/100);
-    else if (v == &tc_h_samplerate)
-        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", video_modes[vm_edit].h_total);
-    else if (v == &tc_h_samplerate_adj)
-        sniprintf(menu_row2, LCD_ROW_LEN+1, ".%.2u", video_modes[vm_edit].h_total_adj*5);
+        sampler_phase_disp(*v);
+    else if ((v == &tc_h_samplerate) || (v == &tc_h_samplerate_adj))
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u", video_modes_plm[vm_edit].timings.h_total, video_modes_plm[vm_edit].timings.h_total_adj*5);
     else
         sniprintf(menu_row2, LCD_ROW_LEN+1, "%u", *v);
 }

@@ -83,6 +83,25 @@ typedef struct {
 } __attribute__((packed)) color_setup_t;
 
 typedef struct {
+    /* P-LM mode options */
+    alt_u8 pm_240p;
+    alt_u8 pm_384p;
+    alt_u8 pm_480i;
+    alt_u8 pm_480p;
+    alt_u8 pm_1080i;
+    alt_u8 l2_mode;
+    alt_u8 l3_mode;
+    alt_u8 l4_mode;
+    alt_u8 l5_mode;
+    alt_u8 l5_fmt;
+    alt_u8 s480p_mode;
+    alt_u8 s400p_mode;
+    alt_u8 upsample2x;
+    alt_u8 ar_256col;
+    alt_u8 default_vic;
+    alt_u8 clamp_offset;
+
+    /* Postprocessing settings */
     alt_u8 sl_mode;
     alt_u8 sl_type;
     alt_u8 sl_hybr_str;
@@ -94,47 +113,35 @@ typedef struct {
     alt_u8 sl_cust_c_str[6];
     alt_u8 sl_cust_iv_x;
     alt_u8 sl_cust_iv_y;
-    alt_u8 l2_mode;
-    alt_u8 l3_mode;
-    alt_u8 l4_mode;
-    alt_u8 l5_mode;
-    alt_u8 l5_fmt;
-    alt_u8 pm_240p;
-    alt_u8 pm_384p;
-    alt_u8 pm_480i;
-    alt_u8 pm_480p;
-    alt_u8 pm_1080i;
-    alt_u8 ar_256col;
-    alt_u8 h_mask;
-    alt_u8 v_mask;
     alt_u8 mask_br;
     alt_u8 mask_color;
-    alt_u8 tx_mode;
-    alt_u8 hdmi_itc;
-    alt_u8 s480p_mode;
-    alt_u8 s400p_mode;
-    alt_u8 upsample2x;
-    alt_u8 ypbpr_cs;
+    alt_u8 reverse_lpf;
+
+    /* AFE settings */
     alt_u8 sync_vth;
     alt_u8 linelen_tol;
     alt_u8 vsync_thold;
-    alt_u8 sync_lpf;
-    alt_u8 stc_lpf;
-    alt_u8 video_lpf;
     alt_u8 pre_coast;
     alt_u8 post_coast;
-    alt_u8 full_tx_setup;
-    alt_u8 av3_alt_rgb;
-    alt_u8 reverse_lpf;
+    alt_u8 ypbpr_cs;
+    alt_u8 video_lpf;
+    alt_u8 sync_lpf;
+    alt_u8 stc_lpf;
+    alt_u8 alc_h_filter;
+    alt_u8 alc_v_filter;
+    color_setup_t col;
+
+    /* Audio settings */
     alt_u8 audio_dw_sampl;
     alt_u8 audio_swap_lr;
     alt_u8 audio_gain;
     alt_u8 audio_mono;
-    alt_u8 default_vic;
-    alt_u8 clamp_offset;
-    alt_u8 alc_h_filter;
-    alt_u8 alc_v_filter;
-    color_setup_t col;
+
+    /* TX / extra settings */
+    alt_u8 tx_mode;
+    alt_u8 hdmi_itc;
+    alt_u8 full_tx_setup;
+    alt_u8 av3_alt_rgb;
     avinput_t link_av;
 } __attribute__((packed)) avconfig_t;
 

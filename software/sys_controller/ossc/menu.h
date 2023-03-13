@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -21,7 +21,9 @@
 #define MENU_H_
 
 #include "alt_types.h"
+#include "sysconfig.h"
 #include "controls.h"
+#include "video_modes.h"
 
 #ifdef OSDLANG_JP
 #define LNG(e, j) j
@@ -121,10 +123,12 @@ typedef struct {
 } menunavi;
 
 menunavi* get_current_menunavi();
+void init_menu();
 void render_osd_page();
 void display_menu(alt_u8 forcedisp);
+void sampler_phase_disp(alt_u8 v);
+void update_osd_size(mode_data_t *vm_out);
 static void vm_select();
 static void vm_tweak(alt_u16 *v);
-static void sampler_phase_tweak(alt_u8 v);
 
 #endif

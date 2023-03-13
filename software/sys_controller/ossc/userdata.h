@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2018  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2015-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -62,6 +62,7 @@ typedef struct {
     alt_u8 auto_av3_ypbpr;
     alt_u8 osd_enable;
     alt_u8 osd_status_timeout;
+    alt_u8 phase_hotkey_enable;
     alt_u16 keys[REMOTE_MAX_KEYS];
 } __attribute__((packed, __may_alias__)) ude_initcfg;
 
@@ -71,7 +72,7 @@ typedef struct {
     alt_u16 avc_data_len;
     alt_u16 vm_data_len;
     avconfig_t avc;
-    mode_data_t vm[VIDEO_MODES_CNT];
+    //mode_data_t vm[VIDEO_MODES_CNT];
 } __attribute__((packed, __may_alias__)) ude_profile;
 
 int write_userdata(alt_u8 entry);
