@@ -115,7 +115,7 @@ typedef struct {
     uint16_t v_total;
     uint16_t h_backporch;
     uint16_t v_backporch;
-    uint16_t h_synclen;
+    uint8_t h_synclen;
     uint8_t v_synclen;
     uint8_t interlaced;
 } sync_timings_t;

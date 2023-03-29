@@ -494,10 +494,10 @@ static void vm_select() {
     tc_h_samplerate = video_modes_plm[vm_edit].timings.h_total;
     tc_h_samplerate_adj = (uint16_t)video_modes_plm[vm_edit].timings.h_total_adj;
     tc_h_synclen = (uint16_t)video_modes_plm[vm_edit].timings.h_synclen;
-    tc_h_bporch = (uint16_t)video_modes_plm[vm_edit].timings.h_backporch;
+    tc_h_bporch = video_modes_plm[vm_edit].timings.h_backporch;
     tc_h_active = video_modes_plm[vm_edit].timings.h_active;
     tc_v_synclen = (uint16_t)video_modes_plm[vm_edit].timings.v_synclen;
-    tc_v_bporch = (uint16_t)video_modes_plm[vm_edit].timings.v_backporch;
+    tc_v_bporch = video_modes_plm[vm_edit].timings.v_backporch;
     tc_v_active = video_modes_plm[vm_edit].timings.v_active;
     tc_sampler_phase = video_modes_plm[vm_edit].sampler_phase;
 }
@@ -508,11 +508,11 @@ static void vm_tweak(uint16_t *v) {
     if (active_mode) {
         if ((video_modes_plm[cm.id].timings.h_total != tc_h_samplerate) ||
             (video_modes_plm[cm.id].timings.h_total_adj != (uint8_t)tc_h_samplerate_adj) ||
-            (video_modes_plm[cm.id].timings.h_synclen != tc_h_synclen) ||
-            (video_modes_plm[cm.id].timings.h_backporch != (uint8_t)tc_h_bporch) ||
+            (video_modes_plm[cm.id].timings.h_synclen != (uint8_t)tc_h_synclen) ||
+            (video_modes_plm[cm.id].timings.h_backporch != tc_h_bporch) ||
             (video_modes_plm[cm.id].timings.h_active != tc_h_active) ||
-            (video_modes_plm[cm.id].timings.v_synclen != tc_v_synclen) ||
-            (video_modes_plm[cm.id].timings.v_backporch != (uint8_t)tc_v_bporch) ||
+            (video_modes_plm[cm.id].timings.v_synclen != (uint8_t)tc_v_synclen) ||
+            (video_modes_plm[cm.id].timings.v_backporch != tc_v_bporch) ||
             (video_modes_plm[cm.id].timings.v_active != tc_v_active))
             update_cur_vm = 1;
         if (video_modes_plm[cm.id].sampler_phase != tc_sampler_phase)
@@ -521,10 +521,10 @@ static void vm_tweak(uint16_t *v) {
     video_modes_plm[vm_edit].timings.h_total = tc_h_samplerate;
     video_modes_plm[vm_edit].timings.h_total_adj = (uint8_t)tc_h_samplerate_adj;
     video_modes_plm[vm_edit].timings.h_synclen = (uint8_t)tc_h_synclen;
-    video_modes_plm[vm_edit].timings.h_backporch = (uint8_t)tc_h_bporch;
+    video_modes_plm[vm_edit].timings.h_backporch = tc_h_bporch;
     video_modes_plm[vm_edit].timings.h_active = tc_h_active;
     video_modes_plm[vm_edit].timings.v_synclen = (uint8_t)tc_v_synclen;
-    video_modes_plm[vm_edit].timings.v_backporch = (uint8_t)tc_v_bporch;
+    video_modes_plm[vm_edit].timings.v_backporch = tc_v_bporch;
     video_modes_plm[vm_edit].timings.v_active = tc_v_active;
     video_modes_plm[vm_edit].sampler_phase = tc_sampler_phase;
 
