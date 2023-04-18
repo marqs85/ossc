@@ -483,7 +483,7 @@ int get_vmode(vmode_t vmode_id, mode_data_t *vm_in, mode_data_t *vm_out, vm_proc
 {
     memset(vm_conf, 0, sizeof(vm_proc_config_t));
     memset(vm_in, 0, sizeof(mode_data_t));
-    memcpy(vm_out, &video_modes_plm[vmode_id], sizeof(mode_data_t));
+    memcpy(vm_out, &video_modes_plm_default[vmode_id], sizeof(mode_data_t));
 
     return 0;
 }

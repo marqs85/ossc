@@ -322,7 +322,7 @@ int import_userdata()
 
         // Just blindly write the entry to flash
         retval = copy_sd_to_flash((512+n*SECTORSIZE)/SD_BLK_SIZE, (n*PAGES_PER_SECTOR)+(USERDATA_OFFSET/PAGESIZE),
-            (header.type == UDE_PROFILE) ? sizeof(ude_profile) : sizeof(ude_initcfg), databuf);
+            (header.type == UDE_PROFILE) ? (sizeof(ude_profile)+sizeof(video_modes_plm_default)) : sizeof(ude_initcfg), databuf);
         if (retval != 0) {
             printf("Copy from SD to flash failed (error %d)\n", retval);
             goto sd_disable;
