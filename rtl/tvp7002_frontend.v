@@ -50,6 +50,7 @@ module tvp7002_frontend (
     output reg frame_change,
     output reg sof_scaler,
     output reg [19:0] pcnt_frame,
+    output reg [7:0] hsync_width,
     output reg sync_active
 );
 
@@ -87,6 +88,7 @@ reg [20:0] pcnt_frame_ctr;
 reg [17:0] syncpol_det_ctr, hsync_hpol_ctr, vsync_hpol_ctr;
 reg [3:0] sync_inactive_ctr;
 reg [11:0] pcnt_line, pcnt_line_ctr, meas_h_cnt, meas_h_cnt_sogref;
+reg [7:0] hs_ctr;
 reg pcnt_line_stored;
 reg [10:0] meas_v_cnt;
 reg meas_hl_det, meas_fid;
@@ -252,14 +254,18 @@ always @(posedge CLK_MEAS_i) begin
 
     if (HSYNC_i_np_prev & ~HSYNC_i_np) begin
         pcnt_line_ctr <= 1;
+        hs_ctr <= 1;
 
         // store count 1ms after vsync
         if (~pcnt_line_stored & (pcnt_frame_ctr > 21'd27000)) begin
             pcnt_line <= pcnt_line_ctr;
+            hsync_width <= hs_ctr;
             pcnt_line_stored <= 1'b1;
         end
     end else begin
         pcnt_line_ctr <= pcnt_line_ctr + 1'b1;
+        if (~HSYNC_i_np)
+            hs_ctr <= hs_ctr + 1'b1;
     end
 
     HSYNC_i_np_prev <= HSYNC_i_np;

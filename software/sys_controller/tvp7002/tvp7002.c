@@ -91,6 +91,8 @@ static void tvp_set_clamp_alc(video_type type, alt_u8 clamp_ref_offset, alt_8 cl
     else if (clamp_pos + clamp_width + alc_offset > 255)
         clamp_pos = 255 - alc_offset - clamp_width;
 
+    printf("Clamp pos: %u, width: %u (ref_offset: %u, user_offset %d)\n", clamp_pos, clamp_width, clamp_ref_offset, clamp_user_offset);
+
     tvp_writereg(TVP_CLAMPSTART, (alt_u8)clamp_pos);
     tvp_writereg(TVP_CLAMPWIDTH, clamp_width);
 

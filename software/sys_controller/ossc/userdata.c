@@ -179,7 +179,7 @@ int read_userdata(alt_u8 entry, int dry_run)
     switch (((ude_hdr*)databuf)->type) {
     case UDE_INITCFG:
         if ((((ude_hdr*)databuf)->version_major != INITCFG_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != INITCFG_VER_MINOR)) {
-            printf("Initconfig version %u.%u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
+            printf("Initconfig version %u.%.2u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
             return 2;
         }
         if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
@@ -210,7 +210,7 @@ int read_userdata(alt_u8 entry, int dry_run)
         break;
     case UDE_PROFILE:
         if ((((ude_hdr*)databuf)->version_major != PROFILE_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != PROFILE_VER_MINOR)) {
-            printf("Profile version %u.%u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
+            printf("Profile version %u.%.2u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
             return 2;
         }
         if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == sizeof(video_modes_plm_default))) {
@@ -310,10 +310,10 @@ int import_userdata()
         }
 
         if ((header.type == UDE_PROFILE) && ((header.version_major != PROFILE_VER_MAJOR) || (header.version_minor != PROFILE_VER_MINOR))) {
-            printf("Profile version %u.%u does not match current one\n", header.version_major, header.version_minor);
+            printf("Profile version %u.%.2u does not match current one\n", header.version_major, header.version_minor);
             continue;
         } else if ((header.type == UDE_INITCFG) && ((header.version_major != INITCFG_VER_MAJOR) || (header.version_minor != INITCFG_VER_MINOR))) {
-            printf("Initconfig version %u.%u does not match current one\n", header.version_major, header.version_minor);
+            printf("Initconfig version %u.%.2u does not match current one\n", header.version_major, header.version_minor);
             continue;
         } else if (header.type > UDE_PROFILE) {
             printf("Unknown userdata entry type %u\n", header.type);

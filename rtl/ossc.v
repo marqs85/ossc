@@ -176,6 +176,7 @@ wire [7:0] TVP_R_post, TVP_G_post, TVP_B_post;
 wire TVP_HSYNC_post, TVP_VSYNC_post, TVP_DE_post, TVP_FID_post, TVP_datavalid_post;
 wire TVP_fe_interlace, TVP_fe_frame_change, TVP_sof_scaler, TVP_sync_active;
 wire [19:0] TVP_fe_pcnt_frame;
+wire [7:0] TVP_hsync_width;
 wire [10:0] TVP_fe_vtotal, TVP_fe_xpos, TVP_fe_ypos;
 tvp7002_frontend u_tvp_frontend ( 
     .PCLK_i(TVP_PCLK_i),
@@ -210,6 +211,7 @@ tvp7002_frontend u_tvp_frontend (
     .frame_change(TVP_fe_frame_change),
     .sof_scaler(TVP_sof_scaler),
     .pcnt_frame(TVP_fe_pcnt_frame),
+    .hsync_width(TVP_hsync_width),
     .sync_active(TVP_sync_active)
 );
 
@@ -374,7 +376,7 @@ sys sys_inst(
     .pio_0_sys_ctrl_out_export              (sys_ctrl),
     .pio_1_controls_in_export               (controls),
     .sc_config_0_sc_if_fe_status_i          ({19'h0, TVP_sync_active, TVP_fe_interlace, TVP_fe_vtotal}),
-    .sc_config_0_sc_if_fe_status2_i         ({12'h0, TVP_fe_pcnt_frame}),
+    .sc_config_0_sc_if_fe_status2_i         ({4'h0, TVP_hsync_width, TVP_fe_pcnt_frame}),
     .sc_config_0_sc_if_lt_status_i          (32'h00000000),
     .sc_config_0_sc_if_hv_in_config_o       (hv_in_config),
     .sc_config_0_sc_if_hv_in_config2_o      (hv_in_config2),

@@ -47,6 +47,7 @@
 #define STATUS_TIMEOUT_US       25000
 
 #define PCNT_TOLERANCE 50
+#define HSYNC_WIDTH_TOLERANCE 8
 
 alt_u32 sys_ctrl;
 
@@ -309,7 +310,7 @@ void set_sampler_phase(uint8_t sampler_phase) {
 status_t get_status(tvp_sync_input_t syncinput)
 {
     alt_u32 totlines, clkcnt, pcnt_frame;
-    alt_u8 progressive, sync_active, valid_linecnt;
+    alt_u8 progressive, sync_active, valid_linecnt, hsync_width;
     status_t status = NO_CHANGE;
     alt_timestamp_type start_ts = alt_timestamp();
 
@@ -326,6 +327,7 @@ status_t get_status(tvp_sync_input_t syncinput)
     totlines = sc->fe_status.vtotal;
     progressive = !sc->fe_status.interlace_flag;
     pcnt_frame = (unsigned long)sc->fe_status2.pcnt_frame;
+    hsync_width = (unsigned long)sc->fe_status2.hsync_width;
     clkcnt = pcnt_frame/(totlines>>!progressive);
 
     valid_linecnt = check_linecnt(progressive, totlines);
@@ -343,8 +345,10 @@ status_t get_status(tvp_sync_input_t syncinput)
         if ((totlines != cm.totlines) ||
             (progressive != cm.progressive) ||
             (pcnt_frame < (cm.pcnt_frame - PCNT_TOLERANCE)) ||
-            (pcnt_frame > (cm.pcnt_frame + PCNT_TOLERANCE))) {
-            printf("totlines: %lu (cur) / %lu (prev), pcnt_frame: %lu (cur) / %lu (prev)\n", totlines, cm.totlines, pcnt_frame, cm.pcnt_frame);
+            (pcnt_frame > (cm.pcnt_frame + PCNT_TOLERANCE)) ||
+            (hsync_width < (cm.hsync_width - HSYNC_WIDTH_TOLERANCE)) ||
+            (hsync_width > (cm.hsync_width + HSYNC_WIDTH_TOLERANCE))) {
+            printf("totlines: %lu (cur) / %lu (prev), pcnt_frame: %lu (cur) / %lu (prev), hsync_width: %lu (cur) / %lu (prev)\n", totlines, cm.totlines, pcnt_frame, cm.pcnt_frame, hsync_width, cm.hsync_width);
 
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
         }
@@ -358,6 +362,7 @@ status_t get_status(tvp_sync_input_t syncinput)
         cm.totlines = totlines;
         cm.clkcnt = clkcnt;
         cm.pcnt_frame = pcnt_frame;
+        cm.hsync_width = hsync_width;
         cm.progressive = progressive;
     }
 
@@ -556,10 +561,13 @@ void program_mode()
     printf("\nLines: %u %c\n", (unsigned)cm.totlines, cm.progressive ? 'p' : 'i');
     printf("Clocks per line: %u\n", (unsigned)cm.clkcnt);
 
-    h_syncinlen = tvp_readreg(TVP_HSINWIDTH);
+    //h_syncinlen = tvp_readreg(TVP_HSINWIDTH);
+    h_syncinlen = cm.hsync_width;
+#ifdef DEBUG
     v_syncinlen = tvp_readreg(TVP_VSINWIDTH);
     macrovis = !!(tvp_readreg(TVP_LINECNT2) & (1<<6));
     printf("Hswidth: %u  Vswidth: %u  Macrovision: %u\n", (unsigned)h_syncinlen, (unsigned)(v_syncinlen & 0x1F), (unsigned)macrovis);
+#endif
 
     vmode_in.timings.h_synclen = h_syncinlen;
     vmode_in.timings.v_total = cm.totlines;
