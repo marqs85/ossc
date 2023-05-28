@@ -254,7 +254,7 @@ always @(posedge PCLK_OUT_i) begin
     frame_change_sync2_reg <= frame_change_sync1_reg;
     frame_change_prev <= frame_change_sync2_reg;
 
-    frame_change_resync <= ~frame_change_prev & frame_change & ((v_cnt != V_STARTLINE_PREV) & (v_cnt != V_STARTLINE));
+    frame_change_resync <= ~frame_change_prev & frame_change & ~(((v_cnt == V_STARTLINE_PREV) & (h_cnt > H_TOTAL-128)) | ((v_cnt == V_STARTLINE) & (h_cnt < 128)));
 end
 
 // H/V counters
