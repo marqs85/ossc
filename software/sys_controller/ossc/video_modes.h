@@ -125,6 +125,11 @@ typedef struct {
     uint8_t v;
 } aspect_ratio_t;
 
+typedef struct {
+    uint8_t h;
+    uint8_t v;
+} mask_t;
+
 typedef enum {
     TX_1X   = 0,
     TX_2X   = 1,
@@ -136,7 +141,10 @@ typedef struct {
     HDMI_Video_Type vic;
     sync_timings_t timings;
     uint8_t sampler_phase;
-    aspect_ratio_t ar;
+    union {
+        aspect_ratio_t ar;
+        mask_t mask;
+    };
     video_type type;
     video_group group;
     mode_flags flags;

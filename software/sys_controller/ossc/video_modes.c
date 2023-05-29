@@ -226,6 +226,8 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     vm_in->timings.h_total = mode_preset->timings.h_total;
     vm_in->timings.h_total_adj = mode_preset->timings.h_total_adj;
     vm_in->sampler_phase = mode_preset->sampler_phase;
+    vm_in->mask.h = mode_preset->mask.h;
+    vm_in->mask.v = mode_preset->mask.v;
     vm_in->type = mode_preset->type;
     vm_in->group = mode_preset->group;
     vm_in->vic = mode_preset->vic;
@@ -312,11 +314,10 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             break;
         case MODE_L3_GEN_4_3:
             vm_conf->y_rpt = 2;
-            vm_conf->x_size = vm_out->timings.h_active;
+            vm_conf->x_size = vm_out->timings.h_active-2*vm_in->mask.h;
             vm_out->timings.h_synclen /= 3;
             vm_out->timings.h_backporch /= 3;
             vm_out->timings.h_active /= 3;
-            vm_conf->x_offset = vm_out->timings.h_active/2;
             vm_out->timings.h_total /= 3;
             vm_out->timings.h_total_adj = 0;
             vmode_hv_mult(vm_out, 4, VM_OUT_YMULT);
@@ -353,7 +354,6 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->x_rpt = vm_conf->h_skip = 6;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
-            //cm.hsync_cut = 13;
             break;
         case MODE_L4_GEN_4_3:
             vm_conf->y_rpt = 3;
@@ -407,21 +407,18 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->x_rpt = vm_conf->h_skip = 2;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
-            //cm.hsync_cut = 40;
             break;
         case MODE_L5_384_COL:
             vm_conf->y_rpt = 4;
             vm_conf->x_rpt = vm_conf->h_skip = 3;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
-            //cm.hsync_cut = 30;
             break;
         case MODE_L5_320_COL:
             vm_conf->y_rpt = 4;
             vm_conf->x_rpt = vm_conf->h_skip = 4;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
-            //cm.hsync_cut = 24;
             break;
         case MODE_L5_256_COL:
             vm_conf->y_rpt = 4;
@@ -429,7 +426,6 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
             vm_conf->x_rpt -= cc->ar_256col;
-            //cm.hsync_cut = 20;
             break;
         default:
             printf("WARNING: invalid mindiff_lm\n");
@@ -440,12 +436,13 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     sniprintf(vm_out->name, 10, "%s x%u", vm_in->name, vm_conf->y_rpt+1);
 
     if (vm_conf->x_size == 0)
-        vm_conf->x_size = vm_in->timings.h_active*(vm_conf->x_rpt+1);
+        vm_conf->x_size = (vm_in->timings.h_active-2*vm_in->mask.h)*(vm_conf->x_rpt+1);
     if (vm_conf->y_size == 0)
-        vm_conf->y_size = vm_out->timings.v_active;
+        vm_conf->y_size = vm_out->timings.v_active-2*vm_in->mask.v*(vm_conf->y_rpt+1);
 
     vm_conf->x_offset = ((vm_out->timings.h_active-vm_conf->x_size)/2);
-    vm_conf->x_start_lb = (vm_conf->x_offset >= 0) ? 0 : (-vm_conf->x_offset / (vm_conf->x_rpt+1));
+    vm_conf->x_start_lb = vm_in->mask.h;
+    vm_conf->y_offset = ((vm_out->timings.v_active-vm_conf->y_size)/2);
 
     // Line5x format
     if (vm_conf->y_rpt == 4) {
@@ -462,7 +459,17 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->y_start_lb = (vm_out->timings.v_active-1080)/10;
             vm_out->timings.v_backporch += 5*vm_conf->y_start_lb;
             vm_out->timings.v_active = 1080;
+            vm_conf->y_size = vm_out->timings.v_active-2*vm_in->mask.v*(vm_conf->y_rpt+1);
         }
+    }
+
+    // Aspect
+    if (vm_out->type & VIDEO_HDTV) {
+        vm_out->ar.h = 16;
+        vm_out->ar.v = 9;
+    } else {
+        vm_out->ar.h = 4;
+        vm_out->ar.v = 3;
     }
 
 #ifdef LM_EMIF_EXTRA_DELAY
@@ -484,6 +491,8 @@ int get_vmode(vmode_t vmode_id, mode_data_t *vm_in, mode_data_t *vm_out, vm_proc
     memset(vm_conf, 0, sizeof(vm_proc_config_t));
     memset(vm_in, 0, sizeof(mode_data_t));
     memcpy(vm_out, &video_modes_plm_default[vmode_id], sizeof(mode_data_t));
+    vm_out->ar.h = 4;
+    vm_out->ar.v = 3;
 
     return 0;
 }

@@ -44,7 +44,7 @@ extern char target_profile_name[PROFILE_NAME_LEN+1];
 extern volatile osd_regs *osd;
 extern const int num_video_modes_plm;
 
-alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active, tc_sampler_phase;
+alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active, tc_sampler_phase, tc_h_mask, tc_v_mask;
 alt_u8 menu_active;
 alt_u8 vm_sel, vm_edit;
 
@@ -115,6 +115,8 @@ MENU(menu_advtiming, P99_PROTECT({ \
     { LNG("V. synclen","V. ﾄﾞｳｷﾅｶﾞｻ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_synclen,    V_SYNCLEN_MIN, V_SYNCLEN_MAX, vm_tweak } } },
     { LNG("V. backporch","V. ﾊﾞｯｸﾎﾟｰﾁ"),       OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_bporch,     V_BPORCH_MIN,  V_BPORCH_MAX, vm_tweak } } },
     { LNG("V. active","V. ｱｸﾃｨﾌﾞ"),            OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_active,     V_ACTIVE_MIN,  V_ACTIVE_MAX, vm_tweak } } },
+    { "H. mask",                              OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_h_mask,    0, H_MASK_MAX, vm_tweak } } },
+    { "V. mask",                              OPT_AVCONFIG_NUMVAL_U16,{ .num_u16 = { &tc_v_mask,    0, V_MASK_MAX, vm_tweak } } },
     { LNG("Sampling phase","ｻﾝﾌﾟﾘﾝｸﾞﾌｪｰｽﾞ"),     OPT_AVCONFIG_NUMVAL_U16,  { .num_u16 = { &tc_sampler_phase, 0, SAMPLER_PHASE_MAX, vm_tweak } } },
 }))
 
@@ -195,8 +197,6 @@ MENU(menu_scanlines, P99_PROTECT({ \
 }))
 
 MENU(menu_postproc, P99_PROTECT({ \
-    //{ LNG("Horizontal mask","ｽｲﾍｲﾏｽｸ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.h_mask,      OPT_NOWRAP, 0, H_MASK_MAX, pixels_disp } } },
-    //{ LNG("Vertical mask","ｽｲﾁｮｸﾏｽｸ"),            OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.v_mask,      OPT_NOWRAP, 0, V_MASK_MAX, pixels_disp } } },
     { "Mask color",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.mask_color,  OPT_NOWRAP,   SETTING_ITEM(mask_color_desc) } } },
     { LNG("Mask brightness","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
     //{ LNG("Reverse LPF","ｷﾞｬｸLPF"),              OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.reverse_lpf, OPT_NOWRAP, 0, REVERSE_LPF_MAX, value_disp } } },
@@ -499,6 +499,8 @@ static void vm_select() {
     tc_v_synclen = (uint16_t)video_modes_plm[vm_edit].timings.v_synclen;
     tc_v_bporch = video_modes_plm[vm_edit].timings.v_backporch;
     tc_v_active = video_modes_plm[vm_edit].timings.v_active;
+    tc_h_mask = (uint16_t)video_modes_plm[vm_edit].mask.h;
+    tc_v_mask = (uint16_t)video_modes_plm[vm_edit].mask.v;
     tc_sampler_phase = video_modes_plm[vm_edit].sampler_phase;
 }
 
@@ -513,7 +515,9 @@ static void vm_tweak(uint16_t *v) {
             (video_modes_plm[cm.id].timings.h_active != tc_h_active) ||
             (video_modes_plm[cm.id].timings.v_synclen != (uint8_t)tc_v_synclen) ||
             (video_modes_plm[cm.id].timings.v_backporch != tc_v_bporch) ||
-            (video_modes_plm[cm.id].timings.v_active != tc_v_active))
+            (video_modes_plm[cm.id].timings.v_active != tc_v_active) ||
+            (video_modes_plm[cm.id].mask.h != tc_h_mask) ||
+            (video_modes_plm[cm.id].mask.v != tc_v_mask))
             update_cur_vm = 1;
         if (video_modes_plm[cm.id].sampler_phase != tc_sampler_phase)
             set_sampler_phase(tc_sampler_phase);
@@ -526,6 +530,8 @@ static void vm_tweak(uint16_t *v) {
     video_modes_plm[vm_edit].timings.v_synclen = (uint8_t)tc_v_synclen;
     video_modes_plm[vm_edit].timings.v_backporch = tc_v_bporch;
     video_modes_plm[vm_edit].timings.v_active = tc_v_active;
+    video_modes_plm[vm_edit].mask.h = tc_h_mask;
+    video_modes_plm[vm_edit].mask.v = tc_v_mask;
     video_modes_plm[vm_edit].sampler_phase = tc_sampler_phase;
 
     if (v == &tc_sampler_phase)
