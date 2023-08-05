@@ -346,8 +346,7 @@ status_t get_status(tvp_sync_input_t syncinput)
             (progressive != cm.progressive) ||
             (pcnt_frame < (cm.pcnt_frame - PCNT_TOLERANCE)) ||
             (pcnt_frame > (cm.pcnt_frame + PCNT_TOLERANCE)) ||
-            (hsync_width < (cm.hsync_width - HSYNC_WIDTH_TOLERANCE)) ||
-            (hsync_width > (cm.hsync_width + HSYNC_WIDTH_TOLERANCE))) {
+            (abs(((int)hsync_width - (int)cm.hsync_width)) > HSYNC_WIDTH_TOLERANCE)) {
             printf("totlines: %lu (cur) / %lu (prev), pcnt_frame: %lu (cur) / %lu (prev), hsync_width: %lu (cur) / %lu (prev)\n", totlines, cm.totlines, pcnt_frame, cm.pcnt_frame, hsync_width, cm.hsync_width);
 
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
@@ -612,10 +611,14 @@ void program_mode()
     printf("PCLK_IN: %luHz PCLK_OUT: %luHz\n", pclk_i_hz, cm.pclk_o_hz);
 
     // Trilevel sync is used with HDTV modes using composite sync
-    if (video_modes_plm[cm.id].type & VIDEO_HDTV)
+    // CEA-770.3 HDTV modes use tri-level syncs which have twice the width of bi-level syncs of corresponding CEA-861 modes
+    if (video_modes_plm[cm.id].type & VIDEO_HDTV) {
         target_type = (target_tvp_sync <= TVP_SOG3) ? VIDEO_HDTV : VIDEO_PC;
-    else
+        if (target_type == VIDEO_HDTV)
+            vmode_in.timings.h_synclen *= 2;
+    } else {
         target_type = video_modes_plm[cm.id].type;
+    }
 
     h_synclen_px = ((alt_u32)h_syncinlen * pll_h_total) / cm.clkcnt;
 

@@ -68,9 +68,8 @@ const avconfig_t tc_default = {
 int set_default_avconfig()
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
-#ifndef ENABLE_AUDIO
+
     tc.tx_mode = (IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) ? TX_DVI : TX_HDMI_RGB;
-#endif
 
     set_default_vm_table();
     update_cur_vm = 1;
