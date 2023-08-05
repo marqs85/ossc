@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2022 Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2022-2023 Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -110,7 +110,7 @@ wire [11:0] even_max_thold = (H_TOTAL / 12'd2) + (H_TOTAL / 12'd4);
 wire [11:0] meas_h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? meas_h_cnt_sogref : meas_h_cnt;
 wire [11:0] meas_even_min_thold = (pcnt_line / 12'd4);
 wire [11:0] meas_even_max_thold = (pcnt_line / 12'd2) + (pcnt_line / 12'd4);
-wire meas_vblank_region = ((pcnt_frame_ctr < (pcnt_frame/8)) | (pcnt_frame_ctr > (pcnt_frame - (pcnt_frame/8))));
+wire meas_vblank_region = ((pcnt_frame_ctr < (pcnt_frame/16)) | (pcnt_frame_ctr > (pcnt_frame - (pcnt_frame/16))));
 wire [11:0] glitch_filt_thold = meas_vblank_region ? (pcnt_line/4) : (pcnt_line/8);
 
 // TODO: calculate H/V polarity independently
@@ -319,8 +319,8 @@ always @(posedge CLK_MEAS_i) begin
             meas_v_cnt <= meas_v_cnt + 1'b1;
         end
         meas_h_cnt_sogref <= meas_h_cnt;
-    end else if (meas_vblank_region & (meas_h_cnt > pcnt_line)) begin
-        // hsync may be missing during vblank, force line change detect if pcnt_line is exceeded +-1/8 field around vsync edge
+    end else if (~VSYNC_i_np & (meas_h_cnt >= pcnt_line)) begin
+        // hsync may be missing during vsync, force line change detect if pcnt_line is exceeded
         meas_hl_det <= 1'b0;
         meas_h_cnt <= 0;
         meas_v_cnt <= meas_v_cnt + 1'b1;
@@ -335,7 +335,7 @@ always @(posedge CLK_MEAS_i) begin
 
             if (vsync_i_type == VSYNC_RAW) begin
                 // vsync leading edge may occur at hsync edge or either side of it
-                if ((HSYNC_i_np_prev & ~HSYNC_i_np) | (meas_h_cnt > pcnt_line)) begin
+                if ((HSYNC_i_np_prev & ~HSYNC_i_np) | (meas_h_cnt >= pcnt_line)) begin
                     meas_v_cnt <= 1;
                     vtotal <= meas_v_cnt;
                 end else if (meas_h_cnt < meas_even_min_thold) begin
