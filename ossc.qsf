@@ -59,6 +59,8 @@ set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_25 -to clk27
 set_location_assignment PIN_99 -to hw_reset_n
 set_location_assignment PIN_23 -to ir_rx
+set_location_assignment PIN_126 -to cfg[1]
+set_location_assignment PIN_127 -to cfg[0]
 
 #============================================================
 # TVP7002
@@ -82,7 +84,7 @@ set_location_assignment PIN_89 -to TVP_PCLK_i
 set_location_assignment PIN_76 -to TVP_B_i[0]
 set_location_assignment PIN_90 -to TVP_HS_i
 set_location_assignment PIN_91 -to TVP_VSYNC_i
-set_location_assignment PIN_98 -to TVP_FID_i
+set_location_assignment PIN_98 -to TVP_SOG_i
 set_location_assignment PIN_72 -to TVP_G_i[7]
 set_location_assignment PIN_71 -to TVP_G_i[6]
 set_location_assignment PIN_69 -to TVP_G_i[5]
@@ -124,7 +126,6 @@ set_location_assignment PIN_7 -to HDMI_TX_RD[5]
 set_location_assignment PIN_10 -to HDMI_TX_RD[6]
 set_location_assignment PIN_11 -to HDMI_TX_RD[7]
 set_location_assignment PIN_100 -to HDMI_TX_INT_N
-set_location_assignment PIN_127 -to HDMI_TX_MODE
 
 #============================================================
 # SD card
@@ -140,8 +141,7 @@ set_location_assignment PIN_30 -to SD_DAT[3]
 # Leds
 #============================================================
 set_location_assignment PIN_44 -to LED_G
-#set_location_assignment PIN_46 -to LED_R
-set_location_assignment PIN_46 -to TVP_HSYNC_i
+set_location_assignment PIN_46 -to LED_R
 
 #============================================================
 # I2C
@@ -250,6 +250,7 @@ set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 set_global_assignment -name QIP_FILE rtl/char_array.qip
+
 
 
 

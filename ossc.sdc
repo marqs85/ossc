@@ -3,7 +3,7 @@
 create_clock -period 27MHz -name clk27 [get_ports clk27]
 
 set_input_delay -clock clk27 0 [get_ports {sda scl SD_CMD SD_DAT* *ALTERA_DATA0}]
-set_false_path -from [get_ports {btn* ir_rx HDMI_TX_INT_N HDMI_TX_MODE}]
+set_false_path -from [get_ports {btn* cfg* ir_rx HDMI_TX_INT_N LED_R}]
 set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
 
 
@@ -35,7 +35,7 @@ derive_clock_uncertainty
 # input delay constraints
 set TVP_dmin 0
 set TVP_dmax 1.5
-set critinputs [get_ports {TVP_R_i* TVP_G_i* TVP_B_i* TVP_HS_i TVP_HSYNC_i TVP_VSYNC_i TVP_FID_i}]
+set critinputs [get_ports {TVP_R_i* TVP_G_i* TVP_B_i* TVP_HS_i TVP_SOG_i TVP_VSYNC_i}]
 foreach_in_collection c [get_clocks "pclk_tvp*"] {
     set_input_delay -clock $c -min $TVP_dmin $critinputs -add_delay
     set_input_delay -clock $c -max $TVP_dmax $critinputs -add_delay

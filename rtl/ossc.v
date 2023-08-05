@@ -28,15 +28,15 @@ module ossc (
 
     input ir_rx,
     input [1:0] btn,
+    input [1:0] cfg,
 
     input TVP_PCLK_i,
     input [7:0] TVP_R_i,
     input [7:0] TVP_G_i,
     input [7:0] TVP_B_i,
     input TVP_HS_i,
-    input TVP_HSYNC_i,
+    input TVP_SOG_i,
     input TVP_VSYNC_i,
-    input TVP_FID_i,
 
     output HDMI_TX_PCLK,
     output reg [7:0] HDMI_TX_RD,
@@ -46,12 +46,11 @@ module ossc (
     output reg HDMI_TX_HS,
     output reg HDMI_TX_VS,
     input HDMI_TX_INT_N,
-    input HDMI_TX_MODE,
 
     output hw_reset_n,
 
     output LED_G,
-    //output LED_R,
+    inout LED_R,
 
     output LCD_RS,
     output LCD_CS_N,
@@ -107,15 +106,19 @@ reg TVP_HSYNC_sync1_reg, TVP_HSYNC_sync2_reg;
 reg TVP_VSYNC_sync1_reg, TVP_VSYNC_sync2_reg;
 
 reg [1:0] btn_L, btn_LL;
-reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL, HDMI_TX_MODE_L, HDMI_TX_MODE_LL;
+reg ir_rx_L, ir_rx_LL, HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL;
 reg vsync_flag_sync1_reg, vsync_flag_sync2_reg;
+reg [1:0] cfg_reg;
+reg cfg_stored;
+wire TVP_SOG_ALT_i;
+wire TVP_HSYNC_i = cfg_reg[1] ? TVP_SOG_i : TVP_SOG_ALT_i;
 
 reg [23:0] resync_led_ctr, warn_pll_lock_lost;
 reg resync_strobe_sync1_reg, resync_strobe_sync2_reg, resync_strobe_prev;
 wire resync_strobe_i;
 wire resync_strobe = resync_strobe_sync2_reg;
 
-wire [31:0] controls = {ir_code_cnt, 3'b000, vsync_flag_sync2_reg, pll_activeclock, HDMI_TX_MODE_LL, btn_LL, ir_code};
+wire [31:0] controls = {ir_code_cnt, 3'b000, vsync_flag_sync2_reg, pll_activeclock, cfg_reg[0], btn_LL, ir_code};
 
 wire lt_sensor = btn_LL[1];
 wire lt_trigger = DE_sc & G_sc[0];
@@ -135,14 +138,9 @@ wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos_sc;
 wire [10:0] ypos_sc;
 
-`ifdef DEBUG
-assign LED_R = TVP_HSYNC_i;
-assign LED_G = TVP_VSYNC_i;
-`else
 wire resync_indicator = (warn_pll_lock_lost != 0)  | (resync_led_ctr != 0);
-//assign LED_R = lt_active ? lt_trig_waiting : resync_indicator;
-assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0) & ~resync_indicator;
-`endif
+wire LED_R_i = lt_active ? lt_trig_waiting : resync_indicator;
+assign LED_G = lt_active ? ~lt_sensor : (ir_code == 0) & (~resync_indicator | cfg_reg[1]);
 
 assign LCD_BL = lcd_bl_on ? (~lcd_bl_timeout | lt_active) : 1'b0;
 assign HDMI_TX_PCLK = pclk_out;
@@ -155,7 +153,6 @@ always @(posedge TVP_PCLK_i) begin
     TVP_B <= TVP_B_i;
     TVP_HS <= TVP_HS_i;
     TVP_VS <= TVP_VSYNC_i;
-    TVP_FID <= TVP_FID_i;
 
     // sync to pclk
     TVP_SOG_sync1_reg <= TVP_HSYNC_i;
@@ -222,12 +219,14 @@ begin
         {btn_L, btn_LL} <= '0;
         {ir_rx_L, ir_rx_LL} <= '0;
         {HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL} <= '0;
-        {HDMI_TX_MODE_L, HDMI_TX_MODE_LL} <= '0;
+        {cfg_stored, cfg_reg} <= '0;
     end else begin
         {btn_L, btn_LL} <= {btn, btn_L};
         {ir_rx_L, ir_rx_LL} <=  {ir_rx, ir_rx_L};
         {HDMI_TX_INT_N_L, HDMI_TX_INT_N_LL} <= {HDMI_TX_INT_N, HDMI_TX_INT_N_L};
-        {HDMI_TX_MODE_L, HDMI_TX_MODE_LL} <= {HDMI_TX_MODE, HDMI_TX_MODE_L};
+        if (!cfg_stored)
+            cfg_reg <= cfg;
+        cfg_stored <= 1'b1;
     end
 end
 
@@ -326,6 +325,9 @@ always @(posedge pclk_out) begin
     HDMI_TX_DE <= DE_sc;
 end
 
+
+// A modified <= v1.7 board uses LED_R for TVP_HSYNC input
+ALT_IOBUF led_r_iobuf (.i(LED_R_i), .oe(cfg_reg[1]), .o(TVP_SOG_ALT_i), .io(LED_R));
 
 pll_2x pll_pclk (
     .areset(pll_areset),
