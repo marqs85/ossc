@@ -523,6 +523,7 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     }
     sl_config.sl_method = avconfig->sl_method;
     sl_config.sl_altern = avconfig->sl_altern;
+    sl_config3.sl_hybr_str = avconfig->sl_hybr_str;
 
     // disable scanlines if configured so
     if (((avconfig->sl_mode == 1) && (!vm_conf->y_rpt)) || (avconfig->sl_mode == 0)) {

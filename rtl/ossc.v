@@ -193,6 +193,7 @@ tvp7002_frontend u_tvp_frontend (
     .hv_in_config(hv_in_config),
     .hv_in_config2(hv_in_config2),
     .hv_in_config3(hv_in_config3),
+    .misc_config(misc_config),
     .R_o(TVP_R_post),
     .G_o(TVP_G_post),
     .B_o(TVP_B_post),

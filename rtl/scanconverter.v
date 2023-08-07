@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019-2022  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2019-2023  Markus Hiienkari <mhiienka@niksula.hut.fi>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -89,8 +89,11 @@ localparam PP_LINEBUF_END       = PP_LINEBUF_START + PP_LINEBUF_LENGTH;
 localparam PP_SRCSEL_START      = PP_LINEBUF_END;
 localparam PP_SRCSEL_LENGTH     = 1;
 localparam PP_SRCSEL_END        = PP_SRCSEL_START + PP_SRCSEL_LENGTH;
-localparam PP_SLGEN_START       = PP_SRCSEL_START;
-localparam PP_SLGEN_LENGTH      = 3;
+localparam PP_Y_CALC_START      = PP_SRCSEL_END;
+localparam PP_Y_CALC_LENGTH     = 2;
+localparam PP_Y_CALC_END        = PP_Y_CALC_START + PP_Y_CALC_LENGTH;
+localparam PP_SLGEN_START       = PP_Y_CALC_END;
+localparam PP_SLGEN_LENGTH      = 5;
 localparam PP_SLGEN_END         = PP_SLGEN_START + PP_SLGEN_LENGTH;
 localparam PP_TP_START          = PP_SLGEN_END;
 localparam PP_TP_LENGTH         = 1;
@@ -134,11 +137,10 @@ wire SL_BOB_ALTERN = sl_config[31];
 wire [9:0] SL_C_OVERLAY = sl_config3[17:8];
 wire [2:0] SL_IV_Y = sl_config3[20:18];
 wire [3:0] SL_IV_X = sl_config3[24:21];
+wire [4:0] SL_HYBRSTR = sl_config3[29:25];
 
 wire [3:0] MISC_MASK_BR = misc_config[3:0];
 wire [2:0] MISC_MASK_COLOR = misc_config[6:4];
-wire [5:0] MISC_REV_LPF_STR = (misc_config[11:7] + 6'd16);
-wire MISC_REV_LPF_ENABLE = (misc_config[11:7] != 5'h0);
 wire MISC_LM_DEINT_MODE = misc_config[12];
 wire MISC_NIR_EVEN_OFFSET = misc_config[13];
 wire [3:0] MISC_BFI_STR = misc_config[19:16];
@@ -165,17 +167,22 @@ reg [3:0] y_ctr;
 reg line_id;
 reg ypos_pp_init;
 
-reg [7:0] sl_str;
 reg sl_method;
+reg [7:0] Y_sl_str, R_sl_str, G_sl_str, B_sl_str;
+wire [7:0] R_sl_mult, G_sl_mult, B_sl_mult;
 wire bfi_frame;
 
-wire [7:0] R_sl_mult, G_sl_mult, B_sl_mult;
+reg [8:0] Y_rb_tmp;
+reg [9:0] Y;
+wire [8:0] Y_sl_hybr_ref_pre, R_sl_hybr_ref_pre, G_sl_hybr_ref_pre, B_sl_hybr_ref_pre;
+wire [8:0] Y_sl_hybr_ref, R_sl_hybr_ref, G_sl_hybr_ref, B_sl_hybr_ref;
+
 wire [7:0] R_linebuf, G_linebuf, B_linebuf;
 
 // Pipeline registers
-reg [7:0] R_pp[PP_LINEBUF_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
-reg [7:0] G_pp[PP_LINEBUF_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
-reg [7:0] B_pp[PP_LINEBUF_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
+reg [7:0] R_pp[PP_SRCSEL_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
+reg [7:0] G_pp[PP_SRCSEL_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
+reg [7:0] B_pp[PP_SRCSEL_END:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg HSYNC_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg VSYNC_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg DE_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
@@ -183,30 +190,90 @@ reg [11:0] xpos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg mask_enable_pp[PP_LINEBUF_START:PP_TP_START] /* synthesis ramstyle = "logic" */;
 reg draw_sl_pp[(PP_SLGEN_START+1):(PP_SLGEN_END-1)] /* synthesis ramstyle = "logic" */;
+reg [7:0] sl_str_pp[(PP_SLGEN_START+1):(PP_SLGEN_START+2)] /* synthesis ramstyle = "logic" */;
 reg [3:0] x_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
 reg [2:0] y_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
 
 assign PCLK_o = PCLK_OUT_i;
 
-lpm_mult_4_sl R_sl_mult_u
+
+lpm_mult_hybr_ref_pre Y_sl_hybr_ref_pre_u
 (
     .clock(PCLK_OUT_i),
-    .dataa(R_pp[PP_SLGEN_START+1]),
-    .datab(~sl_str),
+    .dataa(Y[9:2]),
+    .datab(SL_HYBRSTR),
+    .result(Y_sl_hybr_ref_pre)
+);
+lpm_mult_hybr_ref_pre R_sl_hybr_ref_pre_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(R_pp[PP_SLGEN_START]),
+    .datab(SL_HYBRSTR),
+    .result(R_sl_hybr_ref_pre)
+);
+lpm_mult_hybr_ref_pre G_sl_hybr_ref_pre_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(G_pp[PP_SLGEN_START]),
+    .datab(SL_HYBRSTR),
+    .result(G_sl_hybr_ref_pre)
+);
+lpm_mult_hybr_ref_pre B_sl_hybr_ref_pre_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(B_pp[PP_SLGEN_START]),
+    .datab(SL_HYBRSTR),
+    .result(B_sl_hybr_ref_pre)
+);
+
+lpm_mult_hybr_ref Y_sl_hybr_ref_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(Y_sl_hybr_ref_pre),
+    .datab(sl_str_pp[PP_SLGEN_START+1]),
+    .result(Y_sl_hybr_ref)
+);
+lpm_mult_hybr_ref R_sl_hybr_ref_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(R_sl_hybr_ref_pre),
+    .datab(sl_str_pp[PP_SLGEN_START+1]),
+    .result(R_sl_hybr_ref)
+);
+lpm_mult_hybr_ref G_sl_hybr_ref_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(G_sl_hybr_ref_pre),
+    .datab(sl_str_pp[PP_SLGEN_START+1]),
+    .result(G_sl_hybr_ref)
+);
+lpm_mult_hybr_ref B_sl_hybr_ref_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(B_sl_hybr_ref_pre),
+    .datab(sl_str_pp[PP_SLGEN_START+1]),
+    .result(B_sl_hybr_ref)
+);
+
+lpm_mult_sl R_sl_mult_u
+(
+    .clock(PCLK_OUT_i),
+    .dataa(R_pp[PP_SLGEN_START+3]),
+    .datab(~Y_sl_str),
     .result(R_sl_mult)
 );
-lpm_mult_4_sl G_sl_mult_u
+lpm_mult_sl G_sl_mult_u
 (
     .clock(PCLK_OUT_i),
-    .dataa(G_pp[PP_SLGEN_START+1]),
-    .datab(~sl_str),
+    .dataa(G_pp[PP_SLGEN_START+3]),
+    .datab(~Y_sl_str),
     .result(G_sl_mult)
 );
-lpm_mult_4_sl B_sl_mult_u
+lpm_mult_sl B_sl_mult_u
 (
     .clock(PCLK_OUT_i),
-    .dataa(B_pp[PP_SLGEN_START+1]),
-    .datab(~sl_str),
+    .dataa(B_pp[PP_SLGEN_START+3]),
+    .datab(~Y_sl_str),
     .result(B_sl_mult)
 );
 
@@ -295,15 +362,16 @@ always @(posedge PCLK_OUT_i) begin
 end
 
 // Postprocess pipeline structure
-//            1          2         3         4         5         6        7
-// |----------|----------|---------|---------|---------|---------|--------|
-// | SYNC/DE  |          |         |         |         |         |        |
-// | X/Y POS  |          |         |         |         |         |        |
-// |          |   MASK   |         |         |         |         |        |
-// |          | LB_SETUP | LINEBUF |         |         |         |        |
-// |          |          |         | SRCSEL  |         |         |        |
-// |          |          |         | SLGEN   |  SLGEN  |  SLGEN  |        |
-// |          |          |         |         |         |         |   TP   |
+//            1          2         3         4         5         6         7         8         9         10        11        12
+// |----------|----------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------|
+// | SYNC/DE  |          |         |         |         |         |         |         |         |         |         |         |
+// | X/Y POS  |          |         |         |         |         |         |         |         |         |         |         |
+// |          |   MASK   |         |         |         |         |         |         |         |         |         |         |
+// |          | LB_SETUP | LINEBUF |         |         |         |         |         |         |         |         |         |
+// |          |          |         | SRCSEL  |         |         |         |         |         |         |         |         |
+// |          |          |         |         |    Y    |    Y    |         |         |         |         |         |         |
+// |          |          |         |         |         |         |  SLGEN  |  SLGEN  |  SLGEN  |  SLGEN  |  SLGEN  |         |
+// |          |          |         |         |         |         |         |         |         |         |         |    TP   |
 
 
 // Pipeline stage 1
@@ -398,6 +466,12 @@ always @(posedge PCLK_OUT_i) begin
         x_ctr_sl_pp[pp_idx] <= x_ctr_sl_pp[pp_idx-1];
         y_ctr_sl_pp[pp_idx] <= y_ctr_sl_pp[pp_idx-1];
     end
+    // Overridden later where necessary
+    for (pp_idx = PP_SRCSEL_END+1; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
+        R_pp[pp_idx] <= R_pp[pp_idx-1];
+        G_pp[pp_idx] <= G_pp[pp_idx-1];
+        B_pp[pp_idx] <= B_pp[pp_idx-1];
+    end
 
     if (($signed({1'b0, xpos_pp[PP_LINEBUF_START-1]}) >= X_OFFSET) &
         ($signed({1'b0, xpos_pp[PP_LINEBUF_START-1]}) < X_OFFSET+X_SIZE) &
@@ -412,21 +486,26 @@ always @(posedge PCLK_OUT_i) begin
         mask_enable_pp[pp_idx] <= mask_enable_pp[pp_idx-1];
     end
 
+    /* ---------- Source selection (1 cycle) ---------- */
     R_pp[PP_SRCSEL_END] <= ext_sync_mode ? ext_R_i : R_linebuf;
     G_pp[PP_SRCSEL_END] <= ext_sync_mode ? ext_G_i : G_linebuf;
     B_pp[PP_SRCSEL_END] <= ext_sync_mode ? ext_B_i : B_linebuf;
 
-    // Scanlines (3 cycles)
+    /* ---------- Calculate Y from RGB for hybrid scanlines (2 cycles) ---------- */
+    Y_rb_tmp <=  {1'b0, R_pp[PP_Y_CALC_START]} + {1'b0, B_pp[PP_Y_CALC_START]};
+    Y <= {1'b0, Y_rb_tmp} + {1'b0, G_pp[PP_Y_CALC_START+1], 1'b0};
+
+    /* ---------- Scanline generation (5 cycles) ---------- */
     if (MISC_BFI_ENABLE & bfi_frame) begin
-        sl_str <= ((MISC_BFI_STR+8'h01)<<4)-1'b1;
+        sl_str_pp[PP_SLGEN_START+1] <= ((MISC_BFI_STR+8'h01)<<4)-1'b1;
         sl_method <= 1'b1;
         draw_sl_pp[PP_SLGEN_START+1] <= 1'b1;
     end else if (|(SL_L_OVERLAY & (6'h1<<y_ctr_sl_pp[PP_SLGEN_START]))) begin
-        sl_str <= ((SL_L_STR[y_ctr_sl_pp[PP_SLGEN_START]]+8'h01)<<4)-1'b1;
+        sl_str_pp[PP_SLGEN_START+1] <= ((SL_L_STR[y_ctr_sl_pp[PP_SLGEN_START]]+8'h01)<<4)-1'b1;
         sl_method <= ~SL_METHOD_PRE;
         draw_sl_pp[PP_SLGEN_START+1] <= 1'b1;
     end else if (|(SL_C_OVERLAY & (10'h1<<x_ctr_sl_pp[PP_SLGEN_START]))) begin
-        sl_str <= ((SL_C_STR[x_ctr_sl_pp[PP_SLGEN_START]]+8'h01)<<4)-1'b1;
+        sl_str_pp[PP_SLGEN_START+1] <= ((SL_C_STR[x_ctr_sl_pp[PP_SLGEN_START]]+8'h01)<<4)-1'b1;
         sl_method <= ~SL_METHOD_PRE;
         draw_sl_pp[PP_SLGEN_START+1] <= 1'b1;
     end else begin
@@ -436,14 +515,27 @@ always @(posedge PCLK_OUT_i) begin
         draw_sl_pp[pp_idx] <= draw_sl_pp[pp_idx-1];
     end
 
-    R_pp[PP_SLGEN_START+2] <= draw_sl_pp[PP_SLGEN_START+1] ? ((R_pp[PP_SLGEN_START+1] > sl_str) ? (R_pp[PP_SLGEN_START+1] - sl_str) : 8'h00) : R_pp[PP_SLGEN_START+1];
-    G_pp[PP_SLGEN_START+2] <= draw_sl_pp[PP_SLGEN_START+1] ? ((G_pp[PP_SLGEN_START+1] > sl_str) ? (G_pp[PP_SLGEN_START+1] - sl_str) : 8'h00) : G_pp[PP_SLGEN_START+1];
-    B_pp[PP_SLGEN_START+2] <= draw_sl_pp[PP_SLGEN_START+1] ? ((B_pp[PP_SLGEN_START+1] > sl_str) ? (B_pp[PP_SLGEN_START+1] - sl_str) : 8'h00) : B_pp[PP_SLGEN_START+1];
+    // Cycle 2
+    sl_str_pp[PP_SLGEN_START+2] <= sl_str_pp[PP_SLGEN_START+1];
 
-    R_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+2] & sl_method) ? R_sl_mult : R_pp[PP_SLGEN_START+2];
-    G_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+2] & sl_method) ? G_sl_mult : G_pp[PP_SLGEN_START+2];
-    B_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+2] & sl_method) ? B_sl_mult : B_pp[PP_SLGEN_START+2];
-    
+    // Cycle 3
+    Y_sl_str <= {1'b0, sl_str_pp[PP_SLGEN_START+2]} < Y_sl_hybr_ref ? 8'h0 : sl_str_pp[PP_SLGEN_START+2] - Y_sl_hybr_ref[7:0];
+    R_sl_str <= {1'b0, sl_str_pp[PP_SLGEN_START+2]} < R_sl_hybr_ref ? 8'h0 : sl_str_pp[PP_SLGEN_START+2] - R_sl_hybr_ref[7:0];
+    G_sl_str <= {1'b0, sl_str_pp[PP_SLGEN_START+2]} < G_sl_hybr_ref ? 8'h0 : sl_str_pp[PP_SLGEN_START+2] - G_sl_hybr_ref[7:0];
+    B_sl_str <= {1'b0, sl_str_pp[PP_SLGEN_START+2]} < B_sl_hybr_ref ? 8'h0 : sl_str_pp[PP_SLGEN_START+2] - B_sl_hybr_ref[7:0];
+
+    // Cycle 4
+    // store subtraction based scanlined RGB into pipeline registers
+    R_pp[PP_SLGEN_START+4] <= draw_sl_pp[PP_SLGEN_START+3] ? ((R_pp[PP_SLGEN_START+3] > R_sl_str) ? (R_pp[PP_SLGEN_START+3] - R_sl_str) : 8'h00) : R_pp[PP_SLGEN_START+3];
+    G_pp[PP_SLGEN_START+4] <= draw_sl_pp[PP_SLGEN_START+3] ? ((G_pp[PP_SLGEN_START+3] > G_sl_str) ? (G_pp[PP_SLGEN_START+3] - G_sl_str) : 8'h00) : G_pp[PP_SLGEN_START+3];
+    B_pp[PP_SLGEN_START+4] <= draw_sl_pp[PP_SLGEN_START+3] ? ((B_pp[PP_SLGEN_START+3] > B_sl_str) ? (B_pp[PP_SLGEN_START+3] - B_sl_str) : 8'h00) : B_pp[PP_SLGEN_START+3];
+
+    // Cycle 5
+    R_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? R_sl_mult : R_pp[PP_SLGEN_START+4];
+    G_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? G_sl_mult : G_pp[PP_SLGEN_START+4];
+    B_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? B_sl_mult : B_pp[PP_SLGEN_START+4];
+
+    /* ---------- Testpattern / mask generation ---------- */
     R_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_R : R_pp[PP_TP_START]);
     G_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_G : G_pp[PP_TP_START]);
     B_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_B : B_pp[PP_TP_START]);

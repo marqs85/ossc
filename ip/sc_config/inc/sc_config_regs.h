@@ -141,7 +141,8 @@ typedef union {
         uint32_t sl_c_overlay:10;
         uint8_t sl_iv_y:3;
         uint8_t sl_iv_x:4;
-        uint32_t sl_rsv:7;
+        uint8_t sl_hybr_str:5;
+        uint32_t sl_rsv:2;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } sl_config3_reg;

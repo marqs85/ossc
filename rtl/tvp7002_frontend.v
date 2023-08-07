@@ -35,6 +35,7 @@ module tvp7002_frontend (
     input [31:0] hv_in_config,
     input [31:0] hv_in_config2,
     input [31:0] hv_in_config3,
+    input [31:0] misc_config,
     output [7:0] R_o,
     output [7:0] G_o,
     output [7:0] B_o,
@@ -60,8 +61,11 @@ localparam FID_ODD = 1'b1;
 localparam VSYNC_SEPARATED = 1'b0;
 localparam VSYNC_RAW = 1'b1;
 
-localparam PP_PL_START  = 1;
-localparam PP_PL_END    = 4;
+localparam PP_PL_START      = 1;
+localparam PP_RLPF_START    = PP_PL_START + 1;
+localparam PP_RLPF_LENGTH   = 3;
+localparam PP_RLPF_END      = PP_RLPF_START + PP_RLPF_LENGTH;
+localparam PP_PL_END        = PP_RLPF_END;
 
 reg [11:0] h_cnt, h_cnt_sogref;
 reg [10:0] v_cnt;
@@ -83,6 +87,11 @@ reg datavalid_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [10:0] xpos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 
+// Reverse LPF
+wire rlpf_trigger_act;
+reg signed [14:0] R_diff_s15_pre, G_diff_s15_pre, B_diff_s15_pre, R_diff_s15, G_diff_s15, B_diff_s15;
+reg [7:0] R_pp_prev_rlpf, G_pp_prev_rlpf, B_pp_prev_rlpf;
+
 // Measurement registers
 reg [20:0] pcnt_frame_ctr;
 reg [17:0] syncpol_det_ctr, hsync_hpol_ctr, vsync_hpol_ctr;
@@ -102,6 +111,9 @@ wire [8:0] H_BACKPORCH = hv_in_config2[8:0];
 wire [10:0] V_ACTIVE = hv_in_config2[30:20];
 wire [3:0] V_SYNCLEN = hv_in_config3[3:0];
 wire [8:0] V_BACKPORCH = hv_in_config3[12:4];
+
+wire [5:0] MISC_REV_LPF_STR = (misc_config[11:7] + 6'd16);
+wire MISC_REV_LPF_ENABLE = (misc_config[11:7] != 5'h0);
 
 wire [11:0] h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? h_cnt_sogref : h_cnt;
 wire [11:0] even_min_thold = (H_TOTAL / 12'd4);
@@ -124,6 +136,17 @@ wire [3:0] H_SAMPLE_SEL = hv_in_config3[31:28];
 
 // SOF position for scaler
 wire [10:0] V_SOF_LINE = hv_in_config3[23:13];
+
+function [7:0] apply_reverse_lpf;
+    input [7:0] data_prev;
+    input signed [14:0] diff;
+    reg signed [10:0] result;
+
+    begin
+        result = {3'b0,data_prev} + ~diff[14:4]; // allow for a small error to reduce adder length
+        apply_reverse_lpf = result[10] ? 8'h00 : |result[9:8] ? 8'hFF : result[7:0];
+    end
+endfunction
 
 
 always @(posedge PCLK_i) begin
@@ -206,19 +229,13 @@ always @(posedge PCLK_i) begin
     end
 end
 
-// Pipeline stages 1-
+// Pipeline stages 2-
 integer pp_idx;
 always @(posedge PCLK_i) begin
-    for(pp_idx = PP_PL_START+1; pp_idx <= PP_PL_END-1; pp_idx = pp_idx+1) begin
+    for(pp_idx = PP_PL_START+1; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
         R_pp[pp_idx] <= R_pp[pp_idx-1];
         G_pp[pp_idx] <= G_pp[pp_idx-1];
         B_pp[pp_idx] <= B_pp[pp_idx-1];
-    end
-    R_pp[PP_PL_END] <= R_pp[PP_PL_END-1];
-    G_pp[PP_PL_END] <= G_pp[PP_PL_END-1];
-    B_pp[PP_PL_END] <= B_pp[PP_PL_END-1];
-
-    for(pp_idx = PP_PL_START+1; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
         HSYNC_pp[pp_idx] <= HSYNC_pp[pp_idx-1];
         VSYNC_pp[pp_idx] <= VSYNC_pp[pp_idx-1];
         FID_pp[pp_idx] <= FID_pp[pp_idx-1];
@@ -226,6 +243,36 @@ always @(posedge PCLK_i) begin
         datavalid_pp[pp_idx] <= datavalid_pp[pp_idx-1];
         xpos_pp[pp_idx] <= xpos_pp[pp_idx-1];
         ypos_pp[pp_idx] <= ypos_pp[pp_idx-1];
+    end
+
+    /* ---------- Reverse LPF (3 cycles) ---------- */
+    // Store a copy of valid sample data
+    if (datavalid_pp[PP_RLPF_START]) begin
+        R_pp_prev_rlpf <= R_pp[PP_RLPF_START];
+        G_pp_prev_rlpf <= G_pp[PP_RLPF_START];
+        B_pp_prev_rlpf <= B_pp[PP_RLPF_START];
+    end
+    // Push previous valid data into pipeline when RLPF enabled
+    if (MISC_REV_LPF_ENABLE) begin
+        R_pp[PP_RLPF_START+1] <= R_pp_prev_rlpf;
+        G_pp[PP_RLPF_START+1] <= G_pp_prev_rlpf;
+        B_pp[PP_RLPF_START+1] <= B_pp_prev_rlpf;
+    end
+    // Calculate diff to previous valid data
+    R_diff_s15_pre <= (R_pp_prev_rlpf - R_pp[PP_RLPF_START]);
+    G_diff_s15_pre <= (G_pp_prev_rlpf - G_pp[PP_RLPF_START]);
+    B_diff_s15_pre <= (B_pp_prev_rlpf - B_pp[PP_RLPF_START]);
+
+    // Cycle 2
+    R_diff_s15 <= (R_diff_s15_pre * MISC_REV_LPF_STR);
+    G_diff_s15 <= (G_diff_s15_pre * MISC_REV_LPF_STR);
+    B_diff_s15 <= (B_diff_s15_pre * MISC_REV_LPF_STR);
+
+    // Cycle 3
+    if (MISC_REV_LPF_ENABLE) begin
+        R_pp[PP_RLPF_END] <= apply_reverse_lpf(R_pp[PP_RLPF_START+2], R_diff_s15);
+        G_pp[PP_RLPF_END] <= apply_reverse_lpf(G_pp[PP_RLPF_START+2], G_diff_s15);
+        B_pp[PP_RLPF_END] <= apply_reverse_lpf(B_pp[PP_RLPF_START+2], B_diff_s15);
     end
 end
 
