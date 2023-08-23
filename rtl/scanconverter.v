@@ -83,7 +83,10 @@ localparam FID_EVEN = 1'b0;
 localparam FID_ODD = 1'b1;
 
 localparam PP_PL_START          = 1;
-localparam PP_LINEBUF_START     = PP_PL_START + 1;
+localparam PP_MASK_START        = PP_PL_START;
+localparam PP_MASK_LENGTH       = 1;
+localparam PP_MASK_END          = PP_MASK_START + PP_MASK_LENGTH;
+localparam PP_LINEBUF_START     = PP_MASK_END;
 localparam PP_LINEBUF_LENGTH    = 1;
 localparam PP_LINEBUF_END       = PP_LINEBUF_START + PP_LINEBUF_LENGTH;
 localparam PP_SRCSEL_START      = PP_LINEBUF_END;
@@ -188,7 +191,7 @@ reg VSYNC_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg DE_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [11:0] xpos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
-reg mask_enable_pp[PP_LINEBUF_START:PP_TP_START] /* synthesis ramstyle = "logic" */;
+reg mask_enable_pp[PP_MASK_END:PP_TP_START] /* synthesis ramstyle = "logic" */;
 reg draw_sl_pp[(PP_SLGEN_START+1):(PP_SLGEN_END-1)] /* synthesis ramstyle = "logic" */;
 reg [7:0] sl_str_pp[(PP_SLGEN_START+1):(PP_SLGEN_START+2)] /* synthesis ramstyle = "logic" */;
 reg [3:0] x_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
@@ -394,7 +397,7 @@ always @(posedge PCLK_OUT_i) begin
             if (~ext_sync_mode & ~MISC_LM_DEINT_MODE & (Y_RPT > 0) & ~V_INTERLACED & (src_fid == FID_EVEN)) begin
                 ypos_lb_next <= 11'(Y_START_LB) - 1'b1;
                 y_ctr <= ((Y_RPT+1'b1) >> 1);
-                y_ctr_sl_pp[1] <= SL_BOB_ALTERN ? ((Y_RPT+1'b1) >> 1) : 0;
+                y_ctr_sl_pp[1] <= SL_BOB_ALTERN ? ((Y_RPT+1'b1) >> 1) : '0;
             end else begin
                 if (Y_SKIP & (dst_fid == FID_EVEN)) begin
                     // Linedrop mode and output interlaced
@@ -427,7 +430,7 @@ always @(posedge PCLK_OUT_i) begin
                     y_ctr <= y_ctr + 1'b1;
                 end
                 if (!ypos_pp_init)
-                    y_ctr_sl_pp[1] <= (y_ctr_sl_pp[1] == SL_IV_Y) ? 0 : y_ctr_sl_pp[1] + 1'b1;
+                    y_ctr_sl_pp[1] <= (y_ctr_sl_pp[1] == SL_IV_Y) ? '0 : y_ctr_sl_pp[1] + 1'b1;
             end
         end
         xpos_pp[1] <= 0;
@@ -446,7 +449,7 @@ always @(posedge PCLK_OUT_i) begin
             end else begin
                 x_ctr <= x_ctr + 1'b1;
             end
-            x_ctr_sl_pp[1] <= (x_ctr_sl_pp[1] == SL_IV_X) ? 0 : x_ctr_sl_pp[1] + 1'b1;
+            x_ctr_sl_pp[1] <= (x_ctr_sl_pp[1] == SL_IV_X) ? '0 : x_ctr_sl_pp[1] + 1'b1;
         end
     end
 end
@@ -454,15 +457,14 @@ end
 // Pipeline stages 2-
 integer pp_idx;
 always @(posedge PCLK_OUT_i) begin
-
-    for(pp_idx = PP_LINEBUF_START; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
+    for(pp_idx = PP_PL_START+1; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
         HSYNC_pp[pp_idx] <= HSYNC_pp[pp_idx-1];
         VSYNC_pp[pp_idx] <= VSYNC_pp[pp_idx-1];
         DE_pp[pp_idx] <= DE_pp[pp_idx-1];
         xpos_pp[pp_idx] <= xpos_pp[pp_idx-1];
         ypos_pp[pp_idx] <= ypos_pp[pp_idx-1];
     end
-    for(pp_idx = PP_LINEBUF_START; pp_idx <= PP_SLGEN_START; pp_idx = pp_idx+1) begin
+    for(pp_idx = PP_PL_START+1; pp_idx <= PP_SLGEN_START; pp_idx = pp_idx+1) begin
         x_ctr_sl_pp[pp_idx] <= x_ctr_sl_pp[pp_idx-1];
         y_ctr_sl_pp[pp_idx] <= y_ctr_sl_pp[pp_idx-1];
     end
@@ -473,16 +475,17 @@ always @(posedge PCLK_OUT_i) begin
         B_pp[pp_idx] <= B_pp[pp_idx-1];
     end
 
-    if (($signed({1'b0, xpos_pp[PP_LINEBUF_START-1]}) >= X_OFFSET) &
-        ($signed({1'b0, xpos_pp[PP_LINEBUF_START-1]}) < X_OFFSET+X_SIZE) &
-        ($signed({1'b0, ypos_pp[PP_LINEBUF_START-1]}) >= Y_OFFSET) &
-        ($signed({1'b0, ypos_pp[PP_LINEBUF_START-1]}) < Y_OFFSET+Y_SIZE))
+    /* ---------- Mask enable calculation (1 cycle) ---------- */
+    if (($signed({1'b0, xpos_pp[PP_MASK_START]}) >= X_OFFSET) &
+        ($signed({1'b0, xpos_pp[PP_MASK_START]}) < X_OFFSET+X_SIZE) &
+        ($signed({1'b0, ypos_pp[PP_MASK_START]}) >= Y_OFFSET) &
+        ($signed({1'b0, ypos_pp[PP_MASK_START]}) < Y_OFFSET+Y_SIZE))
     begin
-        mask_enable_pp[PP_LINEBUF_START] <= 1'b0;
+        mask_enable_pp[PP_MASK_END] <= 1'b0;
     end else begin
-        mask_enable_pp[PP_LINEBUF_START] <= 1'b1;
+        mask_enable_pp[PP_MASK_END] <= 1'b1;
     end
-    for(pp_idx = PP_LINEBUF_START+1; pp_idx <= PP_TP_START; pp_idx = pp_idx+1) begin
+    for(pp_idx = PP_MASK_END+1; pp_idx <= PP_TP_START; pp_idx = pp_idx+1) begin
         mask_enable_pp[pp_idx] <= mask_enable_pp[pp_idx-1];
     end
 

@@ -82,8 +82,6 @@ typedef struct {
     alt_u8 progressive;
     alt_8 id;
     alt_u8 sync_active;
-    alt_u8 tx_pixelrep;
-    alt_u8 hdmitx_pixr_ifr;
     alt_u8 hdmitx_pclk_level;
     alt_u32 pclk_o_hz;
     avinput_t avinput;

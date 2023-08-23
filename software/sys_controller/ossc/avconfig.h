@@ -93,6 +93,7 @@ typedef struct {
     alt_u8 l3_mode;
     alt_u8 l4_mode;
     alt_u8 l5_mode;
+    alt_u8 l6_mode;
     alt_u8 l5_fmt;
     alt_u8 s480p_mode;
     alt_u8 s400p_mode;

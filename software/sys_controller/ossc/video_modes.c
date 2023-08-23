@@ -126,6 +126,8 @@ uint32_t calculate_pclk(uint32_t src_clk_hz, mode_data_t *vm_out, vm_proc_config
         }
     }
 
+    pclk_hz *= vm_conf->tx_pixelrep+1;
+
     return pclk_hz;
 }
 
@@ -133,7 +135,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
 {
     int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000;
     mode_data_t *mode_preset;
-    mode_flags valid_lm[] = { MODE_PT, (MODE_L2 | (MODE_L2<<cc->l2_mode)), (MODE_L3_GEN_16_9<<cc->l3_mode), (MODE_L4_GEN_4_3<<cc->l4_mode), (MODE_L5_GEN_4_3<<cc->l5_mode) };
+    mode_flags valid_lm[] = { MODE_PT, (MODE_L2 | (MODE_L2<<cc->l2_mode)), (MODE_L3_GEN_16_9<<cc->l3_mode), (MODE_L4_GEN_4_3<<cc->l4_mode), (MODE_L5_GEN_4_3<<cc->l5_mode), (MODE_L6_GEN_4_3<<cc->l6_mode) };
     mode_flags target_lm, mindiff_lm;
     uint8_t pt_only = 0;
     uint8_t upsample2x = cc->upsample2x;
@@ -401,6 +403,9 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->y_rpt = 4;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
+            // Force TX pixel-repeat
+            if (mode_preset->group == GROUP_288P)
+                vm_conf->tx_pixelrep = 1;
             break;
         case MODE_L5_512_COL:
             vm_conf->y_rpt = 4;
@@ -427,6 +432,35 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
             vm_conf->x_rpt -= cc->ar_256col;
             break;
+        case MODE_L6_GEN_4_3:
+            vm_conf->y_rpt = 5;
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
+            vm_conf->tx_pixelrep = 1;
+            break;
+        case MODE_L6_512_COL:
+            vm_conf->y_rpt = 5;
+            vm_conf->x_rpt = vm_conf->h_skip = 1;
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
+            vm_conf->tx_pixelrep = 1;
+            break;
+        case MODE_L6_384_COL:
+        case MODE_L6_320_COL:
+            vm_conf->y_rpt = 5;
+            vm_conf->x_rpt = vm_conf->h_skip = 2;
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
+            vm_conf->tx_pixelrep = 1;
+            break;
+        case MODE_L6_256_COL:
+            vm_conf->y_rpt = 5;
+            vm_conf->x_rpt = vm_conf->h_skip = 3;
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
+            vm_conf->x_rpt = cc->ar_256col ? 2 : 3;
+            vm_conf->tx_pixelrep = 1;
+            break;
         default:
             printf("WARNING: invalid mindiff_lm\n");
             return -1;
@@ -445,7 +479,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     vm_conf->y_offset = ((vm_out->timings.v_active-vm_conf->y_size)/2);
 
     // Line5x format
-    if (vm_conf->y_rpt == 4) {
+    if ((vm_conf->y_rpt == 4) && !((mindiff_lm == MODE_L5_GEN_4_3) && (mode_preset->group == GROUP_288P))) {
         // adjust output width to 1920
         if (cc->l5_fmt != 1) {
             vm_conf->x_offset = (1920-vm_conf->x_size)/2;

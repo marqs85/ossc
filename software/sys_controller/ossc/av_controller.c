@@ -106,6 +106,7 @@ const pll_config_t pll_configs[] = { {{0x0d806000, 0x00402010, 0x08800020, 0x000
                                      {{0x0d806000, 0x00441c07, 0x02800020, 0x00080002, 0x00000000}},    // 3x (~20-40MHz)
                                      {{0x0d806000, 0x00402004, 0x02800020, 0x00080002, 0x00000000}},    // 4x (~20-40MHz)
                                      {{0x0d806000, 0x00441c05, 0x01800020, 0x00080002, 0x00000000}},    // 5x (~20-40MHz)
+                                     {{0x0d806000, 0x00301802, 0x01800020, 0x00080002, 0x00000000}},    // 6x (~20-40MHz)
                                      {{0x0e406000, 0x00281407, 0x02800020, 0x00080002, 0x00000000}} };  // 2x (~75MHz)
 
 volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
@@ -181,7 +182,7 @@ inline void TX_enable(tx_mode_t mode)
     EnableVideoOutput(cm.hdmitx_pclk_level ? PCLK_HIGH : PCLK_MEDIUM, COLOR_RGB444, (mode == TX_HDMI_YCBCR444) ? COLOR_YUV444 : COLOR_RGB444, (mode != TX_DVI));
 
     if (mode != TX_DVI) {
-        HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
         cm.cc.hdmi_itc = tc.hdmi_itc;
     }
 
@@ -553,7 +554,6 @@ void program_mode()
     alt_u32 h_hz, h_synclen_px, pclk_i_hz, dotclk_hz, pll_h_total;
 
     memset(&vmode_in, 0, sizeof(mode_data_t));
-    cm.tx_pixelrep = cm.hdmitx_pixr_ifr = 0;
 
     vmode_in.timings.v_hz_x100 = (100*27000000UL)/cm.pcnt_frame;
     h_hz = (100*27000000UL)/((100*cm.pcnt_frame*(1+!cm.progressive))/cm.totlines);
@@ -602,7 +602,7 @@ void program_mode()
 
     // Tweak infoframe pixel repetition indicator if passing thru horizontally multiplied mode
     if ((vm_conf.y_rpt == 0) && (vm_conf.h_skip > 0))
-        cm.hdmitx_pixr_ifr = vm_conf.h_skip;
+        vm_conf.hdmitx_pixr_ifr = vm_conf.h_skip;
 
     dotclk_hz = estimate_dotclk(&vmode_in, h_hz);
     cm.pclk_o_hz = calculate_pclk(pclk_i_hz, &vmode_out, &vm_conf);
@@ -640,7 +640,7 @@ void program_mode()
 
     if (vm_conf.si_pclk_mult > 1) {
         if ((vm_conf.si_pclk_mult == 2) && (pclk_i_hz > 50000000UL))
-            pll_reconfigure(5);
+            pll_reconfigure(6);
         else
             pll_reconfigure(vm_conf.si_pclk_mult-1);
         sys_ctrl &= ~PLL_BYPASS;
@@ -649,11 +649,11 @@ void program_mode()
     }
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
-    update_osd_size(&vmode_out);
+    update_osd_size(&vmode_out, &vm_conf);
 
     update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
 
-    TX_SetPixelRepetition(cm.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (cm.tx_pixelrep == cm.hdmitx_pixr_ifr)) ? 1 : 0);
+    TX_SetPixelRepetition(vm_conf.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (vm_conf.tx_pixelrep == vm_conf.hdmitx_pixr_ifr)) ? 1 : 0);
 
     if (cm.pclk_o_hz > 85000000)
         hdmitx_pclk_level = 1;
@@ -662,14 +662,14 @@ void program_mode()
     else
         hdmitx_pclk_level = cm.hdmitx_pclk_level;
 
-    printf("PCLK level: %u, PR: %u, IPR: %u, ITC: %u\n", hdmitx_pclk_level, cm.tx_pixelrep, cm.hdmitx_pixr_ifr, cm.cc.hdmi_itc);
+    printf("PCLK level: %u, PR: %u, IPR: %u, ITC: %u\n", hdmitx_pclk_level, vm_conf.tx_pixelrep, vm_conf.hdmitx_pixr_ifr, cm.cc.hdmi_itc);
 
     // Full TX initialization increases mode switch delay, use only when necessary
     if (cm.cc.full_tx_setup || (cm.hdmitx_pclk_level != hdmitx_pclk_level)) {
         cm.hdmitx_pclk_level = hdmitx_pclk_level;
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode!=TX_DVI) {
-        HDMITX_SetAVIInfoFrame(vmode_out.vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, cm.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(vmode_out.vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
 #ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
@@ -1119,7 +1119,7 @@ int main()
         if ((tc.tx_mode != TX_DVI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
             //EnableAVIInfoFrame(FALSE, NULL);
             printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, cm.hdmitx_pixr_ifr);
+            HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
             cm.cc.hdmi_itc = tc.hdmi_itc;
         }
         if (tc.av3_alt_rgb != cm.cc.av3_alt_rgb) {

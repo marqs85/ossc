@@ -127,7 +127,7 @@ void init_menu();
 void render_osd_page();
 void display_menu(alt_u8 forcedisp);
 void sampler_phase_disp(alt_u8 v);
-void update_osd_size(mode_data_t *vm_out);
+void update_osd_size(mode_data_t *vm_out, vm_proc_config_t *vm_conf);
 static void vm_select();
 static void vm_tweak(alt_u16 *v);
 

@@ -42,7 +42,7 @@
 #define V_BPORCH_MIN 0
 #define V_BPORCH_MAX 511
 #define V_ACTIVE_MIN 160
-#define V_ACTIVE_MAX 1440
+#define V_ACTIVE_MAX 1728
 
 typedef enum {
     FORMAT_RGBS = 0,
@@ -100,10 +100,15 @@ typedef enum {
     MODE_L5_384_COL     = (1<<23),
     MODE_L5_320_COL     = (1<<24),
     MODE_L5_256_COL     = (1<<25),
+    MODE_L6_GEN_4_3     = (1<<26),
+    MODE_L6_512_COL     = (1<<27),
+    MODE_L6_384_COL     = (1<<28),
+    MODE_L6_320_COL     = (1<<29),
+    MODE_L6_256_COL     = (1<<30),
 } mode_flags;
 
 typedef enum {
-    VMODE_480p = 24,
+    VMODE_480p = 23,
 } vmode_t;
 
 typedef struct {
@@ -163,6 +168,8 @@ typedef struct {
     uint8_t x_start_lb;
     int8_t y_start_lb;
     uint8_t framelock;
+    uint8_t tx_pixelrep;
+    uint8_t hdmitx_pixr_ifr;
     // for generation from 27MHz clock
     int8_t si_pclk_mult;
 } vm_proc_config_t;

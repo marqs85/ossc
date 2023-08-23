@@ -62,7 +62,7 @@ localparam VSYNC_SEPARATED = 1'b0;
 localparam VSYNC_RAW = 1'b1;
 
 localparam PP_PL_START      = 1;
-localparam PP_RLPF_START    = PP_PL_START + 1;
+localparam PP_RLPF_START    = PP_PL_START;
 localparam PP_RLPF_LENGTH   = 3;
 localparam PP_RLPF_END      = PP_RLPF_START + PP_RLPF_LENGTH;
 localparam PP_PL_END        = PP_RLPF_END;
