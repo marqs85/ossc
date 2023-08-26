@@ -80,6 +80,7 @@ static SYS_STATUS SetAVIInfoFrame(AVI_InfoFrame *pAVIInfoFrame) ;
 static SYS_STATUS SetAudioInfoFrame(Audio_InfoFrame *pAudioInfoFrame) ;
 static SYS_STATUS SetSPDInfoFrame(SPD_InfoFrame *pSPDInfoFrame) ;
 static SYS_STATUS SetMPEGInfoFrame(MPEG_InfoFrame *pMPGInfoFrame) ;
+static SYS_STATUS SetHDRInfoFrame(HDR_InfoFrame *pHDRInfoFrame) ;
 static SYS_STATUS ReadEDID(BYTE *pData,BYTE bSegment,BYTE offset,SHORT Count) ;
 static void AbortDDC() ;
 static void ClearDDCFIFO() ;
@@ -183,7 +184,7 @@ static _CODE BYTE bCSCOffset_0_255[] =
         0xCE,0x3C,0x83,0x03,0xAE,0x3F,
         0x49,0x3D,0x33,0x3F,0x83,0x03
     } ;
-#endif 
+#endif
 /*
 #ifdef SUPPORT_INPUTYUV
 
@@ -270,7 +271,7 @@ static BYTE InitIT6613_HDCPROM()
     HDMITX_WriteI2C_Byte(0xF8,0xA5) ;	// password
     HDMITX_WriteI2C_Byte(REG_TX_LISTCTRL,0x60) ; // Richard, ????
     I2C_Read_ByteN(0xE0,0x00,uc,5) ;  // richard note. internal rom is used
-    
+
     if(uc[0] == 1 &&
         uc[1] == 1 &&
         uc[2] == 1 &&
@@ -288,7 +289,7 @@ static BYTE InitIT6613_HDCPROM()
         HDMITX_WriteI2C_Byte(REG_TX_LISTCTRL,0x00) ; // Richard, ????
     }
     HDMITX_WriteI2C_Byte(0xF8,0xFF) ;  // password
-    
+
     // richard add
     return ER_SUCCESS;
 }
@@ -299,26 +300,26 @@ void InitIT6613()
     HDMITX_WriteI2C_Byte(REG_TX_INT_CTRL,Instance[0].bIntType) ;
     Instance[0].bIntPOL = (Instance[0].bIntType&B_INTPOL_ACTH)?TRUE:FALSE ;
 
-	// Reset 
+	// Reset
     HDMITX_WriteI2C_Byte(REG_TX_SW_RST,B_REF_RST|B_VID_RST|B_AUD_RST|B_AREF_RST|B_HDCP_RST) ;
     DelayMS(1) ;
     HDMITX_WriteI2C_Byte(REG_TX_SW_RST,B_VID_RST|B_AUD_RST|B_AREF_RST|B_HDCP_RST) ;
-    
-#if 0    
+
+#if 0
     // Enable clock ring (richard add according toe programming guide)
     HDMITX_WriteI2C_Byte(REG_TX_AFE_DRV_CTRL, 0x10);
-    
+
     // Set default DVI mode (richard add according toe programming guide)
-//    HDMITX_WriteI2C_Byte(REG_TX_HDMI_MODE, 0x01);  // set HDMI mode    
-    HDMITX_WriteI2C_Byte(REG_TX_HDMI_MODE, 0x00);  // set DVI mode    
-#endif    
+//    HDMITX_WriteI2C_Byte(REG_TX_HDMI_MODE, 0x01);  // set HDMI mode
+    HDMITX_WriteI2C_Byte(REG_TX_HDMI_MODE, 0x00);  // set DVI mode
+#endif
 
     // Avoid power loading in un play status.
     HDMITX_WriteI2C_Byte(REG_TX_AFE_DRV_CTRL,B_AFE_DRV_RST|B_AFE_DRV_PWD) ;
 
     // set interrupt mask,mask value 0 is interrupt available.
-// richard    HDMITX_WriteI2C_Byte(REG_TX_INT_MASK1,0xB2) ;  // enable interrupt: HPD, DDCBusHangMask, 
-    HDMITX_WriteI2C_Byte(REG_TX_INT_MASK1,0xB2) ;  // enable interrupt: HPD, DDCBusHangMask, 
+// richard    HDMITX_WriteI2C_Byte(REG_TX_INT_MASK1,0xB2) ;  // enable interrupt: HPD, DDCBusHangMask,
+    HDMITX_WriteI2C_Byte(REG_TX_INT_MASK1,0xB2) ;  // enable interrupt: HPD, DDCBusHangMask,
     HDMITX_WriteI2C_Byte(REG_TX_INT_MASK2,0xF8) ;  // enable interrupt: AuthFailMask, AUthDoneMask, KSVListChkMask
     HDMITX_WriteI2C_Byte(REG_TX_INT_MASK3,0x37) ; //  enable interrupt: PktAudMask, PktDBDMask, PkMpgMask, AUdCTSMask, HDCPSynDetMask
 
@@ -331,7 +332,7 @@ void InitIT6613()
     DISABLE_AUD_INFOFRM_PKT() ;
     DISABLE_SPD_INFOFRM_PKT() ;
     DISABLE_MPG_INFOFRM_PKT();
-    
+
 
 	//////////////////////////////////////////////////////////////////
 	// Setup Output Audio format.
@@ -396,7 +397,7 @@ BOOL EnableVideoOutput(VIDEOPCLKLEVEL level,BYTE inputColorMode,BYTE outputColor
     uc = HDMITX_ReadI2C_Byte(REG_TX_CLK_CTRL1) ;
     uc |= B_VDO_LATCH_EDGE ;
     HDMITX_WriteI2C_Byte(REG_TX_CLK_CTRL1, uc) ;
-#endif    
+#endif
 
     HDMITX_WriteI2C_Byte(REG_TX_SW_RST,          B_AUD_RST|B_AREF_RST|B_HDCP_RST) ;
 
@@ -442,7 +443,7 @@ BOOL EnableAudioOutput(ULONG VideoPixelClock,BYTE bAudioSampleFreq,BYTE ChannelN
 
     Instance[0].TMDSClock = VideoPixelClock ;
     Instance[0].bAudFs = bAudioSampleFreq ;
-    
+
     ErrorF("EnableAudioOutput(%d,%ld,%x,%d,%d,%d);\n",0,VideoPixelClock,bAudioSampleFreq,ChannelNumber,bAudSWL,bSPDIF) ;
 
     switch(ChannelNumber)
@@ -474,12 +475,12 @@ BOOL EnableAudioOutput(ULONG VideoPixelClock,BYTE bAudioSampleFreq,BYTE ChannelN
         HDMITX_WriteI2C_Byte(REGPktAudCTS0,0x50) ;
         HDMITX_WriteI2C_Byte(REGPktAudCTS1,0x73) ;
         HDMITX_WriteI2C_Byte(REGPktAudCTS2,0x00) ;
-        
+
         HDMITX_WriteI2C_Byte(REGPktAudN0,0) ;
         HDMITX_WriteI2C_Byte(REGPktAudN1,0x18) ;
         HDMITX_WriteI2C_Byte(REGPktAudN2,0) ;
         Switch_HDMITX_Bank(0) ;
-    
+
         HDMITX_WriteI2C_Byte(0xC5, 2) ; // D[1] = 0, HW auto count CTS
     }
     else
@@ -615,15 +616,15 @@ EnableHDCP(BYTE bEnable)
     {
         if(ER_FAIL == HDCP_Authenticate())
         {
-			
-            HDCP_ResetAuth() ;    
+
+            HDCP_ResetAuth() ;
 			return FALSE ;
         }
 
     }
     else
     {
-        HDCP_ResetAuth() ;    
+        HDCP_ResetAuth() ;
     }
     return TRUE ;
 }
@@ -638,8 +639,8 @@ CheckHDMITX(BYTE *pHPD,BYTE *pHPDChange)
     BOOL HPD ;
 
     sysstat = HDMITX_ReadI2C_Byte(REG_TX_SYS_STATUS) ;  // read system status register
-    
-  //  OS_PRINTF("sysstat(REG[0x0E])=%02Xh\r\n", sysstat);    
+
+  //  OS_PRINTF("sysstat(REG[0x0E])=%02Xh\r\n", sysstat);
 
     HPD = ((sysstat & (B_HPDETECT|B_RXSENDETECT)) == (B_HPDETECT|B_RXSENDETECT))?TRUE:FALSE ;
 
@@ -751,7 +752,7 @@ CheckHDMITX(BYTE *pHPD,BYTE *pHPDChange)
     }
 
     SetupAudioChannel() ; // 2007/12/12 added by jj_tseng
-    
+
     if(pHPD)
     {
         *pHPD = HPD ? TRUE:FALSE ;
@@ -810,7 +811,7 @@ EnableAudioInfoFrame(BYTE bEnable,BYTE *pAudioInfoFrame)
     if(!bEnable)
     {
         // richard modify, DISABLE_AVI_INFOFRM_PKT() ;
-        DISABLE_AUD_INFOFRM_PKT(); 
+        DISABLE_AUD_INFOFRM_PKT();
         return TRUE ;
     }
 
@@ -818,6 +819,22 @@ EnableAudioInfoFrame(BYTE bEnable,BYTE *pAudioInfoFrame)
     if(SetAudioInfoFrame((Audio_InfoFrame *)pAudioInfoFrame) == ER_SUCCESS)
     {
         return TRUE ;
+    }
+
+    return FALSE ;
+}
+
+BOOL
+EnableHDRInfoFrame(BYTE bEnable, BYTE *pHDRInfoFrame)
+{
+    if (!bEnable) {
+        DISABLE_NULL_PKT();
+        return TRUE;
+    }
+
+    if(SetHDRInfoFrame((HDR_InfoFrame *)pHDRInfoFrame) == ER_SUCCESS)
+    {
+        return TRUE;
     }
 
     return FALSE ;
@@ -1087,7 +1104,7 @@ BOOL ProgramDEGenModeByID(MODE_ID id,BYTE bInputSignalType)
         {
             return FALSE ;
         }
-        
+
         Switch_HDMITX_Bank(0) ;
         HDMITX_WriteI2C_Byte(0x90,DeGen_Table[i].Reg90) ;
         HDMITX_WriteI2C_Byte(0x92,DeGen_Table[i].Reg92) ;
@@ -1100,7 +1117,7 @@ BOOL ProgramDEGenModeByID(MODE_ID id,BYTE bInputSignalType)
         HDMITX_WriteI2C_Byte(0x9E,DeGen_Table[i].Reg9E) ;
         HDMITX_WriteI2C_Byte(0x9F,DeGen_Table[i].Reg9F) ;
         return TRUE ;
-        
+
     }
     return FALSE ;
 }
@@ -1181,21 +1198,21 @@ ProgramSyncEmbeddedVideoMode(BYTE VIC,BYTE bInputSignalType)
                 break ;
             }
         }
-    
+
         if(SyncEmbTable[i].fmt == 0xFF)
         {
             return FALSE ;
         }
-    
+
         HDMITX_WriteI2C_Byte(REG_TX_HVPol,SyncEmbTable[i].RegHVPol) ; // Reg90
         HDMITX_WriteI2C_Byte(REG_TX_HfPixel,SyncEmbTable[i].RegHfPixel) ; // Reg91
-    
+
     	HDMITX_WriteI2C_Byte(REG_TX_HSSL,SyncEmbTable[i].RegHSSL) ; // Reg95
     	HDMITX_WriteI2C_Byte(REG_TX_HSEL,SyncEmbTable[i].RegHSEL) ; // Reg96
     	HDMITX_WriteI2C_Byte(REG_TX_HSH,SyncEmbTable[i].RegHSH) ; // Reg97
         HDMITX_WriteI2C_Byte(REG_TX_VSS1,SyncEmbTable[i].RegVSS1) ; // RegA0
         HDMITX_WriteI2C_Byte(REG_TX_VSE1,SyncEmbTable[i].RegVSE1) ; // RegA1
-    
+
         HDMITX_WriteI2C_Byte(REG_TX_VSS2,SyncEmbTable[i].RegVSS2) ; // RegA2
         HDMITX_WriteI2C_Byte(REG_TX_VSE2,SyncEmbTable[i].RegVSE2) ; // RegA3
     }
@@ -1441,7 +1458,7 @@ SetCSCScale(BYTE bInputMode,BYTE bOutputMode)
         case F_MODE_ITU601|F_MODE_0_255:
         default:
             ErrorF("ITU601 0-255 ") ;
-            
+
             HDMITX_WriteI2C_ByteN(REG_TX_CSC_YOFF,bCSCOffset_0_255,SIZEOF_CSCOFFSET) ;
             HDMITX_WriteI2C_ByteN(REG_TX_CSC_MTX11_L,bCSCMtx_RGB2YUV_ITU601_0_255,SIZEOF_CSCMTX) ;
             break ;
@@ -1685,7 +1702,7 @@ SetAudioFormat(BYTE NumChannel,BYTE AudioEnable,BYTE bSampleFreq,BYTE AudSWL,BYT
     fs = ~fs ; // OFS is the one's complement of FS
     HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_OFS_WL,(fs<<4)|SWL) ;
     Switch_HDMITX_Bank(0) ;
-    
+
     // richard modify (could be bug), if(!(AudioEnable | B_AUD_SPDIF))
     if(!(AudioEnable & B_AUD_SPDIF))
     {
@@ -1693,7 +1710,7 @@ SetAudioFormat(BYTE NumChannel,BYTE AudioEnable,BYTE bSampleFreq,BYTE AudSWL,BYT
     }
 
     Instance[0].bAudioChannelEnable = AudioEnable ;
-    
+
     // HDMITX_AndREG_Byte(REG_TX_SW_RST,B_AUD_RST) ;    // enable Audio
     return ER_SUCCESS;
 }
@@ -1717,30 +1734,30 @@ AutoAdjustAudio()
 //             return ;
 //         }
 //     }
-    
+
     Switch_HDMITX_Bank(1) ;
-    
+
     N = ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudN2)&0xF) << 16 ;
     N |= ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudN1)) <<8 ;
     N |= ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudN0)) ;
-    
+
     CTS = ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudCTSCnt2)&0xF) << 16 ;
     CTS |= ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudCTSCnt1)) <<8 ;
     CTS |= ((unsigned long)HDMITX_ReadI2C_Byte(REGPktAudCTSCnt0)) ;
     Switch_HDMITX_Bank(0) ;
-    
-    // CTS = TMDSCLK * N / ( 128 * SampleFreq ) 
-    // SampleFreq = TMDSCLK * N / (128*CTS) 
-    
-    if( CTS == 0 ) 
+
+    // CTS = TMDSCLK * N / ( 128 * SampleFreq )
+    // SampleFreq = TMDSCLK * N / (128*CTS)
+
+    if( CTS == 0 )
     {
         return  ;
     }
-    
+
     SampleFreq = Instance[0].TMDSClock/CTS ;
     SampleFreq *= N ;
     SampleFreq /= 128 ;
-            
+
     if( SampleFreq>31000 && SampleFreq<=38050 )
     {
         Instance[0].bAudFs = AUDFS_32KHz ;
@@ -1776,16 +1793,16 @@ AutoAdjustAudio()
         Instance[0].bAudFs = AUDFS_192KHz ;
         fs = AUDFS_192KHz ;;
     }
-    else 
+    else
     {
         Instance[0].bAudFs = AUDFS_OTHER;
         fs = AUDFS_OTHER;;
     }
 
 //    bPendingAdjustAudioFreq = FALSE ;
-    
+
     SetNCTS(Instance[0].TMDSClock, Instance[0].bAudFs) ; // set N, CTS by new generated clock.
-    
+
     Switch_HDMITX_Bank(1) ; // adjust the new fs in channel status registers
     HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_CA_FS,0x00|fs) ; // choose clock
     fs = ~fs ; // OFS is the one's complement of FS
@@ -1793,7 +1810,7 @@ AutoAdjustAudio()
     uc &= 0xF ;
     uc |= fs << 4 ;
     HDMITX_WriteI2C_Byte(REG_TX_AUDCHST_OFS_WL,uc) ;
-    
+
     Switch_HDMITX_Bank(0) ;
 
 }
@@ -1994,7 +2011,7 @@ AbortDDC()
         {
             break ; // success
         }
-        
+
         if( uc & (B_DDC_NOACK|B_DDC_WAITBUS|B_DDC_ARBILOSE) )
         {
             ErrorF("AbortDDC Fail by reg16=%02X\n",uc) ;
@@ -2100,12 +2117,12 @@ ReadEDID(BYTE *pData,BYTE bSegment,BYTE offset,SHORT Count)
         for(TimeOut = 0 ; TimeOut < 200 ; TimeOut++)
     	{
 		    ucdata = HDMITX_ReadI2C_Byte(REG_TX_DDC_STATUS) ;
-		    
+
 		    if(ucdata&B_DDC_DONE)
 		    {
-		        break ;  
+		        break ;
 		    }
-		    
+
 		    if((ucdata & B_DDC_ERROR)||(HDMITX_ReadI2C_Byte(REG_TX_INT_STAT1) & B_INT_DDC_BUS_HANG))
 		    {
 		    	ErrorF("Called AboutDDC()\n") ;
@@ -2458,14 +2475,14 @@ HDCP_Authenticate()
 
     HDCP_GetBKSV(BKSV) ;
 	ErrorF("BKSV %02X %02X %02X %02X %02X\n",BKSV[0],BKSV[1],BKSV[2],BKSV[3],BKSV[4]) ;
-	
+
 	for(TimeOut = 0, ucdata = 0 ; TimeOut < 5 ; TimeOut ++)
 	{
 	    ucdata += countbit(BKSV[TimeOut]) ;
 	}
 	if( ucdata != 20 ) return ER_FAIL ;
-	
-	
+
+
     #ifdef SUPPORT_REVOKE_KSV
     HDCP_VerifyRevocationList(SRM1,BKSV,&revoked) ;
     if(revoked)
@@ -2513,7 +2530,7 @@ HDCP_Authenticate()
     {
         HDCP_Auth_Fire();
         // wait for status ;
-        
+
         for(TimeOut = 250 ; TimeOut > 0 ; TimeOut --)
         {
             DelayMS(5) ; // delay 1ms
@@ -2525,7 +2542,7 @@ HDCP_Authenticate()
                 Instance[0].bAuthenticated = TRUE ;
                 break ;
             }
-            
+
             ucdata = HDMITX_ReadI2C_Byte(REG_TX_INT_STAT2) ;
             if(ucdata & B_INT_AUTH_FAIL)
             {
@@ -2616,12 +2633,12 @@ HDCP_GetKSVList(BYTE *pKSVList,BYTE cDownStream)
 {
     BYTE TimeOut = 100 ;
 	BYTE ucdata ;
-	
+
 	if(cDownStream == 0 || pKSVList == NULL)
 	{
 	    return ER_FAIL ;
 	}
-	
+
     HDMITX_WriteI2C_Byte(REG_TX_DDC_MASTER_CTRL,B_MASTERHOST) ;
     HDMITX_WriteI2C_Byte(REG_TX_DDC_HEADER,0x74) ;
     HDMITX_WriteI2C_Byte(REG_TX_DDC_REQOFF,0x43) ;
@@ -2667,13 +2684,13 @@ HDCP_GetVr(BYTE *pVr)
 {
     BYTE TimeOut  ;
 	BYTE ucdata ;
-	
+
 	if(pVr == NULL)
 	{
 	   // richard  return NULL ;
        return ER_FAIL;
 	}
-	
+
     HDMITX_WriteI2C_Byte(REG_TX_DDC_MASTER_CTRL,B_MASTERHOST) ;
     HDMITX_WriteI2C_Byte(REG_TX_DDC_HEADER,0x74) ;
     HDMITX_WriteI2C_Byte(REG_TX_DDC_REQOFF,0x20) ;
@@ -2713,9 +2730,9 @@ HDCP_GetVr(BYTE *pVr)
         pVr[TimeOut*4+2] = (ULONG)HDMITX_ReadI2C_Byte(REG_TX_SHA_RD_BYTE2) ;
         pVr[TimeOut*4+1] = (ULONG)HDMITX_ReadI2C_Byte(REG_TX_SHA_RD_BYTE3) ;
         pVr[TimeOut*4] = (ULONG)HDMITX_ReadI2C_Byte(REG_TX_SHA_RD_BYTE4) ;
-		ErrorF("V' = %02X %02X %02X %02X\n",pVr[TimeOut*4],pVr[TimeOut*4+1],pVr[TimeOut*4+2],pVr[TimeOut*4+3]) ; 
+		ErrorF("V' = %02X %02X %02X %02X\n",pVr[TimeOut*4],pVr[TimeOut*4+1],pVr[TimeOut*4+2],pVr[TimeOut*4+3]) ;
     }
-    
+
     return ER_SUCCESS ;
 }
 
@@ -2728,7 +2745,7 @@ HDCP_GetM0(BYTE *pM0)
     {
         return ER_FAIL ;
     }
-    
+
     HDMITX_WriteI2C_Byte(REG_TX_SHA_SEL,5) ; // read m0[31:0] from reg51~reg54
     pM0[0] = HDMITX_ReadI2C_Byte(REG_TX_SHA_RD_BYTE1) ;
     pM0[1] = HDMITX_ReadI2C_Byte(REG_TX_SHA_RD_BYTE2) ;
@@ -2764,7 +2781,7 @@ void SHATransform(ULONG * h)
 {
 	LONG t;
 
-      
+
 	for (t = 16; t < 80; t++) {
 		ULONG tmp = w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16];
 		w[t] = rol(tmp,1);
@@ -2787,7 +2804,7 @@ void SHATransform(ULONG * h)
 		h[2] = rol(h[1],30);
 		h[1] = h[0];
 		h[0] = tmp;
-		
+
 	}
 	for (t = 20; t < 40; t++) {
 		ULONG tmp = rol(h[0],5) + (h[1] ^ h[2] ^ h[3]) + h[4] + w[t] + 0x6ed9eba1;
@@ -2841,8 +2858,8 @@ void SHA_Simple(void *p,LONG len,BYTE *output)
     int i, t ;
     ULONG c ;
     char *pBuff = p ;
-    
-    
+
+
     for( i = 0 ; i < len ; i++ )
     {
         t = i/4 ;
@@ -2867,14 +2884,14 @@ void SHA_Simple(void *p,LONG len,BYTE *output)
         w[t] = 0 ;
     }
     w[15] = len*8  ;
-    
+
     for( t = 0 ; t< 16 ; t++ )
     {
         printf("w[%2d] = %08lX\n",t,w[t]) ;
     }
 
     SHATransform(sha) ;
-    
+
     for( i = 0 ; i < 5 ; i++ )
     {
         output[i*4]   = (BYTE)((sha[i]>>24)&0xFF) ;
@@ -2888,7 +2905,7 @@ static SYS_STATUS
 HDCP_CheckSHA(BYTE pM0[],USHORT BStatus,BYTE pKSVList[],int cDownStream,BYTE Vr[])
 {
     int i,n ;
-    
+
     for(i = 0 ; i < cDownStream*5 ; i++)
     {
         SHABuff[i] = pKSVList[i] ;
@@ -2926,7 +2943,7 @@ HDCP_CheckSHA(BYTE pM0[],USHORT BStatus,BYTE pKSVList[],int cDownStream,BYTE Vr[
     {
         printf(" %02X",Vr[i]) ;
     }
-        
+
     for(i = 0 ; i < 20 ; i++)
     {
         if(V[i] != Vr[i])
@@ -2941,7 +2958,7 @@ static SYS_STATUS
 HDCP_Authenticate_Repeater()
 {
     BYTE uc ;
-    #ifdef SUPPORT_DSSSHA    
+    #ifdef SUPPORT_DSSSHA
     BYTE revoked ;
     int i ;
     #else
@@ -2978,7 +2995,7 @@ HDCP_Authenticate_Repeater()
     //////////////////////////////////////
     // Authenticate Fired
     //////////////////////////////////////
-  
+
     HDCP_GetBCaps(&BCaps,&BStatus) ;
 	DelayMS(2);
     HDCP_Auth_Fire();
@@ -3038,7 +3055,7 @@ HDCP_Authenticate_Repeater()
 		{
 		    ErrorF("Wait KSV FIFO Ready %d\n",TimeOut) ;
 		}
-		
+
         if(HDCP_GetBCaps(&BCaps,&BStatus) == ER_FAIL)
         {
             ErrorF("Get BCaps fail\n") ;
@@ -3061,17 +3078,17 @@ HDCP_Authenticate_Repeater()
     }
 
 	ErrorF("Wait timeout = %d\n",TimeOut) ;
-	
+
     ClearDDCFIFO() ;
     GenerateDDCSCLK() ;
     cDownStream =  (BStatus & M_DOWNSTREAM_COUNT) ;
-    
+
     if(cDownStream == 0 || cDownStream > 6 || BStatus & (B_MAX_CASCADE_EXCEEDED|B_DOWNSTREAM_OVER))
     {
         ErrorF("Invalid Down stream count,fail\n") ;
         goto HDCP_Repeater_Fail ;
     }
-    
+
 
     if(HDCP_GetKSVList(KSVList,cDownStream) == ER_FAIL)
     {
@@ -3087,38 +3104,38 @@ HDCP_Authenticate_Repeater()
 		    uc += countbit(KSVList[i*5+TimeOut]) ;
 		}
 		if( uc != 20 ) revoked = TRUE ;
-    #ifdef SUPPORT_REVOKE_KSV    
+    #ifdef SUPPORT_REVOKE_KSV
         HDCP_VerifyRevocationList(SRM1,&KSVList[i*5],&revoked) ;
     #endif
         if(revoked)
         {
-            ErrorF("KSVFIFO[%d] = %02X %02X %02X %02X %02X is revoked\n",i,KSVList[i*5],KSVList[i*5+1],KSVList[i*5+2],KSVList[i*5+3],KSVList[i*5+4]) ; 
+            ErrorF("KSVFIFO[%d] = %02X %02X %02X %02X %02X is revoked\n",i,KSVList[i*5],KSVList[i*5+1],KSVList[i*5+2],KSVList[i*5+3],KSVList[i*5+4]) ;
 			 goto HDCP_Repeater_Fail ;
         }
     }
 
-    
+
     if(HDCP_GetVr(Vr) == ER_FAIL)
     {
-        goto HDCP_Repeater_Fail ; 
+        goto HDCP_Repeater_Fail ;
     }
 
     if(HDCP_GetM0(M0) == ER_FAIL)
     {
         goto HDCP_Repeater_Fail ;
     }
-    
+
     // do check SHA
     if(HDCP_CheckSHA(M0,BStatus,KSVList,cDownStream,Vr) == ER_FAIL)
     {
         goto HDCP_Repeater_Fail ;
     }
-    
-    
+
+
     HDCP_ResumeRepeaterAuthenticate() ;
 	Instance[0].bAuthenticated = TRUE ;
     return ER_SUCCESS ;
-    
+
 HDCP_Repeater_Fail:
     HDCP_CancelRepeaterAuthenticate() ;
     return ER_FAIL ;
@@ -3385,6 +3402,38 @@ SetAudioInfoFrame(Audio_InfoFrame *pAudioInfoFrame)
 
     Switch_HDMITX_Bank(0) ;
     ENABLE_AUD_INFOFRM_PKT();
+    return ER_SUCCESS ;
+}
+
+static SYS_STATUS
+SetHDRInfoFrame(HDR_InfoFrame *pHDRInfoFrame)
+{
+    int i ;
+    BYTE ucData ;
+
+    if(!pHDRInfoFrame)
+    {
+        return ER_FAIL ;
+    }
+
+    Switch_HDMITX_Bank(1) ;
+
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_HB00, (0x80+pHDRInfoFrame->info.Type));
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_HB01, pHDRInfoFrame->info.Ver);
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_HB02, pHDRInfoFrame->info.Len);
+
+    for(i = 0; i < HDR_INFOFRAME_LEN ; i++)
+        HDMITX_WriteI2C_Byte(REG_TX_PKT_PB01+i, pHDRInfoFrame->pktbyte.HDR_DB[i]);
+
+    for(i = 0,ucData = 0 ; i< HDR_INFOFRAME_LEN ; i++)
+    {
+        ucData -= pHDRInfoFrame->pktbyte.HDR_DB[i] ;
+    }
+    ucData -= 0x80+HDR_INFOFRAME_VER+HDR_INFOFRAME_TYPE+HDR_INFOFRAME_LEN ;
+    HDMITX_WriteI2C_Byte(REG_TX_PKT_PB00, ucData);
+
+    Switch_HDMITX_Bank(0) ;
+    ENABLE_NULL_PKT();
     return ER_SUCCESS ;
 }
 

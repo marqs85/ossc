@@ -130,7 +130,7 @@ typedef enum {
 #define F_VIDMODE_16_235    F_MODE_16_235   // richard add
 
 
-typedef union _VideoFormatCode 
+typedef union _VideoFormatCode
 {
     struct _VFC
     {
@@ -195,18 +195,21 @@ typedef union _VideoFormatCode
 #define SPD_INFOFRAME_TYPE 0x03
 #define AUDIO_INFOFRAME_TYPE 0x04
 #define MPEG_INFOFRAME_TYPE 0x05
+#define HDR_INFOFRAME_TYPE 0x07
 
 #define VENDORSPEC_INFOFRAME_VER 0x01
 #define AVI_INFOFRAME_VER  0x02
 #define SPD_INFOFRAME_VER 0x01
 #define AUDIO_INFOFRAME_VER 0x01
 #define MPEG_INFOFRAME_VER 0x01
+#define HDR_INFOFRAME_VER 0x01
 
 #define VENDORSPEC_INFOFRAME_LEN 8
 #define AVI_INFOFRAME_LEN 13
 #define SPD_INFOFRAME_LEN 25
 #define AUDIO_INFOFRAME_LEN 10
 #define MPEG_INFOFRAME_LEN 10
+#define HDR_INFOFRAME_LEN 26
 
 #define ACP_PKT_LEN 9
 #define ISRC1_PKT_LEN 16
@@ -315,6 +318,23 @@ typedef union _SPD_InfoFrame {
         BYTE SPD_DB[SPD_INFOFRAME_LEN] ;
     } pktbyte ;
 } SPD_InfoFrame ;
+
+// HDR
+typedef union _HDR_InfoFrame {
+    struct {
+        BYTE Type ;
+        BYTE Ver ;
+        BYTE Len ;
+
+        BYTE TF ; // vendor name character in 7bit ascii characters
+        BYTE DESC_ID ; // product description character in 7bit ascii characters
+        BYTE DESC[24] ;
+    } info ;
+    struct {
+        BYTE HDR_HB[3] ;
+        BYTE HDR_DB[HDR_INFOFRAME_LEN] ;
+    } pktbyte ;
+} HDR_InfoFrame ;
 
 ///////////////////////////////////////////////////////////////////////////
 // Using for interface.

@@ -277,7 +277,7 @@
     #define B_AFE_DRV_PDRXDET    (1<<2)
     #define B_AFE_DRV_TERMON    (1<<1)
     #define B_AFE_DRV_ENCAL    (1<<0)
-    
+
 #define REG_TX_AFE_XP_CTRL 0x62
     #define B_AFE_XP_GAINBIT    (1<<7)
     #define B_AFE_XP_PWDPLL    (1<<6)
@@ -287,7 +287,7 @@
     #define B_AFE_XP_PWDI    (1<<2)
     #define B_AFE_XP_DEI    (1<<1)
     #define B_AFE_XP_DER    (1<<0)
-    
+
 #define REG_TX_AFE_ISW_CTRL  0x63
     #define B_AFE_RTERM_SEL  (1<<7)
     #define B_AFE_IP_BYPASS  (1<<6)
@@ -296,7 +296,7 @@
     #define B_AFE_DRV_ISWK   7
 
 #define REG_TX_AFE_IP_CTRL 0x64
-    	
+
     #define B_AFE_IP_GAINBIT    (1<<7)
     #define B_AFE_IP_PWDPLL    (1<<6)
     #define M_AFE_IP_CKSEL    (3<<4)
@@ -315,15 +315,15 @@
     #define M_AFE_DRV_VSW   (3<<2)
     #define B_AFE_RING_SLOW    (1<<1)
     #define B_AFE_RING_FAST    (1<<0)
-#define REG_TX_AFE_TEST    0x66    
+#define REG_TX_AFE_TEST    0x66
     #define B_AFE_AFE_ENTEST    (1<<6)
     #define B_AFE_AFE_ENBIST    (1<<5)
     #define M_AFE_CAL_RTERM_MANUAL    0x1F
-#define REG_TX_AFE_LFSR     0x67    
+#define REG_TX_AFE_LFSR     0x67
     #define B_AFE_AFELFSR_VAL	(1<<7)
     #define B_AFE_DIS_AFELFSR	(1<<6)
     #define M_AFE_RTERM_VAOUE    0xF
-    	
+
 //
 //#define REG_TX_AFE_DRV_CTRL    0x61
 //    #define M_AFE_DRV_SR (3<<2)
@@ -448,7 +448,7 @@
     #define B_BLUE_SCR_MUTE   (1<<1)
     #define B_NODEF_PHASE    (1<<2)
     #define B_PHASE_RESYNC   (1<<3)
-    
+
     #define O_COLOR_DEPTH     4
     #define M_COLOR_DEPTH     7
     #define B_COLOR_DEPTH_MASK (M_COLOR_DEPTH<<O_COLOR_DEPTH)
@@ -688,12 +688,12 @@
 // data structure
 /////////////////////////////////////////////////////////////////////
 typedef struct _INSTANCE_STRUCT {
-	
+
 	BYTE I2C_DEV ;
 	BYTE I2C_ADDR ;
-	
+
 	/////////////////////////////////////////////////
-	// Interrupt Type  
+	// Interrupt Type
 	/////////////////////////////////////////////////
 	BYTE bIntType ; // = 0 ;
 	/////////////////////////////////////////////////
@@ -707,12 +707,12 @@ typedef struct _INSTANCE_STRUCT {
 	BYTE bAudioChannelSwap ; // = 0 ;
     BYTE bAudioChannelEnable ;
     BYTE bAudFs ;
-    unsigned long TMDSClock ;	
+    unsigned long TMDSClock ;
 	BYTE bAuthenticated:1 ;
 	BYTE bHDMIMode: 1;
-	BYTE bIntPOL:1 ; // 0 = Low Active 
+	BYTE bIntPOL:1 ; // 0 = Low Active
 	BYTE bHPD:1 ;
-	
+
 } INSTANCE ;
 
 
@@ -828,6 +828,7 @@ BOOL CheckHDMITX(BYTE *pHPD,BYTE *pHPDChange) ;
 BOOL EnableHDCP(BYTE bEnable) ;
 BOOL EnableAVIInfoFrame(BYTE bEnable,BYTE *pAVIInfoFrame);
 BOOL EnableAudioInfoFrame(BYTE bEnable,BYTE *pAudioInfoFrame);
+BOOL EnableHDRInfoFrame(BYTE bEnable, BYTE *pHDRInfoFrame);
 // BOOL EnableVideoOutputIndirect(BYTE xCnt,BYTE inputColorMode,BYTE outputColorMode,BYTE bHDMI) ;
 void SetAVMute(BYTE bEnable) ;
 void SetOutputColorDepthPhase(BYTE ColorDepth,BYTE bPhase) ;

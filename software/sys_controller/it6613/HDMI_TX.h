@@ -27,5 +27,6 @@ bool HDMITX_IsSinkSupportColorDepth30(void);
 void HDMITX_SetOutputColorDepth(int ColorDepth);
 
 void HDMITX_SetAudioInfoFrame(BYTE bAudioDwSampling);
+void HDMITX_SetHDRInfoFrame(BYTE enableHDR);
 
 #endif /*HDMI_TX_H_*/
