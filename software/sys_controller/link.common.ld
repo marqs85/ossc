@@ -7,7 +7,7 @@ MEMORY
 }
 
 /* Stack information variables */
-_min_stack      = 0x400;   /* 1K - minimum stack space to reserve */
+_min_stack      = 0x4B0;   /* 1200 - minimum stack space to reserve */
 _stack_start   = ORIGIN(dataram) + LENGTH(dataram);
 
 /* We have to align each sector to word boundaries as our current s19->slm

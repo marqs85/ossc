@@ -110,7 +110,7 @@ typedef struct {
     alt_u8 sl_altern;
     alt_u8 sl_str;
     alt_u8 sl_id;
-    alt_u8 sl_cust_l_str[5];
+    alt_u8 sl_cust_l_str[6];
     alt_u8 sl_cust_c_str[6];
     alt_u8 sl_cust_iv_x;
     alt_u8 sl_cust_iv_y;
@@ -141,6 +141,7 @@ typedef struct {
     /* TX / extra settings */
     alt_u8 tx_mode;
     alt_u8 hdmi_itc;
+    alt_u8 hdmi_hdr;
     alt_u8 full_tx_setup;
     alt_u8 av3_alt_rgb;
     avinput_t link_av;

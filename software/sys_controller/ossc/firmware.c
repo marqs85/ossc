@@ -103,7 +103,7 @@ int fw_update()
 #ifdef CHECK_STACK_USE
     // estimate stack usage, assuming around here is the worst case (due to 512B databuf)
     alt_u32 sp;
-    asm volatile("mov %0, sp" : "=r"(sp));
+    asm volatile("mv %0, sp" : "=r"(sp));
     sniprintf(menu_row1, LCD_ROW_LEN+1, "Stack size:");
     sniprintf(menu_row2, LCD_ROW_LEN+1, "%lu bytes", (ONCHIP_MEMORY2_0_BASE+ONCHIP_MEMORY2_0_SIZE_VALUE)-sp);
     ui_disp_menu(1);
@@ -161,7 +161,6 @@ update_init:
         goto failure;
 
     strncpy(menu_row1, "Verifying flash", LCD_ROW_LEN+1);
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
     ui_disp_menu(1);
     retval = verify_flash(0, fw_header.data_len, fw_header.data_crc, databuf);
     if (retval != 0)

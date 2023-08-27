@@ -1116,11 +1116,18 @@ int main()
             cm.cc.tx_mode = tc.tx_mode;
             cm.clkcnt = 0; //TODO: proper invalidate
         }
-        if ((tc.tx_mode != TX_DVI) && (tc.hdmi_itc != cm.cc.hdmi_itc)) {
-            //EnableAVIInfoFrame(FALSE, NULL);
-            printf("setting ITC to %d\n", tc.hdmi_itc);
-            HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
-            cm.cc.hdmi_itc = tc.hdmi_itc;
+        if (tc.tx_mode != TX_DVI) {
+            if (tc.hdmi_itc != cm.cc.hdmi_itc) {
+                //EnableAVIInfoFrame(FALSE, NULL);
+                printf("setting ITC to %d\n", tc.hdmi_itc);
+                HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
+                cm.cc.hdmi_itc = tc.hdmi_itc;
+            }
+            if (tc.hdmi_hdr != cm.cc.hdmi_hdr) {
+                printf("setting HDR flag to %d\n", tc.hdmi_hdr);
+                HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
+                cm.cc.hdmi_hdr = tc.hdmi_hdr;
+            }
         }
         if (tc.av3_alt_rgb != cm.cc.av3_alt_rgb) {
             printf("Changing AV3 RGB source\n");
