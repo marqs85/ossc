@@ -3324,21 +3324,9 @@ SetAVIInfoFrame(AVI_InfoFrame *pAVIInfoFrame)
     }
 
     Switch_HDMITX_Bank(1) ;
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB1,pAVIInfoFrame->pktbyte.AVI_DB[0]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB2,pAVIInfoFrame->pktbyte.AVI_DB[1]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB3,pAVIInfoFrame->pktbyte.AVI_DB[2]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB4,pAVIInfoFrame->pktbyte.AVI_DB[3]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB5,pAVIInfoFrame->pktbyte.AVI_DB[4]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB6,pAVIInfoFrame->pktbyte.AVI_DB[5]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB7,pAVIInfoFrame->pktbyte.AVI_DB[6]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB8,pAVIInfoFrame->pktbyte.AVI_DB[7]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB9,pAVIInfoFrame->pktbyte.AVI_DB[8]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB10,pAVIInfoFrame->pktbyte.AVI_DB[9]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB11,pAVIInfoFrame->pktbyte.AVI_DB[10]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB12,pAVIInfoFrame->pktbyte.AVI_DB[11]);
-	HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB13,pAVIInfoFrame->pktbyte.AVI_DB[12]);
-    for(i = 0,ucData = 0; i < 13 ; i++)
+    for(i = 0,ucData = 0; i < AVI_INFOFRAME_LEN ; i++)
     {
+        HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB1+i,pAVIInfoFrame->pktbyte.AVI_DB[i]);
         ucData -= pAVIInfoFrame->pktbyte.AVI_DB[i] ;
     }
 	ErrorF("SetAVIInfo(): ") ;
@@ -3386,13 +3374,9 @@ SetAudioInfoFrame(Audio_InfoFrame *pAudioInfoFrame)
     }
 
     Switch_HDMITX_Bank(1) ;
-    HDMITX_WriteI2C_Byte(REG_TX_PKT_AUDINFO_CC,pAudioInfoFrame->pktbyte.AUD_DB[0]);
-    HDMITX_WriteI2C_Byte(REG_TX_PKT_AUDINFO_SF,pAudioInfoFrame->pktbyte.AUD_DB[1]);
-    HDMITX_WriteI2C_Byte(REG_TX_PKT_AUDINFO_CA,pAudioInfoFrame->pktbyte.AUD_DB[3]);
-    HDMITX_WriteI2C_Byte(REG_TX_PKT_AUDINFO_DM_LSV,pAudioInfoFrame->pktbyte.AUD_DB[4]) ;
-
     for(i = 0,ucData = 0 ; i< 5 ; i++)
     {
+        HDMITX_WriteI2C_Byte(REG_TX_PKT_AUDINFO_CC+i,pAudioInfoFrame->pktbyte.AUD_DB[i]);
         ucData -= pAudioInfoFrame->pktbyte.AUD_DB[i] ;
     }
     ucData -= 0x80+AUDIO_INFOFRAME_VER+AUDIO_INFOFRAME_TYPE+AUDIO_INFOFRAME_LEN ;
@@ -3422,11 +3406,9 @@ SetHDRInfoFrame(HDR_InfoFrame *pHDRInfoFrame)
     HDMITX_WriteI2C_Byte(REG_TX_PKT_HB01, pHDRInfoFrame->info.Ver);
     HDMITX_WriteI2C_Byte(REG_TX_PKT_HB02, pHDRInfoFrame->info.Len);
 
-    for(i = 0; i < HDR_INFOFRAME_LEN ; i++)
-        HDMITX_WriteI2C_Byte(REG_TX_PKT_PB01+i, pHDRInfoFrame->pktbyte.HDR_DB[i]);
-
     for(i = 0,ucData = 0 ; i< HDR_INFOFRAME_LEN ; i++)
     {
+        HDMITX_WriteI2C_Byte(REG_TX_PKT_PB01+i, pHDRInfoFrame->pktbyte.HDR_DB[i]);
         ucData -= pHDRInfoFrame->pktbyte.HDR_DB[i] ;
     }
     ucData -= 0x80+HDR_INFOFRAME_VER+HDR_INFOFRAME_TYPE+HDR_INFOFRAME_LEN ;
@@ -3458,7 +3440,7 @@ SetSPDInfoFrame(SPD_InfoFrame *pSPDInfoFrame)
     }
 
     Switch_HDMITX_Bank(1) ;
-    for(i = 0,ucData = 0 ; i < 25 ; i++)
+    for(i = 0,ucData = 0 ; i < SPD_INFOFRAME_LEN ; i++)
     {
         ucData -= pSPDInfoFrame->pktbyte.SPD_DB[i] ;
         HDMITX_WriteI2C_Byte(REG_TX_PKT_SPDINFO_PB1+i,pSPDInfoFrame->pktbyte.SPD_DB[i]) ;

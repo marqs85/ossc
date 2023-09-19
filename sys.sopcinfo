@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 21.1 842 (Future versions may contain additional information.) -->
- <!-- 2023.01.31.22:14:55 -->
+ <!-- 2023.09.18.23:29:06 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1675196095</value>
+  <value>1695068946</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -4643,7 +4643,7 @@ parameters are a RESULT of the module parameters. -->
     <slaveName>avalon_slave_debug</slaveName>
     <name>pulpino_0.avalon_slave_debug</name>
     <baseAddress>0</baseAddress>
-    <span>8192</span>
+    <span>32768</span>
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
@@ -9753,7 +9753,7 @@ parameters are a RESULT of the module parameters. -->
    </parameter>
    <parameter name="addressSpan">
     <type>java.math.BigInteger</type>
-    <value>8192</value>
+    <value>32768</value>
     <derived>true</derived>
     <enabled>true</enabled>
     <visible>false</visible>
@@ -9841,7 +9841,7 @@ parameters are a RESULT of the module parameters. -->
    </parameter>
    <parameter name="explicitAddressSpan">
     <type>java.math.BigInteger</type>
-    <value>8192</value>
+    <value>0</value>
     <derived>false</derived>
     <enabled>true</enabled>
     <visible>true</visible>
@@ -10740,19 +10740,19 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.LOAD_VALUE</name>
-   <value>26</value>
+   <value>4294967294</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.MULT</name>
-   <value>0.000001</value>
+   <value>3.7037037037037036e-8</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.PERIOD</name>
-   <value>1</value>
+   <value>0xffffffff</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.PERIOD_UNITS</name>
-   <value>us</value>
+   <value>clocks</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.RESET_OUTPUT</name>
@@ -10764,7 +10764,7 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.TICKS_PER_SEC</name>
-   <value>1000000</value>
+   <value>0</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.TIMEOUT_PULSE_OUTPUT</name>
@@ -10816,7 +10816,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="period">
    <type>java.lang.String</type>
-   <value>1</value>
+   <value>0xffffffff</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -10824,7 +10824,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="periodUnits">
    <type>java.lang.String</type>
-   <value>USEC</value>
+   <value>CLOCKS</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -10882,7 +10882,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="periodUnitsString">
    <type>java.lang.String</type>
-   <value>us</value>
+   <value>clocks</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -10890,7 +10890,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="valueInSecond">
    <type>double</type>
-   <value>1.0E-6</value>
+   <value>0.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -10898,7 +10898,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="loadValue">
    <type>java.lang.String</type>
-   <value>26</value>
+   <value>4294967294</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -10906,7 +10906,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="mult">
    <type>double</type>
-   <value>1.0E-6</value>
+   <value>3.7037037037037036E-8</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -10914,7 +10914,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="ticksPerSec">
    <type>double</type>
-   <value>1000000.0</value>
+   <value>0.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>

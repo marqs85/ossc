@@ -536,8 +536,8 @@
   <parameter name="alwaysRun" value="false" />
   <parameter name="counterSize" value="32" />
   <parameter name="fixedPeriod" value="false" />
-  <parameter name="period" value="1" />
-  <parameter name="periodUnits" value="USEC" />
+  <parameter name="period" value="0xffffffff" />
+  <parameter name="periodUnits" value="CLOCKS" />
   <parameter name="resetOutput" value="false" />
   <parameter name="snapshot" value="true" />
   <parameter name="systemFrequency" value="27000000" />

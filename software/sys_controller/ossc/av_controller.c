@@ -45,6 +45,7 @@
 #define MIN_LINES_PROGRESSIVE   200
 #define MIN_LINES_INTERLACED    400
 #define STATUS_TIMEOUT_US       25000
+#define MAINLOOP_INTERVAL_US    10000
 
 #define PCNT_TOLERANCE 50
 #define HSYNC_WIDTH_TOLERANCE 8
@@ -910,13 +911,17 @@ int main()
 
     alt_u32 input_vec;
 
-    alt_u32 auto_input_timestamp = 300 * (alt_timestamp_freq() >> 10);
+    alt_timestamp_type start_ts;
+    alt_timestamp_type auto_input_timestamp = 0;
     alt_u8 auto_input_changed = 0;
     alt_u8 auto_input_ctr = 0;
     alt_u8 auto_input_current_ctr = AUTO_CURRENT_MAX_COUNT;
     alt_u8 auto_input_keep_current = 0;
 
     int init_stat, man_input_change;
+
+    // Start system timer
+    alt_timestamp_start();
 
     init_stat = init_hw();
 
@@ -937,11 +942,10 @@ int main()
         while (1) {}
     }
 
-    // start timer for auto input
-    alt_timestamp_start();
-
     // Mainloop
     while(1) {
+        start_ts = alt_timestamp();
+
         // Read remote control and PCB button status
         input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
         remote_code = input_vec & RC_MASK;
@@ -961,8 +965,8 @@ int main()
         }
 
         // Auto input switching
-        if (auto_input != AUTO_OFF && cm.avinput != AV_TESTPAT && !cm.sync_active && !menu_active
-            && alt_timestamp() >= auto_input_timestamp && auto_input_ctr < AUTO_MAX_COUNT) {
+        if ((auto_input != AUTO_OFF) && (cm.avinput != AV_TESTPAT) && !cm.sync_active && !menu_active
+            && (alt_timestamp() >= auto_input_timestamp + 300 * (alt_timestamp_freq() >> 10)) && (auto_input_ctr < AUTO_MAX_COUNT)) {
 
             // Keep switching on the same physical input when set to Current input or a short time after losing sync.
             auto_input_keep_current = (auto_input == AUTO_CURRENT_INPUT || auto_input_current_ctr < AUTO_CURRENT_MAX_COUNT);
@@ -1001,8 +1005,8 @@ int main()
             // For input linked profile loading below
             auto_input_changed = 1;
 
-            // reset timer
-            alt_timestamp_start();
+            // set auto_input_timestamp
+            auto_input_timestamp = alt_timestamp();
         }
 
         man_input_change = parse_control();
@@ -1103,9 +1107,9 @@ int main()
                 // record last input if it was selected manually
                 if (def_input == AV_LAST)
                     write_userdata(INIT_CONFIG_SLOT);
-                // Reset auto input timer when input is manually changed
+                // Set auto_input_timestamp when input is manually changed
                 auto_input_ctr = 0;
-                alt_timestamp_start();
+                auto_input_timestamp = alt_timestamp();
             }
         }
 
@@ -1165,7 +1169,8 @@ int main()
                     strncpy(row1, avinput_str[cm.avinput], LCD_ROW_LEN+1);
                     strncpy(row2, "    NO SYNC", LCD_ROW_LEN+1);
                     ui_disp_status(1);
-                    alt_timestamp_start();// reset auto input timer
+                    // Set auto_input_timestamp
+                    auto_input_timestamp = alt_timestamp();
                     auto_input_ctr = 0;
                     auto_input_current_ctr = 0;
                 }
@@ -1187,7 +1192,17 @@ int main()
             }
         }
 
-        usleep(300);    // Avoid executing mainloop multiple times per vsync
+        while (alt_timestamp() < start_ts + MAINLOOP_INTERVAL_US*(TIMER_0_FREQ/1000000)) {}
+
+        // restart timer if past half-range
+        if (start_ts > 0x7fffffff) {
+            alt_timestamp_start();
+            if (auto_input_timestamp > start_ts)
+                auto_input_timestamp -= start_ts;
+            else
+                auto_input_timestamp = 0;
+            //printf("Timer restart\n");
+        }
     }
 
     return 0;
