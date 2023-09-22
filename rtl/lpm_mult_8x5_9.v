@@ -1,10 +1,10 @@
 // megafunction wizard: %LPM_MULT%
 // GENERATION: STANDARD
 // VERSION: WM1.0
-// MODULE: lpm_mult 
+// MODULE: lpm_mult
 
 // ============================================================
-// File Name: lpm_mult_hybr_ref_pre.v
+// File Name: lpm_mult_8x5_9.v
 // Megafunction Name(s):
 // 			lpm_mult
 //
@@ -19,12 +19,12 @@
 
 
 //Copyright (C) 2021  Intel Corporation. All rights reserved.
-//Your use of Intel Corporation's design tools, logic functions 
-//and other software and tools, and any partner logic 
-//functions, and any output files from any of the foregoing 
-//(including device programming or simulation files), and any 
-//associated documentation or information are expressly subject 
-//to the terms and conditions of the Intel Program License 
+//Your use of Intel Corporation's design tools, logic functions
+//and other software and tools, and any partner logic
+//functions, and any output files from any of the foregoing
+//(including device programming or simulation files), and any
+//associated documentation or information are expressly subject
+//to the terms and conditions of the Intel Program License
 //Subscription Agreement, the Intel Quartus Prime License Agreement,
 //the Intel FPGA IP License Agreement, or other applicable license
 //agreement, including, without limitation, that your use is for
@@ -37,7 +37,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module lpm_mult_hybr_ref_pre (
+module lpm_mult_8x5_9 (
 	clock,
 	dataa,
 	datab,
@@ -108,10 +108,10 @@ endmodule
 // Retrieval info: CONNECT: @dataa 0 0 8 0 dataa 0 0 8 0
 // Retrieval info: CONNECT: @datab 0 0 5 0 datab 0 0 5 0
 // Retrieval info: CONNECT: result 0 0 9 0 @result 0 0 9 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_hybr_ref_pre_bb.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL lpm_mult_8x5_9_bb.v FALSE
 // Retrieval info: LIB_FILE: lpm

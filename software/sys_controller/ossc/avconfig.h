@@ -117,6 +117,7 @@ typedef struct {
     alt_u8 mask_br;
     alt_u8 mask_color;
     alt_u8 reverse_lpf;
+    alt_u8 shmask_mode;
 
     /* AFE settings */
     alt_u8 sync_vth;

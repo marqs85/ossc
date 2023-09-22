@@ -243,13 +243,13 @@ set_global_assignment -name QIP_FILE software/sys_controller/mem_init/meminit.qi
 set_global_assignment -name QIP_FILE rtl/linebuf.qip
 set_global_assignment -name QIP_FILE rtl/char_rom.qip
 set_global_assignment -name QIP_FILE rtl/pll_2x.qip
-set_global_assignment -name QIP_FILE rtl/lpm_mult_hybr_ref_pre.qip
-set_global_assignment -name QIP_FILE rtl/lpm_mult_hybr_ref.qip
+set_global_assignment -name QIP_FILE rtl/lpm_mult_8x5_9.qip
 set_global_assignment -name QIP_FILE rtl/lpm_mult_sl.qip
 set_global_assignment -name SDC_FILE ossc.sdc
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name SIGNALTAP_FILE output_files/ossc_la.stp
 set_global_assignment -name QIP_FILE rtl/char_array.qip
+
 
 
 

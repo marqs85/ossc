@@ -27,7 +27,7 @@
 #define FW_VER_MINOR            06
 
 #define PROFILE_VER_MAJOR       1
-#define PROFILE_VER_MINOR       05
+#define PROFILE_VER_MINOR       06
 
 #define INITCFG_VER_MAJOR       1
 #define INITCFG_VER_MINOR       00

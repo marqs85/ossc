@@ -478,12 +478,13 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     misc_config.mask_br = avconfig->mask_br;
     misc_config.mask_color = avconfig->mask_color;
     misc_config.reverse_lpf = avconfig->reverse_lpf;
-    misc_config.lm_deint_mode = 0;
+    misc_config.shmask_mode = avconfig->shmask_mode;
+    /*misc_config.lm_deint_mode = 0;
     misc_config.nir_even_offset = 0;
     misc_config.ypbpr_cs = (avconfig->ypbpr_cs == 0) ? ((vm_in->type & VIDEO_HDTV) ? 1 : 0) : avconfig->ypbpr_cs-1;
     misc_config.vip_enable = 0;
     misc_config.bfi_enable = 0;
-    misc_config.bfi_str = 0;
+    misc_config.bfi_str = 0;*/
 
     // set default/custom scanline interval
     sl_def_iv_y = (vm_conf->y_rpt > 0) ? vm_conf->y_rpt : 1;
@@ -830,7 +831,7 @@ void print_vm_stats() {
 
         sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "Profile:");
         sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u: %s", profile_sel, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name);
-        sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "Firmware:");
+        sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "FW:");
         sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX1 FW_SUFFIX2 " @ " __DATE__, FW_VER_MAJOR, FW_VER_MINOR);
 
         osd->osd_config.status_refresh = 1;

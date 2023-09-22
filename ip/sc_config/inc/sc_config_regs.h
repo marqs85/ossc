@@ -113,7 +113,8 @@ typedef union {
         uint8_t vip_enable:1;
         uint8_t bfi_str:4;
         uint8_t bfi_enable:1;
-        uint32_t misc_rsv:11;
+        uint8_t shmask_mode:2;
+        uint32_t misc_rsv:9;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } misc_config_reg;
