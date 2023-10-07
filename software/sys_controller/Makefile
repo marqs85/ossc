@@ -190,7 +190,7 @@ CREATE_ELF_DERIVED_FILES := 0
 CREATE_LINKER_MAP := 1
 
 # Common arguments for ALT_CFLAGSs
-APP_CFLAGS_DEFINED_SYMBOLS :=
+APP_CFLAGS_DEFINED_SYMBOLS := -DPICOLIBC_INTEGER_PRINTF_SCANF
 ifeq ($(ENABLE_AUDIO),y)
 APP_CFLAGS_DEFINED_SYMBOLS += -DENABLE_AUDIO
 endif
@@ -216,6 +216,7 @@ SYS_LIB :=
 BSP_ROOT_DIR := ../sys_controller_bsp/
 
 # List of application specific include directories, library directories and library names
+APP_INCLUDE_DIRS += /usr/lib/picolibc/riscv64-unknown-elf/include
 APP_INCLUDE_DIRS += it6613
 APP_INCLUDE_DIRS += tvp7002
 APP_INCLUDE_DIRS += ths7353
@@ -396,7 +397,7 @@ APP_ASFLAGS := $(APP_ASM_INC_DIRS) \
                $(ASFLAGS)
 
 # Arguments only for the linker.
-APP_LDFLAGS := $(APP_LDFLAGS_USER) --specs=nano.specs -nostartfiles
+APP_LDFLAGS := $(APP_LDFLAGS_USER) --specs=picolibc.specs -nostartfiles
 
 ifneq ($(LINKER_SCRIPT),)
 APP_LDFLAGS += -T'$(LINKER_SCRIPT)'
@@ -657,11 +658,11 @@ build_post_process :
 # included makefile fragment.
 #
 ifeq ($(DEFAULT_CROSS_COMPILE),)
-DEFAULT_CROSS_COMPILE := riscv32-unknown-elf-
+DEFAULT_CROSS_COMPILE := riscv64-unknown-elf-
 endif
 
 ifeq ($(DEFAULT_STACKREPORT),)
-DEFAULT_STACKREPORT := riscv32-unknown-elf-size
+DEFAULT_STACKREPORT := riscv64-unknown-elf-size
 endif
 
 ifeq ($(DEFAULT_DOWNLOAD),)
@@ -715,7 +716,7 @@ AR := $(CROSS_COMPILE)ar
 endif
 
 ifeq ($(origin LD),default)
-LD := $(CROSS_COMPILE)g++
+LD := $(CROSS_COMPILE)gcc
 endif
 
 ifeq ($(origin RM),default)
@@ -760,7 +761,7 @@ ifeq ($(MKDIR),)
 MKDIR := $(DEFAULT_MKDIR)
 endif
 
-RV_OBJCOPY = riscv32-unknown-elf-objcopy
+RV_OBJCOPY = riscv64-unknown-elf-objcopy
 
 #------------------------------------------------------------------------------
 #                     PATTERN RULES TO BUILD OBJECTS

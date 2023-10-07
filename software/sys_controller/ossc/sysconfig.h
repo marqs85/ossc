@@ -25,6 +25,7 @@
 #define SD_SPI_BASE I2C_OPENCORES_1_BASE
 
 #ifndef DEBUG
+#include <stdio.h>
 #define OS_PRINTF(...)
 #define ErrorF(...)
 #define printf(...)
@@ -37,6 +38,8 @@
 //#define printf alt_printf
 #define printf dd_printf
 #endif
+
+#define sniprintf snprintf
 
 #define WAITLOOP_SLEEP_US   10000
 
