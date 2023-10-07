@@ -184,7 +184,9 @@ inline void TX_enable(tx_mode_t mode)
 
     if (mode != TX_DVI) {
         HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
+        HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
         cm.cc.hdmi_itc = tc.hdmi_itc;
+        cm.cc.hdmi_hdr = tc.hdmi_hdr;
     }
 
 #ifdef ENABLE_AUDIO
@@ -285,27 +287,6 @@ inline int check_linecnt(alt_u8 progressive, alt_u32 totlines) {
         return (totlines >= MIN_LINES_PROGRESSIVE);
     else
         return (totlines >= MIN_LINES_INTERLACED);
-}
-
-void set_sampler_phase(uint8_t sampler_phase) {
-    uint32_t sample_rng_x1000;
-    uint8_t tvp_phase;
-
-    vmode_in.sampler_phase = sampler_phase;
-
-    if (vm_conf.h_skip == 0) {
-        vm_conf.h_sample_sel = 0;
-        tvp_phase = sampler_phase;
-    } else {
-        sample_rng_x1000 = 360000 / (vm_conf.h_skip+1);
-        vm_conf.h_sample_sel = (sampler_phase*11250)/sample_rng_x1000;
-        tvp_phase = ((((sampler_phase*11250) % sample_rng_x1000)*32)/sample_rng_x1000);
-    }
-
-    if (vm_conf.h_skip > 0)
-        printf("Sample sel: %u/%u\n", (vm_conf.h_sample_sel+1), (vm_conf.h_skip+1));
-
-    tvp_set_hpll_phase(tvp_phase);
 }
 
 // Check if input video status / target configuration has changed
@@ -636,7 +617,7 @@ void program_mode()
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
 
-    set_sampler_phase(video_modes_plm[cm.id].sampler_phase);
+    set_sampler_phase(video_modes_plm[cm.id].sampler_phase, 0);
 
     pll_reconfig->pll_config_status.reset = (vm_conf.si_pclk_mult <= 1);
 
@@ -651,7 +632,7 @@ void program_mode()
     }
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 
-    update_osd_size(&vmode_out, &vm_conf);
+    update_osd_size(&vmode_out);
 
     update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
 
@@ -678,6 +659,30 @@ void program_mode()
 #endif
 #endif
     }
+}
+
+void set_sampler_phase(uint8_t sampler_phase, uint8_t update_sc) {
+    uint32_t sample_rng_x1000;
+    uint8_t tvp_phase;
+
+    vmode_in.sampler_phase = sampler_phase;
+
+    if (vm_conf.h_skip == 0) {
+        vm_conf.h_sample_sel = 0;
+        tvp_phase = sampler_phase;
+    } else {
+        sample_rng_x1000 = 360000 / (vm_conf.h_skip+1);
+        vm_conf.h_sample_sel = (sampler_phase*11250)/sample_rng_x1000;
+        tvp_phase = ((((sampler_phase*11250) % sample_rng_x1000)*32)/sample_rng_x1000);
+    }
+
+    if (vm_conf.h_skip > 0)
+        printf("Sample sel: %u/%u\n", (vm_conf.h_sample_sel+1), (vm_conf.h_skip+1));
+
+    tvp_set_hpll_phase(tvp_phase);
+
+    if (update_sc)
+        update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
 }
 
 int load_profile() {

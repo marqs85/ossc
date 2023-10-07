@@ -475,23 +475,18 @@ void display_menu(alt_u8 forcedisp)
     ui_disp_menu(0);
 }
 
-void update_osd_size(mode_data_t *vm_out, vm_proc_config_t *vm_conf) {
+void update_osd_size(mode_data_t *vm_out) {
     uint8_t osd_size = vm_out->timings.v_active / 700;
-    uint8_t par = (((100*vm_out->timings.h_active*vm_out->ar.v)/((vm_out->timings.v_active<<vm_out->timings.interlaced)*vm_out->ar.h))+50)/100;
-    uint8_t par_log2 = 0;
+    uint8_t par_x4 = (((400*vm_out->timings.h_active*vm_out->ar.v)/((vm_out->timings.v_active<<vm_out->timings.interlaced)*vm_out->ar.h))+50)/100;
+    int8_t xadj_log2 = -2;
 
-    while (par > 1) {
-        par >>= 1;
-        par_log2++;
+    while (par_x4 > 1) {
+        par_x4 >>= 1;
+        xadj_log2++;
     }
 
-    osd->osd_config.x_size = osd_size + vm_out->timings.interlaced + par_log2;
+    osd->osd_config.x_size = ((osd_size + vm_out->timings.interlaced + xadj_log2) >= 0) ? (osd_size + vm_out->timings.interlaced + xadj_log2) : 0;
     osd->osd_config.y_size = osd_size;
-
-    if (vm_conf->hdmitx_pixr_ifr)
-        osd->osd_config.x_size += (vm_conf->hdmitx_pixr_ifr+1)/2;
-    if (vm_conf->tx_pixelrep)
-        osd->osd_config.x_size -= (vm_conf->tx_pixelrep+1)/2;
 }
 
 static void vm_select() {
@@ -525,7 +520,7 @@ static void vm_tweak(uint16_t *v) {
             (video_modes_plm[cm.id].mask.v != tc_v_mask))
             update_cur_vm = 1;
         if (video_modes_plm[cm.id].sampler_phase != tc_sampler_phase)
-            set_sampler_phase(tc_sampler_phase);
+            set_sampler_phase(tc_sampler_phase, 1);
     }
     video_modes_plm[vm_edit].timings.h_total = tc_h_samplerate;
     video_modes_plm[vm_edit].timings.h_total_adj = (uint8_t)tc_h_samplerate_adj;

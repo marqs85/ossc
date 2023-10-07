@@ -326,8 +326,8 @@ typedef union _HDR_InfoFrame {
         BYTE Ver ;
         BYTE Len ;
 
-        BYTE TF ; // vendor name character in 7bit ascii characters
-        BYTE DESC_ID ; // product description character in 7bit ascii characters
+        BYTE TF ;
+        BYTE DESC_ID ;
         BYTE DESC[24] ;
     } info ;
     struct {

@@ -123,7 +123,7 @@ int parse_control()
 
     // one for each video_group
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &pt_only, &tc.pm_1080i, &pt_only };
-    alt_u8 valid_pm[] = { 0x1, 0x1f, 0x1f, 0x7, 0xf, 0xf, 0x3, 0x3, 0x1, 0x3, 0x1 };
+    alt_u8 valid_pm[] = { 0x1, 0x3f, 0x3f, 0x7, 0xf, 0xf, 0x3, 0x3, 0x1, 0x3, 0x1 };
 
     avinput_t next_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
 
@@ -216,7 +216,7 @@ int parse_control()
             break;
         case RC_LM_MODE:
             strncpy(menu_row1, "Linemult mode:", LCD_ROW_LEN+1);
-            strncpy(menu_row2, "press 1-5", LCD_ROW_LEN+1);
+            strncpy(menu_row2, "press 1-6", LCD_ROW_LEN+1);
             osd->osd_config.menu_active = 1;
             ui_disp_menu(1);
 
@@ -232,7 +232,7 @@ int parse_control()
                     break;
                 }
 
-                if (i <= RC_BTN5) {
+                if (i <= RC_BTN6) {
                     if ((1<<i) & valid_pm[video_modes_plm[cm.id].group]) {
                         *pmcfg_ptr[video_modes_plm[cm.id].group] = i;
                     } else {
@@ -262,7 +262,7 @@ int parse_control()
                 if (cm.id == vm_edit)
                     tc_sampler_phase = video_modes_plm[cm.id].sampler_phase;
 
-                set_sampler_phase(video_modes_plm[cm.id].sampler_phase);
+                set_sampler_phase(video_modes_plm[cm.id].sampler_phase, 1);
 
                 if (!menu_active) {
                     strncpy((char*)osd->osd_array.data[0][0], menu_advtiming.items[8].name, OSD_CHAR_COLS);

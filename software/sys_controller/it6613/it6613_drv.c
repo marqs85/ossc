@@ -3326,7 +3326,7 @@ SetAVIInfoFrame(AVI_InfoFrame *pAVIInfoFrame)
     Switch_HDMITX_Bank(1) ;
     for(i = 0,ucData = 0; i < AVI_INFOFRAME_LEN ; i++)
     {
-        HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB1+i,pAVIInfoFrame->pktbyte.AVI_DB[i]);
+        HDMITX_WriteI2C_Byte(REG_TX_AVIINFO_DB1+i+(i>=5),pAVIInfoFrame->pktbyte.AVI_DB[i]);
         ucData -= pAVIInfoFrame->pktbyte.AVI_DB[i] ;
     }
 	ErrorF("SetAVIInfo(): ") ;
