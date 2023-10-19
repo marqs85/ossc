@@ -570,12 +570,14 @@ void program_mode()
     cm.id = retval;
     vm_sel = cm.id;
 
+    pll_h_total = (vm_conf.h_skip+1) * vmode_in.timings.h_total + (((vm_conf.h_skip+1) * vmode_in.timings.h_total_adj * 5 + 50) / 100);
+
     // Double TVP7002 PLL sampling rate when possible to minimize jitter
     while (1) {
-        pll_h_total = (vm_conf.h_skip+1) * vmode_in.timings.h_total + (((vm_conf.h_skip+1) * vmode_in.timings.h_total_adj * 5 + 50) / 100);
         pclk_i_hz = h_hz * pll_h_total;
 
         if ((pclk_i_hz < 25000000UL) && ((vm_conf.si_pclk_mult % 2) == 0)) {
+            pll_h_total *= 2;
             vm_conf.h_skip = 2*(vm_conf.h_skip+1)-1;
             vm_conf.si_pclk_mult /= 2;
         } else {
