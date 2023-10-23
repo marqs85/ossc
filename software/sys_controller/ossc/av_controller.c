@@ -338,7 +338,7 @@ status_t get_status(tvp_sync_input_t syncinput)
         if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
-        if ((vm_conf.si_pclk_mult > 1) && (pll_reconfig->pll_config_status.c_config_id != 5) && (vm_conf.si_pclk_mult-1 != pll_reconfig->pll_config_status.c_config_id))
+        if ((vm_conf.si_pclk_mult > 1) && (pll_reconfig->pll_config_status.c_config_id != 6) && (vm_conf.si_pclk_mult-1 != pll_reconfig->pll_config_status.c_config_id))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         cm.totlines = totlines;
