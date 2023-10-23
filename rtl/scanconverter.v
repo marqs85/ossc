@@ -196,6 +196,7 @@ wire [8:0] Y_sl_hybr_ref, R_sl_hybr_ref, G_sl_hybr_ref, B_sl_hybr_ref;
 reg [4:0] R_shmask_str, G_shmask_str, B_shmask_str;
 wire [8:0] R_shmask_mult, G_shmask_mult, B_shmask_mult;
 
+wire [7:0] R_vg, G_vg, B_vg;
 wire [7:0] R_linebuf, G_linebuf, B_linebuf;
 
 // Pipeline registers
@@ -355,6 +356,18 @@ linebuf_top #(
     .emif_wr_wdata(emif_wr_wdata),
     .emif_wr_waitrequest(emif_wr_waitrequest),
     .emif_wr_burstcount(emif_wr_burstcount)
+);
+
+
+videogen vg0 (
+    .pclk           (PCLK_OUT_i),
+    .lt_active      (1'b0),
+    .lt_mode        (2'h0),
+    .xpos           (xpos_pp[PP_TP_START]),
+    .ypos           (ypos_pp[PP_TP_START]),
+    .R_out          (R_vg),
+    .G_out          (G_vg),
+    .B_out          (B_vg)
 );
 
 
@@ -605,9 +618,9 @@ always @(posedge PCLK_OUT_i) begin
     B_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? B_sl_mult : B_pp[PP_SLGEN_START+4];
 
     /* ---------- Testpattern / mask generation ---------- */
-    R_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_R : R_pp[PP_TP_START]);
-    G_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_G : G_pp[PP_TP_START]);
-    B_pp[PP_TP_END] <= testpattern_enable ? (xpos_pp[PP_TP_START] ^ ypos_pp[PP_TP_START]) : (mask_enable_pp[PP_TP_START] ? MASK_B : B_pp[PP_TP_START]);
+    R_pp[PP_TP_END] <= testpattern_enable ? R_vg : (mask_enable_pp[PP_TP_START] ? MASK_R : R_pp[PP_TP_START]);
+    G_pp[PP_TP_END] <= testpattern_enable ? G_vg : (mask_enable_pp[PP_TP_START] ? MASK_G : G_pp[PP_TP_START]);
+    B_pp[PP_TP_END] <= testpattern_enable ? B_vg : (mask_enable_pp[PP_TP_START] ? MASK_B : B_pp[PP_TP_START]);
 end
 
 // Output

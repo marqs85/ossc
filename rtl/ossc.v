@@ -476,7 +476,7 @@ ir_rcv ir0 (
     .ir_code_cnt    (ir_code_cnt)
 );
 
-lat_tester lt0 (
+/*lat_tester lt0 (
     .clk27          (clk27),
     .pclk           (PCLK_sc),
     .active         (lt_active),
@@ -490,21 +490,6 @@ lat_tester lt0 (
     .stb_result     (lt_stb_result),
     .trig_waiting   (lt_trig_waiting),
     .finished       (lt_finished)
-);
-
-/*Ävideogen vg0 (
-    .clk27          (PCLK_sc),
-    .reset_n        (po_reset_n & ~enable_sc),
-    .lt_active      (lt_active),
-    .lt_mode        (lt_mode_synced),
-    .R_out          (R_out_vg),
-    .G_out          (G_out_vg),
-    .B_out          (B_out_vg),
-    .HSYNC_out      (HSYNC_out_vg),
-    .VSYNC_out      (VSYNC_out_vg),
-    .DE_out         (DE_out_vg),
-    .xpos           (xpos_vg),
-    .ypos           (ypos_vg)
 );*/
 
 endmodule
