@@ -142,7 +142,7 @@ typedef enum {
 } HDMI_pixelrep_t;
 
 typedef struct {
-    char name[10];
+    char name[11];
     HDMI_Video_Type vic;
     sync_timings_t timings;
     uint8_t sampler_phase;

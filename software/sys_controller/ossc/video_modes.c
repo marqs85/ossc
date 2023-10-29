@@ -384,7 +384,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     if (((mindiff_lm == MODE_L5_GEN_4_3) && (mode_preset->group == GROUP_288P)) || (mindiff_lm >= MODE_L6_GEN_4_3))
         vm_conf->tx_pixelrep = 1;
 
-    sniprintf(vm_out->name, 10, "%s x%u", vm_in->name, vm_conf->y_rpt+1);
+    sniprintf(vm_out->name, 11, "%s x%u", vm_in->name, vm_conf->y_rpt+1);
 
     if (vm_conf->x_size == 0)
         vm_conf->x_size = (vm_in->timings.h_active-2*vm_in->mask.h)*(vm_conf->x_rpt+1);
