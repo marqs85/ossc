@@ -214,7 +214,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
         }
     }
 
-    if (mindiff_lines >= 110)
+    if (mindiff_lines >= 130)
         return -1;
 
     mode_preset = &video_modes_plm[mindiff_id];
@@ -356,7 +356,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L3_240x360:
-            vm_conf->x_rpt = vm_conf->h_skip = 6;
+            vm_conf->x_rpt = vm_conf->h_skip = 7;
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         default:
@@ -377,8 +377,15 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     else if (mindiff_lm & (MODE_L3_256_COL|MODE_L6_256_COL))
         vm_conf->x_rpt = cc->ar_256col ? 2 : 3;
 
-    if (mindiff_lm == MODE_L3_320_COL)
-        vm_conf->x_rpt = 2;
+    if (mindiff_lm & (MODE_L3_320_COL|MODE_L2_240x360))
+        vm_conf->x_rpt--;
+    else if (mindiff_lm & MODE_L3_240x360)
+        vm_conf->x_rpt -= 2;
+
+    if (mindiff_lm == MODE_L2_240x360) {
+        vm_out->timings.h_active += 80;
+        vm_out->timings.h_backporch -= 40;
+    }
 
     // Force TX pixel-repeat for high bandwidth modes
     if (((mindiff_lm == MODE_L5_GEN_4_3) && (mode_preset->group == GROUP_288P)) || (mindiff_lm >= MODE_L6_GEN_4_3))

@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            1
-#define FW_VER_MINOR            8
+#define FW_VER_MINOR            9
 
 #define PROFILE_VER_MAJOR       1
 #define PROFILE_VER_MINOR       6

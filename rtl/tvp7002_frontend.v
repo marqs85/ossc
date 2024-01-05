@@ -122,7 +122,8 @@ wire [11:0] even_max_thold = (H_TOTAL / 12'd2) + (H_TOTAL / 12'd4);
 wire [11:0] meas_h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? meas_h_cnt_sogref : meas_h_cnt;
 wire [11:0] meas_even_min_thold = (pcnt_line / 12'd4);
 wire [11:0] meas_even_max_thold = (pcnt_line / 12'd2) + (pcnt_line / 12'd4);
-wire meas_vblank_region = ((pcnt_frame_ctr < (pcnt_frame/16)) | (pcnt_frame_ctr > (pcnt_frame - (pcnt_frame/16))));
+wire meas_vblank_region = (pcnt_frame_ctr < 8*pcnt_line) | (pcnt_frame_ctr > (({1'b0, pcnt_frame}<<interlace_flag) - 4*pcnt_line)) |
+                          (interlace_flag & (pcnt_frame_ctr < (pcnt_frame+8*pcnt_line)) & (pcnt_frame_ctr > (pcnt_frame - 4*pcnt_line)));
 wire [11:0] glitch_filt_thold = meas_vblank_region ? (pcnt_line/4) : (pcnt_line/8);
 
 // TODO: calculate H/V polarity independently
@@ -366,8 +367,8 @@ always @(posedge CLK_MEAS_i) begin
             meas_v_cnt <= meas_v_cnt + 1'b1;
         end
         meas_h_cnt_sogref <= meas_h_cnt;
-    end else if (~VSYNC_i_np & (meas_h_cnt >= pcnt_line)) begin
-        // hsync may be missing during vsync, force line change detect if pcnt_line is exceeded
+    end else if (meas_vblank_region & (meas_h_cnt >= pcnt_line)) begin
+        // hsync may be missing or irregular during vblank, force line change detect if pcnt_line is exceeded
         meas_hl_det <= 1'b0;
         meas_h_cnt <= 0;
         meas_v_cnt <= meas_v_cnt + 1'b1;

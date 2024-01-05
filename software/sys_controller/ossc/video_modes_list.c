@@ -41,7 +41,7 @@ const mode_data_t video_modes_plm_default[] = {
     { "288p",          HDMI_288p50,      { 720,  288,   5008,   864, 0,  312,   69, 19,   63, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_SDTV,               GROUP_288P,   (MODE_PT | MODE_L2),                                                                        },
     /* 360p: GBI */
     { "480x360",       HDMI_Unknown,     { 480,  360,   6000,   600, 0,  375,   63, 10,   38, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_EDTV,               GROUP_384P,   (MODE_PT | MODE_L2),                                                                        },
-    { "240x360",       HDMI_Unknown,     { 256,  360,   6000,   300, 0,  375,   24, 10,   18, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_EDTV,               GROUP_384P,   (MODE_L2_240x360 | MODE_L3_240x360),                                                        },
+    { "240x360",       HDMI_Unknown,     { 240,  360,   6000,   300, 0,  375,   32, 10,   18, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_EDTV,               GROUP_384P,   (MODE_L2_240x360 | MODE_L3_240x360),                                                        },
     /* 384p: Sega Model 2 */
     { "384p",          HDMI_Unknown,     { 496,  384,   5500,   640, 0,  423,   50, 29,   62, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_EDTV,               GROUP_384P,   (MODE_PT | MODE_L2),                                                                        },
     /* 400p line3x */

@@ -36,7 +36,7 @@
 #define VSYNC_THOLD_MIN     10
 #define VSYNC_THOLD_MAX     200
 #define SD_SYNC_WIN_MAX     255
-#define PLL_COAST_MAX       5
+#define PLL_COAST_MAX       10
 #define REVERSE_LPF_MAX     31
 #define COARSE_GAIN_MAX     15
 #define ALC_H_FILTER_MAX    7
