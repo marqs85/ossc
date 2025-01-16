@@ -3401,6 +3401,8 @@ SetGPInfoFrame(BYTE *pInfoFrameData)
         return ER_FAIL ;
     }
 
+    DISABLE_NULL_PKT();
+
     Switch_HDMITX_Bank(1) ;
 
     HDMITX_WriteI2C_Byte(REG_TX_PKT_HB00, (0x80+pInfoFrame->info.Type));

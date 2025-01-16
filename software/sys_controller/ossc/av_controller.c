@@ -185,6 +185,7 @@ inline void TX_enable(tx_mode_t mode)
     SetAVMute(TRUE);
     DisableVideoOutput();
     EnableAVIInfoFrame(FALSE, NULL);
+    EnableGPInfoFrame(FALSE, NULL);
 
     //Setup TX configuration
     //TODO: set pclk target and VIC dynamically
@@ -192,8 +193,10 @@ inline void TX_enable(tx_mode_t mode)
 
     if (mode != TX_DVI) {
         HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
-        HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
-        HDMITX_SetVRRInfoFrame(tc.hdmi_vrr);
+        if (tc.hdmi_vrr)
+            HDMITX_SetVRRInfoFrame(tc.hdmi_vrr);
+        if (tc.hdmi_hdr)
+            HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
         cm.cc.hdmi_itc = tc.hdmi_itc;
         cm.cc.hdmi_hdr = tc.hdmi_hdr;
         cm.cc.hdmi_vrr = tc.hdmi_vrr;
@@ -1162,15 +1165,15 @@ int main()
                 HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
                 cm.cc.hdmi_itc = tc.hdmi_itc;
             }
-            if (tc.hdmi_hdr != cm.cc.hdmi_hdr) {
-                printf("setting HDR flag to %d\n", tc.hdmi_hdr);
-                HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
-                cm.cc.hdmi_hdr = tc.hdmi_hdr;
-            }
             if (tc.hdmi_vrr != cm.cc.hdmi_vrr) {
                 printf("setting VRR flag to %d\n", tc.hdmi_vrr);
                 HDMITX_SetVRRInfoFrame(tc.hdmi_vrr);
                 cm.cc.hdmi_vrr = tc.hdmi_vrr;
+            }
+            if (tc.hdmi_hdr != cm.cc.hdmi_hdr) {
+                printf("setting HDR flag to %d\n", tc.hdmi_hdr);
+                HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
+                cm.cc.hdmi_hdr = tc.hdmi_hdr;
             }
         }
         if (tc.av3_alt_rgb != cm.cc.av3_alt_rgb) {
