@@ -45,6 +45,7 @@ const avconfig_t tc_default = {
     .vsync_thold = DEFAULT_VSYNC_THOLD,
     .pre_coast = DEFAULT_PRE_COAST,
     .post_coast = DEFAULT_POST_COAST,
+    .adc_pll_bw = 1,
     .sync_lpf = DEFAULT_SYNC_LPF,
     .alc_h_filter = DEFAULT_ALC_H_FILTER,
     .alc_v_filter = DEFAULT_ALC_V_FILTER,
