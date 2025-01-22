@@ -80,7 +80,7 @@ static const char *auto_input_desc[] = { "Off", "Current input", "All inputs" };
 static const char *mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White" };
 static const char *av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
 static const char *shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
-static const char *lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES" };
+static const char *lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
 static const char *adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
 static const char *fpga_pll_bw_desc[] = { "High", "Low" };
 

@@ -100,6 +100,8 @@ reg [1:0] lc_code[1:4];
 reg [2:0] lc_ctr;
 reg [2:0] lc_cnt;
 reg [2:0] lc_emp_nes;
+reg [3:0] lc_atari_hue, lc_atari_luma;
+reg lc_atari_ctr;
 
 // Measurement registers
 reg [20:0] pcnt_frame_ctr;
@@ -145,8 +147,8 @@ wire HSYNC_i_np = (HSYNC_i ^ ~hsync_i_pol);
 wire [3:0] H_SKIP = hv_in_config3[27:24];
 wire [3:0] H_SAMPLE_SEL = hv_in_config3[31:28];
 
-// Lumacode uses 2 samples for {C64, C128, VIC20, Spectrum, TMS99xxA}, 3 samples for NES, 4 samples for VCS and 6 samples for Atari 8bit
-wire [2:0] LC_SAMPLES = (MISC_LUMACODE_MODE <= 3) ? 2 : ((MISC_LUMACODE_MODE <= 4) ? 3 : ((MISC_LUMACODE_MODE <= 5) ? 4 : 6));
+// Lumacode uses 2 samples for {C64, C128, VIC20, Spectrum, TMS99xxA}, 3 samples for NES, 6 samples for Atari 8bit (3 per pixel) and 4 samples for VCS (2 per half-pixel)
+wire [2:0] LC_SAMPLES = (MISC_LUMACODE_MODE <= 3) ? 2 : ((MISC_LUMACODE_MODE <= 5) ? 3 : 2);
 wire [2:0] LC_H_SKIP = ((H_SKIP+1) / LC_SAMPLES) - 1;
 
 // Lumacode palettes for 2-sample index-based sources (C64, Spectrum, Coleco/MSX)
@@ -163,6 +165,44 @@ wire [23:0] lumacode_data_3s[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h
 wire [7:0] lumacode_data_3s_R = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
 wire [7:0] lumacode_data_3s_G = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
 wire [7:0] lumacode_data_3s_B = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+
+// Lumacode palette Atari GTIA
+wire [23:0] lumacode_data_gtia[0:255] = '{
+24'h000000, 24'h111111, 24'h222222, 24'h333333, 24'h444444, 24'h555555, 24'h666666, 24'h777777, 24'h888888, 24'h999999, 24'haaaaaa, 24'hbbbbbb, 24'hcccccc, 24'hdddddd, 24'heeeeee, 24'hffffff,
+24'h091900, 24'h192806, 24'h29370d, 24'h3a4714, 24'h4a561b, 24'h5a6522, 24'h6b7529, 24'h7b8430, 24'h8c9336, 24'h9ca33d, 24'hacb244, 24'hbdc14b, 24'hcdd152, 24'hdee059, 24'heeef60, 24'hffff67,
+24'h300000, 24'h3d1108, 24'h4b2211, 24'h593319, 24'h674422, 24'h75552a, 24'h826633, 24'h90773b, 24'h9e8844, 24'hac994c, 24'hbaaa55, 24'hc7bb5d, 24'hd5cc66, 24'he3dd6e, 24'hf1ee77, 24'hffff80,
+24'h4b0000, 24'h570f0c, 24'h631e18, 24'h6f2e24, 24'h7a3d30, 24'h874d3c, 24'h935c49, 24'h9f6b55, 24'hab7b61, 24'hb68a6d, 24'hc39a79, 24'hcfa986, 24'hdbb892, 24'he6c89e, 24'hf3d7aa, 24'hffe7b7,
+24'h550000, 24'h600e10, 24'h6b1c21, 24'h772a32, 24'h823843, 24'h8d4654, 24'h995465, 24'ha46276, 24'haf7187, 24'hbb7f98, 24'hc68da9, 24'hd19bba, 24'hdda9cb, 24'he8b7dc, 24'hf3c5ed, 24'hffd4fe,
+24'h4c0047, 24'h570d53, 24'h631b5f, 24'h6f286b, 24'h7b3678, 24'h874384, 24'h935190, 24'h9f5e9c, 24'hab6ca9, 24'hb779b5, 24'hc387c1, 24'hcf94cd, 24'hdba2da, 24'he7afe6, 24'hf3bdf2, 24'hffcbff,
+24'h30007e, 24'h3b0b85, 24'h49198d, 24'h572796, 24'h65349f, 24'h7242a7, 24'h8050b0, 24'h8e5db8, 24'h9c6bc1, 24'ha979c9, 24'hb786d2, 24'hc594db, 24'hd3a2e3, 24'he0afec, 24'heebdf4, 24'hfccbfd,
+24'h0a0097, 24'h1a0e9d, 24'h2a1da4, 24'h3b2cab, 24'h4b3ab2, 24'h5b49b9, 24'h6c58c0, 24'h7c67c7, 24'h8c75ce, 24'h9c84d5, 24'had93dc, 24'hbda2e3, 24'hceb0ea, 24'hdebff1, 24'heecef8, 24'hffddff,
+24'h00008e, 24'h0c0d94, 24'h1b1e9c, 24'h2a2ea3, 24'h393eab, 24'h484eb2, 24'h575eba, 24'h666ec1, 24'h747ec9, 24'h838fd0, 24'h929fd8, 24'ha1afdf, 24'hb0bfe6, 24'hbfcfee, 24'hcedff5, 24'hddeffd,
+24'h000e64, 24'h0c1e6e, 24'h192e78, 24'h263e83, 24'h324e8d, 24'h3f5e97, 24'h4c6ea2, 24'h587eac, 24'h658eb6, 24'h729ec1, 24'h7eaecb, 24'h8bbed5, 24'h98cee0, 24'ha4deea, 24'hb1eef4, 24'hbeffff,
+24'h002422, 24'h09302e, 24'h153f3d, 24'h204d4c, 24'h2c5c5a, 24'h376a69, 24'h427978, 24'h4e8786, 24'h599695, 24'h65a4a4, 24'h70b3b2, 24'h7cc1c1, 24'h87d0d0, 24'h92dfde, 24'h9eeded, 24'ha9fcfc,
+24'h003200, 24'h0b3f0e, 24'h164d1c, 24'h225b2b, 24'h2d6839, 24'h397648, 24'h448456, 24'h509164, 24'h5b9f73, 24'h67ad81, 24'h72ba90, 24'h7ec89e, 24'h89d6ac, 24'h95e3bb, 24'ha0f1c9, 24'hacffd8,
+24'h003400, 24'h0c410a, 24'h194f14, 24'h265c1e, 24'h336a28, 24'h407732, 24'h4c853c, 24'h599246, 24'h66a050, 24'h73ad5a, 24'h80bb64, 24'h8cc86e, 24'h99d678, 24'ha6e382, 24'hb3f18c, 24'hc0ff97,
+24'h002a00, 24'h0f3807, 24'h1e460e, 24'h2d5416, 24'h3c621d, 24'h4b7124, 24'h5a7f2c, 24'h698d33, 24'h799b3b, 24'h88a942, 24'h97b849, 24'ha6c651, 24'hb5d458, 24'hc4e260, 24'hd3f067, 24'he3ff6f,
+24'h0d1700, 24'h1d2606, 24'h2d350d, 24'h3d4514, 24'h4d541b, 24'h5d6422, 24'h6d7329, 24'h7d8330, 24'h8e9237, 24'h9ea23e, 24'haeb145, 24'hbec14c, 24'hced053, 24'hdee05a, 24'heeef61, 24'hffff68,
+24'h330000, 24'h401008, 24'h4e2111, 24'h5b321a, 24'h694323, 24'h77542c, 24'h846535, 24'h92763e, 24'h9f8646, 24'had974f, 24'hbba858, 24'hc8b961, 24'hd6ca6a, 24'he3db73, 24'hf1ec7c, 24'hfffd85};
+
+// Lumacode palette Atari CTIA/TIA
+wire [23:0] lumacode_data_ctia[0:127] = '{
+24'h000000, 24'h404040, 24'h6C6C6C, 24'h909090, 24'hB0B0B0, 24'hC8C8C8, 24'hDCDCDC, 24'hECECEC,
+24'h444400, 24'h646410, 24'h848424, 24'hA0A034, 24'hB8B840, 24'hD0D050, 24'hE8E85C, 24'hFCFC68,
+24'h702800, 24'h844414, 24'h985C28, 24'hAC783C, 24'hBC8C4C, 24'hCCA05C, 24'hDCB468, 24'hECC878,
+24'h841800, 24'h983418, 24'hAC5030, 24'hC06848, 24'hD0805C, 24'hE09470, 24'hECA880, 24'hFCBC94,
+24'h880000, 24'h9C2020, 24'hB03C3C, 24'hC05858, 24'hD07070, 24'hE08888, 24'hECA0A0, 24'hFCB4B4,
+24'h78005C, 24'h8C2074, 24'hA03C88, 24'hB0589C, 24'hC070B0, 24'hD084C0, 24'hDC9CD0, 24'hECB0E0,
+24'h480078, 24'h602090, 24'h783CA4, 24'h8C58B8, 24'hA070CC, 24'hB484DC, 24'hC49CEC, 24'hD4B0FC,
+24'h140084, 24'h302098, 24'h4C3CAC, 24'h6858C0, 24'h7C70D0, 24'h9488E0, 24'hA8A0EC, 24'hBCB4FC,
+24'h000088, 24'h1C209C, 24'h3840B0, 24'h505CC0, 24'h6874D0, 24'h7C8CE0, 24'h90A4EC, 24'hA4B8FC,
+24'h00187C, 24'h1C3890, 24'h3854A8, 24'h5070BC, 24'h6888CC, 24'h7C9CDC, 24'h90B4EC, 24'hA4C8FC,
+24'h002C5C, 24'h1C4C78, 24'h386890, 24'h5084AC, 24'h689CC0, 24'h7CB4D4, 24'h90CCE8, 24'hA4E0FC,
+24'h003C2C, 24'h1C5C48, 24'h387C64, 24'h509C80, 24'h68B494, 24'h7CD0AC, 24'h90E4C0, 24'hA4FCD4,
+24'h003C00, 24'h205C20, 24'h407C40, 24'h5C9C5C, 24'h74B474, 24'h8CD08C, 24'hA4E4A4, 24'hB8FCB8,
+24'h143800, 24'h345C1C, 24'h507C38, 24'h6C9850, 24'h84B468, 24'h9CCC7C, 24'hB4E490, 24'hC8FCA4,
+24'h2C3000, 24'h4C501C, 24'h687034, 24'h848C4C, 24'h9CA864, 24'hB4C078, 24'hCCD488, 24'hE0EC9C,
+24'h442800, 24'h644818, 24'h846830, 24'hA08444, 24'hB89C58, 24'hD0B46C, 24'hE8CC7C, 24'hFCE08C};
 
 // SOF position for scaler
 wire [10:0] V_SOF_LINE = hv_in_config3[23:13];
@@ -263,6 +303,7 @@ always @(posedge PCLK_i) begin
         lc_code[1] <= G_pp[1][7:6];
         lc_cnt <= 0;
         lc_ctr <= 0;
+        lc_atari_ctr <= (h_cnt == 0) ? 0 : lc_atari_ctr ^ 1'b1;
     end else if (lc_ctr == LC_H_SKIP) begin
         lc_code[2+lc_cnt] <= G_pp[1][7:6];
         lc_cnt <= lc_cnt + 1;
@@ -302,12 +343,31 @@ always @(posedge PCLK_i) begin
 
         if ((h_ctr == H_SAMPLE_SEL) & ({lc_code[1], lc_code[2], lc_code[3]} < 8))
             lc_emp_nes <= {lc_code[2][0], lc_code[3]};
-    // TODO: Lumacode VCS
+    // Lumacode Atari GTIA
     end else if (MISC_LUMACODE_MODE == 5) begin
-        {R_pp[2], G_pp[2], B_pp[2]} <= '0;
-    // TODO: Lumacode Atari 8-bit
+        if (h_ctr == H_SAMPLE_SEL) begin
+            if (lc_atari_ctr) begin
+                // Store hue and luma (high bits) for 1st pixel, and display last pixel of previous pair
+                lc_atari_hue <= {lc_code[1], lc_code[2]};
+                lc_atari_luma[3:2] <= lc_code[3];
+                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma}];
+            end else begin
+                // Store luma for 2nd pixel, and display first pixel of current pair
+                lc_atari_luma <= {lc_code[2], lc_code[3]};
+                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma[3:2], lc_code[1]}];
+            end
+        end
+    // Lumacode Atari VCS
     end else begin
-        {R_pp[2], G_pp[2], B_pp[2]} <= '0;
+        if (h_ctr == H_SAMPLE_SEL) begin
+            if (lc_atari_ctr) begin
+                // Store first 2 lumacode samples (hue) from double-sampled input (160col->320col)
+                lc_atari_hue <= {lc_code[1], lc_code[2]};
+            end else begin
+                // Display pixel after receiving remaining 2 lumacode samples (luma)
+                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_ctia[{lc_atari_hue, lc_code[1], lc_code[2][1]}];
+            end
+        end
     end
 
     HSYNC_pp[2] <= HSYNC_pp[1];
