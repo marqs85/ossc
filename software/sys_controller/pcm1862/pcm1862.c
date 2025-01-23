@@ -18,6 +18,7 @@
 //
 
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include "system.h"
 #include "i2c_opencores.h"
