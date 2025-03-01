@@ -169,18 +169,18 @@ wire [23:0] lumacode_data_3s_palette2[0:63] = '{ 24'h000000, 24'h000000, 24'h000
                                         24'hB9BCB9, 24'h1850C7, 24'h4B30E3, 24'h7322D6, 24'h951FA9, 24'h9D285C, 24'h983700, 24'h7F4C00, 24'h5E6400, 24'h227700, 24'h027E02, 24'h007645, 24'h006E8A, 24'h000000,
                                         24'hFFFFFF, 24'h68A6FF, 24'h8C9CFF, 24'hB586FF, 24'hD975FD, 24'hE377B9, 24'hE58D68, 24'hD49D29, 24'hB3AF0C, 24'h7BC211, 24'h55CA47, 24'h46CB81, 24'h47C1C5, 24'h4A4D4A,
                                         24'hFFFFFF, 24'hCCEAFF, 24'hDDDEFF, 24'hECDAFF, 24'hF8D7FE, 24'hFCD6F5, 24'hFDDBCF, 24'hF9E7B5, 24'hF1F0AA, 24'hDAFAA9, 24'hC9FFBC, 24'hC3FBD7, 24'hC4F6F6, 24'hBEC1BE};
-// FCEUX					
-wire [23:0] lumacode_data_3s_palette3[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
-                                        24'h747474, 24'h24188C, 24'h0000A8, 24'h44009C, 24'h8C0074, 24'hA80010, 24'hA40000, 24'h7C0800, 24'h402C00, 24'h004400, 24'h005000, 24'h003C14, 24'h183C5C, 24'h000000,
-                                        24'hBCBCBC, 24'h0070EC, 24'h2038EC, 24'h8000F0, 24'hBC00BC, 24'hE40058, 24'hD82800, 24'hC84C0C, 24'h887000, 24'h009400, 24'h00A800, 24'h009038, 24'h008088, 24'h000000,
-                                        24'hFCFCFC, 24'h3CBCFC, 24'h5C94FC, 24'hCC88FC, 24'hF478FC, 24'hFC74B4, 24'hFC7460, 24'hFC9838, 24'hF0BC3C, 24'h80D010, 24'h4CDC48, 24'h58F898, 24'h00E8D8, 24'h787878,
-                                        24'hFCFCFC, 24'hA8E4FC, 24'hC4D4FC, 24'hD4C8FC, 24'hFCC4FC, 24'hFCC4D8, 24'hFCBCB0, 24'hFCD8A8, 24'hFCE4A0, 24'hE0FCA0, 24'hA8F0BC, 24'hB0FCCC, 24'h9CFCF0, 24'hC4C4C4};
 // Kitrinx34
-wire [23:0] lumacode_data_3s_palette4[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+wire [23:0] lumacode_data_3s_palette3[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
                                         24'h666666, 24'h01247B, 24'h1B1489, 24'h39087C, 24'h520257, 24'h5C0725, 24'h571300, 24'h472300, 24'h2D3300, 24'h0E4000, 24'h004500, 24'h004124, 24'h003456, 24'h000000,
                                         24'hADADAD, 24'h2759C9, 24'h4845DB, 24'h6F34CA, 24'h922B9B, 24'hA1305A, 24'h9B4018, 24'h885400, 24'h686700, 24'h3E7A00, 24'h1B8213, 24'h0D7C57, 24'h136C99, 24'h000000,
                                         24'hFFFFFF, 24'h78ABFF, 24'h9897FF, 24'hC086FF, 24'hE27DEF, 24'hF281AF, 24'hED916D, 24'hDBA43B, 24'hBDB825, 24'h92CB33, 24'h6DD463, 24'h5ECEA8, 24'h65BEEA, 24'h525252,
                                         24'hFFFFFF, 24'hCADBFF, 24'hD8D2FF, 24'hE7CCFF, 24'hF4C9F9, 24'hFACBDF, 24'hF7D2C4, 24'hEEDAAF, 24'hE1E3A5, 24'hD0EBAB, 24'hC2EEBF, 24'hBDEBDB, 24'hC0E4F7, 24'hB8B8B8};
+// FCEUX					
+wire [23:0] lumacode_data_3s_palette4[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+                                        24'h747474, 24'h24188C, 24'h0000A8, 24'h44009C, 24'h8C0074, 24'hA80010, 24'hA40000, 24'h7C0800, 24'h402C00, 24'h004400, 24'h005000, 24'h003C14, 24'h183C5C, 24'h000000,
+                                        24'hBCBCBC, 24'h0070EC, 24'h2038EC, 24'h8000F0, 24'hBC00BC, 24'hE40058, 24'hD82800, 24'hC84C0C, 24'h887000, 24'h009400, 24'h00A800, 24'h009038, 24'h008088, 24'h000000,
+                                        24'hFCFCFC, 24'h3CBCFC, 24'h5C94FC, 24'hCC88FC, 24'hF478FC, 24'hFC74B4, 24'hFC7460, 24'hFC9838, 24'hF0BC3C, 24'h80D010, 24'h4CDC48, 24'h58F898, 24'h00E8D8, 24'h787878,
+                                        24'hFCFCFC, 24'hA8E4FC, 24'hC4D4FC, 24'hD4C8FC, 24'hFCC4FC, 24'hFCC4D8, 24'hFCBCB0, 24'hFCD8A8, 24'hFCE4A0, 24'hE0FCA0, 24'hA8F0BC, 24'hB0FCCC, 24'h9CFCF0, 24'hC4C4C4};
 
 // Lumacode palette Atari GTIA
 wire [23:0] lumacode_data_gtia[0:255] = '{
@@ -348,12 +348,12 @@ always @(posedge PCLK_i) begin
                 nes_g = lumacode_data_3s_palette2[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
                 nes_b = lumacode_data_3s_palette2[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
             end
-            2'b10: begin // Alternative 1
+            2'b10: begin // Kitrinx34
                 nes_r = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
                 nes_g = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
                 nes_b = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
             end
-            2'b11: begin // Alternative 1
+            2'b11: begin // FCEUX
                 nes_r = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
                 nes_g = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
                 nes_b = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
