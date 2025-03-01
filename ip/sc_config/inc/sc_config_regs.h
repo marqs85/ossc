@@ -116,7 +116,7 @@ typedef union {
         uint8_t shmask_mode:2;
         uint8_t lumacode_mode:3;
         uint8_t lumacode_nes_palette:2;
-        uint32_t misc_rsv:6;
+        uint32_t misc_rsv:4;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } misc_config_reg;
