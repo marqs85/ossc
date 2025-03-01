@@ -126,6 +126,7 @@ wire [8:0] V_BACKPORCH = hv_in_config3[12:4];
 wire [5:0] MISC_REV_LPF_STR = (misc_config[11:7] + 6'd16);
 wire MISC_REV_LPF_ENABLE = (misc_config[11:7] != 5'h0);
 wire [2:0] MISC_LUMACODE_MODE = misc_config[25:23];
+wire [1:0] MISC_LUMACODE_NES_PALETTE = misc_config[27:26];
 
 wire [11:0] h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? h_cnt_sogref : h_cnt;
 wire [11:0] even_min_thold = (H_TOTAL / 12'd4);
@@ -156,15 +157,30 @@ wire [23:0] lumacode_data_2s[0:2][0:15] = '{'{ 24'h000000,24'h2a1b9d,24'h7d202c,
                                             '{ 24'h000000,24'h000000,24'h0200FD,24'hCF01CE,24'h0100CE,24'hCF0100,24'hFF02FD,24'h01CFCF,24'hFF0201,24'h00CF15,24'h02FFFF,24'hFFFF1D,24'h00FF1C,24'hCFCF15,24'hCFCFCF,24'hFFFFFF},
                                             '{ 24'h000000,24'h5455ed,24'hfc5554,24'hff7978,24'h000000,24'hd4524d,24'h7d76fc,24'h42ebf5,24'h21b03b,24'h21c842,24'hff7978,24'hcccccc,24'hc95bba,24'hd4c154,24'he6ce80,24'hffffff}};
 
-// Lumacode palette for NES
-wire [23:0] lumacode_data_3s[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+// Lumacode palette for NES, default
+wire [23:0] lumacode_data_3s_default[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
                                         24'h626262, 24'h001fb2, 24'h2404c8, 24'h5200b2, 24'h730076, 24'h800024, 24'h730b00, 24'h522800, 24'h244400, 24'h005700, 24'h005c00, 24'h005324, 24'h003c76, 24'h000000, 
                                         24'hababab, 24'h0d57ff, 24'h4b30ff, 24'h8a13ff, 24'hbc08d6, 24'hd21269, 24'hc72e00, 24'h9d5400, 24'h607b00, 24'h209800, 24'h00a300, 24'h009942, 24'h007db4, 24'h000000, 
                                         24'hffffff, 24'h53aeff, 24'h9085ff, 24'hd365ff, 24'hff57ff, 24'hff5dcf, 24'hff7757, 24'hfa9e00, 24'hbdc700, 24'h7ae700, 24'h43f611, 24'h26ef7e, 24'h2cd5f6, 24'h4e4e4e, 
                                         24'hffffff, 24'hb6e1ff, 24'hced1ff, 24'he9c3ff, 24'hffbcff, 24'hffbdf4, 24'hffc6c3, 24'hffd59a, 24'he9e681, 24'hcef481, 24'hb6fb9a, 24'ha9fac3, 24'ha9f0f4, 24'hb8b8b8};
-wire [7:0] lumacode_data_3s_R = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
-wire [7:0] lumacode_data_3s_G = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
-wire [7:0] lumacode_data_3s_B = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+// Firebrand X smooth
+wire [23:0] lumacode_data_3s_palette2[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+                                        24'h6A6D6A, 24'h001380, 24'h1E008A, 24'h39007A, 24'h550056, 24'h5A0018, 24'h4F1000, 24'h3D1C00, 24'h253200, 24'h003D00, 24'h004000, 24'h003924, 24'h002E55, 24'h000000,
+                                        24'hB9BCB9, 24'h1850C7, 24'h4B30E3, 24'h7322D6, 24'h951FA9, 24'h9D285C, 24'h983700, 24'h7F4C00, 24'h5E6400, 24'h227700, 24'h027E02, 24'h007645, 24'h006E8A, 24'h000000,
+                                        24'hFFFFFF, 24'h68A6FF, 24'h8C9CFF, 24'hB586FF, 24'hD975FD, 24'hE377B9, 24'hE58D68, 24'hD49D29, 24'hB3AF0C, 24'h7BC211, 24'h55CA47, 24'h46CB81, 24'h47C1C5, 24'h4A4D4A,
+                                        24'hFFFFFF, 24'hCCEAFF, 24'hDDDEFF, 24'hECDAFF, 24'hF8D7FE, 24'hFCD6F5, 24'hFDDBCF, 24'hF9E7B5, 24'hF1F0AA, 24'hDAFAA9, 24'hC9FFBC, 24'hC3FBD7, 24'hC4F6F6, 24'hBEC1BE};
+// FCEUX					
+wire [23:0] lumacode_data_3s_palette3[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+                                        24'h747474, 24'h24188C, 24'h0000A8, 24'h44009C, 24'h8C0074, 24'hA80010, 24'hA40000, 24'h7C0800, 24'h402C00, 24'h004400, 24'h005000, 24'h003C14, 24'h183C5C, 24'h000000,
+                                        24'hBCBCBC, 24'h0070EC, 24'h2038EC, 24'h8000F0, 24'hBC00BC, 24'hE40058, 24'hD82800, 24'hC84C0C, 24'h887000, 24'h009400, 24'h00A800, 24'h009038, 24'h008088, 24'h000000,
+                                        24'hFCFCFC, 24'h3CBCFC, 24'h5C94FC, 24'hCC88FC, 24'hF478FC, 24'hFC74B4, 24'hFC7460, 24'hFC9838, 24'hF0BC3C, 24'h80D010, 24'h4CDC48, 24'h58F898, 24'h00E8D8, 24'h787878,
+                                        24'hFCFCFC, 24'hA8E4FC, 24'hC4D4FC, 24'hD4C8FC, 24'hFCC4FC, 24'hFCC4D8, 24'hFCBCB0, 24'hFCD8A8, 24'hFCE4A0, 24'hE0FCA0, 24'hA8F0BC, 24'hB0FCCC, 24'h9CFCF0, 24'hC4C4C4};
+// Kitrinx34
+wire [23:0] lumacode_data_3s_palette4[0:63] = '{ 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000, 24'h000000,
+                                        24'h666666, 24'h01247B, 24'h1B1489, 24'h39087C, 24'h520257, 24'h5C0725, 24'h571300, 24'h472300, 24'h2D3300, 24'h0E4000, 24'h004500, 24'h004124, 24'h003456, 24'h000000,
+                                        24'hADADAD, 24'h2759C9, 24'h4845DB, 24'h6F34CA, 24'h922B9B, 24'hA1305A, 24'h9B4018, 24'h885400, 24'h686700, 24'h3E7A00, 24'h1B8213, 24'h0D7C57, 24'h136C99, 24'h000000,
+                                        24'hFFFFFF, 24'h78ABFF, 24'h9897FF, 24'hC086FF, 24'hE27DEF, 24'hF281AF, 24'hED916D, 24'hDBA43B, 24'hBDB825, 24'h92CB33, 24'h6DD463, 24'h5ECEA8, 24'h65BEEA, 24'h525252,
+                                        24'hFFFFFF, 24'hCADBFF, 24'hD8D2FF, 24'hE7CCFF, 24'hF4C9F9, 24'hFACBDF, 24'hF7D2C4, 24'hEEDAAF, 24'hE1E3A5, 24'hD0EBAB, 24'hC2EEBF, 24'hBDEBDB, 24'hC0E4F7, 24'hB8B8B8};
 
 // Lumacode palette Atari GTIA
 wire [23:0] lumacode_data_gtia[0:255] = '{
@@ -320,26 +336,50 @@ always @(posedge PCLK_i) begin
         {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_2s[MISC_LUMACODE_MODE-1'b1][{lc_code[1], lc_code[2]}];
     // Lumacode NES
     end else if (MISC_LUMACODE_MODE == 4) begin
+        reg [7:0] nes_r, nes_g, nes_b;
+        case(MISC_LUMACODE_NES_PALETTE)
+            2'b00: begin // Default
+                nes_r = lumacode_data_3s_default[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
+                nes_g = lumacode_data_3s_default[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
+                nes_b = lumacode_data_3s_default[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+            end
+            2'b01: begin // Firebrand X smooth
+                nes_r = lumacode_data_3s_palette2[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
+                nes_g = lumacode_data_3s_palette2[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
+                nes_b = lumacode_data_3s_palette2[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+            end
+            2'b10: begin // Alternative 1
+                nes_r = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
+                nes_g = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
+                nes_b = lumacode_data_3s_palette3[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+            end
+            2'b11: begin // Alternative 1
+                nes_r = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][23:16];
+                nes_g = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][15:8];
+                nes_b = lumacode_data_3s_palette4[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
+            end
+        endcase
+    
         if (lc_emp_nes[1] & lc_emp_nes[0])
-            R_pp[2] <= lumacode_data_3s_R/2;
+            R_pp[2] <= nes_r/2;
         else if (lc_emp_nes[1] | lc_emp_nes[0])
-            R_pp[2] <= lumacode_data_3s_R - lumacode_data_3s_R/4;
+            R_pp[2] <= nes_r - nes_r/4;
         else
-            R_pp[2] <= lumacode_data_3s_R;
+            R_pp[2] <= nes_r;
 
         if (lc_emp_nes[2] & lc_emp_nes[0])
-            G_pp[2] <= lumacode_data_3s_G/2;
+            G_pp[2] <= nes_g/2;
         else if (lc_emp_nes[2] | lc_emp_nes[0])
-            G_pp[2] <= lumacode_data_3s_G - lumacode_data_3s_G/4;
+            G_pp[2] <= nes_g - nes_g/4;
         else
-            G_pp[2] <= lumacode_data_3s_G;
+            G_pp[2] <= nes_g;
 
         if (lc_emp_nes[2] & lc_emp_nes[1])
-            B_pp[2] <= lumacode_data_3s_B/2;
+            B_pp[2] <= nes_b/2;
         else if (lc_emp_nes[2] | lc_emp_nes[1])
-            B_pp[2] <= lumacode_data_3s_B - lumacode_data_3s_B/4;
+            B_pp[2] <= nes_b - nes_b/4;
         else
-            B_pp[2] <= lumacode_data_3s_B;
+            B_pp[2] <= nes_b;        
 
         if ((h_ctr == H_SAMPLE_SEL) & ({lc_code[1], lc_code[2], lc_code[3]} < 8))
             lc_emp_nes <= {lc_code[2][0], lc_code[3]};

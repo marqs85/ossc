@@ -81,6 +81,7 @@ static const char *mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red"
 static const char *av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
 static const char *shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
 static const char *lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
+static const char *lumacode_nes_palette_desc[] = { "Default", "FBX smooth", "FCEUX", "Kitrinx34" };
 static const char *adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
 static const char *fpga_pll_bw_desc[] = { "High", "Low" };
 
@@ -158,6 +159,7 @@ MENU(menu_vinputproc, P99_PROTECT({ \
     { "ALC V filter",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.alc_v_filter,  OPT_NOWRAP, 0, ALC_V_FILTER_MAX, alc_v_filter_disp } } },
     { "ALC H filter",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.alc_h_filter,  OPT_NOWRAP, 0, ALC_H_FILTER_MAX, alc_h_filter_disp } } },
     { "Lumacode",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.lumacode_mode,  OPT_WRAP,   SETTING_ITEM(lumacode_mode_desc) } } },
+    { "NES Palette",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.lumacode_nes_palette, OPT_WRAP, SETTING_ITEM(lumacode_nes_palette_desc) } } },
 }))
 
 MENU(menu_sampling, P99_PROTECT({ \

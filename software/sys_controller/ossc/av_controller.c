@@ -498,6 +498,7 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     misc_config.reverse_lpf = avconfig->reverse_lpf;
     misc_config.shmask_mode = avconfig->shmask_mode;
     misc_config.lumacode_mode = avconfig->lumacode_mode;
+    misc_config.lumacode_nes_palette = avconfig->lumacode_nes_palette;
     /*misc_config.lm_deint_mode = 0;
     misc_config.nir_even_offset = 0;
     misc_config.ypbpr_cs = (avconfig->ypbpr_cs == 0) ? ((vm_in->type & VIDEO_HDTV) ? 1 : 0) : avconfig->ypbpr_cs-1;
