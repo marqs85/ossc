@@ -137,6 +137,7 @@ typedef struct {
     alt_u8 alc_h_filter;
     alt_u8 alc_v_filter;
     color_setup_t col;
+    alt_u8 full_vs_bypass;
 
     /* Audio settings */
     alt_u8 audio_dw_sampl;

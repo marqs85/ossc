@@ -415,6 +415,9 @@ status_t get_status(tvp_sync_input_t syncinput)
     if (memcmp(&tc.col, &cm.cc.col, sizeof(color_setup_t)))
         tvp_set_gain_offset(&tc.col);
 
+    if (tc.full_vs_bypass != cm.cc.full_vs_bypass)
+        tvp_set_full_vs_bypass(tc.full_vs_bypass);
+
 #ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
 #ifdef MANUAL_CTS
@@ -964,7 +967,7 @@ int main()
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
-        strncpy(row2, "2014-2024  marqs", LCD_ROW_LEN+1);
+        strncpy(row2, "2014-2025  marqs", LCD_ROW_LEN+1);
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif

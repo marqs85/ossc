@@ -38,7 +38,8 @@ const ypbpr_to_rgb_csc_t csc_coeffs[] = {
 };
 
 static const alt_u8 Kvco[] = {75, 85, 150, 200};
-static const char *Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
+static const char* const Kvco_str[] = { "Ultra low", "Low", "Medium", "High" };
+static alt_u8 full_vs_bypass;
 
 static void tvp_set_clamp_type(video_format fmt)
 {
@@ -201,6 +202,7 @@ void tvp_init()
     };
 
     // Set default configuration (skip those which match register reset values)
+    full_vs_bypass = 0;
 
     // Configure external refclk, HPLL generated pclk
     tvp_sel_clk(REFCLK_EXT27, 0);
@@ -265,6 +267,10 @@ void tvp_set_gain_offset(color_setup_t *col) {
     tvp_writereg(TVP_R_FOFFSET_MSB, col->r_f_off);
     tvp_writereg(TVP_G_FOFFSET_MSB, col->g_f_off);
     tvp_writereg(TVP_B_FOFFSET_MSB, col->b_f_off);
+}
+
+void tvp_set_full_vs_bypass(alt_u8 enable) {
+    full_vs_bypass = enable;
 }
 
 // Configure H-PLL (sampling rate, VCO gain and charge pump current)
@@ -447,11 +453,10 @@ void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format 
     else
         tvp_writereg(TVP_MISCCTRL3, 0x00);
 
-#ifdef SYNCBYPASS
-    tvp_writereg(TVP_SYNCBYPASS, 0x03);
-#else
-    tvp_writereg(TVP_SYNCBYPASS, 0x00);
-#endif
+    if ((syncinput > TVP_SOG3) && (syncinput < TVP_CS_A))
+        tvp_writereg(TVP_SYNCBYPASS, full_vs_bypass ? 0x02 : 0x00);
+    else
+        tvp_writereg(TVP_SYNCBYPASS, 0x00);
 
     //TODO:
     //TVP_ADCSETUP

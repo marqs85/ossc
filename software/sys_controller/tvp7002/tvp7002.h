@@ -98,6 +98,8 @@ void tvp_init();
 
 void tvp_set_gain_offset(color_setup_t *col);
 
+void tvp_set_full_vs_bypass(alt_u8 enable);
+
 void tvp_setup_hpll(alt_u16 h_samplerate, alt_u16 pixs_per_line, alt_u16 refclks_per_line, alt_u8 plldivby2);
 
 void tvp_sel_csc(const ypbpr_to_rgb_csc_t *csc);
