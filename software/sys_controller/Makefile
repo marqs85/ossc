@@ -142,35 +142,35 @@ ACDS_VERSION := 14.1
 ELF := sys_controller.elf
 
 # Paths to C, C++, and assembly source files.
-C_SRCS += it6613/EDID.c
-C_SRCS += it6613/HDMI_TX.c
-C_SRCS += it6613/hdmitx_nios2.c
-C_SRCS += it6613/it6613.c
-C_SRCS += it6613/it6613_drv.c
-C_SRCS += it6613/it6613_sys.c
-C_SRCS += tvp7002/tvp7002.c
-C_SRCS += ths7353/ths7353.c
-C_SRCS += pcm1862/pcm1862.c
-C_SRCS += spi_charlcd/lcd.c
-C_SRCS += memory/flash.c
-C_SRCS += memory/sdcard.c
-C_SRCS += ossc/av_controller.c
-C_SRCS += ossc/avconfig.c
-C_SRCS += ossc/controls.c
-C_SRCS += ossc/firmware.c
-C_SRCS += ossc/fat16_export.c
+C_SRCS += av_controller.c
+C_SRCS += src/avconfig.c
+C_SRCS += src/utils.c
+C_SRCS += src/controls.c
 ifeq ($(OSDLANG),JP)
-C_SRCS += ossc/menu_sjis.c
+C_SRCS += src/menu_sjis.c
 else
-C_SRCS += ossc/menu.c
+C_SRCS += src/menu.c
 endif
+C_SRCS += src/video_modes.c
+C_SRCS += src/flash.c
+C_SRCS += src/firmware.c
 ifeq ($(OSDLANG),JP)
-C_SRCS += ossc/userdata_sjis.c
+C_SRCS += src/userdata_sjis.c
 else
-C_SRCS += ossc/userdata.c
+C_SRCS += src/userdata.c
 endif
-C_SRCS += ossc/utils.c
-C_SRCS += ossc/video_modes.c
+C_SRCS += src/sdcard.c
+C_SRCS += src/fat16_export.c
+C_SRCS += ic_drivers/it6613/EDID.c
+C_SRCS += ic_drivers/it6613/HDMI_TX.c
+C_SRCS += ic_drivers/it6613/hdmitx_nios2.c
+C_SRCS += ic_drivers/it6613/it6613.c
+C_SRCS += ic_drivers/it6613/it6613_drv.c
+C_SRCS += ic_drivers/it6613/it6613_sys.c
+C_SRCS += ic_drivers/tvp7002/tvp7002.c
+C_SRCS += ic_drivers/ths7353/ths7353.c
+C_SRCS += ic_drivers/pcm1862/pcm1862.c
+C_SRCS += ic_drivers/spi_charlcd/lcd.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
@@ -217,14 +217,16 @@ BSP_ROOT_DIR := ../sys_controller_bsp/
 
 # List of application specific include directories, library directories and library names
 APP_INCLUDE_DIRS += /usr/lib/picolibc/riscv64-unknown-elf/include
-APP_INCLUDE_DIRS += it6613
-APP_INCLUDE_DIRS += tvp7002
-APP_INCLUDE_DIRS += ths7353
-APP_INCLUDE_DIRS += pcm1862
-APP_INCLUDE_DIRS += spi_charlcd
+APP_INCLUDE_DIRS += config
+APP_INCLUDE_DIRS += inc
+APP_INCLUDE_DIRS += ic_drivers/it6613
+APP_INCLUDE_DIRS += ic_drivers/tvp7002
+APP_INCLUDE_DIRS += ic_drivers/ths7353
+APP_INCLUDE_DIRS += ic_drivers/pcm1862
+APP_INCLUDE_DIRS += ic_drivers/spi_charlcd
+>>>>>>> 6015591 (restructure firmware to be more inline with pro)
 APP_INCLUDE_DIRS += memory
 APP_INCLUDE_DIRS += ulibSD
-APP_INCLUDE_DIRS += ossc
 APP_LIBRARY_DIRS :=
 APP_LIBRARY_NAMES :=
 
@@ -976,7 +978,7 @@ clean : clean_elf_derived_files
 endif
 
 clean :
-	@$(RM) -r $(ELF) $(OBJDUMP_NAME) $(LINKER_MAP_NAME) $(OBJ_ROOT_DIR) $(RUNTIME_ROOT_DIR) $(FORCE_REBUILD_DEP_LIST) ossc/menu_sjis.c ossc/userdata_sjis.c
+	@$(RM) -r $(ELF) $(OBJDUMP_NAME) $(LINKER_MAP_NAME) $(OBJ_ROOT_DIR) $(RUNTIME_ROOT_DIR) $(FORCE_REBUILD_DEP_LIST) src/menu_sjis.c src/userdata_sjis.c
 	@$(ECHO) [$(APP_NAME) clean complete]
 
 # Clean just the BSP.
@@ -1133,11 +1135,11 @@ print-elf-name:
 #------------------------------------------------------------------------------
 #                         CUSTOM TARGETS
 #------------------------------------------------------------------------------
-ossc/menu_sjis.c: ossc/menu.c
-	iconv -f UTF-8 -t SHIFT-JIS ossc/menu.c > ossc/menu_sjis.c
+src/menu_sjis.c: src/menu.c
+	iconv -f UTF-8 -t SHIFT-JIS src/menu.c > src/menu_sjis.c
 
-ossc/userdata_sjis.c: ossc/userdata.c
-	iconv -f UTF-8 -t SHIFT-JIS ossc/userdata.c > ossc/userdata_sjis.c
+src/userdata_sjis.c: src/userdata.c
+	iconv -f UTF-8 -t SHIFT-JIS src/userdata.c > src/userdata_sjis.c
 
 mem_init/flash.hex: sys_controller.elf
 	$(RV_OBJCOPY) --change-addresses -0x02080000 -O binary --gap-fill 0 $< mem_init/flash.bin
