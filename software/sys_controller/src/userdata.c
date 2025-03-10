@@ -20,6 +20,8 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include "system.h"
 #include "userdata.h"
 #include "fat16_export.h"
 #include "flash.h"

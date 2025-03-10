@@ -18,6 +18,7 @@
 //
 
 #include <string.h>
+#include <stdio.h>
 #include "menu.h"
 #include "av_controller.h"
 #include "firmware.h"

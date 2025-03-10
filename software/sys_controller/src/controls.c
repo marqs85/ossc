@@ -19,6 +19,8 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include "system.h"
 #include "alt_types.h"
 #include "controls.h"
 #include "menu.h"

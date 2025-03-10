@@ -161,6 +161,7 @@ C_SRCS += src/userdata.c
 endif
 C_SRCS += src/sdcard.c
 C_SRCS += src/fat16_export.c
+C_SRCS += src/lcd.c
 C_SRCS += ic_drivers/it6613/EDID.c
 C_SRCS += ic_drivers/it6613/HDMI_TX.c
 C_SRCS += ic_drivers/it6613/hdmitx_nios2.c
@@ -170,7 +171,7 @@ C_SRCS += ic_drivers/it6613/it6613_sys.c
 C_SRCS += ic_drivers/tvp7002/tvp7002.c
 C_SRCS += ic_drivers/ths7353/ths7353.c
 C_SRCS += ic_drivers/pcm1862/pcm1862.c
-C_SRCS += ic_drivers/spi_charlcd/lcd.c
+C_SRCS += ic_drivers/st7032/st7032.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
@@ -223,8 +224,7 @@ APP_INCLUDE_DIRS += ic_drivers/it6613
 APP_INCLUDE_DIRS += ic_drivers/tvp7002
 APP_INCLUDE_DIRS += ic_drivers/ths7353
 APP_INCLUDE_DIRS += ic_drivers/pcm1862
-APP_INCLUDE_DIRS += ic_drivers/spi_charlcd
->>>>>>> 6015591 (restructure firmware to be more inline with pro)
+APP_INCLUDE_DIRS += ic_drivers/st7032
 APP_INCLUDE_DIRS += memory
 APP_INCLUDE_DIRS += ulibSD
 APP_LIBRARY_DIRS :=

@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2025  Balázs Triszka <info@balika011.hu>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -19,10 +20,6 @@
 
 #ifndef LCD_H_
 #define LCD_H_
-
-#include "system.h"
-#include <stdio.h>
-#include "sysconfig.h"
 
 #define LCD_ROW_LEN 16
 
