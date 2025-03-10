@@ -17,24 +17,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "lcd.h"
-#include "st7032.h"
-#include "sh1107.h"
+#ifndef SH1107_H_
+#define SH1107_H_
 
-void lcd_init()
-{
-#ifndef HAS_SH1107
-	st7032_init();
-#else
-	sh1107_init();
-#endif
-}
+#include "system.h"
+#include <stdio.h>
+#include "sysconfig.h"
 
-void lcd_write(char *row1, char *row2)
-{
-#ifndef HAS_SH1107
-	st7032_write(row1, row2);
-#else
-	sh1107_write(row1, row2);
-#endif
-}
+void sh1107_init();
+
+void sh1107_write(char *row1, char *row2);
+
+#endif /* sh1107_H_ */

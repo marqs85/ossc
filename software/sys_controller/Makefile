@@ -172,6 +172,7 @@ C_SRCS += ic_drivers/tvp7002/tvp7002.c
 C_SRCS += ic_drivers/ths7353/ths7353.c
 C_SRCS += ic_drivers/pcm1862/pcm1862.c
 C_SRCS += ic_drivers/st7032/st7032.c
+C_SRCS += ic_drivers/sh1107/sh1107.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
 CXX_SRCS :=
@@ -197,6 +198,9 @@ APP_CFLAGS_DEFINED_SYMBOLS += -DENABLE_AUDIO
 endif
 ifeq ($(OSDLANG),JP)
 APP_CFLAGS_DEFINED_SYMBOLS += -DOSDLANG_JP
+endif
+ifeq ($(HAS_SH1107),y)
+APP_CFLAGS_DEFINED_SYMBOLS += -DHAS_SH1107
 endif
 APP_CFLAGS_UNDEFINED_SYMBOLS :=
 APP_CFLAGS_OPTIMIZATION := -Os
@@ -225,6 +229,7 @@ APP_INCLUDE_DIRS += ic_drivers/tvp7002
 APP_INCLUDE_DIRS += ic_drivers/ths7353
 APP_INCLUDE_DIRS += ic_drivers/pcm1862
 APP_INCLUDE_DIRS += ic_drivers/st7032
+APP_INCLUDE_DIRS += ic_drivers/sh1107
 APP_INCLUDE_DIRS += memory
 APP_INCLUDE_DIRS += ulibSD
 APP_LIBRARY_DIRS :=
