@@ -20,22 +20,32 @@
 #ifndef FLASH_H_
 #define FLASH_H_
 
-#include "alt_types.h"
+#include <stdint.h>
 #include "sysconfig.h"
-#include "altera_epcq_controller2.h"
 
-// EPCS16 pagesize is 256 bytes
-// Flash is split 50-50 to FW and userdata, 1MB each
-#define PAGESIZE 256
-#define PAGES_PER_SECTOR 256        //EPCS "sector" corresponds to "block" on Spansion flash
-#define SECTORSIZE (PAGESIZE*PAGES_PER_SECTOR)
-#define USERDATA_OFFSET 0x100000
-#define MAX_USERDATA_ENTRY 15    // 16 sectors for userdata
+#define FLASH_SECTOR_SIZE 65536
 
-#define FLASH_VERIFY_ERROR      204
+typedef struct {
+    uint32_t ctrl;
+    uint32_t baud_rate;
+    uint32_t cs_delay;
+    uint32_t read_capture;
+    uint32_t oper_mode;
+    uint32_t read_instr;
+    uint32_t write_instr;
+    uint32_t flash_cmd_cfg;
+    uint32_t flash_cmd_ctrl;
+    uint32_t flash_cmd_addr;
+    uint32_t flash_cmd_wrdata[2];
+    uint32_t flash_cmd_rddata[2];
+} gen_flash_if_regs;
 
+typedef struct {
+    volatile gen_flash_if_regs *regs;
+    uint32_t flash_size;
+} flash_ctrl_dev;
 
-int init_flash();
-int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmpbuf);
+void flash_write_protect(flash_ctrl_dev *dev, int enable);
+void flash_sector_erase(flash_ctrl_dev *dev, uint32_t addr);
 
 #endif /* FLASH_H_ */

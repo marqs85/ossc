@@ -142,7 +142,7 @@
         <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch bsp_timestamp</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>make ENABLE_AUDIO=y APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex</BuildCommand>
+        <BuildCommand>make ENABLE_AUDIO=y APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>
@@ -188,7 +188,7 @@
         <Target Name="Ack BSP update">cd ../sys_controller_bsp &amp;&amp; touch bsp_timestamp</Target>
         <RebuildCommand/>
         <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>make ENABLE_AUDIO=y generate_hex</BuildCommand>
+        <BuildCommand>make ENABLE_AUDIO=y</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>

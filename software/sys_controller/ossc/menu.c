@@ -48,41 +48,41 @@ alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_ac
 alt_u8 menu_active;
 alt_u8 vm_sel, vm_edit;
 
-static const char *off_on_desc[] = { LNG("Off","ｵﾌ"), LNG("On","ｵﾝ") };
-static const char *video_lpf_desc[] = { LNG("Auto","ｵｰﾄ"), LNG("Off","ｵﾌ"), "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
-static const char *ypbpr_cs_desc[] = { "Rec. 601", "Rec. 709", "Auto" };
-static const char *s480p_mode_desc[] = { LNG("Auto","ｵｰﾄ"), "DTV 480p", "VESA 640x480@60", "PSP 480x272" };
-static const char *s400p_mode_desc[] = { "VGA 640x400@70", "VGA 720x400@70" };
-static const char *sync_lpf_desc[] = { LNG("2.5MHz (max)","2.5MHz (ｻｲﾀﾞｲ)"), LNG("10MHz (med)","10MHz (ﾁｭｳｲ)"), LNG("33MHz (min)","33MHz (ｻｲｼｮｳ)"), LNG("Off","ｵﾌ") };
-static const char *stc_lpf_desc[] = { "4.8MHz (HDTV/PC)", "0.5MHz (SDTV)", "1.7MHz (EDTV)" };
-static const char *pt_mode_desc[] = {"Normal", "High samplerate", LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
-static const char *l3_mode_desc[] = { LNG("Generic 16:9","ｼﾞｪﾈﾘｯｸ 16:9"), LNG("Generic 4:3","ｼﾞｪﾈﾘｯｸ 4:3"), LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
-static const char *l2l4l5l6_mode_desc[] = { LNG("Generic 4:3","ｼﾞｪﾈﾘｯｸ 4:3"), LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
-static const char *l5_fmt_desc[] = { "1920x1080", "1600x1200", "1920x1200" };
-static const char *pm_240p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x", "Line4x", "Line5x", "Line6x" };
-static const char *pm_480i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)", "Line3x (laced)", "Line4x (bob)" };
-static const char *pm_384p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x Generic", "Line2x 240x360", "Line3x 240x360" };
-static const char *pm_480p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x Generic" };
-static const char *pm_1080i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)" };
-static const char *ar_256col_desc[] = { "Pseudo 4:3 DAR", "1:1 PAR" };
-static const char *tx_mode_desc[] = { "HDMI (RGB)", "HDMI (YCbCr444)", "DVI" };
-static const char *sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｵｰﾄ"), LNG("On","ｵﾝ") };
-static const char *sl_method_desc[] = { LNG("Multiplication","Multiplication"), LNG("Subtraction","Subtraction") };
-static const char *sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical","ﾀﾃ"), "Horiz. + Vert.", "Custom" };
-static const char *sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
-static const char *audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
-static const char *lt_desc[] = { "Top-left", "Center", "Bottom-right" };
-static const char *lcd_bl_timeout_desc[] = { "Off", "3s", "10s", "30s" };
-static const char *osd_enable_desc[] = { "Off", "Full", "Simple" };
-static const char *osd_status_desc[] = { "2s", "5s", "10s", "Off" };
-static const char *rgsb_ypbpr_desc[] = { "RGsB", "YPbPr" };
-static const char *auto_input_desc[] = { "Off", "Current input", "All inputs" };
-static const char *mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White" };
-static const char *av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
-static const char *shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
-static const char *lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
-static const char *adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
-static const char *fpga_pll_bw_desc[] = { "High", "Low" };
+static const char* const off_on_desc[] = { LNG("Off","ｵﾌ"), LNG("On","ｵﾝ") };
+static const char* const video_lpf_desc[] = { LNG("Auto","ｵｰﾄ"), LNG("Off","ｵﾌ"), "95MHz (HDTV II)", "35MHz (HDTV I)", "16MHz (EDTV)", "9MHz (SDTV)" };
+static const char* const ypbpr_cs_desc[] = { "Rec. 601", "Rec. 709", "Auto" };
+static const char* const s480p_mode_desc[] = { LNG("Auto","ｵｰﾄ"), "DTV 480p", "VESA 640x480@60", "PSP 480x272" };
+static const char* const s400p_mode_desc[] = { "VGA 640x400@70", "VGA 720x400@70" };
+static const char* const sync_lpf_desc[] = { LNG("2.5MHz (max)","2.5MHz (ｻｲﾀﾞｲ)"), LNG("10MHz (med)","10MHz (ﾁｭｳｲ)"), LNG("33MHz (min)","33MHz (ｻｲｼｮｳ)"), LNG("Off","ｵﾌ") };
+static const char* const stc_lpf_desc[] = { "4.8MHz (HDTV/PC)", "0.5MHz (SDTV)", "1.7MHz (EDTV)" };
+static const char* const pt_mode_desc[] = {"Normal", "High samplerate", LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
+static const char* const l3_mode_desc[] = { LNG("Generic 16:9","ｼﾞｪﾈﾘｯｸ 16:9"), LNG("Generic 4:3","ｼﾞｪﾈﾘｯｸ 4:3"), LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
+static const char* const l2l4l5l6_mode_desc[] = { LNG("Generic 4:3","ｼﾞｪﾈﾘｯｸ 4:3"), LNG("512x240 optim.","512x240 ｻｲﾃｷｶ."), LNG("384x240 optim.","384x240 ｻｲﾃｷｶ."), LNG("320x240 optim.","320x240 ｻｲﾃｷｶ."), LNG("256x240 optim.","256x240 ｻｲﾃｷｶ.") };
+static const char* const l5_fmt_desc[] = { "1920x1080", "1600x1200", "1920x1200" };
+static const char* const pm_240p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x", "Line4x", "Line5x", "Line6x" };
+static const char* const pm_480i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)", "Line3x (laced)", "Line4x (bob)" };
+static const char* const pm_384p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x Generic", "Line2x 240x360", "Line3x 240x360" };
+static const char* const pm_480p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x", "Line3x Generic" };
+static const char* const pm_1080i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)" };
+static const char* const ar_256col_desc[] = { "Pseudo 4:3 DAR", "1:1 PAR" };
+static const char* const tx_mode_desc[] = { "HDMI (RGB)", "HDMI (YCbCr444)", "DVI" };
+static const char* const sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｵｰﾄ"), LNG("On","ｵﾝ") };
+static const char* const sl_method_desc[] = { LNG("Multiplication","Multiplication"), LNG("Subtraction","Subtraction") };
+static const char* const sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical","ﾀﾃ"), "Horiz. + Vert.", "Custom" };
+static const char* const sl_id_desc[] = { LNG("Top","ｳｴ"), LNG("Bottom","ｼﾀ") };
+static const char* const audio_dw_sampl_desc[] = { LNG("Off (fs = 96kHz)","ｵﾌ (fs = 96kHz)"), "2x  (fs = 48kHz)" };
+static const char* const lt_desc[] = { "Top-left", "Center", "Bottom-right" };
+static const char* const lcd_bl_timeout_desc[] = { "Off", "3s", "10s", "30s" };
+static const char* const osd_enable_desc[] = { "Off", "Full", "Simple" };
+static const char* const osd_status_desc[] = { "2s", "5s", "10s", "Off" };
+static const char* const rgsb_ypbpr_desc[] = { "RGsB", "YPbPr" };
+static const char* const auto_input_desc[] = { "Off", "Current input", "All inputs" };
+static const char* const mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White" };
+static const char* const av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
+static const char* const shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
+static const char* const lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
+static const char* const adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
+static const char* const fpga_pll_bw_desc[] = { "High", "Low" };
 
 static void sync_vth_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d mV", (v*1127)/100); }
 static void intclks_to_time_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u.%.2u us", (unsigned)(((1000000U*v)/(TVP_INTCLK_HZ/1000))/1000), (unsigned)((((1000000U*v)/(TVP_INTCLK_HZ/1000))%1000)/10)); }
@@ -298,7 +298,7 @@ void init_menu() {
 
 }
 
-void write_option_value(menuitem_t *item, int func_called, int retval)
+void write_option_value(const menuitem_t *item, int func_called, int retval)
 {
     switch (item->type) {
         case OPT_AVCONFIG_SELECTION:
@@ -335,7 +335,7 @@ void write_option_value(menuitem_t *item, int func_called, int retval)
 
 void render_osd_page() {
     int i;
-    menuitem_t *item;
+    const menuitem_t *item;
     uint32_t row_mask[2] = {0, 0};
 
     if (!menu_active || (osd_enable != 1))
@@ -360,7 +360,7 @@ void render_osd_page() {
 void display_menu(alt_u8 forcedisp)
 {
     menucode_id code = NO_ACTION;
-    menuitem_t *item;
+    const menuitem_t *item;
     alt_u8 *val, val_wrap, val_min, val_max;
     alt_u16 *val_u16, val_u16_min, val_u16_max;
     int i, func_called = 0, retval = 0;

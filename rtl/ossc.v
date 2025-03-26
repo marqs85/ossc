@@ -365,10 +365,8 @@ defparam
 sys sys_inst(
     .clk_clk                                (clk27),
     .reset_reset_n                          (sys_reset_n),
-    .pulpino_0_config_testmode_i            (1'b0),
-    .pulpino_0_config_fetch_enable_i        (1'b1),
-    .pulpino_0_config_clock_gating_i        (1'b0),
-    .pulpino_0_config_boot_addr_i           (32'h00010000),
+    .ibex_0_config_boot_addr_i              (32'h02080000),
+    .ibex_0_config_core_sleep_o             (),
     .master_0_master_reset_reset            (jtagm_reset_req),
     .i2c_opencores_0_export_scl_pad_io      (scl),
     .i2c_opencores_0_export_sda_pad_io      (sda),
@@ -408,10 +406,7 @@ sys sys_inst(
 
 // These do not work in current Quartus version (23.1) and a patch file (scripts/qsys.patch) must be used after Qsys generation instead
 defparam
-    sys_inst.epcq_controller2_0.asmi2_inst_epcq_ctrl.xip_controller.avst_fifo_inst.USE_MEMORY_BLOCKS = 0,
-    sys_inst.epcq_controller2_0.asmi2_inst_epcq_ctrl.xip_controller.avst_fifo_inst.avst_fifo.USE_MEMORY_BLOCKS = 0,
-    sys_inst.master_0.fifo.USE_MEMORY_BLOCKS = 0,
-    sys_inst.onchip_memory2_0.the_altsyncram.MAXIMUM_DEPTH = 2048;
+    sys_inst.master_0.fifo.USE_MEMORY_BLOCKS = 0;
 
 scanconverter #(
     .EMIF_ENABLE(0),

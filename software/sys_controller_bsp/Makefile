@@ -225,13 +225,6 @@ altera_avalon_timer_driver_C_LIB_SRCS := \
 	$(altera_avalon_timer_driver_SRCS_ROOT)/src/altera_avalon_timer_ts.c \
 	$(altera_avalon_timer_driver_SRCS_ROOT)/src/altera_avalon_timer_vars.c
 
-# altera_epcq_controller2_driver sources root
-altera_epcq_controller2_driver_SRCS_ROOT := drivers
-
-# altera_epcq_controller2_driver sources
-altera_epcq_controller2_driver_C_LIB_SRCS := \
-	$(altera_epcq_controller2_driver_SRCS_ROOT)/src/altera_epcq_controller2.c
-
 # altera_nios2_gen2_hal_driver sources root
 altera_nios2_gen2_hal_driver_SRCS_ROOT := HAL
 
@@ -259,6 +252,7 @@ hal_C_LIB_SRCS := \
 	$(hal_SRCS_ROOT)/src/alt_dev_llist_insert.c \
 	$(hal_SRCS_ROOT)/src/alt_errno.c \
 	$(hal_SRCS_ROOT)/src/alt_flash_dev.c \
+	$(hal_SRCS_ROOT)/src/alt_load.c \
 	$(hal_SRCS_ROOT)/src/alt_main.c
 
 # i2c_opencores_driver sources root
@@ -276,7 +270,6 @@ nios2_hw_crc32_driver_SRCS_ROOT := drivers
 COMPONENT_C_LIB_SRCS += \
 	$(altera_avalon_jtag_uart_driver_C_LIB_SRCS) \
 	$(altera_avalon_timer_driver_C_LIB_SRCS) \
-	$(altera_epcq_controller2_driver_C_LIB_SRCS) \
 	$(altera_nios2_gen2_hal_driver_C_LIB_SRCS) \
 	$(hal_C_LIB_SRCS) \
 	$(i2c_opencores_driver_C_LIB_SRCS) \

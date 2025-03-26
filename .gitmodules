@@ -1,3 +1,3 @@
-[submodule "ip/pulpino_qsys"]
-	path = ip/pulpino_qsys
-	url = https://github.com/marqs85/pulpino_qsys.git
+[submodule "ip/ibex_qsys"]
+	path = ip/ibex_qsys
+	url = git@github.com:marqs85/ibex_qsys.git

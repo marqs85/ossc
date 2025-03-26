@@ -167,7 +167,7 @@ wire [7:0] lumacode_data_3s_G = lumacode_data_3s[{lc_code[1], lc_code[2], lc_cod
 wire [7:0] lumacode_data_3s_B = lumacode_data_3s[{lc_code[1], lc_code[2], lc_code[3]}][7:0];
 
 // Lumacode palette Atari GTIA
-wire [23:0] lumacode_data_gtia[0:255] = '{
+/*wire [23:0] lumacode_data_gtia[0:255] = '{
 24'h000000, 24'h111111, 24'h222222, 24'h333333, 24'h444444, 24'h555555, 24'h666666, 24'h777777, 24'h888888, 24'h999999, 24'haaaaaa, 24'hbbbbbb, 24'hcccccc, 24'hdddddd, 24'heeeeee, 24'hffffff,
 24'h091900, 24'h192806, 24'h29370d, 24'h3a4714, 24'h4a561b, 24'h5a6522, 24'h6b7529, 24'h7b8430, 24'h8c9336, 24'h9ca33d, 24'hacb244, 24'hbdc14b, 24'hcdd152, 24'hdee059, 24'heeef60, 24'hffff67,
 24'h300000, 24'h3d1108, 24'h4b2211, 24'h593319, 24'h674422, 24'h75552a, 24'h826633, 24'h90773b, 24'h9e8844, 24'hac994c, 24'hbaaa55, 24'hc7bb5d, 24'hd5cc66, 24'he3dd6e, 24'hf1ee77, 24'hffff80,
@@ -183,10 +183,10 @@ wire [23:0] lumacode_data_gtia[0:255] = '{
 24'h003400, 24'h0c410a, 24'h194f14, 24'h265c1e, 24'h336a28, 24'h407732, 24'h4c853c, 24'h599246, 24'h66a050, 24'h73ad5a, 24'h80bb64, 24'h8cc86e, 24'h99d678, 24'ha6e382, 24'hb3f18c, 24'hc0ff97,
 24'h002a00, 24'h0f3807, 24'h1e460e, 24'h2d5416, 24'h3c621d, 24'h4b7124, 24'h5a7f2c, 24'h698d33, 24'h799b3b, 24'h88a942, 24'h97b849, 24'ha6c651, 24'hb5d458, 24'hc4e260, 24'hd3f067, 24'he3ff6f,
 24'h0d1700, 24'h1d2606, 24'h2d350d, 24'h3d4514, 24'h4d541b, 24'h5d6422, 24'h6d7329, 24'h7d8330, 24'h8e9237, 24'h9ea23e, 24'haeb145, 24'hbec14c, 24'hced053, 24'hdee05a, 24'heeef61, 24'hffff68,
-24'h330000, 24'h401008, 24'h4e2111, 24'h5b321a, 24'h694323, 24'h77542c, 24'h846535, 24'h92763e, 24'h9f8646, 24'had974f, 24'hbba858, 24'hc8b961, 24'hd6ca6a, 24'he3db73, 24'hf1ec7c, 24'hfffd85};
+24'h330000, 24'h401008, 24'h4e2111, 24'h5b321a, 24'h694323, 24'h77542c, 24'h846535, 24'h92763e, 24'h9f8646, 24'had974f, 24'hbba858, 24'hc8b961, 24'hd6ca6a, 24'he3db73, 24'hf1ec7c, 24'hfffd85};*/
 
 // Lumacode palette Atari CTIA/TIA
-wire [23:0] lumacode_data_ctia[0:127] = '{
+/*wire [23:0] lumacode_data_ctia[0:127] = '{
 24'h000000, 24'h404040, 24'h6C6C6C, 24'h909090, 24'hB0B0B0, 24'hC8C8C8, 24'hDCDCDC, 24'hECECEC,
 24'h444400, 24'h646410, 24'h848424, 24'hA0A034, 24'hB8B840, 24'hD0D050, 24'hE8E85C, 24'hFCFC68,
 24'h702800, 24'h844414, 24'h985C28, 24'hAC783C, 24'hBC8C4C, 24'hCCA05C, 24'hDCB468, 24'hECC878,
@@ -202,7 +202,7 @@ wire [23:0] lumacode_data_ctia[0:127] = '{
 24'h003C00, 24'h205C20, 24'h407C40, 24'h5C9C5C, 24'h74B474, 24'h8CD08C, 24'hA4E4A4, 24'hB8FCB8,
 24'h143800, 24'h345C1C, 24'h507C38, 24'h6C9850, 24'h84B468, 24'h9CCC7C, 24'hB4E490, 24'hC8FCA4,
 24'h2C3000, 24'h4C501C, 24'h687034, 24'h848C4C, 24'h9CA864, 24'hB4C078, 24'hCCD488, 24'hE0EC9C,
-24'h442800, 24'h644818, 24'h846830, 24'hA08444, 24'hB89C58, 24'hD0B46C, 24'hE8CC7C, 24'hFCE08C};
+24'h442800, 24'h644818, 24'h846830, 24'hA08444, 24'hB89C58, 24'hD0B46C, 24'hE8CC7C, 24'hFCE08C};*/
 
 // SOF position for scaler
 wire [10:0] V_SOF_LINE = hv_in_config3[23:13];
@@ -350,11 +350,13 @@ always @(posedge PCLK_i) begin
                 // Store hue and luma (high bits) for 1st pixel, and display last pixel of previous pair
                 lc_atari_hue <= {lc_code[1], lc_code[2]};
                 lc_atari_luma[3:2] <= lc_code[3];
-                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma}];
+                //{R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma}];
+                {R_pp[2], G_pp[2], B_pp[2]} <= '0;
             end else begin
                 // Store luma for 2nd pixel, and display first pixel of current pair
                 lc_atari_luma <= {lc_code[2], lc_code[3]};
-                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma[3:2], lc_code[1]}];
+                //{R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_gtia[{lc_atari_hue, lc_atari_luma[3:2], lc_code[1]}];
+                {R_pp[2], G_pp[2], B_pp[2]} <= '0;
             end
         end
     // Lumacode Atari VCS
@@ -365,7 +367,8 @@ always @(posedge PCLK_i) begin
                 lc_atari_hue <= {lc_code[1], lc_code[2]};
             end else begin
                 // Display pixel after receiving remaining 2 lumacode samples (luma)
-                {R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_ctia[{lc_atari_hue, lc_code[1], lc_code[2][1]}];
+                //{R_pp[2], G_pp[2], B_pp[2]} <= lumacode_data_ctia[{lc_atari_hue, lc_code[1], lc_code[2][1]}];
+                {R_pp[2], G_pp[2], B_pp[2]} <= '0;
             end
         end
     end

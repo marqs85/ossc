@@ -50,7 +50,6 @@ extern alt_u8 lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 osd_enable, osd_status_timeout, phase_hotkey_enable;
 extern SD_DEV sdcard_dev;
-extern alt_flash_dev *epcq_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 char target_profile_name[PROFILE_NAME_LEN+1];
@@ -92,9 +91,9 @@ int write_userdata(alt_u8 entry)
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         for (i=0; i<sizeof(ude_initcfg); i++)
             databuf[i] = bitswap8(databuf[i]);
-        retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
+        /*retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
         if (retval != 0)
-            return retval;
+            return retval;*/
 
         printf("Initconfig data written (%u bytes)\n", sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile));
         break;
@@ -122,9 +121,9 @@ int write_userdata(alt_u8 entry)
         vm_to_write -= PAGESIZE-pageoffset;
         for (i=0; i<PAGESIZE; i++)
             databuf[i] = bitswap8(databuf[i]);
-        retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+        /*retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
         if (retval != 0)
-            return retval;
+            return retval;*/
 
         // then write the rest page by page
         pageno = 1;
@@ -132,9 +131,9 @@ int write_userdata(alt_u8 entry)
             memcpy(databuf, (char*)video_modes_plm+srcoffset, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
             for (i=0; i<PAGESIZE; i++)
                 databuf[i] = bitswap8(databuf[i]);
-            retval = alt_epcq_controller2_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
+            /*retval = alt_epcq_controller2_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
             if (retval != 0)
-                return retval;
+                return retval;*/
 
             srcoffset += PAGESIZE;
             vm_to_write = (vm_to_write < PAGESIZE) ? 0 : (vm_to_write - PAGESIZE);
@@ -165,7 +164,7 @@ int read_userdata(alt_u8 entry, int dry_run)
         return -1;
     }
 
-    retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
+    //retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
     for (i=0; i<PAGESIZE; i++)
         databuf[i] = bitswap8(databuf[i]);
     if (retval != 0)
@@ -236,7 +235,7 @@ int read_userdata(alt_u8 entry, int dry_run)
                     pageoffset = 0;
                     pageno++;
                     // check
-                    retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
+                    //retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
                     for (i=0; i<PAGESIZE; i++)
                         databuf[i] = bitswap8(databuf[i]);
                     if (retval != 0)

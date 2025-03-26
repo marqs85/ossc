@@ -49,7 +49,16 @@
 
 #include "priv/alt_busy_sleep.h"
 
-unsigned int alt_busy_sleep (unsigned int us)
+#define TIMER_BASED_SLEEP
+
+#ifdef TIMER_BASED_SLEEP
+
+#include "altera_avalon_timer.h"
+#include "sys/alt_timestamp.h"
+
+#endif
+
+unsigned int __attribute__((noinline, flatten, __section__(".text_bram"))) alt_busy_sleep (unsigned int us)
 {
 /*
  * Only delay if ALT_SIM_OPTIMIZE is not defined; i.e., if software
@@ -57,6 +66,18 @@ unsigned int alt_busy_sleep (unsigned int us)
  * skipped to speed up simulation.
  */
 #ifndef ALT_SIM_OPTIMIZE
+  /*unsigned long i, loops;
+
+  // 1 loop >= 7 cyc
+  loops = ((ALT_CPU_FREQ/1000000)*us)/120;
+
+  for (i=7; i<loops; i++)
+    asm volatile ("nop");*/
+#ifdef TIMER_BASED_SLEEP
+    alt_timestamp_type start_ts = alt_timestamp();
+
+    while (alt_timestamp() < start_ts + us*(TIMER_0_FREQ/1000000)) {}
+#else
   unsigned long i, loops;
 
   // 1 loop >= 7 cyc
@@ -64,6 +85,7 @@ unsigned int alt_busy_sleep (unsigned int us)
 
   for (i=7; i<loops; i++)
     asm volatile ("nop");
+#endif
 #endif /* #ifndef ALT_SIM_OPTIMIZE */
   return 0;
 }

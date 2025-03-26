@@ -18,52 +18,46 @@
 //
 
 #include <unistd.h>
-#include <string.h>
-#include "system.h"
 #include "flash.h"
-#include "utils.h"
 
-// save some code space
-#define SINGLE_FLASH_INSTANCE
+void __attribute__((noinline, flatten, __section__(".text_bram"))) flash_write_protect(flash_ctrl_dev *dev, int enable) {
+    // Write enable
+    dev->regs->flash_cmd_cfg = 0x00000006;
+    dev->regs->flash_cmd_ctrl = 1;
 
-alt_flash_dev *epcq_dev;
+    // Write status register
+    dev->regs->flash_cmd_cfg = 0x00001001;
+    dev->regs->flash_cmd_wrdata[0] = enable ? 0x0000005c : 0x00000000;
+    dev->regs->flash_cmd_ctrl = 1;
 
-
-int init_flash()
-{
-#ifdef SINGLE_FLASH_INSTANCE
-    extern alt_llist alt_flash_dev_list;
-    epcq_dev = (alt_flash_dev*)alt_flash_dev_list.next;
-#else
-    epcq_dev = alt_flash_open_dev(EPCQ_CONTROLLER2_0_AVL_MEM_NAME);
-#endif
-
-    if (epcq_dev == NULL)
-        return -1;
-
-    return 0;
-}
-
-int verify_flash(alt_u32 offset, alt_u32 length, alt_u32 golden_crc, alt_u8 *tmpbuf)
-{
-    alt_u32 crcval=0, i, j, bytes_to_read;
-    int retval;
-
-    for (i=0; i<length; i=i+PAGESIZE) {
-        bytes_to_read = ((length-i < PAGESIZE) ? (length-i) : PAGESIZE);
-
-        //retval = read_flash(i, bytes_to_read, tmpbuf);
-        retval = alt_epcq_controller2_read(epcq_dev, offset+i, tmpbuf, bytes_to_read);
-        for (j=0; j<bytes_to_read; j++)
-            tmpbuf[j] = bitswap8(tmpbuf[j]);
-        if (retval != 0)
-            return retval;
-
-        crcval = crc32(tmpbuf, bytes_to_read, (i==0));
+    // Poll status register until write has completed
+    while (1) {
+        dev->regs->flash_cmd_cfg = 0x00001805;
+        dev->regs->flash_cmd_ctrl = 1;
+        if (!(dev->regs->flash_cmd_rddata[0] & (1<<0)))
+            break;
     }
 
-    if (crcval != golden_crc)
-        return -FLASH_VERIFY_ERROR;
+    // Write disable
+    dev->regs->flash_cmd_cfg = 0x00000004;
+    dev->regs->flash_cmd_ctrl = 1;
+}
 
-    return 0;
+void __attribute__((noinline, flatten, __section__(".text_bram"))) flash_sector_erase(flash_ctrl_dev *dev, uint32_t addr) {
+    // Write enable
+    dev->regs->flash_cmd_cfg = 0x00000006;
+    dev->regs->flash_cmd_ctrl = 1;
+
+    // Sector erase
+    dev->regs->flash_cmd_cfg = (dev->flash_size > 0x1000000) ? 0x000004DC : 0x000003D8;
+    dev->regs->flash_cmd_addr = addr;
+    dev->regs->flash_cmd_ctrl = 1;
+
+    // Poll status register until write has completed
+    while (1) {
+        dev->regs->flash_cmd_cfg = 0x00001805;
+        dev->regs->flash_cmd_ctrl = 1;
+        if (!(dev->regs->flash_cmd_rddata[0] & (1<<0)))
+            break;
+    }
 }

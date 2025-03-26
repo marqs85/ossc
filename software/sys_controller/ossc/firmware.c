@@ -156,7 +156,7 @@ update_init:
     strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
     ui_disp_menu(1);
 
-    retval = copy_sd_to_flash(512/SD_BLK_SIZE, 0, fw_header.data_len, databuf);
+    /*retval = copy_sd_to_flash(512/SD_BLK_SIZE, 0, fw_header.data_len, databuf);
     if (retval != 0)
         goto failure;
 
@@ -164,7 +164,7 @@ update_init:
     ui_disp_menu(1);
     retval = verify_flash(0, fw_header.data_len, fw_header.data_crc, databuf);
     if (retval != 0)
-        goto failure;
+        goto failure;*/
 
     SPI_CS_High();
 
@@ -196,9 +196,6 @@ failure:
             break;
         case FW_UPD_CANCELLED:
             errmsg = "Update cancelled";
-            break;
-        case -FLASH_VERIFY_ERROR:
-            errmsg = "Flash verif fail";
             break;
         default:
             errmsg = "SD/Flash error";

@@ -55,6 +55,15 @@ zero_loop:
   ble x14, x15, zero_loop
 zero_loop_end:
 
+copy_sections:
+  jal alt_load
+copy_sections_end:
+
+cache_setup:
+  fence.i
+  csrwi 0x7C0, 1
+cache_setup_end:
+
 
 main_entry:
   /* jump to alt_main program entry point */

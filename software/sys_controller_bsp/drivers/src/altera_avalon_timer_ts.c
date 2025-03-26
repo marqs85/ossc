@@ -97,7 +97,7 @@ int alt_timestamp_start(void)
  * was reset. 
  */
 
-alt_timestamp_type alt_timestamp(void)
+alt_timestamp_type __attribute__((noinline, flatten, __section__(".text_bram"))) alt_timestamp(void)
 {
 
   void* base = altera_avalon_timer_ts_base;

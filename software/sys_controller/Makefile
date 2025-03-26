@@ -258,7 +258,7 @@ endif
 all:
 	@$(ECHO) [$(APP_NAME) build complete]
 
-all : build_pre_process libs app build_post_process
+all : build_pre_process libs app mem_init_generate_new build_post_process
 
 
 #------------------------------------------------------------------------------
@@ -1139,16 +1139,28 @@ ossc/menu_sjis.c: ossc/menu.c
 ossc/userdata_sjis.c: ossc/userdata.c
 	iconv -f UTF-8 -t SHIFT-JIS ossc/userdata.c > ossc/userdata_sjis.c
 
-mem_init/sys_onchip_memory2_0.hex: sys_controller.elf
-	$(RV_OBJCOPY) --change-addresses -0x10000 -O binary --gap-fill 0 $< mem_init/sys_onchip_memory2_0.bin
-	../../tools/bin2hex 4 mem_init/sys_onchip_memory2_0.bin mem_init/sys_onchip_memory2_0.hex
+mem_init/flash.hex: sys_controller.elf
+	$(RV_OBJCOPY) --change-addresses -0x02A00000 -O binary --gap-fill 0 $< mem_init/flash.bin
+	$(RV_OBJCOPY) --change-addresses -0x02A00000 -O ihex --gap-fill 0 $< mem_init/flash.hex
+	mkdir -p mem_init/chunks
+	rm -f mem_init/chunks/*
+	split -d -b 64 -a 4 mem_init/flash.bin mem_init/chunks/flash.
 
 .PHONY: mem_init_generate_new
-mem_init_generate_new: mem_init/sys_onchip_memory2_0.hex
+mem_init_generate_new: mem_init/flash.hex
 
-.PHONY: generate_hex
-generate_hex: clean mem_init_generate_new
+.PHONY: regenerate_hex
+regenerate_hex: clean mem_init_generate_new
 
 .PHONY: rv-reprogram
 rv-reprogram: mem_init_generate_new
+	jtagconfig
 	system-console -cli --script ../../scripts/rv-reprogram.tcl
+
+rv-bt:
+	jtagconfig
+	system-console -cli --script ../../scripts/rv-bt.tcl
+
+rv-reboot:
+	jtagconfig
+	system-console -cli --script ../../scripts/rv-reboot.tcl

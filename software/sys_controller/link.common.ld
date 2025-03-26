@@ -1,13 +1,19 @@
 SEARCH_DIR(.)
 __DYNAMIC  =  0;
 
+/* First 16 flash sectors reserved for firmware image (1MB).
+   In typical configuration a firmware image consists of
+   * compressed bitstream (8 sectors / 0.5MB)
+   * flash_imem (8 sectors / 0.5MB)
+   Last 16 flash sectors reserved for userdata (16x 64KB). */
 MEMORY
 {
-    dataram    : ORIGIN = 0x00010000, LENGTH = 0xa400
+    flash_imem : ORIGIN = 0x02080000, LENGTH = 524288
+    dataram    : ORIGIN = 0x00010000, LENGTH = 16384
 }
 
 /* Stack information variables */
-_min_stack      = 0x4B0;   /* 1200 - minimum stack space to reserve */
+_min_stack      = 0x1000;   /* 4KB - minimum stack space to reserve */
 _stack_start   = ORIGIN(dataram) + LENGTH(dataram);
 
 /* We have to align each sector to word boundaries as our current s19->slm
@@ -19,7 +25,7 @@ SECTIONS
     {
         . = ALIGN(4);
         KEEP(*(.vectors))
-    } > dataram
+    } > flash_imem
 
     .text : {
         . = ALIGN(4);
@@ -40,7 +46,15 @@ SECTIONS
         *(.lit)
         *(.shdata)
         _endtext = .;
-    }  > dataram
+    }  > flash_imem
+
+    .rodata : {
+        . = ALIGN(4);
+        *(.rodata);
+        *(.rodata.*)
+        *(.srodata);
+        *(.srodata.*)
+    } > flash_imem
 
     /*--------------------------------------------------------------------*/
     /* Global constructor/destructor segement                             */
@@ -69,19 +83,18 @@ SECTIONS
       PROVIDE_HIDDEN (__fini_array_end = .);
     } > dataram
 
-    .rodata : {
+    .text_bram : AT ( LOADADDR (.rodata) + SIZEOF (.rodata) ) {
+        PROVIDE (__ram_text_start = ABSOLUTE(.));
         . = ALIGN(4);
-        *(.rodata);
-        *(.rodata.*)
+        *(.text_bram);
+        LONG(0)
+        PROVIDE (__ram_text_end = ABSOLUTE(.));
     } > dataram
 
-    .shbss :
-    {
-        . = ALIGN(4);
-        *(.shbss)
-    } > dataram
+    PROVIDE (__flash_text_bram_start = LOADADDR(.text_bram));
 
-    .data : {
+    .data : AT ( LOADADDR (.text_bram) + SIZEOF (.text_bram) ) {
+        PROVIDE (__ram_rwdata_start = ABSOLUTE(.));
         . = ALIGN(4);
         sdata  =  .;
         _sdata  =  .;
@@ -93,6 +106,15 @@ SECTIONS
         *(.sdata2.*)
         edata  =  .;
         _edata  =  .;
+        PROVIDE (__ram_rwdata_end = ABSOLUTE(.));
+    } > dataram
+
+    PROVIDE (__flash_rwdata_start = LOADADDR(.data));
+
+    .shbss :
+    {
+        . = ALIGN(4);
+        *(.shbss)
     } > dataram
 
     .bss :

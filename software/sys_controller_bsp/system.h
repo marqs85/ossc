@@ -52,7 +52,7 @@
 #define __SYSTEM_H_
 
 /* Include definitions from linker script generator */
-#include "linker.h"
+//#include "linker.h"
 
 
 /*
@@ -151,7 +151,7 @@
 #define __ALTERA_AVALON_ONCHIP_MEMORY2
 #define __ALTERA_AVALON_PIO
 #define __ALTERA_AVALON_TIMER
-#define __ALTERA_EPCQ_CONTROLLER2
+#define __INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP
 #define __ALTERA_NIOS2_GEN2
 #define __ALTERA_NIOS_CUSTOM_INSTR_BITSWAP
 #define __ALTERA_NIOS_CUSTOM_INSTR_ENDIANCONVERTER
@@ -175,19 +175,19 @@
 #define ALT_NUM_INTERNAL_INTERRUPT_CONTROLLERS 1
 #define ALT_NUM_INTERRUPT_CONTROLLERS 1
 #define ALT_STDERR "/dev/jtag_uart_0"
-#define ALT_STDERR_BASE 0x20020
+#define ALT_STDERR_BASE 0x20040
 #define ALT_STDERR_DEV jtag_uart_0
 #define ALT_STDERR_IS_JTAG_UART
 #define ALT_STDERR_PRESENT
 #define ALT_STDERR_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDIN "/dev/jtag_uart_0"
-#define ALT_STDIN_BASE 0x20020
+#define ALT_STDIN_BASE 0x20040
 #define ALT_STDIN_DEV jtag_uart_0
 #define ALT_STDIN_IS_JTAG_UART
 #define ALT_STDIN_PRESENT
 #define ALT_STDIN_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDOUT "/dev/jtag_uart_0"
-#define ALT_STDOUT_BASE 0x20020
+#define ALT_STDOUT_BASE 0x20040
 #define ALT_STDOUT_DEV jtag_uart_0
 #define ALT_STDOUT_IS_JTAG_UART
 #define ALT_STDOUT_PRESENT
@@ -196,43 +196,31 @@
 
 
 /*
- * epcq_controller2_0_avl_csr configuration
+ * intel_generic_serial_flash_interface_top_0_avl_csr configuration
  *
  */
 
-#define ALT_MODULE_CLASS_epcq_controller2_0_avl_csr altera_epcq_controller2
-#define EPCQ_CONTROLLER2_0_AVL_CSR_BASE 0x20100
-#define EPCQ_CONTROLLER2_0_AVL_CSR_FLASH_TYPE "EPCQ16"
-#define EPCQ_CONTROLLER2_0_AVL_CSR_IRQ 2
-#define EPCQ_CONTROLLER2_0_AVL_CSR_IRQ_INTERRUPT_CONTROLLER_ID 0
-#define EPCQ_CONTROLLER2_0_AVL_CSR_IS_EPCS 0
-#define EPCQ_CONTROLLER2_0_AVL_CSR_NAME "/dev/epcq_controller2_0_avl_csr"
-#define EPCQ_CONTROLLER2_0_AVL_CSR_NUMBER_OF_SECTORS 32
-#define EPCQ_CONTROLLER2_0_AVL_CSR_PAGE_SIZE 256
-#define EPCQ_CONTROLLER2_0_AVL_CSR_SECTOR_SIZE 65536
-#define EPCQ_CONTROLLER2_0_AVL_CSR_SPAN 64
-#define EPCQ_CONTROLLER2_0_AVL_CSR_SUBSECTOR_SIZE 4096
-#define EPCQ_CONTROLLER2_0_AVL_CSR_TYPE "altera_epcq_controller2"
+#define ALT_MODULE_CLASS_intel_generic_serial_flash_interface_top_0_avl_csr intel_generic_serial_flash_interface_top
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_BASE 0x00020100
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_IRQ -1
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_IRQ_INTERRUPT_CONTROLLER_ID -1
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_NAME "/dev/intel_generic_serial_flash_interface_top_0_avl_csr"
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_SPAN 256
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_CSR_TYPE "intel_generic_serial_flash_interface_top"
 
 
 /*
- * epcq_controller2_0_avl_mem configuration
+ * intel_generic_serial_flash_interface_top_0_avl_mem configuration
  *
  */
 
-#define ALT_MODULE_CLASS_epcq_controller2_0_avl_mem altera_epcq_controller2
-#define EPCQ_CONTROLLER2_0_AVL_MEM_BASE 0x800000
-#define EPCQ_CONTROLLER2_0_AVL_MEM_FLASH_TYPE "EPCQ16"
-#define EPCQ_CONTROLLER2_0_AVL_MEM_IRQ -1
-#define EPCQ_CONTROLLER2_0_AVL_MEM_IRQ_INTERRUPT_CONTROLLER_ID -1
-#define EPCQ_CONTROLLER2_0_AVL_MEM_IS_EPCS 0
-#define EPCQ_CONTROLLER2_0_AVL_MEM_NAME "/dev/epcq_controller2_0_avl_mem"
-#define EPCQ_CONTROLLER2_0_AVL_MEM_NUMBER_OF_SECTORS 32
-#define EPCQ_CONTROLLER2_0_AVL_MEM_PAGE_SIZE 256
-#define EPCQ_CONTROLLER2_0_AVL_MEM_SECTOR_SIZE 65536
-#define EPCQ_CONTROLLER2_0_AVL_MEM_SPAN 2097152
-#define EPCQ_CONTROLLER2_0_AVL_MEM_SUBSECTOR_SIZE 4096
-#define EPCQ_CONTROLLER2_0_AVL_MEM_TYPE "altera_epcq_controller_mod"
+#define ALT_MODULE_CLASS_intel_generic_serial_flash_interface_top_0_avl_mem intel_generic_serial_flash_interface_top
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE 0x02000000
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_IRQ -1
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_IRQ_INTERRUPT_CONTROLLER_ID -1
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_NAME "/dev/intel_generic_serial_flash_interface_top_0_avl_mem"
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_SPAN 2097152
+#define INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_TYPE "intel_generic_serial_flash_interface_top"
 
 
 /*
@@ -279,7 +267,7 @@
  */
 
 #define ALT_MODULE_CLASS_jtag_uart_0 altera_avalon_jtag_uart
-#define JTAG_UART_0_BASE 0x20020
+#define JTAG_UART_0_BASE 0x20040
 #define JTAG_UART_0_IRQ 1
 #define JTAG_UART_0_IRQ_INTERRUPT_CONTROLLER_ID 0
 #define JTAG_UART_0_NAME "/dev/jtag_uart_0"
@@ -416,7 +404,7 @@
 #define ALT_MODULE_CLASS_timer_0 altera_avalon_timer
 #define TIMER_0_ALWAYS_RUN 0
 #define TIMER_0_BASE 0x20000
-#define TIMER_0_COUNTER_SIZE 32
+#define TIMER_0_COUNTER_SIZE 64
 #define TIMER_0_FIXED_PERIOD 0
 #define TIMER_0_FREQ 27000000
 #define TIMER_0_IRQ 0
@@ -428,7 +416,7 @@
 #define TIMER_0_PERIOD_UNITS "us"
 #define TIMER_0_RESET_OUTPUT 0
 #define TIMER_0_SNAPSHOT 1
-#define TIMER_0_SPAN 32
+#define TIMER_0_SPAN 64
 #define TIMER_0_TICKS_PER_SEC 1000000
 #define TIMER_0_TIMEOUT_PULSE_OUTPUT 0
 #define TIMER_0_TYPE "altera_avalon_timer"

@@ -55,7 +55,7 @@ typedef struct {
     alt_u8 wrap_cfg;
     alt_u8 min;
     alt_u8 max;
-    const char **setting_str;
+    const char *const *const setting_str;
 } opt_avconfig_selection;
 
 typedef struct {
@@ -100,11 +100,11 @@ typedef struct {
 
 struct menustruct {
     alt_u8 num_items;
-    menuitem_t *items;
+    const menuitem_t *items;
 };
 
 #define SETTING_ITEM(x) 0, sizeof(x)/sizeof(char*)-1, x
-#define MENU(X, Y) menuitem_t X##_items[] = Y; const menu_t X = { sizeof(X##_items)/sizeof(menuitem_t), X##_items };
+#define MENU(X, Y) const menuitem_t X##_items[] = Y; const menu_t X = { sizeof(X##_items)/sizeof(menuitem_t), X##_items };
 #define P99_PROTECT(...) __VA_ARGS__
 
 typedef enum {
