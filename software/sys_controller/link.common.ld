@@ -54,6 +54,7 @@ SECTIONS
         *(.rodata.*)
         *(.srodata);
         *(.srodata.*)
+        . = ALIGN(4);
     } > flash_imem
 
     /*--------------------------------------------------------------------*/
@@ -84,18 +85,18 @@ SECTIONS
     } > dataram
 
     .text_bram : AT ( LOADADDR (.rodata) + SIZEOF (.rodata) ) {
-        PROVIDE (__ram_text_start = ABSOLUTE(.));
         . = ALIGN(4);
+        PROVIDE (__ram_text_start = ABSOLUTE(.));
         *(.text_bram);
-        LONG(0)
+        . = ALIGN(4);
         PROVIDE (__ram_text_end = ABSOLUTE(.));
     } > dataram
 
     PROVIDE (__flash_text_bram_start = LOADADDR(.text_bram));
 
     .data : AT ( LOADADDR (.text_bram) + SIZEOF (.text_bram) ) {
-        PROVIDE (__ram_rwdata_start = ABSOLUTE(.));
         . = ALIGN(4);
+        PROVIDE (__ram_rwdata_start = ABSOLUTE(.));
         sdata  =  .;
         _sdata  =  .;
         *(.data);
@@ -106,6 +107,7 @@ SECTIONS
         *(.sdata2.*)
         edata  =  .;
         _edata  =  .;
+        . = ALIGN(4);
         PROVIDE (__ram_rwdata_end = ABSOLUTE(.));
     } > dataram
 
