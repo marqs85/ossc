@@ -21,7 +21,7 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "7";
          type = "int";
       }
    }
@@ -42,7 +42,7 @@
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "8";
          type = "int";
       }
    }
@@ -63,7 +63,7 @@
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "9";
          type = "int";
       }
    }
@@ -88,14 +88,6 @@
          type = "int";
       }
    }
-   element ibex_0.avalon_slave_dbgreg
-   {
-      datum _lockedAddress
-      {
-         value = "1";
-         type = "boolean";
-      }
-   }
    element ibex_0.avalon_slave_dm
    {
       datum _lockedAddress
@@ -108,7 +100,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "6";
          type = "int";
       }
    }
@@ -142,7 +134,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "5";
          type = "int";
       }
    }
@@ -157,14 +149,6 @@
       {
          value = "131136";
          type = "String";
-      }
-   }
-   element master_0
-   {
-      datum _sortIndex
-      {
-         value = "4";
-         type = "int";
       }
    }
    element onchip_memory2_0
@@ -205,7 +189,7 @@
    {
       datum _sortIndex
       {
-         value = "14";
+         value = "13";
          type = "int";
       }
    }
@@ -226,7 +210,7 @@
    {
       datum _sortIndex
       {
-         value = "11";
+         value = "10";
          type = "int";
       }
    }
@@ -247,7 +231,7 @@
    {
       datum _sortIndex
       {
-         value = "12";
+         value = "11";
          type = "int";
       }
    }
@@ -268,7 +252,7 @@
    {
       datum _sortIndex
       {
-         value = "15";
+         value = "14";
          type = "int";
       }
    }
@@ -297,7 +281,7 @@
    {
       datum _sortIndex
       {
-         value = "13";
+         value = "12";
          type = "int";
       }
    }
@@ -318,7 +302,7 @@
    {
       datum _sortIndex
       {
-         value = "5";
+         value = "4";
          type = "int";
       }
    }
@@ -373,12 +357,9 @@
    type="conduit"
    dir="end" />
  <interface name="ibex_0_dm" internal="ibex_0.dm" />
+ <interface name="ibex_0_jtag" internal="ibex_0.jtag" type="conduit" dir="end" />
  <interface name="ibex_0_ndm" internal="ibex_0.ndm" type="conduit" dir="end" />
- <interface
-   name="master_0_master_reset"
-   internal="master_0.master_reset"
-   type="reset"
-   dir="start" />
+ <interface name="ibex_0_tck" internal="ibex_0.tck" type="clock" dir="end" />
  <interface
    name="osd_generator_0_osd_if"
    internal="osd_generator_0.osd_if"
@@ -436,7 +417,7 @@
   <parameter name="dedicated_spi" value="1" />
  </module>
  <module name="ibex_0" kind="ibex" version="1.0" enabled="1">
-  <parameter name="AUTO_INTERRUPT_RECEIVER_INTERRUPTS_USED" value="15" />
+  <parameter name="AUTO_INTERRUPT_RECEIVER_INTERRUPTS_USED" value="11" />
   <parameter name="IBEX_ICACHE" value="true" />
   <parameter name="IBEX_RV32E" value="true" />
  </module>
@@ -475,7 +456,7 @@
    name="jtag_uart_0"
    kind="altera_avalon_jtag_uart"
    version="24.1"
-   enabled="1">
+   enabled="0">
   <parameter name="allowMultipleConnections" value="false" />
   <parameter name="avalonSpec" value="2.0" />
   <parameter name="clkFreq" value="27000000" />
@@ -490,20 +471,6 @@
   <parameter name="useRelativePathForSimFile" value="false" />
   <parameter name="writeBufferDepth" value="16" />
   <parameter name="writeIRQThreshold" value="8" />
- </module>
- <module
-   name="master_0"
-   kind="altera_jtag_avalon_master"
-   version="24.1"
-   enabled="1">
-  <parameter name="AUTO_DEVICE" value="EP4CE15E22C8" />
-  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone IV E" />
-  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="8" />
-  <parameter name="COMPONENT_CLOCK" value="0" />
-  <parameter name="FAST_VER" value="0" />
-  <parameter name="FIFO_DEPTHS" value="2" />
-  <parameter name="PLI_PORT" value="50000" />
-  <parameter name="USE_PLI" value="0" />
  </module>
  <module
    name="onchip_memory2_0"
@@ -720,6 +687,33 @@
  <connection
    kind="avalon"
    version="24.1"
+   start="ibex_0.avalon_master_bus_debug"
+   end="intel_generic_serial_flash_interface_top_0.avl_csr">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00020100" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="24.1"
+   start="ibex_0.avalon_master_bus_debug"
+   end="intel_generic_serial_flash_interface_top_0.avl_mem">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x02000000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="24.1"
+   start="ibex_0.avalon_master_bus_debug"
+   end="onchip_memory2_0.s2">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x00010000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="24.1"
    start="ibex_0.avalon_master_bus_instr"
    end="ibex_0.avalon_slave_dm">
   <parameter name="arbitrationPriority" value="1" />
@@ -744,47 +738,10 @@
   <parameter name="baseAddress" value="0x00010000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
- <connection
-   kind="avalon"
-   version="24.1"
-   start="master_0.master"
-   end="ibex_0.avalon_slave_dbgreg">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x0000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="24.1"
-   start="master_0.master"
-   end="intel_generic_serial_flash_interface_top_0.avl_csr">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00020100" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="24.1"
-   start="master_0.master"
-   end="intel_generic_serial_flash_interface_top_0.avl_mem">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x02000000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
- <connection
-   kind="avalon"
-   version="24.1"
-   start="master_0.master"
-   end="onchip_memory2_0.s2">
-  <parameter name="arbitrationPriority" value="1" />
-  <parameter name="baseAddress" value="0x00010000" />
-  <parameter name="defaultConnection" value="false" />
- </connection>
  <connection kind="clock" version="24.1" start="clk_27.clk" end="jtag_uart_0.clk" />
  <connection kind="clock" version="24.1" start="clk_27.clk" end="pio_0.clk" />
  <connection kind="clock" version="24.1" start="clk_27.clk" end="pio_1.clk" />
  <connection kind="clock" version="24.1" start="clk_27.clk" end="timer_0.clk" />
- <connection kind="clock" version="24.1" start="clk_27.clk" end="master_0.clk" />
  <connection
    kind="clock"
    version="24.1"
@@ -924,11 +881,6 @@
    version="24.1"
    start="clk_27.clk_reset"
    end="ibex_0.reset_sink" />
- <connection
-   kind="reset"
-   version="24.1"
-   start="po_reset_bridge_0.out_reset"
-   end="master_0.clk_reset" />
  <connection
    kind="reset"
    version="24.1"

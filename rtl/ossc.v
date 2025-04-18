@@ -58,7 +58,12 @@ module ossc (
 
     output SD_CLK,
     inout SD_CMD,
-    inout [3:0] SD_DAT
+    inout [3:0] SD_DAT,
+
+    input altera_reserved_tms,
+    input altera_reserved_tck,
+    input altera_reserved_tdi,
+    output altera_reserved_tdo
 );
 
 
@@ -86,6 +91,8 @@ wire clkmux_clkout;
 wire [15:0] ir_code;
 wire [7:0] ir_code_cnt;
 
+wire tms, tck, tdi, tdo;
+
 wire [7:0] R_sc, G_sc, B_sc;
 wire HSYNC_sc, VSYNC_sc, DE_sc;
 wire pll_areset, pll_scanclk, pll_scanclkena, pll_configupdate, pll_scandata, pll_scandone, pll_activeclock;
@@ -95,9 +102,9 @@ wire pclk_out = PCLK_sc;
 
 reg [7:0] po_reset_ctr = 0;
 reg po_reset_n = 1'b0;
-wire jtagm_reset_req, ndmreset_req;
+wire ndmreset_req;
 reg ndmreset_ack, ndmreset_pulse;
-wire sys_reset_n = (po_reset_n & ~jtagm_reset_req & ~ndmreset_pulse);
+wire sys_reset_n = (po_reset_n & ~ndmreset_pulse);
 
 reg [7:0] TVP_R, TVP_G, TVP_B;
 reg TVP_HS, TVP_VS, TVP_FID;
@@ -378,7 +385,11 @@ sys sys_inst(
     .ibex_0_ndm_ndmreset_ack_i              (ndmreset_ack),
     .ibex_0_config_boot_addr_i              (32'h02080000),
     .ibex_0_config_core_sleep_o             (),
-    .master_0_master_reset_reset            (jtagm_reset_req),
+    .ibex_0_tck_clk                         (tck),
+    .ibex_0_jtag_tdi                        (tdi),
+    .ibex_0_jtag_tms                        (tms),
+    .ibex_0_jtag_tdo                        (tdo),
+    .ibex_0_jtag_trstn                      (),
     .i2c_opencores_0_export_scl_pad_io      (scl),
     .i2c_opencores_0_export_sda_pad_io      (sda),
     .i2c_opencores_0_export_spi_miso_pad_i  (1'b0),
@@ -414,10 +425,6 @@ sys sys_inst(
     .pll_reconfig_0_pll_reconfig_if_scandata     (pll_scandata),
     .pll_reconfig_0_pll_reconfig_if_scandone     (pll_scandone)
 );
-
-// These do not work in current Quartus version (23.1) and a patch file (scripts/qsys.patch) must be used after Qsys generation instead
-defparam
-    sys_inst.master_0.fifo.USE_MEMORY_BLOCKS = 0;
 
 scanconverter #(
     .EMIF_ENABLE(0),
@@ -487,6 +494,17 @@ ir_rcv ir0 (
     .ir_code        (ir_code),
     .ir_code_ack    (),
     .ir_code_cnt    (ir_code_cnt)
+);
+
+cycloneive_jtag jtag_inst(
+    .tms(altera_reserved_tms),
+    .tck(altera_reserved_tck),
+    .tdi(altera_reserved_tdi),
+    .tdo(altera_reserved_tdo),
+    .tmsutap(tms),
+    .tckutap(tck),
+    .tdiutap(tdi),
+    .tdouser(tdo)
 );
 
 /*lat_tester lt0 (
