@@ -95,8 +95,9 @@ wire pclk_out = PCLK_sc;
 
 reg [7:0] po_reset_ctr = 0;
 reg po_reset_n = 1'b0;
-wire jtagm_reset_req;
-wire sys_reset_n = (po_reset_n & ~jtagm_reset_req);
+wire jtagm_reset_req, ndmreset_req;
+reg ndmreset_ack, ndmreset_pulse;
+wire sys_reset_n = (po_reset_n & ~jtagm_reset_req & ~ndmreset_pulse);
 
 reg [7:0] TVP_R, TVP_G, TVP_B;
 reg TVP_HS, TVP_VS, TVP_FID;
@@ -240,6 +241,13 @@ begin
         po_reset_ctr <= po_reset_ctr + 1'b1;
 end
 
+// ndmreset pulse & ack for RISC-V DM
+always @(posedge clk27)
+begin
+    ndmreset_pulse <= !ndmreset_ack & ndmreset_req;
+    ndmreset_ack <= ndmreset_req;
+end
+
 // Sync vsync flag to CPU clock
 always @(posedge clk27) begin
     {vsync_flag_sync1_reg, vsync_flag_sync2_reg} <= {~VSYNC_sc, vsync_flag_sync1_reg};
@@ -364,7 +372,10 @@ defparam
 
 sys sys_inst(
     .clk_clk                                (clk27),
-    .reset_reset_n                          (sys_reset_n),
+    .reset_sys_reset_n                      (sys_reset_n),
+    .reset_po_reset_n                       (po_reset_n),
+    .ibex_0_ndm_ndmreset_o                  (ndmreset_req),
+    .ibex_0_ndm_ndmreset_ack_i              (ndmreset_ack),
     .ibex_0_config_boot_addr_i              (32'h02080000),
     .ibex_0_config_core_sleep_o             (),
     .master_0_master_reset_reset            (jtagm_reset_req),

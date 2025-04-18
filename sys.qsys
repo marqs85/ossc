@@ -21,7 +21,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "8";
          type = "int";
       }
    }
@@ -42,7 +42,7 @@
    {
       datum _sortIndex
       {
-         value = "8";
+         value = "9";
          type = "int";
       }
    }
@@ -63,7 +63,7 @@
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "10";
          type = "int";
       }
    }
@@ -84,7 +84,7 @@
    {
       datum _sortIndex
       {
-         value = "1";
+         value = "2";
          type = "int";
       }
    }
@@ -108,7 +108,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "7";
          type = "int";
       }
    }
@@ -142,7 +142,7 @@
    {
       datum _sortIndex
       {
-         value = "5";
+         value = "6";
          type = "int";
       }
    }
@@ -163,7 +163,7 @@
    {
       datum _sortIndex
       {
-         value = "3";
+         value = "4";
          type = "int";
       }
    }
@@ -171,7 +171,7 @@
    {
       datum _sortIndex
       {
-         value = "2";
+         value = "3";
          type = "int";
       }
    }
@@ -205,7 +205,7 @@
    {
       datum _sortIndex
       {
-         value = "13";
+         value = "14";
          type = "int";
       }
    }
@@ -226,7 +226,7 @@
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "11";
          type = "int";
       }
    }
@@ -247,7 +247,7 @@
    {
       datum _sortIndex
       {
-         value = "11";
+         value = "12";
          type = "int";
       }
    }
@@ -268,7 +268,7 @@
    {
       datum _sortIndex
       {
-         value = "14";
+         value = "15";
          type = "int";
       }
    }
@@ -285,11 +285,19 @@
          type = "String";
       }
    }
+   element po_reset_bridge_0
+   {
+      datum _sortIndex
+      {
+         value = "1";
+         type = "int";
+      }
+   }
    element sc_config_0
    {
       datum _sortIndex
       {
-         value = "12";
+         value = "13";
          type = "int";
       }
    }
@@ -310,7 +318,7 @@
    {
       datum _sortIndex
       {
-         value = "4";
+         value = "5";
          type = "int";
       }
    }
@@ -364,6 +372,8 @@
    internal="ibex_0.config"
    type="conduit"
    dir="end" />
+ <interface name="ibex_0_dm" internal="ibex_0.dm" />
+ <interface name="ibex_0_ndm" internal="ibex_0.ndm" type="conduit" dir="end" />
  <interface
    name="master_0_master_reset"
    internal="master_0.master_reset"
@@ -389,7 +399,16 @@
    internal="pll_reconfig_0.pll_reconfig_if"
    type="conduit"
    dir="end" />
- <interface name="reset" internal="clk_27.clk_in_reset" type="reset" dir="end" />
+ <interface
+   name="reset_po"
+   internal="po_reset_bridge_0.in_reset"
+   type="reset"
+   dir="end" />
+ <interface
+   name="reset_sys"
+   internal="clk_27.clk_in_reset"
+   type="reset"
+   dir="end" />
  <interface
    name="sc_config_0_sc_if"
    internal="sc_config_0.sc_if"
@@ -399,7 +418,7 @@
   <parameter name="clockFrequency" value="27000000" />
   <parameter name="clockFrequencyKnown" value="true" />
   <parameter name="inputClockFrequency" value="0" />
-  <parameter name="resetSynchronousEdges" value="NONE" />
+  <parameter name="resetSynchronousEdges" value="DEASSERT" />
  </module>
  <module name="hw_crc32_0" kind="hw_crc32" version="1.0" enabled="1" />
  <module
@@ -418,6 +437,7 @@
  </module>
  <module name="ibex_0" kind="ibex" version="1.0" enabled="1">
   <parameter name="AUTO_INTERRUPT_RECEIVER_INTERRUPTS_USED" value="15" />
+  <parameter name="IBEX_ICACHE" value="true" />
   <parameter name="IBEX_RV32E" value="true" />
  </module>
  <module
@@ -507,7 +527,7 @@
   <parameter name="instanceID" value="NONE" />
   <parameter name="memorySize" value="16384" />
   <parameter name="readDuringWriteMode" value="DONT_CARE" />
-  <parameter name="resetrequest_enabled" value="true" />
+  <parameter name="resetrequest_enabled" value="false" />
   <parameter name="simAllowMRAMContentsFile" value="false" />
   <parameter name="simMemInitOnlyFilename" value="0" />
   <parameter name="singleClockOperation" value="true" />
@@ -547,6 +567,17 @@
   <parameter name="width" value="32" />
  </module>
  <module name="pll_reconfig_0" kind="pll_reconfig" version="1.0" enabled="1" />
+ <module
+   name="po_reset_bridge_0"
+   kind="altera_reset_bridge"
+   version="24.1"
+   enabled="1">
+  <parameter name="ACTIVE_LOW_RESET" value="1" />
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="27000000" />
+  <parameter name="NUM_RESET_OUTPUTS" value="1" />
+  <parameter name="SYNCHRONOUS_EDGES" value="deassert" />
+  <parameter name="USE_RESET_REQUEST" value="0" />
+ </module>
  <module name="sc_config_0" kind="sc_config" version="1.0" enabled="1" />
  <module name="timer_0" kind="altera_avalon_timer" version="24.1" enabled="1">
   <parameter name="alwaysRun" value="false" />
@@ -763,6 +794,11 @@
    kind="clock"
    version="24.1"
    start="clk_27.clk"
+   end="po_reset_bridge_0.clk" />
+ <connection
+   kind="clock"
+   version="24.1"
+   start="clk_27.clk"
    end="onchip_memory2_0.clk1" />
  <connection
    kind="clock"
@@ -823,11 +859,6 @@
    end="timer_0.irq">
   <parameter name="irqNumber" value="3" />
  </connection>
- <connection
-   kind="reset"
-   version="24.1"
-   start="clk_27.clk_reset"
-   end="master_0.clk_reset" />
  <connection
    kind="reset"
    version="24.1"
@@ -893,6 +924,16 @@
    version="24.1"
    start="clk_27.clk_reset"
    end="ibex_0.reset_sink" />
+ <connection
+   kind="reset"
+   version="24.1"
+   start="po_reset_bridge_0.out_reset"
+   end="master_0.clk_reset" />
+ <connection
+   kind="reset"
+   version="24.1"
+   start="po_reset_bridge_0.out_reset"
+   end="ibex_0.po_reset_sink" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="false" />
  <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
