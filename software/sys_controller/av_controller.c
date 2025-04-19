@@ -155,7 +155,6 @@ void ui_disp_status(alt_u8 refresh_osd_timer) {
     }
 }
 
-#ifdef ENABLE_AUDIO
 inline void SetupAudio(tx_mode_t mode)
 {
     // shut down audio-tx before setting new config (recommended for changing audio-tx config)
@@ -177,7 +176,6 @@ inline void SetupAudio(tx_mode_t mode)
 #endif
     }
 }
-#endif
 
 inline void TX_enable(tx_mode_t mode)
 {
@@ -202,9 +200,7 @@ inline void TX_enable(tx_mode_t mode)
         cm.cc.hdmi_vrr = tc.hdmi_vrr;
     }
 
-#ifdef ENABLE_AUDIO
     SetupAudio(mode);
-#endif
 
     // start TX
     SetAVMute(FALSE);
@@ -418,7 +414,6 @@ status_t get_status(tvp_sync_input_t syncinput)
     if (tc.full_vs_bypass != cm.cc.full_vs_bypass)
         tvp_set_full_vs_bypass(tc.full_vs_bypass);
 
-#ifdef ENABLE_AUDIO
     if ((tc.audio_dw_sampl != cm.cc.audio_dw_sampl) ||
 #ifdef MANUAL_CTS
         update_cur_vm ||
@@ -434,7 +429,6 @@ status_t get_status(tvp_sync_input_t syncinput)
         pcm_set_stereo_mode(tc.audio_mono);
         SetupAudio(cm.cc.tx_mode);
     }
-#endif
 
     cm.cc = tc;
     update_cur_vm = 0;
@@ -685,10 +679,8 @@ void program_mode()
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode!=TX_DVI) {
         HDMITX_SetAVIInfoFrame(vmode_out.vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
-#ifdef ENABLE_AUDIO
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
-#endif
 #endif
     }
 }
@@ -807,12 +799,10 @@ int init_hw()
 
     InitIT6613();
 
-#ifdef ENABLE_AUDIO
     if (pcm1862_init()) {
         printf("PCM1862 found\n");
         pcm1862_active = 1;
     }
-#endif
 
     /*if (init_flash() != 0) {
         printf("Error: could not find flash\n");
@@ -869,7 +859,7 @@ void print_vm_stats() {
         sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "Profile:");
         sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u: %s", profile_sel, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name);
         sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "FW:");
-        sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX1 FW_SUFFIX2 " @ " __DATE__, FW_VER_MAJOR, FW_VER_MINOR);
+        sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX " @ " __DATE__, FW_VER_MAJOR, FW_VER_MINOR);
 
         osd->osd_config.status_refresh = 1;
         osd->osd_row_color.mask = 0;
@@ -965,7 +955,7 @@ int main()
 
     if (init_stat >= 0) {
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
-        sniprintf(row1, LCD_ROW_LEN+1, "OSSC  fw. %u.%.2u" FW_SUFFIX1 FW_SUFFIX2, FW_VER_MAJOR, FW_VER_MINOR);
+        sniprintf(row1, LCD_ROW_LEN+1, " OSSC fw. %u.%.2u" FW_SUFFIX, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
         strncpy(row2, "2014-2025  marqs", LCD_ROW_LEN+1);
 #else
@@ -1127,11 +1117,9 @@ int main()
             cm.sync_active = 0;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
             tvp_powerdown();
-#ifdef ENABLE_AUDIO
             DisableAudioOutput();
             if (pcm1862_active)
                 pcm_source_sel(target_pcm);
-#endif
             tvp_source_sel(target_tvp, target_tvp_sync, target_format);
             cm.clkcnt = 0; //TODO: proper invalidate
             sys_ctrl &= ~VSYNC_I_TYPE;
@@ -1204,9 +1192,7 @@ int main()
                     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
                     tvp_powerup();
                     program_mode();
-#ifdef ENABLE_AUDIO
                     SetupAudio(cm.cc.tx_mode);
-#endif
                 } else {
                     printf("Sync lost\n");
                     cm.clkcnt = 0; //TODO: proper invalidate

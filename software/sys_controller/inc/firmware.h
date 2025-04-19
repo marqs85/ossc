@@ -32,16 +32,10 @@
 #define INITCFG_VER_MAJOR       1
 #define INITCFG_VER_MINOR       0
 
-#ifdef ENABLE_AUDIO
-#define FW_SUFFIX1              "a"
-#else
-#define FW_SUFFIX1              ""
-#endif
-
 #ifdef OSDLANG_JP
-#define FW_SUFFIX2              "j"
+#define FW_SUFFIX              "j"
 #else
-#define FW_SUFFIX2              ""
+#define FW_SUFFIX              ""
 #endif
 
 #define FW_UPDATE_RETRIES       3

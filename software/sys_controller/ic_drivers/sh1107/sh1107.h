@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2025  Balázs Triszka <info@balika011.hu>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -17,17 +17,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef LCD_H_
-#define LCD_H_
+#ifndef SH1107_H_
+#define SH1107_H_
 
 #include "system.h"
 #include <stdio.h>
 #include "sysconfig.h"
 
-#define LCD_ROW_LEN 16
+void sh1107_init();
 
-void lcd_init();
+void sh1107_write(char *row1, char *row2);
 
-void lcd_write(char *row1, char *row2);
-
-#endif /* LCD_H_ */
+#endif /* sh1107_H_ */

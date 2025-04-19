@@ -19,6 +19,8 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
+#include "system.h"
 #include "firmware.h"
 #include "sdcard.h"
 #include "flash.h"

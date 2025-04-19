@@ -1,5 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ossc_sw" InternalType="" Version="11000">
+  <VirtualDirectory Name="sys_controller">
+    <File Name="sys_controller/av_controller.c"/>
+    <VirtualDirectory Name="src">
+      <File Name="sys_controller/src/sdcard.c"/>
+      <File Name="sys_controller/src/firmware.c"/>
+      <File Name="sys_controller/src/controls.c"/>
+      <File Name="sys_controller/src/avconfig.c"/>
+      <File Name="sys_controller/src/userdata.c"/>
+      <File Name="sys_controller/src/flash.c"/>
+      <File Name="sys_controller/src/menu.c"/>
+      <File Name="sys_controller/src/utils.c"/>
+      <File Name="sys_controller/src/video_modes_list.c"/>
+      <File Name="sys_controller/src/video_modes.c"/>
+      <File Name="sys_controller/src/fat16_export.c"/>
+      <File Name="sys_controller/src/lcd.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ic_drivers">
+      <VirtualDirectory Name="pcm1862">
+        <File Name="sys_controller/ic_drivers/pcm1862/pcm1862_regs.h"/>
+        <File Name="sys_controller/ic_drivers/pcm1862/pcm1862.c"/>
+        <File Name="sys_controller/ic_drivers/pcm1862/pcm1862.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="st7032">
+        <File Name="sys_controller/ic_drivers/st7032/st7032.c"/>
+        <File Name="sys_controller/ic_drivers/st7032/st7032.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="tvp7002">
+        <File Name="sys_controller/ic_drivers/tvp7002/tvp7002.c"/>
+        <File Name="sys_controller/ic_drivers/tvp7002/tvp7002.h"/>
+        <File Name="sys_controller/ic_drivers/tvp7002/tvp7002_regs.h"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="it6613">
+        <File Name="sys_controller/ic_drivers/it6613/typedef.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/edid.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613_sys.c"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/hdmitx.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/HDMI_COMMON.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613_sys.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/EDID.c"/>
+        <File Name="sys_controller/ic_drivers/it6613/hdmitx_nios2.c"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613_drv.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613.c"/>
+        <File Name="sys_controller/ic_drivers/it6613/HDMI_TX.h"/>
+        <File Name="sys_controller/ic_drivers/it6613/HDMI_TX.c"/>
+        <File Name="sys_controller/ic_drivers/it6613/it6613_drv.c"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="sh1107">
+        <File Name="sys_controller/ic_drivers/sh1107/font12.h"/>
+        <File Name="sys_controller/ic_drivers/sh1107/sh1107.h"/>
+        <File Name="sys_controller/ic_drivers/sh1107/sh1107.c"/>
+      </VirtualDirectory>
+      <VirtualDirectory Name="ths7353">
+        <File Name="sys_controller/ic_drivers/ths7353/ths7353.c"/>
+        <File Name="sys_controller/ic_drivers/ths7353/ths7353.h"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ulibSD">
+      <File Name="sys_controller/ulibSD/sd_io.c"/>
+      <File Name="sys_controller/ulibSD/integer.h"/>
+      <File Name="sys_controller/ulibSD/spi_io.c"/>
+      <File Name="sys_controller/ulibSD/sd_io.h"/>
+      <File Name="sys_controller/ulibSD/spi_io.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="inc">
+      <File Name="sys_controller/inc/firmware.h"/>
+      <File Name="sys_controller/inc/controls.h"/>
+      <File Name="sys_controller/inc/av_controller.h"/>
+      <File Name="sys_controller/inc/menu.h"/>
+      <File Name="sys_controller/inc/sdcard.h"/>
+      <File Name="sys_controller/inc/utils.h"/>
+      <File Name="sys_controller/inc/avconfig.h"/>
+      <File Name="sys_controller/inc/video_modes.h"/>
+      <File Name="sys_controller/inc/fat16_export.h"/>
+      <File Name="sys_controller/inc/flash.h"/>
+      <File Name="sys_controller/inc/userdata.h"/>
+      <File Name="sys_controller/inc/lcd.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="config">
+      <File Name="sys_controller/config/sysconfig.h"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
@@ -33,77 +115,8 @@
     <Extensions>
       <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp]]>
     </Extensions>
-    <Topleveldir>./</Topleveldir>
+    <Topleveldir>/home/markus/Code/ossc/software/</Topleveldir>
   </Reconciliation>
-  <VirtualDirectory Name="sys_controller">
-    <VirtualDirectory Name="ths7353">
-      <File Name="sys_controller/ths7353/ths7353.h"/>
-      <File Name="sys_controller/ths7353/ths7353.c"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="it6613">
-      <File Name="sys_controller/it6613/it6613_drv.c"/>
-      <File Name="sys_controller/it6613/HDMI_TX.c"/>
-      <File Name="sys_controller/it6613/HDMI_TX.h"/>
-      <File Name="sys_controller/it6613/it6613.c"/>
-      <File Name="sys_controller/it6613/it6613_drv.h"/>
-      <File Name="sys_controller/it6613/hdmitx_nios2.c"/>
-      <File Name="sys_controller/it6613/EDID.c"/>
-      <File Name="sys_controller/it6613/it6613_sys.h"/>
-      <File Name="sys_controller/it6613/HDMI_COMMON.h"/>
-      <File Name="sys_controller/it6613/hdmitx.h"/>
-      <File Name="sys_controller/it6613/it6613.h"/>
-      <File Name="sys_controller/it6613/it6613_sys.c"/>
-      <File Name="sys_controller/it6613/edid.h"/>
-      <File Name="sys_controller/it6613/typedef.h"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="spi_charlcd">
-      <File Name="sys_controller/spi_charlcd/lcd.c"/>
-      <File Name="sys_controller/spi_charlcd/lcd.h"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="tvp7002">
-      <File Name="sys_controller/tvp7002/tvp7002_regs.h"/>
-      <File Name="sys_controller/tvp7002/tvp7002.h"/>
-      <File Name="sys_controller/tvp7002/tvp7002.c"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="memory">
-      <File Name="sys_controller/memory/flash.h"/>
-      <File Name="sys_controller/memory/flash.c"/>
-      <File Name="sys_controller/memory/sdcard.h"/>
-      <File Name="sys_controller/memory/sdcard.c"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="ossc">
-      <File Name="sys_controller/ossc/utils.h"/>
-      <File Name="sys_controller/ossc/utils.c"/>
-      <File Name="sys_controller/ossc/menu.c"/>
-      <File Name="sys_controller/ossc/menu.h"/>
-      <File Name="sys_controller/ossc/sysconfig.h"/>
-      <File Name="sys_controller/ossc/controls.h"/>
-      <File Name="sys_controller/ossc/controls.c"/>
-      <File Name="sys_controller/ossc/avconfig.h"/>
-      <File Name="sys_controller/ossc/avconfig.c"/>
-      <File Name="sys_controller/ossc/av_controller.c"/>
-      <File Name="sys_controller/ossc/av_controller.h"/>
-      <File Name="sys_controller/ossc/firmware.h"/>
-      <File Name="sys_controller/ossc/firmware.c"/>
-      <File Name="sys_controller/ossc/userdata.h"/>
-      <File Name="sys_controller/ossc/userdata.c"/>
-      <File Name="sys_controller/ossc/video_modes.h"/>
-      <File Name="sys_controller/ossc/video_modes.c"/>
-      <File Name="sys_controller/ossc/video_modes_list.c"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="ulibSD">
-      <File Name="sys_controller/ulibSD/integer.h"/>
-      <File Name="sys_controller/ulibSD/sd_io.c"/>
-      <File Name="sys_controller/ulibSD/sd_io.h"/>
-      <File Name="sys_controller/ulibSD/spi_io.h"/>
-      <File Name="sys_controller/ulibSD/spi_io.c"/>
-    </VirtualDirectory>
-    <VirtualDirectory Name="pcm1862">
-      <File Name="sys_controller/pcm1862/pcm1862.c"/>
-      <File Name="sys_controller/pcm1862/pcm1862.h"/>
-      <File Name="sys_controller/pcm1862/pcm1862_regs.h"/>
-    </VirtualDirectory>
-  </VirtualDirectory>
   <Description/>
   <Dependencies/>
   <Dependencies Name="Debug"/>

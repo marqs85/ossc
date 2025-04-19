@@ -23,3 +23,8 @@ software/sys_controller/sys_controller.map
 software/sys_controller/sys_controller.elf
 .qsys_edit/*
 PLLJ_PLLSPE_INFO.txt
+tools/bin2hex
+software/sys_controller_bsp/bsp_timestamp
+*.a
+software/sys_controller/mem_init/sys_onchip_memory2_0.bin
+software/sys_controller/mem_init/sys_onchip_memory2_0.hex

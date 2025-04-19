@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2015-2016  Markus Hiienkari <mhiienka@niksula.hut.fi>
+// Copyright (C) 2025  Balázs Triszka <info@balika011.hu>
 //
 // This file is part of Open Source Scan Converter project.
 //
@@ -20,13 +21,11 @@
 #include <unistd.h>
 #include <string.h>
 #include "lcd.h"
+#include "st7032.h"
 #include "alt_types.h"
 #include "altera_avalon_pio_regs.h"
 #include "i2c_opencores.h"
 #include "av_controller.h"
-
-#define LCD_CMD     0x00
-#define LCD_DATA    0x40
 
 #define WRDELAY     20
 #define CLEARDELAY  800
@@ -38,7 +37,7 @@ static void lcd_cmd(alt_u8 cmd, alt_u16 postdelay) {
     usleep(postdelay);
 }
 
-void lcd_init()
+void st7032_init()
 {
     sys_ctrl &= ~(LCD_CS_N|LCD_RS);
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
@@ -59,7 +58,7 @@ void lcd_init()
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }
 
-void lcd_write(char *row1, char *row2)
+void st7032_write(char *row1, char *row2)
 {
     alt_u8 i, rowlen;
 

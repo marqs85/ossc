@@ -67,7 +67,6 @@ make [OPTIONS] [TARGET]
 ~~~~
 OPTIONS may include following definitions:
 * OSDLANG=JP (Japanese language menu)
-* ENABLE_AUDIO=y (Includes audio setup code for v1.6 PCB / DIY audio add-on board)
 
 TARGET is typically one of the following:
 * all (Default target. Compiles an ELF file)

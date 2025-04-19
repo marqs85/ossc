@@ -59,10 +59,8 @@ const avconfig_t tc_default = {
         .c_gain = DEFAULT_COARSE_GAIN,
     },
     .mask_br = 8,
-#ifdef ENABLE_AUDIO
     .audio_dw_sampl = DEFAULT_ON,
     .audio_gain = AUDIO_GAIN_0DB,
-#endif
     .link_av = AV_LAST,
 };
 

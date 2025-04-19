@@ -79,13 +79,11 @@ for {set i 0} {$i<$chunks} {incr i} {
 #master_read_to_file $claim_path mem_init/flash_readback.bin $flash_imem_base $bin_size
 #master_read_to_file $claim_path mem_init/ram_readback.bin 0x010000 65536
 
-close_service master $claim_path
-
-
-set jtag_debug_list [get_service_paths jtag_debug]
-set jd [ lindex $jtag_debug_list 0 ]
-open_service jtag_debug $jd
 puts "Resetting system"
-jtag_debug_reset_system $jd
-close_service jtag_debug $jd
+master_write_32 $claim_path 0x40 0x00000003
+after 1
+master_write_32 $claim_path 0x40 0x00000001
+master_write_32 $claim_path 0x40 0x00000000
+
+close_service master $claim_path
 puts "Done"
