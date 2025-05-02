@@ -162,6 +162,7 @@ endif
 C_SRCS += src/sdcard.c
 C_SRCS += src/fat16_export.c
 C_SRCS += src/lcd.c
+C_SRCS += src/file.c
 C_SRCS += ic_drivers/it6613/EDID.c
 C_SRCS += ic_drivers/it6613/HDMI_TX.c
 C_SRCS += ic_drivers/it6613/hdmitx_nios2.c
@@ -175,6 +176,10 @@ C_SRCS += ic_drivers/st7032/st7032.c
 C_SRCS += ic_drivers/sh1107/sh1107.c
 C_SRCS += ulibSD/sd_io.c
 C_SRCS += ulibSD/spi_io.c
+C_SRCS += fatfs/source/diskio.c
+C_SRCS += fatfs/source/ff.c
+C_SRCS += fatfs/source/ffsystem.c
+C_SRCS += fatfs/source/ffunicode.c
 CXX_SRCS :=
 ASM_SRCS := crt0.boot_E.S
 
@@ -229,6 +234,7 @@ APP_INCLUDE_DIRS += ic_drivers/st7032
 APP_INCLUDE_DIRS += ic_drivers/sh1107
 APP_INCLUDE_DIRS += memory
 APP_INCLUDE_DIRS += ulibSD
+APP_INCLUDE_DIRS += fatfs/source
 APP_LIBRARY_DIRS :=
 APP_LIBRARY_NAMES :=
 

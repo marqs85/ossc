@@ -1,8 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ossc_sw" InternalType="" Version="11000">
+  <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
+    </Plugin>
+    <Plugin Name="CMakePlugin">
+      <![CDATA[[{
+  "name": "Debug",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }, {
+  "name": "Release",
+  "enabled": false,
+  "buildDirectory": "build",
+  "sourceDirectory": "$(ProjectPath)",
+  "generator": "",
+  "buildType": "",
+  "arguments": [],
+  "parentProject": ""
+ }]]]>
+    </Plugin>
+  </Plugins>
   <VirtualDirectory Name="sys_controller">
+    <VirtualDirectory Name="fatfs">
+      <VirtualDirectory Name="source">
+        <File Name="sys_controller/fatfs/source/ffsystem.c"/>
+        <File Name="sys_controller/fatfs/source/ff.h"/>
+        <File Name="sys_controller/fatfs/source/ff.c"/>
+        <File Name="sys_controller/fatfs/source/diskio.h"/>
+        <File Name="sys_controller/fatfs/source/diskio.c"/>
+        <File Name="sys_controller/fatfs/source/ffunicode.c"/>
+      </VirtualDirectory>
+    </VirtualDirectory>
     <File Name="sys_controller/av_controller.c"/>
     <VirtualDirectory Name="src">
+      <File Name="sys_controller/src/file.c"/>
       <File Name="sys_controller/src/sdcard.c"/>
       <File Name="sys_controller/src/firmware.c"/>
       <File Name="sys_controller/src/controls.c"/>
@@ -65,6 +102,7 @@
       <File Name="sys_controller/ulibSD/spi_io.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="inc">
+      <File Name="sys_controller/inc/file.h"/>
       <File Name="sys_controller/inc/firmware.h"/>
       <File Name="sys_controller/inc/controls.h"/>
       <File Name="sys_controller/inc/av_controller.h"/>
@@ -79,35 +117,10 @@
       <File Name="sys_controller/inc/lcd.h"/>
     </VirtualDirectory>
     <VirtualDirectory Name="config">
+      <File Name="sys_controller/config/ffconf.h"/>
       <File Name="sys_controller/config/sysconfig.h"/>
     </VirtualDirectory>
   </VirtualDirectory>
-  <Plugins>
-    <Plugin Name="qmake">
-      <![CDATA[00020001N0005Debug0000000000000001N0007Release000000000000]]>
-    </Plugin>
-    <Plugin Name="CMakePlugin">
-      <![CDATA[[{
-  "name": "Debug",
-  "enabled": false,
-  "buildDirectory": "build",
-  "sourceDirectory": "$(ProjectPath)",
-  "generator": "",
-  "buildType": "",
-  "arguments": [],
-  "parentProject": ""
- }, {
-  "name": "Release",
-  "enabled": false,
-  "buildDirectory": "build",
-  "sourceDirectory": "$(ProjectPath)",
-  "generator": "",
-  "buildType": "",
-  "arguments": [],
-  "parentProject": ""
- }]]]>
-    </Plugin>
-  </Plugins>
   <Reconciliation>
     <Regexes/>
     <Excludepaths/>
