@@ -25,7 +25,7 @@
 #include "sysconfig.h"
 #include "io.h"
 
-inline unsigned char bitswap8(unsigned char v)
+inline __attribute__((flatten, __section__(".text_bram"))) unsigned char bitswap8(unsigned char v)
 {
     return ((v * 0x0802LU & 0x22110LU) |
             (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;

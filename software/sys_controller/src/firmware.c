@@ -30,190 +30,223 @@
 #include "lcd.h"
 #include "utils.h"
 #include "menu.h"
+#include "ff.h"
+#include "file.h"
 #include "altera_avalon_pio_regs.h"
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern SD_DEV sdcard_dev;
 extern alt_u32 sys_ctrl;
+extern flash_ctrl_dev flashctrl_dev;
+extern rem_update_dev rem_reconfig_dev;
 
-static int check_fw_header(alt_u8 *databuf, fw_hdr *hdr)
-{
-    alt_u32 crcval, tmp;
-
-    strncpy(hdr->fw_key, (char*)databuf, 4);
-    if (strncmp(hdr->fw_key, "OSSC", 4))
-        return FW_IMAGE_ERROR;
-
-    hdr->version_major = databuf[4];
-    hdr->version_minor = databuf[5];
-    strncpy(hdr->version_suffix, (char*)(databuf+6), 8);
-    hdr->version_suffix[7] = 0;
-
-    memcpy(&tmp, databuf+14, 4);
-    hdr->hdr_len = bswap32(tmp);
-    memcpy(&tmp, databuf+18, 4);
-    hdr->data_len = bswap32(tmp);
-    memcpy(&tmp, databuf+22, 4);
-    hdr->data_crc = bswap32(tmp);
-    // Always at bytes [508-511]
-    memcpy(&tmp, databuf+508, 4);
-    hdr->hdr_crc = bswap32(tmp);
-
-    if (hdr->hdr_len < 26 || hdr->hdr_len > 508)
-        return FW_HDR_ERROR;
-
-    crcval = crc32(databuf, hdr->hdr_len, 1);
-
-    if (crcval != hdr->hdr_crc)
-        return FW_HDR_CRC_ERROR;
-
-    return 0;
-}
-
-static int check_fw_image(alt_u32 offset, alt_u32 size, alt_u32 golden_crc, alt_u8 *tmpbuf)
-{
-    alt_u32 crcval=0, i, bytes_to_read;
+//int fw_update(char *dirname, char *filename) {
+int fw_update() {
+    FIL fw_file;
     SDRESULTS res;
+    char dirname_root[10];
+    fw_hdr hdr;
+    int retval;
+    unsigned bytes_read, bytes_to_copy;
+    uint32_t crcval, hdr_len, btn_vec;
+    uint32_t cluster_idx[100]; // enough for >=4kB cluster size
+    uint8_t databuf[SD_BLK_SIZE]; // temp buffer for data
+    uint16_t fs_csize, fs_startsec, cl_iter, cl_soffs;
 
-    for (i=0; i<size; i=i+SD_BLK_SIZE) {
-        bytes_to_read = ((size-i < SD_BLK_SIZE) ? (size-i) : SD_BLK_SIZE);
-        res = SD_Read(&sdcard_dev, tmpbuf, (offset+i)/SD_BLK_SIZE, 0, bytes_to_read);
-
-        if (res != SD_OK)
-            return -res;
-
-        crcval = crc32(tmpbuf, bytes_to_read, (i==0));
-    }
-
-    if (crcval != golden_crc)
-        return FW_DATA_CRC_ERROR;
-
-    return 0;
-}
-
-int fw_update()
-{
-    int retval, i;
-    int retries = FW_UPDATE_RETRIES;
-    char *errmsg;
-    alt_u8 databuf[SD_BLK_SIZE];
-    alt_u32 btn_vec;
-    alt_u32 bytes_to_rw;
-    fw_hdr fw_header;
-
-#ifdef CHECK_STACK_USE
-    // estimate stack usage, assuming around here is the worst case (due to 512B databuf)
-    alt_u32 sp;
-    asm volatile("mv %0, sp" : "=r"(sp));
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "Stack size:");
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%lu bytes", (ONCHIP_MEMORY2_0_BASE+ONCHIP_MEMORY2_0_SIZE_VALUE)-sp);
-    ui_disp_menu(1);
-    usleep(1000000);
-#endif
-
-    retval = check_sdcard(databuf);
-    SPI_CS_High();
+    retval = file_mount();
     if (retval != 0) {
-        retval = -retval;
-        goto failure;
+        printf("SD card not detected %d\n", retval);
+        return -1;
     }
 
-    retval = check_fw_header(databuf, &fw_header);
-    if (retval != 0)
-        goto failure;
+    //sniprintf(dirname_root, sizeof(dirname_root), "/%s", dirname);
+    sniprintf(dirname_root, sizeof(dirname_root), "/");
+    f_chdir(dirname_root);
 
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "Validating data");
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%u bytes", (unsigned)fw_header.data_len);
-    ui_disp_menu(1);
-    retval = check_fw_image(512, fw_header.data_len, fw_header.data_crc, databuf);
-    if (retval != 0)
-        goto failure;
+    if (!file_open(&fw_file, "ossc.bin")) {
+        strlcpy(menu_row1, "Checking FW", LCD_ROW_LEN+1);
+        strlcpy(menu_row2, "Please wait...", LCD_ROW_LEN+1);
+        ui_disp_menu(1);
 
-    sniprintf(menu_row1, LCD_ROW_LEN+1, "%u.%.2u%s%s", fw_header.version_major, fw_header.version_minor, (fw_header.version_suffix[0] == 0) ? "" : "-", fw_header.version_suffix);
-    strncpy(menu_row2, "Update? 1=Y, 2=N", LCD_ROW_LEN+1);
-    ui_disp_menu(1);
-
-    while (1) {
-        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-
-        if (btn_vec == rc_keymap[RC_BTN1]) {
-            break;
-        } else if (btn_vec == rc_keymap[RC_BTN2]) {
-            retval = FW_UPD_CANCELLED;
-            goto failure;
+        if (f_read(&fw_file, &hdr, sizeof(hdr), &bytes_read) != F_OK) {
+            printf("FW hdr read error\n");
+            retval = -3;
+            goto close_file;
         }
 
-        usleep(WAITLOOP_SLEEP_US);
+        hdr_len = bswap32(hdr.hdr_len);
+
+        if (strncmp(hdr.fw_key, "OSSC", 4) || (hdr_len < 26 || hdr_len > 508)) {
+            printf("Invalid FW header\n");
+            retval = -4;
+            goto close_file;
+        }
+
+        crcval = crc32((unsigned char *)&hdr, hdr_len, 1);
+        hdr.hdr_len = bswap32(hdr.hdr_len);
+        hdr.data_len = bswap32(hdr.data_len);
+        hdr.data_crc = bswap32(hdr.data_crc);
+        hdr.hdr_crc = bswap32(hdr.hdr_crc);
+        if (crcval != hdr.hdr_crc) {
+            printf("Invalid FW header CRC (0x%.8x instead of 0x%.8x)\n", crcval, hdr.hdr_crc);
+            retval = -5;
+            goto close_file;
+        }
+
+        printf("Firmware %u.%u%s%s\n", hdr.version_major, hdr.version_minor, hdr.version_suffix[0] ? "-" : "", hdr.version_suffix);
+        bytes_to_copy = hdr.data_len;
+        printf("    Image: %u bytes, crc 0x%.8x\n", hdr.data_len, hdr.data_crc);
+        if (hdr.data_len >= 16*FLASH_SECTOR_SIZE) {
+            printf("Image exceeds flash allocation\n");
+            retval = -6;
+            goto close_file;
+        }
+
+        sniprintf(menu_row1, LCD_ROW_LEN+1, "v%u.%u%s%s", hdr.version_major, hdr.version_minor, hdr.version_suffix[0] ? "-" : "", hdr.version_suffix);
+        sniprintf(menu_row2, LCD_ROW_LEN+1, "Update? 1=Y, 2=N");
+        ui_disp_menu(1);
+
+        while (1) {
+            btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+
+            if (btn_vec == rc_keymap[RC_BTN1]) {
+                break;
+            } else if (btn_vec == rc_keymap[RC_BTN2]) {
+                //set_func_ret_msg("Cancelled");
+                retval = 1;
+                goto close_file;
+            }
+
+            usleep(WAITLOOP_SLEEP_US);
+        }
+
+        strlcpy(menu_row2, "Please wait...", LCD_ROW_LEN+1);
+        ui_disp_menu(1);
+
+        // check if 512-byte header is on first or second cluster
+        fs_startsec = fw_file.obj.fs->database;
+        fs_csize = fw_file.obj.fs->csize;
+        if (fs_csize == 1) {
+            cl_iter = 1;
+            cl_soffs = 0;
+            cluster_idx[0] = fw_file.obj.sclust;
+        } else {
+            cl_iter = 0;
+            cl_soffs = 1;
+        }
+        // record cluster IDs to an array
+        if ((f_read_cc(&fw_file, &cluster_idx[cl_iter], bytes_to_copy, &bytes_read, (sizeof(cluster_idx)/sizeof(cluster_idx[0]))-1) != F_OK) || (bytes_read != bytes_to_copy)) {
+            printf("FW cluster error\n");
+            retval = -7;
+            goto close_file;
+        }
+
+        file_close(&fw_file);
+        f_chdir("/");
+
+        printf("Checking copied data...\n");
+        while (bytes_to_copy > 0) {
+            bytes_read = (bytes_to_copy > SD_BLK_SIZE) ? SD_BLK_SIZE : bytes_to_copy;
+            res = SD_Read(&sdcard_dev, databuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
+            if (res != SD_OK) {
+                printf("FW data read error\n");
+                retval = -8;
+                goto close_file;
+            }
+
+            crcval = crc32((unsigned char *)&databuf, bytes_read, (bytes_to_copy==hdr.data_len));
+            bytes_to_copy -= bytes_read;
+
+            cl_soffs += 1;
+            if (cl_soffs == fs_csize) {
+                cl_iter += 1;
+                cl_soffs = 0;
+            }
+        }
+
+        if (crcval != hdr.data_crc) {
+            printf("Image: Invalid CRC (0x%.8x)\n", crcval);
+            retval = -9;
+            goto close_file;
+        }
+
+        printf("Starting update procedure...\n");
+        strlcpy(menu_row1, "Updating", LCD_ROW_LEN+1);
+        ui_disp_menu(1);
+
+        //disable video output
+        tvp_powerdown();
+        sys_ctrl |= VIDGEN_OFF;
+        IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+        usleep(10000);
+
+        // No return from here
+        fw_update_commit(cluster_idx, databuf, hdr.data_len, fs_csize, fs_startsec);
+        return 0;
+    } else {
+        printf("FW file not found\n");
+        f_chdir("/");
+        return -2;
     }
 
-    //disable video output
-    tvp_powerdown();
-    sys_ctrl |= VIDGEN_OFF;
-    IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
-    usleep(10000);
+close_file:
+    file_close(&fw_file);
+    f_chdir("/");
+    return retval;
+}
 
-    strncpy(menu_row1, "Updating FW", LCD_ROW_LEN+1);
-update_init:
-    strncpy(menu_row2, "please wait...", LCD_ROW_LEN+1);
-    ui_disp_menu(1);
+// commit FW update. Do not call functions located in flash during update
+void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec) {
+    int i, sectors;
+    SDRESULTS res;
+    uint16_t cl_iter, cl_soffs;
+    uint32_t addr, bytes_read;
+    uint32_t *data_to;
 
-    /*retval = copy_sd_to_flash(512/SD_BLK_SIZE, 0, fw_header.data_len, databuf);
-    if (retval != 0)
-        goto failure;
+    flash_write_protect(&flashctrl_dev, 0);
 
-    strncpy(menu_row1, "Verifying flash", LCD_ROW_LEN+1);
-    ui_disp_menu(1);
-    retval = verify_flash(0, fw_header.data_len, fw_header.data_crc, databuf);
-    if (retval != 0)
-        goto failure;*/
+    // Erase sectors
+    addr = 0;
+    sectors = (bytes_to_copy/FLASH_SECTOR_SIZE) + ((bytes_to_copy % FLASH_SECTOR_SIZE) != 0);
+    data_to = (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE);
 
-    SPI_CS_High();
+    for (i=0; i<sectors; i++) {
+        flash_sector_erase(&flashctrl_dev, addr);
+        addr += FLASH_SECTOR_SIZE;
+    }
 
-    strncpy(menu_row1, "Firmware updated", LCD_ROW_LEN+1);
-    strncpy(menu_row2, "please restart", LCD_ROW_LEN+1);
-    ui_disp_menu(1);
+    if (fs_csize == 1) {
+        cl_iter = 1;
+        cl_soffs = 0;
+    } else {
+        cl_iter = 0;
+        cl_soffs = 1;
+    }
+
+    // Write data
+    while (bytes_to_copy > 0) {
+        bytes_read = (bytes_to_copy > SD_BLK_SIZE) ? SD_BLK_SIZE : bytes_to_copy;
+        res = SD_Read(&sdcard_dev, databuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
+        //TODO: retry if read fails
+
+        bytes_to_copy -= bytes_read;
+        for (i=0; i<bytes_read; i++)
+            databuf[i] = bitswap8(databuf[i]);
+        for (i=0; i<bytes_read; i+=4)
+            *data_to++ = *((uint32_t*)&databuf[i]);
+
+        cl_soffs += 1;
+        if (cl_soffs == fs_csize) {
+            cl_iter += 1;
+            cl_soffs = 0;
+        }
+    }
+
+    // flush command FIFO before FPGA reconfiguration start
+    *(volatile uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE);
+
+    rem_reconfig_dev.regs->reconfig_start = 1;
+
     while (1) {}
-
-    return 0;
-
-failure:
-    SPI_CS_High();
-
-    switch (retval) {
-        case SD_NOINIT:
-            errmsg = "No SD card det.";
-            break;
-        case FW_IMAGE_ERROR:
-            errmsg = "Invalid image";
-            break;
-        case FW_HDR_ERROR:
-            errmsg = "Invalid header";
-            break;
-        case FW_HDR_CRC_ERROR:
-            errmsg = "Invalid hdr CRC";
-            break;
-        case FW_DATA_CRC_ERROR:
-            errmsg = "Invalid data CRC";
-            break;
-        case FW_UPD_CANCELLED:
-            errmsg = "Update cancelled";
-            break;
-        default:
-            errmsg = "SD/Flash error";
-            break;
-    }
-    strncpy(menu_row2, errmsg, LCD_ROW_LEN+1);
-    ui_disp_menu(1);
-    usleep(1000000);
-
-    // Critical error, retry update
-    if ((retval < 0) && (retries > 0)) {
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "Retrying update");
-        retries--;
-        goto update_init;
-    }
-
-    render_osd_page();
-    return -1;
 }

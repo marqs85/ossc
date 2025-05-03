@@ -293,6 +293,27 @@
          type = "int";
       }
    }
+   element remote_update_0
+   {
+      datum _sortIndex
+      {
+         value = "16";
+         type = "int";
+      }
+   }
+   element remote_update_0.avl_csr
+   {
+      datum _lockedAddress
+      {
+         value = "1";
+         type = "boolean";
+      }
+      datum baseAddress
+      {
+         value = "172032";
+         type = "String";
+      }
+   }
    element sc_config_0
    {
       datum _sortIndex
@@ -578,6 +599,21 @@
   <parameter name="SYNCHRONOUS_EDGES" value="deassert" />
   <parameter name="USE_RESET_REQUEST" value="0" />
  </module>
+ <module
+   name="remote_update_0"
+   kind="altera_remote_update"
+   version="24.1"
+   enabled="1">
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="8" />
+  <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
+  <parameter name="DEVICE" value="EP4CE15E22C8" />
+  <parameter name="DEVICE_FAMILY" value="Cyclone IV E" />
+  <parameter name="GUI_config_device" value="EPCS16" />
+  <parameter name="check_app_pof" value="false" />
+  <parameter name="check_avalon_interface" value="true" />
+  <parameter name="m_support_write_config_check" value="false" />
+  <parameter name="operation_mode" value="REMOTE" />
+ </module>
  <module name="sc_config_0" kind="sc_config" version="1.0" enabled="1" />
  <module name="timer_0" kind="altera_avalon_timer" version="24.1" enabled="1">
   <parameter name="alwaysRun" value="false" />
@@ -670,6 +706,15 @@
    end="intel_generic_serial_flash_interface_top_0.avl_csr">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x00020100" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="24.1"
+   start="ibex_0.avalon_master_bus_data"
+   end="remote_update_0.avl_csr">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0002a000" />
   <parameter name="defaultConnection" value="false" />
  </connection>
  <connection
@@ -820,6 +865,11 @@
    kind="clock"
    version="24.1"
    start="clk_27.clk"
+   end="remote_update_0.clock" />
+ <connection
+   kind="clock"
+   version="24.1"
+   start="clk_27.clk"
    end="sc_config_0.clock_sink" />
  <connection
    kind="clock"
@@ -894,6 +944,11 @@
    version="24.1"
    start="clk_27.clk_reset"
    end="intel_generic_serial_flash_interface_top_0.reset" />
+ <connection
+   kind="reset"
+   version="24.1"
+   start="clk_27.clk_reset"
+   end="remote_update_0.reset" />
  <connection
    kind="reset"
    version="24.1"

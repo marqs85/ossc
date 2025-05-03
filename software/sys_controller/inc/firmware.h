@@ -20,6 +20,7 @@
 #ifndef FIRMWARE_H_
 #define FIRMWARE_H_
 
+#include <stdint.h>
 #include "alt_types.h"
 #include "sysconfig.h"
 
@@ -40,23 +41,29 @@
 
 #define FW_UPDATE_RETRIES       3
 
-#define FW_IMAGE_ERROR          100
-#define FW_HDR_ERROR            101
-#define FW_HDR_CRC_ERROR        102
-#define FW_DATA_CRC_ERROR       103
-#define FW_UPD_CANCELLED        104
-
 typedef struct {
     char fw_key[4];
-    alt_u8 version_major;
-    alt_u8 version_minor;
+    uint8_t version_major;
+    uint8_t version_minor;
     char version_suffix[8];
-    alt_u32 hdr_len;
-    alt_u32 data_len;
-    alt_u32 data_crc;
-    alt_u32 hdr_crc;
-} fw_hdr;
+    uint32_t hdr_len;
+    uint32_t data_len;
+    uint32_t data_crc;
+    char padding[482];
+    uint32_t hdr_crc;
+} __attribute__((packed)) fw_hdr;
+
+typedef struct {
+    uint32_t unused[29];
+    uint32_t reconfig_start;
+} rem_update_regs;
+
+typedef struct {
+    volatile rem_update_regs *regs;
+} rem_update_dev;
 
 int fw_update();
+
+void fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec);
 
 #endif

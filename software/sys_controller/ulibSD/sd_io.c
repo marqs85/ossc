@@ -94,11 +94,11 @@ DWORD __SD_Power_Of_Two(BYTE e)
     return(partial);
 }
 
-inline void __SD_Assert(void){
+inline void __attribute__((flatten, __section__(".text_bram"))) __SD_Assert(void){
     SPI_CS_Low();
 }
 
-inline void __SD_Deassert(void){
+inline void __attribute__((flatten, __section__(".text_bram"))) __SD_Deassert(void){
     SPI_CS_High();
 }
 
@@ -107,7 +107,7 @@ void __SD_Speed_Transfer(BYTE throttle) {
     else SPI_Freq_Low();
 }
 
-BYTE __SD_Send_Cmd(BYTE cmd, DWORD arg)
+BYTE __attribute__((noinline, flatten, __section__(".text_bram"))) __SD_Send_Cmd(BYTE cmd, DWORD arg)
 {
     BYTE wiredata[10];
     BYTE crc, res;
@@ -361,7 +361,7 @@ SDRESULTS SD_Init(SD_DEV *dev)
 #endif
 }
 
-SDRESULTS SD_Read(SD_DEV *dev, void *dat, DWORD sector, WORD ofs, WORD cnt)
+SDRESULTS __attribute__((noinline, flatten, __section__(".text_bram"))) SD_Read(SD_DEV *dev, void *dat, DWORD sector, WORD ofs, WORD cnt)
 {
 #if defined(_M_IX86)    // x86
     // Check the sector query

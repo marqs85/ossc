@@ -130,7 +130,7 @@ alt_u32 I2C_read(alt_u32 base,alt_u32 last)
 int I2C_write
             assumes that any addressing and start
             has already been done.
-            writes one byte of data from the slave.  
+            writes one byte of data from the slave.
             If last is set the stop bit set.
 inputs
       base = the base address of the component
@@ -182,7 +182,7 @@ alt_u32 I2C_write(alt_u32 base,alt_u8 data, alt_u32 last)
 
 }
 
-void SPI_read(alt_u32 base, alt_u8 *rdata, int len)
+void __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_read(alt_u32 base, alt_u8 *rdata, int len)
 {
     int i;
 
@@ -197,7 +197,7 @@ void SPI_read(alt_u32 base, alt_u8 *rdata, int len)
     }
 }
 
-void SPI_write(alt_u32 base, const alt_u8 *wdata, int len)
+void __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_write(alt_u32 base, const alt_u8 *wdata, int len)
 {
     int i;
 

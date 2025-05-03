@@ -15,11 +15,11 @@ void SPI_Init (void) {
     I2C_init(SD_SPI_BASE,ALT_CPU_FREQ,400000);
 }
 
-void SPI_W(const BYTE *wd, int len) {
+void __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_W(const BYTE *wd, int len) {
     SPI_write(SD_SPI_BASE, wd, len);
 }
 
-void SPI_R(BYTE *rd, int len) {
+void __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_R(BYTE *rd, int len) {
     SPI_read(SD_SPI_BASE, rd, len);
 }
 
@@ -34,16 +34,17 @@ BYTE SPI_RW (BYTE d) {
     return w;
 }
 
-void SPI_Release (void) {
+void __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_Release (void) {
+    SPI_CS_High();
     return;
 }
 
-inline void SPI_CS_Low (void) {
+inline void __attribute__((flatten, __section__(".text_bram"))) SPI_CS_Low (void) {
     sys_ctrl &= ~SD_SPI_SS_N;
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }
 
-inline void SPI_CS_High (void){
+inline void __attribute__((flatten, __section__(".text_bram"))) SPI_CS_High (void){
     sys_ctrl |= SD_SPI_SS_N;
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 }
@@ -56,7 +57,7 @@ inline void SPI_Freq_Low (void) {
     I2C_init(SD_SPI_BASE,ALT_CPU_FREQ,400000);
 }
 
-int SPI_Timer_On (WORD ms) {
+int __attribute__((noinline, flatten, __section__(".text_bram"))) SPI_Timer_On (WORD ms) {
     if (!sd_timer_ts) {
         sd_timer_ts = alt_timestamp() + ms*(TIMER_0_FREQ/1000);
         return 0;
@@ -64,11 +65,11 @@ int SPI_Timer_On (WORD ms) {
     return 1;
 }
 
-inline BOOL SPI_Timer_Status (void) {
+inline BOOL __attribute__((flatten, __section__(".text_bram"))) SPI_Timer_Status (void) {
     return alt_timestamp() < sd_timer_ts;
 }
 
-inline void SPI_Timer_Off (void) {
+inline void __attribute__((flatten, __section__(".text_bram"))) SPI_Timer_Off (void) {
     sd_timer_ts = 0;
     return;
 }
