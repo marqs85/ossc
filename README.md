@@ -13,6 +13,7 @@ Requirements for building and debugging firmware
 * Software
   * [Altera Quartus II + Cyclone IV support](http://dl.altera.com/?edition=lite) (v 16.1 or higher - free Lite Edition suffices)
   * [RISC-V GNU Compiler Toolchain](https://github.com/riscv/riscv-gnu-toolchain)
+  * [Picolibc library for RISC-V](https://github.com/picolibc/picolibc)
   * GCC (or another C compiler) for host architecture (for building a SD card image)
   * Make
   * [iconv](https://en.wikipedia.org/wiki/Iconv) (for building with JP lang menu)
@@ -20,19 +21,14 @@ Requirements for building and debugging firmware
 
 Architecture
 ------------------------------
-* [Reference board schematics](https://github.com/marqs85/ossc_pcb/raw/v1.6/ossc_board.pdf)
+* [Reference board schematics](https://github.com/marqs85/ossc_pcb/raw/v1.8/doc/ossc_board.pdf)
 * [Reference PCB project](https://github.com/marqs85/ossc_pcb)
 
 
 SW toolchain build procedure
 --------------------------
-1. Download, configure, build and install RISC-V toolchain with Newlib + RV32EMC support:
-~~~~
-git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
-cd riscv-gnu-toolchain
-./configure --prefix=/opt/riscv --with-arch=rv32emc --with-abi=ilp32e
-sudo make    # sudo needed if installing under default /opt/riscv location
-~~~~
+1. Download and install RISC-V GNU toolchain and Picolibc
+
 2. Compile custom binary to IHEX converter:
 ~~~~
 gcc tools/bin2hex.c -o tools/bin2hex
@@ -51,9 +47,10 @@ git submodule update --init --recursive ip/pulpino_qsys
     * Load platform configuration (sys.qsys)
     * Generate output (Generate -> Generate HDL, Generate)
     * Close Platform Designer
+    * Run "patch -p0 <scripts/qsys.patch" to patch generated files to optimize block RAM usage
     * Run "touch software/sys_controller_bsp/bsp_timestamp" to acknowledge QSYS update
 3. Generate the FPGA bitstream (Processing -> Start Compilation)
-4. Ensure that there are no severe timing violations by looking into Timing Analyzer report
+4. Ensure that there are no timing violations by looking into Timing Analyzer report
 
 NOTE: If the software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) was not up to date at the time of compilation, bitstream can be quickly rebuilt with updated hex by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
 
