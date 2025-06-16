@@ -431,6 +431,11 @@
    type="reset"
    dir="end" />
  <interface
+   name="sc_config_0_lc_ram_if"
+   internal="sc_config_0.lc_ram_if"
+   type="conduit"
+   dir="end" />
+ <interface
    name="sc_config_0_sc_if"
    internal="sc_config_0.sc_if"
    type="conduit"
@@ -457,7 +462,11 @@
   <parameter name="dedicated_spi" value="1" />
  </module>
  <module name="ibex_0" kind="ibex" version="1.0" enabled="1">
-  <parameter name="AUTO_INTERRUPT_RECEIVER_INTERRUPTS_USED" value="15" />
+  <parameter name="AUTO_EXTERNAL_IRQ_INTERRUPTS_USED" value="0" />
+  <parameter name="AUTO_FAST_IRQ_INTERRUPTS_USED" value="7" />
+  <parameter name="AUTO_NOT_MASKABLE_IRQ_INTERRUPTS_USED" value="0" />
+  <parameter name="AUTO_SOFTWARE_IRQ_INTERRUPTS_USED" value="0" />
+  <parameter name="AUTO_TIMER_IRQ_INTERRUPTS_USED" value="1" />
   <parameter name="IBEX_ICACHE" value="true" />
   <parameter name="IBEX_RV32E" value="true" />
  </module>
@@ -884,30 +893,30 @@
  <connection
    kind="interrupt"
    version="24.1"
-   start="ibex_0.interrupt_receiver"
-   end="i2c_opencores_1.interrupt_sender">
-  <parameter name="irqNumber" value="0" />
- </connection>
- <connection
-   kind="interrupt"
-   version="24.1"
-   start="ibex_0.interrupt_receiver"
+   start="ibex_0.fast_irq"
    end="i2c_opencores_0.interrupt_sender">
   <parameter name="irqNumber" value="1" />
  </connection>
  <connection
    kind="interrupt"
    version="24.1"
-   start="ibex_0.interrupt_receiver"
-   end="jtag_uart_0.irq">
+   start="ibex_0.fast_irq"
+   end="i2c_opencores_1.interrupt_sender">
   <parameter name="irqNumber" value="2" />
  </connection>
  <connection
    kind="interrupt"
    version="24.1"
-   start="ibex_0.interrupt_receiver"
+   start="ibex_0.fast_irq"
+   end="jtag_uart_0.irq">
+  <parameter name="irqNumber" value="0" />
+ </connection>
+ <connection
+   kind="interrupt"
+   version="24.1"
+   start="ibex_0.timer_irq"
    end="timer_0.irq">
-  <parameter name="irqNumber" value="3" />
+  <parameter name="irqNumber" value="0" />
  </connection>
  <connection
    kind="reset"

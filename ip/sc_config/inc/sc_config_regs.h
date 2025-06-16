@@ -165,6 +165,8 @@ typedef struct {
     sl_config_reg sl_config;
     sl_config2_reg sl_config2;
     sl_config3_reg sl_config3;
+    uint32_t padding[1];
+    uint32_t lumacode_pal_ram[496];
 } sc_regs;
 
 #endif //SC_CONFIG_REGS_H_

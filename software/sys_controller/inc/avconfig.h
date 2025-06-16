@@ -123,6 +123,7 @@ typedef struct {
     alt_u8 reverse_lpf;
     alt_u8 shmask_mode;
     alt_u8 lumacode_mode;
+    alt_u8 lumacode_pal;
 
     /* AFE settings */
     alt_u8 sync_vth;

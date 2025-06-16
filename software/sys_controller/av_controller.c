@@ -126,6 +126,10 @@ volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
 volatile pll_reconfig_regs *pll_reconfig = (volatile pll_reconfig_regs*)PLL_RECONFIG_0_BASE;
 
+#include "src/lumacode_palettes.c"
+const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal};
+int loaded_lc_palette = -1;
+
 void ui_disp_menu(alt_u8 osd_mode)
 {
     alt_u8 menu_page;
@@ -457,6 +461,12 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     sl_config_reg sl_config = {.data=0x00000000};
     sl_config2_reg sl_config2 = {.data=0x00000000};
     sl_config3_reg sl_config3 = {.data=0x00000000};
+
+    if (avconfig->lumacode_mode && (avconfig->lumacode_pal != loaded_lc_palette)) {
+        for (i=0; i<(sizeof(lc_palette_set)/4); i++)
+            sc->lumacode_pal_ram[i] = lc_palette_set_list[avconfig->lumacode_pal]->data[i];
+        loaded_lc_palette = avconfig->lumacode_pal;
+    }
 
     // Set input params
     hv_in_config.h_total = vm_in->timings.h_total;

@@ -52,6 +52,7 @@
       <File Name="sys_controller/src/video_modes.c"/>
       <File Name="sys_controller/src/fat16_export.c"/>
       <File Name="sys_controller/src/lcd.c"/>
+      <File Name="sys_controller/src/lumacode_palettes.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="ic_drivers">
       <VirtualDirectory Name="pcm1862">

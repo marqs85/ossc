@@ -24,7 +24,7 @@ module sc_config_top(
     // avalon slave
     input [31:0] avalon_s_writedata,
     output reg [31:0] avalon_s_readdata,
-    input [3:0] avalon_s_address,
+    input [8:0] avalon_s_address,
     input [3:0] avalon_s_byteenable,
     input avalon_s_write,
     input avalon_s_read,
@@ -45,24 +45,31 @@ module sc_config_top(
     output [31:0] misc_config_o,
     output [31:0] sl_config_o,
     output [31:0] sl_config2_o,
-    output [31:0] sl_config3_o
+    output [31:0] sl_config3_o,
+    // Lumacode interface
+    input lumacode_clk_i,
+    input [8:0] lumacode_addr_i,
+    input lumacode_rden_i,
+    output [31:0] lumacode_data_o
 );
 
-localparam FE_STATUS_REGNUM =       4'h0;
-localparam FE_STATUS2_REGNUM =      4'h1;
-localparam LT_STATUS_REGNUM =       4'h2;
-localparam HV_IN_CONFIG_REGNUM =    4'h3;
-localparam HV_IN_CONFIG2_REGNUM =   4'h4;
-localparam HV_IN_CONFIG3_REGNUM =   4'h5;
-localparam HV_OUT_CONFIG_REGNUM =   4'h6;
-localparam HV_OUT_CONFIG2_REGNUM =  4'h7;
-localparam HV_OUT_CONFIG3_REGNUM =  4'h8;
-localparam XY_OUT_CONFIG_REGNUM =   4'h9;
-localparam XY_OUT_CONFIG2_REGNUM =  4'ha;
-localparam MISC_CONFIG_REGNUM =     4'hb;
-localparam SL_CONFIG_REGNUM =       4'hc;
-localparam SL_CONFIG2_REGNUM =      4'hd;
-localparam SL_CONFIG3_REGNUM =      4'he;
+localparam FE_STATUS_REGNUM =       9'h0;
+localparam FE_STATUS2_REGNUM =      9'h1;
+localparam LT_STATUS_REGNUM =       9'h2;
+localparam HV_IN_CONFIG_REGNUM =    9'h3;
+localparam HV_IN_CONFIG2_REGNUM =   9'h4;
+localparam HV_IN_CONFIG3_REGNUM =   9'h5;
+localparam HV_OUT_CONFIG_REGNUM =   9'h6;
+localparam HV_OUT_CONFIG2_REGNUM =  9'h7;
+localparam HV_OUT_CONFIG3_REGNUM =  9'h8;
+localparam XY_OUT_CONFIG_REGNUM =   9'h9;
+localparam XY_OUT_CONFIG2_REGNUM =  9'ha;
+localparam MISC_CONFIG_REGNUM =     9'hb;
+localparam SL_CONFIG_REGNUM =       9'hc;
+localparam SL_CONFIG2_REGNUM =      9'hd;
+localparam SL_CONFIG3_REGNUM =      9'he;
+
+localparam LUMACODE_RAM_START =     9'h10;
 
 reg [31:0] config_reg[HV_IN_CONFIG_REGNUM:SL_CONFIG3_REGNUM] /* synthesis ramstyle = "logic" */;
 
@@ -117,5 +124,52 @@ assign misc_config_o = config_reg[MISC_CONFIG_REGNUM];
 assign sl_config_o = config_reg[SL_CONFIG_REGNUM];
 assign sl_config2_o = config_reg[SL_CONFIG2_REGNUM];
 assign sl_config3_o = config_reg[SL_CONFIG3_REGNUM];
+
+
+// Lumacode palette RAM
+altsyncram lumacode_pal_ram (
+            .address_a (avalon_s_address),
+            .address_b (lumacode_addr_i),
+            .clock0 (clk_i),
+            .clock1 (lumacode_clk_i),
+            .data_a (avalon_s_writedata),
+            .rden_b (lumacode_rden_i),
+            .wren_a (avalon_s_chipselect && avalon_s_write && (avalon_s_address >= LUMACODE_RAM_START)),
+            .q_b (lumacode_data_o),
+            .aclr0 (1'b0),
+            .aclr1 (1'b0),
+            .addressstall_a (1'b0),
+            .addressstall_b (1'b0),
+            .byteena_a (1'b1),
+            .byteena_b (1'b1),
+            .clocken0 (1'b1),
+            .clocken1 (1'b1),
+            .clocken2 (1'b1),
+            .clocken3 (1'b1),
+            .data_b ({32{1'b1}}),
+            .eccstatus (),
+            .q_a (),
+            .rden_a (1'b1),
+            .wren_b (1'b0));
+defparam
+    lumacode_pal_ram.address_aclr_b = "NONE",
+    lumacode_pal_ram.address_reg_b = "CLOCK1",
+    lumacode_pal_ram.clock_enable_input_a = "BYPASS",
+    lumacode_pal_ram.clock_enable_input_b = "BYPASS",
+    lumacode_pal_ram.clock_enable_output_b = "BYPASS",
+    lumacode_pal_ram.intended_device_family = "Cyclone IV E",
+    lumacode_pal_ram.lpm_type = "altsyncram",
+    lumacode_pal_ram.numwords_a = 512,
+    lumacode_pal_ram.numwords_b = 512,
+    lumacode_pal_ram.operation_mode = "DUAL_PORT",
+    lumacode_pal_ram.outdata_aclr_b = "NONE",
+    lumacode_pal_ram.outdata_reg_b = "UNREGISTERED",
+    lumacode_pal_ram.power_up_uninitialized = "FALSE",
+    lumacode_pal_ram.rdcontrol_reg_b = "CLOCK1",
+    lumacode_pal_ram.widthad_a = 9,
+    lumacode_pal_ram.widthad_b = 9,
+    lumacode_pal_ram.width_a = 32,
+    lumacode_pal_ram.width_b = 32,
+    lumacode_pal_ram.width_byteena_a = 1;
 
 endmodule

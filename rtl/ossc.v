@@ -129,6 +129,10 @@ wire [11:0] lt_stb_result;
 wire lt_trig_waiting;
 wire lt_finished;
 
+wire [31:0] lumacode_data;
+wire [8:0] lumacode_addr;
+wire lumacode_rden;
+
 reg remove_event_prev;
 reg [14:0] to_ctr, to_ctr_ms;
 wire lcd_bl_timeout;
@@ -195,6 +199,7 @@ tvp7002_frontend u_tvp_frontend (
     .hv_in_config2(hv_in_config2),
     .hv_in_config3(hv_in_config3),
     .misc_config(misc_config),
+    .lumacode_data(lumacode_data),
     .R_o(TVP_R_post),
     .G_o(TVP_G_post),
     .B_o(TVP_B_post),
@@ -211,7 +216,9 @@ tvp7002_frontend u_tvp_frontend (
     .sof_scaler(TVP_sof_scaler),
     .pcnt_field(TVP_fe_pcnt_field),
     .hsync_width(TVP_hsync_width),
-    .sync_active(TVP_sync_active)
+    .sync_active(TVP_sync_active),
+    .lumacode_addr(lumacode_addr),
+    .lumacode_rden(lumacode_rden)
 );
 
 // Insert synchronizers to async inputs (synchronize to CPU clock)
@@ -402,6 +409,10 @@ sys sys_inst(
     .sc_config_0_sc_if_sl_config_o          (sl_config),
     .sc_config_0_sc_if_sl_config2_o         (sl_config2),
     .sc_config_0_sc_if_sl_config3_o         (sl_config3),
+    .sc_config_0_lc_ram_if_lumacode_clk_i   (TVP_PCLK_i),
+    .sc_config_0_lc_ram_if_lumacode_addr_i  (lumacode_addr),
+    .sc_config_0_lc_ram_if_lumacode_rden_i  (lumacode_rden),
+    .sc_config_0_lc_ram_if_lumacode_data_o  (lumacode_data),
     .osd_generator_0_osd_if_vclk            (PCLK_sc),
     .osd_generator_0_osd_if_xpos            (xpos_sc),
     .osd_generator_0_osd_if_ypos            (ypos_sc),

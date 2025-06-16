@@ -89,6 +89,18 @@ typedef struct {
     avconfig_t cc;
 } avmode_t;
 
+typedef union {
+    struct {
+        uint32_t c64_pal[16];
+        uint32_t zx_pal[16];
+        uint32_t msx_pal[16];
+        uint32_t nes_pal[64];
+        uint32_t tia_pal[128];
+        uint32_t gtia_pal[256];
+    } __attribute__((packed, __may_alias__));
+    uint32_t data[496];
+} lc_palette_set;
+
 void ui_disp_menu(alt_u8 osd_mode);
 void ui_disp_status(alt_u8 refresh_osd_timer);
 

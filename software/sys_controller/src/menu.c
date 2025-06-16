@@ -82,6 +82,7 @@ static const char* const mask_color_desc[] = { "Black", "Blue", "Green", "Cyan",
 static const char* const av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
 static const char* const shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
 static const char* const lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
+static const char* const lumacode_pal_desc[] = { "PAL" };
 static const char* const adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
 static const char* const fpga_pll_bw_desc[] = { "High", "Low" };
 
@@ -159,6 +160,7 @@ MENU(menu_vinputproc, P99_PROTECT({ \
     { "ALC V filter",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.alc_v_filter,  OPT_NOWRAP, 0, ALC_V_FILTER_MAX, alc_v_filter_disp } } },
     { "ALC H filter",                           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.alc_h_filter,  OPT_NOWRAP, 0, ALC_H_FILTER_MAX, alc_h_filter_disp } } },
     { "Lumacode",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.lumacode_mode,  OPT_WRAP,   SETTING_ITEM(lumacode_mode_desc) } } },
+    { "Lc palette set",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.lumacode_pal,   OPT_WRAP,   SETTING_ITEM(lumacode_pal_desc) } } },
 }))
 
 MENU(menu_sampling, P99_PROTECT({ \

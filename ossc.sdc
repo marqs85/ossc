@@ -53,8 +53,7 @@ foreach_in_collection c [get_clocks pclk_*_out] {
 set_false_path -to [remove_from_collection [all_outputs] $critoutputs_hdmi]
 
 # Lumacode (constrained to max. 60MHz sampling)
-set_max_delay 16.6 -from [get_clocks pclk_tvp_high] -through [get_cells tvp7002_frontend:u_tvp_frontend|lc_code*]
-set_max_delay 16.6 -from [get_clocks pclk_tvp_high] -through [get_cells u_tvp_frontend|lc_atari_*]
+set_max_delay 16.6 -from [get_registers sys:sys_inst|sc_config_top:sc_config_0|altsyncram:lumacode_pal_ram|*]
 
 
 ### CPU/scanconverter clock relations ###
