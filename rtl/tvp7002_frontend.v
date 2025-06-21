@@ -128,7 +128,7 @@ wire [8:0] V_BACKPORCH = hv_in_config3[12:4];
 
 wire [5:0] MISC_REV_LPF_STR = (misc_config[11:7] + 6'd16);
 wire MISC_REV_LPF_ENABLE = (misc_config[11:7] != 5'h0);
-wire [2:0] MISC_LUMACODE_MODE = misc_config[25:23];
+wire [2:0] MISC_LUMACODE_MODE = misc_config[14:12];
 
 wire [11:0] h_cnt_ref = (vsync_i_type == VSYNC_SEPARATED) ? h_cnt_sogref : h_cnt;
 wire [11:0] even_min_thold = (H_TOTAL / 12'd4);

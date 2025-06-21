@@ -133,7 +133,7 @@ wire [31:0] lumacode_data;
 wire [8:0] lumacode_addr;
 wire lumacode_rden;
 
-reg remove_event_prev;
+reg remote_event_prev;
 reg [14:0] to_ctr, to_ctr_ms;
 wire lcd_bl_timeout;
 
@@ -142,6 +142,8 @@ wire osd_enable_pre;
 wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos_sc;
 wire [10:0] ypos_sc;
+wire [3:0] x_ctr_shmask, y_ctr_shmask;
+wire [10:0] shmask_data;
 
 wire resync_indicator = (warn_pll_lock_lost != 0)  | (resync_led_ctr != 0);
 wire LED_R_i = lt_active ? lt_trig_waiting : resync_indicator;
@@ -263,7 +265,7 @@ end
 // LCD backlight timeout counters
 always @(posedge clk27)
 begin
-    if (remote_event != remove_event_prev) begin
+    if (remote_event != remote_event_prev) begin
         to_ctr <= 15'd0;
         to_ctr_ms <= 15'd0;
     end else begin
@@ -283,7 +285,7 @@ begin
         2'b11:  lcd_bl_timeout <= (to_ctr_ms >= 30000); //30s
     endcase
 
-    remove_event_prev <= remote_event;
+    remote_event_prev <= remote_event;
 end
 
 // Generate a warning signal from sync lock loss
@@ -409,6 +411,10 @@ sys sys_inst(
     .sc_config_0_sc_if_sl_config_o          (sl_config),
     .sc_config_0_sc_if_sl_config2_o         (sl_config2),
     .sc_config_0_sc_if_sl_config3_o         (sl_config3),
+    .sc_config_0_shmask_if_vclk             (PCLK_sc),
+    .sc_config_0_shmask_if_shmask_xpos      (x_ctr_shmask),
+    .sc_config_0_shmask_if_shmask_ypos      (y_ctr_shmask),
+    .sc_config_0_shmask_if_shmask_data      (shmask_data),
     .sc_config_0_lc_ram_if_lumacode_clk_i   (TVP_PCLK_i),
     .sc_config_0_lc_ram_if_lumacode_addr_i  (lumacode_addr),
     .sc_config_0_lc_ram_if_lumacode_rden_i  (lumacode_rden),
@@ -475,6 +481,9 @@ scanconverter #(
     .DE_o(DE_sc),
     .xpos_o(xpos_sc),
     .ypos_o(ypos_sc),
+    .x_ctr_shmask(x_ctr_shmask),
+    .y_ctr_shmask(y_ctr_shmask),
+    .shmask_data(shmask_data),
     .resync_strobe(resync_strobe_i),
     .emif_br_clk(1'b0),
     .emif_br_reset(1'b0),

@@ -100,7 +100,7 @@ set_interface_property avalon_s PORT_NAME_MAP ""
 set_interface_property avalon_s CMSIS_SVD_VARIABLES ""
 set_interface_property avalon_s SVD_ADDRESS_GROUP ""
 
-add_interface_port avalon_s avalon_s_address address Input 9
+add_interface_port avalon_s avalon_s_address address Input 10
 add_interface_port avalon_s avalon_s_writedata writedata Input 32
 add_interface_port avalon_s avalon_s_readdata readdata Output 32
 add_interface_port avalon_s avalon_s_byteenable byteenable Input 4
@@ -158,6 +158,24 @@ add_interface_port sc_if misc_config_o misc_config_o Output 32
 add_interface_port sc_if sl_config_o sl_config_o Output 32
 add_interface_port sc_if sl_config2_o sl_config2_o Output 32
 add_interface_port sc_if sl_config3_o sl_config3_o Output 32
+
+
+#
+# connection point shmask_if
+#
+add_interface shmask_if conduit end
+set_interface_property shmask_if associatedClock ""
+set_interface_property shmask_if associatedReset ""
+set_interface_property shmask_if ENABLED true
+set_interface_property shmask_if EXPORT_OF ""
+set_interface_property shmask_if PORT_NAME_MAP ""
+set_interface_property shmask_if CMSIS_SVD_VARIABLES ""
+set_interface_property shmask_if SVD_ADDRESS_GROUP ""
+
+add_interface_port shmask_if vclk vclk Input 1
+add_interface_port shmask_if shmask_xpos shmask_xpos Input 4
+add_interface_port shmask_if shmask_ypos shmask_ypos Input 4
+add_interface_port shmask_if shmask_data shmask_data Output 11
 
 
 #

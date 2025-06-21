@@ -440,6 +440,11 @@
    internal="sc_config_0.sc_if"
    type="conduit"
    dir="end" />
+ <interface
+   name="sc_config_0_shmask_if"
+   internal="sc_config_0.shmask_if"
+   type="conduit"
+   dir="end" />
  <module name="clk_27" kind="clock_source" version="24.1" enabled="1">
   <parameter name="clockFrequency" value="27000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -516,9 +521,9 @@
   <parameter name="simInputCharacterStream" value="" />
   <parameter name="simInteractiveOptions">NO_INTERACTIVE_WINDOWS</parameter>
   <parameter name="useRegistersForReadBuffer" value="true" />
-  <parameter name="useRegistersForWriteBuffer" value="true" />
+  <parameter name="useRegistersForWriteBuffer" value="false" />
   <parameter name="useRelativePathForSimFile" value="false" />
-  <parameter name="writeBufferDepth" value="16" />
+  <parameter name="writeBufferDepth" value="64" />
   <parameter name="writeIRQThreshold" value="8" />
  </module>
  <module

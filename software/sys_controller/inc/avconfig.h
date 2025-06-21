@@ -122,6 +122,7 @@ typedef struct {
     alt_u8 mask_color;
     alt_u8 reverse_lpf;
     alt_u8 shmask_mode;
+    alt_u8 shmask_str;
     alt_u8 lumacode_mode;
     alt_u8 lumacode_pal;
 

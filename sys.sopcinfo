@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="sys" kind="sys" version="1.0" fabric="QSYS">
  <!-- Format version 24.1 1077 (Future versions may contain additional information.) -->
- <!-- 2025.06.16.21:04:21 -->
+ <!-- 2025.06.21.10:48:12 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1750097061</value>
+  <value>1750492092</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -3578,7 +3578,7 @@ parameters are a RESULT of the module parameters. -->
     <slaveName>avalon_s</slaveName>
     <name>sc_config_0.avalon_s</name>
     <baseAddress>139264</baseAddress>
-    <span>2048</span>
+    <span>4096</span>
    </memoryBlock>
    <memoryBlock>
     <isBridge>false</isBridge>
@@ -5595,7 +5595,7 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.WRITE_DEPTH</name>
-   <value>16</value>
+   <value>64</value>
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.WRITE_THRESHOLD</name>
@@ -5675,7 +5675,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="useRegistersForWriteBuffer">
    <type>boolean</type>
-   <value>true</value>
+   <value>false</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -5691,7 +5691,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="writeBufferDepth">
    <type>int</type>
-   <value>16</value>
+   <value>64</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -5723,7 +5723,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="WR_WIDTHU">
    <type>int</type>
-   <value>4</value>
+   <value>6</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -5739,7 +5739,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="write_le">
    <type>java.lang.String</type>
-   <value>OFF</value>
+   <value>ON</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -5755,7 +5755,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="HEX_WRITE_DEPTH_STR">
    <type>int</type>
-   <value>16</value>
+   <value>64</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -11874,7 +11874,7 @@ parameters are a RESULT of the module parameters. -->
    </parameter>
    <parameter name="addressSpan">
     <type>java.math.BigInteger</type>
-    <value>2048</value>
+    <value>4096</value>
     <derived>true</derived>
     <enabled>true</enabled>
     <visible>false</visible>
@@ -12173,7 +12173,7 @@ parameters are a RESULT of the module parameters. -->
    <port>
     <name>avalon_s_address</name>
     <direction>Input</direction>
-    <width>9</width>
+    <width>10</width>
     <role>address</role>
    </port>
    <port>
@@ -12346,6 +12346,69 @@ parameters are a RESULT of the module parameters. -->
     <direction>Output</direction>
     <width>32</width>
     <role>sl_config3_o</role>
+   </port>
+  </interface>
+  <interface name="shmask_if" kind="conduit_end" version="24.1">
+   <!-- The connection points exposed by a module instance for the
+particular module parameters. Connection points and their
+parameters are a RESULT of the module parameters. -->
+   <parameter name="associatedClock">
+    <type>java.lang.String</type>
+    <value></value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="associatedReset">
+    <type>java.lang.String</type>
+    <value></value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="deviceFamily">
+    <type>java.lang.String</type>
+    <value>UNKNOWN</value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <parameter name="generateLegacySim">
+    <type>boolean</type>
+    <value>false</value>
+    <derived>false</derived>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <valid>true</valid>
+   </parameter>
+   <type>conduit</type>
+   <isStart>false</isStart>
+   <port>
+    <name>vclk</name>
+    <direction>Input</direction>
+    <width>1</width>
+    <role>vclk</role>
+   </port>
+   <port>
+    <name>shmask_xpos</name>
+    <direction>Input</direction>
+    <width>4</width>
+    <role>shmask_xpos</role>
+   </port>
+   <port>
+    <name>shmask_ypos</name>
+    <direction>Input</direction>
+    <width>4</width>
+    <role>shmask_ypos</role>
+   </port>
+   <port>
+    <name>shmask_data</name>
+    <direction>Output</direction>
+    <width>11</width>
+    <role>shmask_data</role>
    </port>
   </interface>
   <interface name="lc_ram_if" kind="conduit_end" version="24.1">
@@ -15405,7 +15468,7 @@ parameters are a RESULT of the module parameters. -->
   <version>17.1</version>
  </plugin>
  <plugin>
-  <instanceCount>10</instanceCount>
+  <instanceCount>11</instanceCount>
   <name>conduit_end</name>
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IMutableConnectionPoint</subtype>

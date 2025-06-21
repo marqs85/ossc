@@ -107,15 +107,11 @@ typedef union {
         uint8_t mask_br:4;
         uint8_t mask_color:3;
         uint8_t reverse_lpf:5;
-        uint8_t lm_deint_mode:1;
-        uint8_t nir_even_offset:1;
-        uint8_t ypbpr_cs:1;
-        uint8_t vip_enable:1;
-        uint8_t bfi_str:4;
-        uint8_t bfi_enable:1;
-        uint8_t shmask_mode:2;
         uint8_t lumacode_mode:3;
-        uint32_t misc_rsv:6;
+        uint8_t shmask_enable:1;
+        uint8_t shmask_iv_x:4;
+        uint8_t shmask_iv_y:4;
+        uint32_t misc_rsv:8;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } misc_config_reg;
@@ -149,6 +145,17 @@ typedef union {
     uint32_t data;
 } sl_config3_reg;
 
+// shmask regs
+typedef struct {
+    uint32_t data[16][16];
+} shmask_array;
+
+// lumacode palatte ram
+typedef struct {
+    uint32_t padding[16];
+    uint32_t data[496];
+} lc_pal_ram;
+
 typedef struct {
     fe_status_reg fe_status;
     fe_status2_reg fe_status2;
@@ -165,8 +172,8 @@ typedef struct {
     sl_config_reg sl_config;
     sl_config2_reg sl_config2;
     sl_config3_reg sl_config3;
-    uint32_t padding[1];
-    uint32_t lumacode_pal_ram[496];
+    shmask_array shmask_data_array __attribute__ ((aligned (1024)));
+    lc_pal_ram lumacode_pal_ram __attribute__ ((aligned (2048)));
 } sc_regs;
 
 #endif //SC_CONFIG_REGS_H_

@@ -44,6 +44,7 @@ extern uint8_t sl_def_iv_x, sl_def_iv_y;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 extern volatile osd_regs *osd;
 extern const int num_video_modes_plm;
+extern c_shmask_t c_shmask;
 
 alt_u16 tc_h_samplerate, tc_h_samplerate_adj, tc_h_synclen, tc_h_bporch, tc_h_active, tc_v_synclen, tc_v_bporch, tc_v_active, tc_sampler_phase, tc_h_mask, tc_v_mask;
 alt_u8 menu_active;
@@ -80,7 +81,7 @@ static const char* const rgsb_ypbpr_desc[] = { "RGsB", "YPbPr" };
 static const char* const auto_input_desc[] = { "Off", "Current input", "All inputs" };
 static const char* const mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White" };
 static const char* const av3_alt_rgb_desc[] = { "Off", "AV1", "AV2" };
-static const char* const shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM" };
+static const char* const shmask_mode_desc[] = { "Off", "A-Grille", "TV", "PVM", "PVM-2530", "XC-3315C", "C-1084", "JVC", "VGA", c_shmask.name };
 static const char* const lumacode_mode_desc[] = { "Off", "C64", "Spectrum", "Coleco/MSX", "NES", "Atari GTIA", "Atari VCS" };
 static const char* const lumacode_pal_desc[] = { "PAL" };
 static const char* const adc_pll_bw_desc[] = { "High", "Medium", "Low", "Ultra low" };
@@ -215,6 +216,8 @@ MENU(menu_scanlines, P99_PROTECT({ \
 
 MENU(menu_postproc, P99_PROTECT({ \
     { "Shadow mask",                             OPT_AVCONFIG_SELECTION, { .sel = { &tc.shmask_mode, OPT_WRAP,   SETTING_ITEM(shmask_mode_desc) } } },
+    //{ "Custom shadow mask",                      OPT_CUSTOMMENU,         { .cstm = { &cstm_shmask_load } } },
+    { "Sh. mask strength",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.shmask_str,  OPT_NOWRAP, 0, SCANLINESTR_MAX, sl_str_disp } } },
     { "Border color",                            OPT_AVCONFIG_SELECTION, { .sel = { &tc.mask_color,  OPT_NOWRAP,   SETTING_ITEM(mask_color_desc) } } },
     { LNG("Border brightn.","ﾏｽｸｱｶﾙｻ"),           OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.mask_br,     OPT_NOWRAP, 0, HV_MASK_MAX_BR, value_disp } } },
     //{ LNG("<DIY lat. test>","DIYﾁｴﾝﾃｽﾄ"),         OPT_FUNC_CALL,          { .fun = { latency_test, &lt_arg_info } } },

@@ -89,6 +89,17 @@ typedef struct {
     avconfig_t cc;
 } avmode_t;
 
+typedef struct {
+    uint8_t iv_x;
+    uint8_t iv_y;
+    uint16_t v[16][16];
+} shmask_data_arr;
+
+typedef struct {
+    char name[20];
+    shmask_data_arr arr;
+} c_shmask_t;
+
 typedef union {
     struct {
         uint32_t c64_pal[16];

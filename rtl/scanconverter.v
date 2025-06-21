@@ -59,6 +59,9 @@ module scanconverter (
     output DE_o,
     output [11:0] xpos_o,
     output [10:0] ypos_o,
+    output reg [3:0] x_ctr_shmask,
+    output reg [3:0] y_ctr_shmask,
+    input [11:0] shmask_data,
     output reg resync_strobe,
     input emif_br_clk,
     input emif_br_reset,
@@ -147,24 +150,18 @@ wire [4:0] SL_HYBRSTR = sl_config3[29:25];
 
 wire [3:0] MISC_MASK_BR = misc_config[3:0];
 wire [2:0] MISC_MASK_COLOR = misc_config[6:4];
-wire MISC_LM_DEINT_MODE = misc_config[12];
-wire MISC_NIR_EVEN_OFFSET = misc_config[13];
-wire [3:0] MISC_BFI_STR = misc_config[19:16];
-wire MISC_BFI_ENABLE = misc_config[20];
-wire MISC_SHMASK_ENABLE = (misc_config[22:21] != '0);
-wire [1:0] MISC_SHMASK_ID = (misc_config[22:21] - 1'b1);
+wire MISC_LM_DEINT_MODE = 1'b0;
+wire MISC_NIR_EVEN_OFFSET = 1'b0;
+wire [3:0] MISC_BFI_STR = 4'h0;
+wire MISC_BFI_ENABLE = 1'b0;
+wire MISC_SHMASK_ENABLE = misc_config[15];
+wire [3:0] MISC_SHMASK_IV_X = misc_config[19:16];
+wire [3:0] MISC_SHMASK_IV_Y = misc_config[23:20];
 
 wire [7:0] MASK_R = MISC_MASK_COLOR[2] ? {2{MISC_MASK_BR}} : 8'h00;
 wire [7:0] MASK_G = MISC_MASK_COLOR[1] ? {2{MISC_MASK_BR}} : 8'h00;
 wire [7:0] MASK_B = MISC_MASK_COLOR[0] ? {2{MISC_MASK_BR}} : 8'h00;
 
-
-/* RGB Shadow mask presets: A-Grille, TV, PVM. Data from ShadowMasks_MiSTer */
-wire [1:0] shmask_iv_x[0:2] = '{2'h3, 2'h3, 2'h2};
-wire [1:0] shmask_iv_y[0:2] = '{2'h0, 2'h1, 2'h3};
-wire [10:0] shmask_data[0:2][0:3][0:3] =    '{'{ '{11'h44c,11'h24c,11'h14c,11'h04c}, '{11'h0,11'h0,11'h0,11'h0}, '{11'h0,11'h0,11'h0,11'h0}, '{11'h0,11'h0,11'h0,11'h0}},
-                                              '{ '{11'h708,11'h44c,11'h24c,11'h14c}, '{11'h44c,11'h24c,11'h14c,11'h708}, '{11'h0,11'h0,11'h0,11'h0}, '{11'h0,11'h0,11'h0,11'h0}},
-                                              '{ '{11'h42a,11'h72a,11'h72a,11'h0}, '{11'h42a,11'h22a,11'h72a,11'h0}, '{11'h72a,11'h22a,11'h12a,11'h0}, '{11'h42a,11'h72a,11'h12a,11'h0}}};
 
 reg frame_change_sync1_reg, frame_change_sync2_reg, frame_change_prev, frame_change_resync;
 wire frame_change = frame_change_sync2_reg;
@@ -212,8 +209,6 @@ reg mask_enable_pp[PP_MASK_END:PP_TP_START] /* synthesis ramstyle = "logic" */;
 reg draw_sl_pp[(PP_SLGEN_START+1):(PP_SLGEN_END-1)] /* synthesis ramstyle = "logic" */;
 reg [3:0] x_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
 reg [2:0] y_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
-reg [1:0] x_ctr_shmask_pp[PP_PL_START:PP_SHMASK_START] /* synthesis ramstyle = "logic" */;
-reg [1:0] y_ctr_shmask_pp[PP_PL_START:PP_SHMASK_START] /* synthesis ramstyle = "logic" */;
 
 assign PCLK_o = PCLK_OUT_i;
 
@@ -425,7 +420,7 @@ end
 // |          |   MASK   |         |         |         |         |         |         |         |         |         |         |
 // |          | LB_SETUP | LINEBUF |         |         |         |         |         |         |         |         |         |
 // |          |          |         | SRCSEL  |         |         |         |         |         |         |         |         |
-// |          |          |         | SHMASK  | SHMASK  | SHMASK  |         |         |         |         |         |         |
+// |          | SHM_BUF  | SHM_BUF | SHMASK  | SHMASK  | SHMASK  |         |         |         |         |         |         |
 // |          |          |         |         |    Y    |    Y    |         |         |         |         |         |         |
 // |          |          |         |         |         |         |  SLGEN  |  SLGEN  |  SLGEN  |  SLGEN  |  SLGEN  |         |
 // |          |          |         |         |         |         |         |         |         |         |         |    TP   |
@@ -466,7 +461,7 @@ always @(posedge PCLK_OUT_i) begin
                 y_ctr_sl_pp[1] <= 0;
             end
             line_id <= ~line_id;
-            y_ctr_shmask_pp[1] <= '0;
+            y_ctr_shmask <= '0;
         end else begin
             if (ypos_pp[1] != V_ACTIVE) begin
                 ypos_pp[1] <= ypos_pp[1] + 1'b1;
@@ -486,7 +481,7 @@ always @(posedge PCLK_OUT_i) begin
                 end
                 if (!ypos_pp_init) begin
                     y_ctr_sl_pp[1] <= (y_ctr_sl_pp[1] == SL_IV_Y) ? '0 : y_ctr_sl_pp[1] + 1'b1;
-                    y_ctr_shmask_pp[1] <= (y_ctr_shmask_pp[1] == shmask_iv_y[MISC_SHMASK_ID]) ? '0 : y_ctr_shmask_pp[1] + 1'b1;
+                    y_ctr_shmask <= (y_ctr_shmask == MISC_SHMASK_IV_Y) ? '0 : y_ctr_shmask + 1'b1;
                 end
             end
         end
@@ -494,7 +489,7 @@ always @(posedge PCLK_OUT_i) begin
         xpos_lb <= X_START_LB;
         x_ctr <= 0;
         x_ctr_sl_pp[1] <= 0;
-        x_ctr_shmask_pp[1] <= 0;
+        x_ctr_shmask <= 0;
     end else begin
         if (xpos_pp[1] != H_ACTIVE) begin
             xpos_pp[1] <= xpos_pp[1] + 1'b1;
@@ -508,7 +503,7 @@ always @(posedge PCLK_OUT_i) begin
                 x_ctr <= x_ctr + 1'b1;
             end
             x_ctr_sl_pp[1] <= (x_ctr_sl_pp[1] == SL_IV_X) ? '0 : x_ctr_sl_pp[1] + 1'b1;
-            x_ctr_shmask_pp[1] <= (x_ctr_shmask_pp[1] == shmask_iv_x[MISC_SHMASK_ID]) ? '0 : x_ctr_shmask_pp[1] + 1'b1;
+            x_ctr_shmask <= (x_ctr_shmask == MISC_SHMASK_IV_X) ? '0 : x_ctr_shmask + 1'b1;
         end
     end
 end
@@ -526,10 +521,6 @@ always @(posedge PCLK_OUT_i) begin
     for(pp_idx = PP_PL_START+1; pp_idx <= PP_SLGEN_START; pp_idx = pp_idx+1) begin
         x_ctr_sl_pp[pp_idx] <= x_ctr_sl_pp[pp_idx-1];
         y_ctr_sl_pp[pp_idx] <= y_ctr_sl_pp[pp_idx-1];
-    end
-    for(pp_idx = PP_PL_START+1; pp_idx <= PP_SHMASK_START; pp_idx = pp_idx+1) begin
-        x_ctr_shmask_pp[pp_idx] <= x_ctr_shmask_pp[pp_idx-1];
-        y_ctr_shmask_pp[pp_idx] <= y_ctr_shmask_pp[pp_idx-1];
     end
     // Overridden later where necessary
     for (pp_idx = PP_SRCSEL_END+1; pp_idx <= PP_PL_END; pp_idx = pp_idx+1) begin
@@ -562,15 +553,15 @@ always @(posedge PCLK_OUT_i) begin
     Y <= {1'b0, Y_rb_tmp} + {1'b0, G_pp[PP_Y_CALC_START+1], 1'b0};
 
     /* ---------- Shadow mask calculation (3 cycles) ---------- */
-    R_shmask_str <= shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][10] ? 
-                     5'h10 + shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][7:4] :
-                     shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][3:0];
-    G_shmask_str <= shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][9] ? 
-                     5'h10 + shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][7:4] :
-                     shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][3:0];
-    B_shmask_str <= shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][8] ? 
-                     5'h10 + shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][7:4] :
-                     shmask_data[MISC_SHMASK_ID][y_ctr_shmask_pp[PP_SHMASK_START]][x_ctr_shmask_pp[PP_SHMASK_START]][3:0];
+    R_shmask_str <= shmask_data[10] ? 
+                     5'h10 + shmask_data[7:4] :
+                     shmask_data[3:0];
+    G_shmask_str <= shmask_data[9] ? 
+                     5'h10 + shmask_data[7:4] :
+                     shmask_data[3:0];
+    B_shmask_str <= shmask_data[8] ? 
+                     5'h10 + shmask_data[7:4] :
+                     shmask_data[3:0];
 
     // Cycle 3
     R_pp[PP_SHMASK_END] <= MISC_SHMASK_ENABLE ? (R_shmask_mult[8] ? 8'hff : R_shmask_mult[7:0]) : R_pp[PP_SHMASK_START+2];

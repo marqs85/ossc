@@ -42,6 +42,9 @@
 #include "sd_io.h"
 #include "sys/alt_timestamp.h"
 
+#include "src/shmask_arrays.c"
+#include "src/lumacode_palettes.c"
+
 #define MIN_LINES_PROGRESSIVE   200
 #define MIN_LINES_INTERLACED    400
 #define STATUS_TIMEOUT_US       25000
@@ -126,7 +129,12 @@ volatile sc_regs *sc = (volatile sc_regs*)SC_CONFIG_0_BASE;
 volatile osd_regs *osd = (volatile osd_regs*)OSD_GENERATOR_0_BASE;
 volatile pll_reconfig_regs *pll_reconfig = (volatile pll_reconfig_regs*)PLL_RECONFIG_0_BASE;
 
-#include "src/lumacode_palettes.c"
+c_shmask_t c_shmask;
+const shmask_data_arr* shmask_data_arr_list[] = {NULL, &shmask_agrille, &shmask_tv, &shmask_pvm, &shmask_pvm_2530, &shmask_xc_3315c, &shmask_c_1084, &shmask_jvc, &shmask_vga, &c_shmask.arr};
+int shmask_loaded_array = 0;
+int shmask_loaded_str = -1;
+#define SHMASKS_SIZE  (sizeof(shmask_data_arr_list) / sizeof((shmask_data_arr_list)[0]))
+
 const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal};
 int loaded_lc_palette = -1;
 
@@ -447,7 +455,8 @@ status_t get_status(tvp_sync_input_t syncinput)
 
 void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t *vm_conf, avconfig_t *avconfig)
 {
-    int i;
+    int i, p, t;
+    shmask_data_arr *shmask_data_arr_ptr;
 
     hv_config_reg hv_in_config = {.data=0x00000000};
     hv_config2_reg hv_in_config2 = {.data=0x00000000};
@@ -462,9 +471,25 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     sl_config2_reg sl_config2 = {.data=0x00000000};
     sl_config3_reg sl_config3 = {.data=0x00000000};
 
+    if (avconfig->shmask_mode && ((avconfig->shmask_mode != shmask_loaded_array) || (avconfig->shmask_str != shmask_loaded_str))) {
+        shmask_data_arr_ptr = (shmask_data_arr*)shmask_data_arr_list[avconfig->shmask_mode];
+
+        for (p=0; p<=shmask_data_arr_ptr->iv_y; p++) {
+            for (t=0; t<=shmask_data_arr_ptr->iv_x; t++)
+                sc->shmask_data_array.data[p][t] = (avconfig->shmask_str == 15) ? shmask_data_arr_ptr->v[p][t] : (shmask_data_arr_ptr->v[p][t]&0x700) |
+                                                                                                                 ((((avconfig->shmask_str+1)*((shmask_data_arr_ptr->v[p][t]&0x0f0) >> 4))/16)<<4) |
+                                                                                                                 (15-(((avconfig->shmask_str+1)*(15-(shmask_data_arr_ptr->v[p][t]&0x00f))) / 16));
+        }
+
+        shmask_loaded_array = avconfig->shmask_mode;
+        shmask_loaded_str = avconfig->shmask_str;
+    } else {
+        shmask_data_arr_ptr = shmask_loaded_array ? (shmask_data_arr*)shmask_data_arr_list[shmask_loaded_array] : (shmask_data_arr*)shmask_data_arr_list[1];
+    }
+
     if (avconfig->lumacode_mode && (avconfig->lumacode_pal != loaded_lc_palette)) {
         for (i=0; i<(sizeof(lc_palette_set)/4); i++)
-            sc->lumacode_pal_ram[i] = lc_palette_set_list[avconfig->lumacode_pal]->data[i];
+            sc->lumacode_pal_ram.data[i] = lc_palette_set_list[avconfig->lumacode_pal]->data[i];
         loaded_lc_palette = avconfig->lumacode_pal;
     }
 
@@ -505,7 +530,9 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     misc_config.mask_br = avconfig->mask_br;
     misc_config.mask_color = avconfig->mask_color;
     misc_config.reverse_lpf = avconfig->reverse_lpf;
-    misc_config.shmask_mode = avconfig->shmask_mode;
+    misc_config.shmask_enable = (avconfig->shmask_mode != 0);
+    misc_config.shmask_iv_x = shmask_data_arr_ptr->iv_x;
+    misc_config.shmask_iv_y = shmask_data_arr_ptr->iv_y;
     misc_config.lumacode_mode = avconfig->lumacode_mode;
     /*misc_config.lm_deint_mode = 0;
     misc_config.nir_even_offset = 0;
@@ -757,6 +784,11 @@ int save_profile() {
     return retval;
 }
 
+void set_default_c_shmask() {
+    memset(&c_shmask, 0, sizeof(c_shmask));
+    strncpy(c_shmask.name, "Custom: <none>", 20);
+}
+
 // Initialize hardware
 int init_hw()
 {
@@ -827,6 +859,7 @@ int init_hw()
     // Set defaults
     set_default_avconfig();
     memcpy(&cm.cc, &tc_default, sizeof(avconfig_t));
+    set_default_c_shmask();
     memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
 
     // Init menu
