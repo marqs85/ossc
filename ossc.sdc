@@ -2,10 +2,12 @@
 
 create_clock -period 27MHz -name clk27 [get_ports clk27]
 
-set_input_delay -clock clk27 0 [get_ports {sda scl SD_CMD SD_DAT* *ALTERA_DATA0}]
+set_input_delay -clock clk27 0 [get_ports {sda scl SD_CMD SD_DAT*}]
 set_false_path -from [get_ports {btn* cfg* ir_rx HDMI_TX_INT_N LED_R}]
 set_false_path -to {sys:sys_inst|sys_pio_1:pio_1|readdata*}
 
+create_generated_clock -name flash_clk -divide_by 2 -source clk27 [get_pins sys:sys_inst|sys_intel_generic_serial_flash_interface_top_0:intel_generic_serial_flash_interface_top_0|sys_intel_generic_serial_flash_interface_top_0_qspi_inf_inst:qspi_inf_inst|flash_clk_reg|q]
+create_generated_clock -name flash_clk_out -master_clock flash_clk -source [get_pins sys:sys_inst|sys_intel_generic_serial_flash_interface_top_0:intel_generic_serial_flash_interface_top_0|sys_intel_generic_serial_flash_interface_top_0_qspi_inf_inst:qspi_inf_inst|flash_clk_reg|q] -multiply_by 1 [get_ports *ALTERA_DCLK]
 
 ### Scanconverter clock constraints ###
 
@@ -54,6 +56,11 @@ set_false_path -to [remove_from_collection [all_outputs] $critoutputs_hdmi]
 
 # Lumacode (constrained to max. 60MHz sampling)
 set_max_delay 16.6 -from [get_registers sys:sys_inst|sc_config_top:sc_config_0|altsyncram:lumacode_pal_ram|*]
+
+# Flash controller (delays from N25Q128A datasheet)
+set_input_delay -clock flash_clk_out -clock_fall 5 [get_ports *ALTERA_DATA0]
+set_output_delay -clock flash_clk_out 4 [get_ports *ALTERA_SCE]
+set_output_delay -clock flash_clk_out 2 [get_ports *ALTERA_SDO]
 
 
 ### CPU/scanconverter clock relations ###

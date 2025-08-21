@@ -70,6 +70,7 @@ typedef struct {
     alt_u8 auto_av3_ypbpr;
     alt_u8 osd_enable;
     alt_u8 osd_status_timeout;
+    alt_u8 osd_highlight_color;
     alt_u8 phase_hotkey_enable;
     alt_u16 keys[REMOTE_MAX_KEYS];
 } __attribute__((packed, __may_alias__)) ude_initcfg;

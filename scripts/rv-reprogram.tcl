@@ -64,20 +64,23 @@ for {set i 0} {$i<$num_sectors} {incr i} {
 }
 
 puts "Writing flash"
-# writes garbage and occasionally hangs (bug in generic serial flash IF?)
+# JTAG to Avalon master does not support sink backpressure
 #master_write_from_file $claim_path mem_init/flash.bin $flash_imem_base
 
-# work around the issue by writing into small chunks so that FIFO does not fill up
+# work around lack of backpressure support by writing chunks of master FIFO size
 set chunks [llength [glob mem_init/chunks/*]]
 puts "Programming $chunks chunks"
 set addr $flash_imem_base
 for {set i 0} {$i<$chunks} {incr i} {
     set file [format "flash.%04d" $i]
     master_write_from_file $claim_path mem_init/chunks/$file $addr
-    set addr [expr $addr + 64]
+    set addr [expr $addr + 1024]
 }
 #master_read_to_file $claim_path mem_init/flash_readback.bin $flash_imem_base $bin_size
 #master_read_to_file $claim_path mem_init/ram_readback.bin 0x010000 65536
+
+# flush flashctrl cmd fifo to ensure writes have finished
+master_read_32 $claim_path $flash_base 1
 
 puts "Resetting system"
 master_write_32 $claim_path 0x40 0x00000003

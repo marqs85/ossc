@@ -75,7 +75,7 @@ alt_u8 target_type;
 alt_u8 update_cur_vm;
 
 alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
-alt_u8 osd_enable=1, osd_status_timeout=1;
+alt_u8 osd_enable=1, osd_status_timeout=1, osd_highlight_color=4;
 alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -1222,9 +1222,10 @@ int main()
             printf("Changing AV3 RGB source\n");
             cm.cc.av3_alt_rgb = tc.av3_alt_rgb;
         }
-        if ((!!osd_enable != osd->osd_config.enable) || (osd_status_timeout != osd->osd_config.status_timeout)) {
+        if ((!!osd_enable != osd->osd_config.enable) || (osd_status_timeout != osd->osd_config.status_timeout) || (osd_highlight_color != osd->osd_config.highlight_color)) {
             osd->osd_config.enable = !!osd_enable;
             osd->osd_config.status_timeout = osd_status_timeout;
+            osd->osd_config.highlight_color = 2+osd_highlight_color;
             if (menu_active) {
                 remote_code = 0;
                 render_osd_page();

@@ -39,7 +39,7 @@ extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern alt_u8 vm_sel, profile_sel_menu, lt_sel, def_input, profile_link, lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
 extern alt_u8 update_cur_vm;
-extern alt_u8 osd_enable, osd_status_timeout, phase_hotkey_enable;
+extern alt_u8 osd_enable, osd_status_timeout, osd_highlight_color, phase_hotkey_enable;
 extern uint8_t sl_def_iv_x, sl_def_iv_y;
 extern char target_profile_name[PROFILE_NAME_LEN+1];
 extern volatile osd_regs *osd;
@@ -77,6 +77,7 @@ static const char* const lt_desc[] = { "Top-left", "Center", "Bottom-right" };
 static const char* const lcd_bl_timeout_desc[] = { "Off", "3s", "10s", "30s" };
 static const char* const osd_enable_desc[] = { "Off", "Full", "Simple" };
 static const char* const osd_status_desc[] = { "2s", "5s", "10s", "Off" };
+static const char* const osd_color_desc[] = { "Green", "Cyan", "Red", "Magenta", "Yellow" };
 static const char* const rgsb_ypbpr_desc[] = { "RGsB", "YPbPr" };
 static const char* const auto_input_desc[] = { "Off", "Current input", "All inputs" };
 static const char* const mask_color_desc[] = { "Black", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White" };
@@ -250,6 +251,7 @@ MENU(menu_settings, P99_PROTECT({ \
     { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
     { "OSD",                                    OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable,   OPT_WRAP,   SETTING_ITEM(osd_enable_desc) } } },
     { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
+    { "OSD cursor color",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_highlight_color,   OPT_WRAP,   SETTING_ITEM(osd_color_desc) } } },
     { "Phase hotkey",                           OPT_AVCONFIG_SELECTION, { .sel = { &phase_hotkey_enable,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"),   OPT_FUNC_CALL,         { .fun = { load_profile, &profile_arg_info } } },
     { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"),  OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },

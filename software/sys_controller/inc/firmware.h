@@ -31,7 +31,7 @@
 #define PROFILE_VER_MINOR       12
 
 #define INITCFG_VER_MAJOR       1
-#define INITCFG_VER_MINOR       0
+#define INITCFG_VER_MINOR       20
 
 #ifdef OSDLANG_JP
 #define FW_SUFFIX              "j"

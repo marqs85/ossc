@@ -137,7 +137,7 @@ reg remote_event_prev;
 reg [14:0] to_ctr, to_ctr_ms;
 wire lcd_bl_timeout;
 
-wire [1:0] osd_color;
+wire [2:0] osd_color;
 wire osd_enable_pre;
 wire osd_enable = osd_enable_pre & ~lt_active;
 wire [10:0] xpos_sc;
@@ -325,15 +325,7 @@ end
 // Output registers
 always @(posedge pclk_out) begin
     if (osd_enable) begin
-        if (osd_color == 2'h0) begin
-            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'h000000;
-        end else if (osd_color == 2'h1) begin
-            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'h0000ff;
-        end else if (osd_color == 2'h2) begin
-            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'hffff00;
-        end else begin
-            {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= 24'hffffff;
-        end
+        {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= {{8{osd_color[2]}}, {8{osd_color[1]}}, {8{osd_color[0]}}};
     end else begin
         {HDMI_TX_RD, HDMI_TX_GD, HDMI_TX_BD} <= {R_sc, G_sc, B_sc};
     end
@@ -432,9 +424,9 @@ sys sys_inst(
     .pll_reconfig_0_pll_reconfig_if_scandone     (pll_scandone)
 );
 
-// These do not work in current Quartus version (23.1) and a patch file (scripts/qsys.patch) must be used after Qsys generation instead
+// These do not work in current Quartus version (24.1) and a patch file (scripts/qsys.patch) must be used after Qsys generation instead
 defparam
-    sys_inst.master_0.fifo.USE_MEMORY_BLOCKS = 0;
+    sys_inst.master_0.fifo.FIFO_DEPTH = 1024;
 
 scanconverter #(
     .EMIF_ENABLE(0),

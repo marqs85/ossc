@@ -36,8 +36,9 @@ typedef union {
         uint8_t y_offset:3;
         uint8_t x_size:2;
         uint8_t y_size:2;
-        uint8_t border_color:2;
-        uint32_t osd_rsv:15;
+        uint8_t border_color:3;
+        uint8_t highlight_color:3;
+        uint32_t osd_rsv:11;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } osd_config_reg;

@@ -1,0 +1,13 @@
+--- sys/synthesis/submodules/sys_master_0.v	2025-07-25 10:15:46.708247405 +0300
++++ sys/synthesis/submodules/sys_master_0.v	2025-07-25 10:15:54.937804924 +0300
+@@ -156,9 +156,9 @@
+ 
+ 	altera_avalon_sc_fifo #(
+ 		.SYMBOLS_PER_BEAT    (1),
+ 		.BITS_PER_SYMBOL     (8),
+-		.FIFO_DEPTH          (64),
++		.FIFO_DEPTH          (1024),
+ 		.CHANNEL_WIDTH       (0),
+ 		.ERROR_WIDTH         (0),
+ 		.USE_PACKETS         (0),
+ 		.USE_FILL_LEVEL      (0),

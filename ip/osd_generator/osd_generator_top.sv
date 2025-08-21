@@ -35,7 +35,7 @@ module osd_generator_top (
     input [10:0] xpos,
     input [10:0] ypos,
     output reg osd_enable,
-    output reg [1:0] osd_color
+    output reg [2:0] osd_color
 );
 
 localparam CHAR_ROWS = 30;
@@ -43,10 +43,10 @@ localparam CHAR_COLS = 16;
 localparam CHAR_SECTIONS = 2;
 localparam CHAR_SEC_SEPARATOR = 2;
 
-localparam BG_BLACK =   2'h0;
-localparam BG_BLUE =    2'h1;
-localparam BG_YELLOW =  2'h2;
-localparam BG_WHITE =   2'h3;
+localparam BG_BLACK =   3'h0;
+localparam BG_BLUE =    3'h1;
+localparam BG_YELLOW =  3'h6;
+localparam BG_WHITE =   3'h7;
 
 localparam OSD_CONFIG_REGNUM =          8'hf0;
 localparam OSD_ROW_LSEC_ENABLE_REGNUM = 8'hf1;
@@ -59,7 +59,9 @@ reg [31:0] config_reg[OSD_ROW_LSEC_ENABLE_REGNUM:OSD_ROW_COLOR_REGNUM] /* synthe
 reg [10:0] xpos_osd_area_scaled, xpos_text_scaled;
 reg [10:0] ypos_osd_area_scaled, ypos_text_scaled;
 reg [7:0] x_ptr[2:5], y_ptr[2:5] /* synthesis ramstyle = "logic" */;
-reg osd_text_act_pp[2:6], osd_act_pp[3:6];
+reg osd_text_act_lsec_x_hit, osd_text_act_lsec_en, osd_text_act_rsec_x_hit, osd_text_act_rsec_en, osd_text_act_y_hit;
+reg osd_act_lsec_x_hit, osd_act_lsec_en, osd_act_rsec_x_hit, osd_act_rsec_en, osd_act_y_hit;
+reg osd_text_act_pp[3:6], osd_act_pp[4:6];
 reg [14:0] to_ctr, to_ctr_ms;
 reg char_px;
 
@@ -71,7 +73,8 @@ wire [2:0] x_offset = osd_config[7:5];
 wire [2:0] y_offset = osd_config[10:8];
 wire [1:0] x_size = osd_config[12:11];
 wire [1:0] y_size = osd_config[14:13];
-wire [1:0] border_color = osd_config[16:15];
+wire [2:0] border_color = osd_config[17:15];
+wire [2:0] highlight_color = osd_config[20:18];
 
 wire [10:0] xpos_scaled_w = (xpos >> x_size)-({3'h0, x_offset} << 3);
 wire [10:0] ypos_scaled_w = (ypos >> y_size)-({3'h0, y_offset} << 3);
@@ -123,21 +126,27 @@ always @(posedge vclk) begin
         y_ptr[pp_idx] <= y_ptr[pp_idx-1];
     end
 
-    osd_text_act_pp[2] <= render_enable &
+    osd_text_act_lsec_x_hit <= (xpos_text_scaled < 8*CHAR_COLS);
+    osd_text_act_lsec_en <= config_reg[OSD_ROW_LSEC_ENABLE_REGNUM][ypos_text_scaled/8];
+    osd_text_act_rsec_x_hit <= (xpos_text_scaled >= 8*(CHAR_COLS+CHAR_SEC_SEPARATOR)) & (xpos_text_scaled < 8*(2*CHAR_COLS+CHAR_SEC_SEPARATOR));
+    osd_text_act_rsec_en <= config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][ypos_text_scaled/8];
+    osd_text_act_y_hit <= (ypos_text_scaled < 8*CHAR_ROWS);
+    osd_text_act_pp[3] <= render_enable &
                           (menu_active || (to_ctr_ms > 0)) &
-                          (((xpos_text_scaled < 8*CHAR_COLS) & config_reg[OSD_ROW_LSEC_ENABLE_REGNUM][ypos_text_scaled/8]) |
-                           ((xpos_text_scaled >= 8*(CHAR_COLS+CHAR_SEC_SEPARATOR)) & (xpos_text_scaled < 8*(2*CHAR_COLS+CHAR_SEC_SEPARATOR)) & config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][ypos_text_scaled/8])) &
-                          (ypos_text_scaled < 8*CHAR_ROWS);
-    for(pp_idx = 3; pp_idx <= 6; pp_idx = pp_idx+1) begin
+                          ((osd_text_act_lsec_x_hit & osd_text_act_lsec_en) | (osd_text_act_rsec_x_hit & osd_text_act_rsec_en)) & osd_text_act_y_hit;
+    for(pp_idx = 4; pp_idx <= 6; pp_idx = pp_idx+1) begin
         osd_text_act_pp[pp_idx] <= osd_text_act_pp[pp_idx-1];
     end
 
-    osd_act_pp[3] <= render_enable &
+    osd_act_lsec_x_hit <= (xpos_osd_area_scaled/8 < (CHAR_COLS+1));
+    osd_act_lsec_en <= config_reg[OSD_ROW_LSEC_ENABLE_REGNUM][(ypos_osd_area_scaled/8) ? ((ypos_osd_area_scaled/8)-1) : 0];
+    osd_act_rsec_x_hit <= (xpos_osd_area_scaled/8 >= (CHAR_COLS+1)) & (xpos_osd_area_scaled/8 < (2*CHAR_COLS+CHAR_SEC_SEPARATOR+1));
+    osd_act_rsec_en <= (config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][(ypos_osd_area_scaled/8)-1] | config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][ypos_osd_area_scaled/8]);
+    osd_act_y_hit <= (ypos_osd_area_scaled < 8*(CHAR_ROWS+1));
+    osd_act_pp[4] <= render_enable &
                      (menu_active || (to_ctr_ms > 0)) &
-                     (((xpos_osd_area_scaled/8 < (CHAR_COLS+1)) & config_reg[OSD_ROW_LSEC_ENABLE_REGNUM][(ypos_osd_area_scaled/8) ? ((ypos_osd_area_scaled/8)-1) : 0]) |
-                      ((xpos_osd_area_scaled/8 >= (CHAR_COLS+1)) & (xpos_osd_area_scaled/8 < (2*CHAR_COLS+CHAR_SEC_SEPARATOR+1)) & (config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][(ypos_osd_area_scaled/8)-1] | config_reg[OSD_ROW_RSEC_ENABLE_REGNUM][ypos_osd_area_scaled/8]))) &
-                     (ypos_osd_area_scaled < 8*(CHAR_ROWS+1));
-    for(pp_idx = 4; pp_idx <= 6; pp_idx = pp_idx+1) begin
+                     ((osd_act_lsec_x_hit & osd_act_lsec_en) | (osd_act_rsec_x_hit & osd_act_rsec_en)) & osd_act_y_hit;
+    for(pp_idx = 5; pp_idx <= 6; pp_idx = pp_idx+1) begin
         osd_act_pp[pp_idx] <= osd_act_pp[pp_idx-1];
     end
 
@@ -147,7 +156,7 @@ always @(posedge vclk) begin
 
     if (osd_text_act_pp[6]) begin
         if (char_px) begin
-            osd_color <= config_reg[OSD_ROW_COLOR_REGNUM][char_row] ? BG_YELLOW : BG_WHITE;
+            osd_color <= config_reg[OSD_ROW_COLOR_REGNUM][char_row] ? highlight_color : BG_WHITE;
         end else begin
             osd_color <= BG_BLUE;
         end

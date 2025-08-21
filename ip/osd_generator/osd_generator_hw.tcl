@@ -156,4 +156,4 @@ add_interface_port osd_if vclk vclk Input 1
 add_interface_port osd_if xpos xpos Input 11
 add_interface_port osd_if ypos ypos Input 11
 add_interface_port osd_if osd_enable osd_enable Output 1
-add_interface_port osd_if osd_color osd_color Output 2
+add_interface_port osd_if osd_color osd_color Output 3

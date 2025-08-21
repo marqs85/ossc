@@ -50,7 +50,7 @@ extern alt_u8 profile_sel;
 extern alt_u8 def_input, profile_link;
 extern alt_u8 lcd_bl_timeout;
 extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
-extern alt_u8 osd_enable, osd_status_timeout, phase_hotkey_enable;
+extern alt_u8 osd_enable, osd_status_timeout, osd_highlight_color, phase_hotkey_enable;
 extern SD_DEV sdcard_dev;
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
@@ -89,6 +89,7 @@ int write_userdata(alt_u8 entry)
         ((ude_initcfg*)databuf)->auto_av3_ypbpr = auto_av3_ypbpr;
         ((ude_initcfg*)databuf)->osd_enable = osd_enable;
         ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout;
+        ((ude_initcfg*)databuf)->osd_highlight_color = osd_highlight_color;
         ((ude_initcfg*)databuf)->phase_hotkey_enable = phase_hotkey_enable;
         memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
         for (i=0; i<sizeof(ude_initcfg); i++)
@@ -201,6 +202,7 @@ int read_userdata(alt_u8 entry, int dry_run)
             auto_av3_ypbpr = ((ude_initcfg*)databuf)->auto_av3_ypbpr;
             osd_enable = ((ude_initcfg*)databuf)->osd_enable;
             osd_status_timeout = ((ude_initcfg*)databuf)->osd_status_timeout;
+            osd_highlight_color = ((ude_initcfg*)databuf)->osd_highlight_color;
             profile_link = ((ude_initcfg*)databuf)->profile_link;
             profile_sel = input_profiles[AV_TESTPAT]; // Global profile
             lcd_bl_timeout = ((ude_initcfg*)databuf)->lcd_bl_timeout;

@@ -208,7 +208,7 @@ APP_CFLAGS_UNDEFINED_SYMBOLS :=
 APP_CFLAGS_OPTIMIZATION := -Os
 APP_CFLAGS_DEBUG_LEVEL :=
 APP_CFLAGS_WARNINGS := -Wall -Wno-unused-but-set-variable -Wno-unused-variable -Wno-unused-function -Wno-packed-bitfield-compat
-APP_CFLAGS_USER_FLAGS := -fdata-sections -ffunction-sections -fshort-enums -fgnu89-inline -flto
+APP_CFLAGS_USER_FLAGS := -fdata-sections -ffunction-sections -fshort-enums -fgnu89-inline -flto -msmall-data-limit=0
 
 APP_ASFLAGS_USER :=
 APP_LDFLAGS_USER := -Wl,--gc-sections
@@ -1154,7 +1154,7 @@ mem_init/flash.hex: sys_controller.elf
 	$(RV_OBJCOPY) --change-addresses -0x02080000 -O ihex --gap-fill 0 $< mem_init/flash.hex
 	mkdir -p mem_init/chunks
 	rm -f mem_init/chunks/*
-	split -d -b 64 -a 4 mem_init/flash.bin mem_init/chunks/flash.
+	split -d -b 1024 -a 4 mem_init/flash.bin mem_init/chunks/flash.
 
 .PHONY: mem_init_generate_new
 mem_init_generate_new: mem_init/flash.hex
