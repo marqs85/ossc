@@ -60,6 +60,7 @@ typedef enum {
 #define REMOTE_MAX_KEYS (RC_PROF_HOTKEY-RC_BTN1+1)
 
 void setup_rc();
+void set_default_keymap();
 int parse_control();
 
 #endif

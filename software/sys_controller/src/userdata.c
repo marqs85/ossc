@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include "system.h"
 #include "userdata.h"
-#include "fat16_export.h"
 #include "flash.h"
 #include "sdcard.h"
 #include "firmware.h"
@@ -31,510 +30,417 @@
 #include "controls.h"
 #include "av_controller.h"
 #include "menu.h"
-#include "utils.h"
-#include "altera_avalon_pio_regs.h"
+#include "ff.h"
+#include "file.h"
+
+#define UDE_ITEM(ID, VER, ITEM) {{ID, VER, sizeof(ITEM)}, &ITEM}
 
 // include mode array definitions so that sizeof() can be used
 #define VM_STATIC_INCLUDE
 #include "video_modes_list.c"
 #undef VM_STATIC_INCLUDE
 
-extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
-extern avmode_t cm;
+extern flash_ctrl_dev flashctrl_dev;
+extern uint16_t rc_keymap[REMOTE_MAX_KEYS];
+extern uint8_t input_profiles[AV_LAST];
 extern avconfig_t tc;
+extern settings_t ts;
 extern mode_data_t video_modes_plm[];
-extern avinput_t target_input;
-extern alt_u8 update_cur_vm;
-extern alt_u8 input_profiles[AV_LAST];
-extern alt_u8 profile_sel;
-extern alt_u8 def_input, profile_link;
-extern alt_u8 lcd_bl_timeout;
-extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
-extern alt_u8 osd_enable, osd_status_timeout, osd_highlight_color, phase_hotkey_enable;
+extern uint8_t update_cur_vm;
 extern SD_DEV sdcard_dev;
-extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
+extern c_shmask_t c_shmask;
 
-char target_profile_name[PROFILE_NAME_LEN+1];
+char target_profile_name[USERDATA_NAME_LEN+1], cur_profile_name[USERDATA_NAME_LEN+1];
 
-int write_userdata(alt_u8 entry)
-{
-    alt_u8 databuf[PAGESIZE];
-    alt_u16 vm_to_write;
-    alt_u16 pageoffset, srcoffset;
-    alt_u8 pageno;
-    alt_u32 bytes_to_w;
-    int retval, i;
+const ude_item_map ude_initcfg_items[] = {
+    UDE_ITEM(0, 120, rc_keymap),
+    UDE_ITEM(1, 120, input_profiles),
+    UDE_ITEM(2, 120, ts.profile_link),
+    UDE_ITEM(3, 120, ts.def_input),
+    UDE_ITEM(4, 120, ts.auto_input),
+    UDE_ITEM(5, 120, ts.auto_av1_ypbpr),
+    UDE_ITEM(6, 120, ts.auto_av2_ypbpr),
+    UDE_ITEM(7, 120, ts.auto_av3_ypbpr),
+    UDE_ITEM(8, 120, ts.lcd_bl_timeout),
+    UDE_ITEM(9, 120, ts.osd_enable),
+    UDE_ITEM(10, 120, ts.osd_status_timeout),
+    UDE_ITEM(11, 120, ts.osd_highlight_color),
+    UDE_ITEM(12, 120, ts.phase_hotkey_enable),
+};
+
+const ude_item_map ude_profile_items[] = {
+    {{0, 120, sizeof(video_modes_plm_default)}, video_modes_plm},
+    UDE_ITEM(1, 120, c_shmask),
+    // avconfig_t
+    UDE_ITEM(2, 120, tc.pm_240p),
+    UDE_ITEM(3, 120, tc.pm_384p),
+    UDE_ITEM(4, 120, tc.pm_480i),
+    UDE_ITEM(5, 120, tc.pm_480p),
+    UDE_ITEM(6, 120, tc.pm_1080i),
+    UDE_ITEM(7, 120, tc.pt_mode),
+    UDE_ITEM(8, 120, tc.l2_mode),
+    UDE_ITEM(9, 120, tc.l3_mode),
+    UDE_ITEM(10, 120, tc.l4_mode),
+    UDE_ITEM(11, 120, tc.l5_mode),
+    UDE_ITEM(12, 120, tc.l6_mode),
+    UDE_ITEM(13, 120, tc.l5_fmt),
+    UDE_ITEM(14, 120, tc.s480p_mode),
+    UDE_ITEM(15, 120, tc.s400p_mode),
+    UDE_ITEM(16, 120, tc.upsample2x),
+    UDE_ITEM(17, 120, tc.ar_256col),
+    UDE_ITEM(18, 120, tc.default_vic),
+    UDE_ITEM(19, 120, tc.clamp_offset),
+    UDE_ITEM(20, 120, tc.tvp_hpll2x),
+    UDE_ITEM(21, 120, tc.adc_pll_bw),
+    UDE_ITEM(22, 120, tc.fpga_pll_bw),
+    UDE_ITEM(23, 120, tc.sl_mode),
+    UDE_ITEM(24, 120, tc.sl_type),
+    UDE_ITEM(25, 120, tc.sl_hybr_str),
+    UDE_ITEM(26, 120, tc.sl_method),
+    UDE_ITEM(27, 120, tc.sl_altern),
+    UDE_ITEM(28, 120, tc.sl_str),
+    UDE_ITEM(29, 120, tc.sl_id),
+    UDE_ITEM(30, 120, tc.sl_cust_l_str),
+    UDE_ITEM(31, 120, tc.sl_cust_c_str),
+    UDE_ITEM(32, 120, tc.sl_cust_iv_x),
+    UDE_ITEM(33, 120, tc.sl_cust_iv_y),
+    UDE_ITEM(34, 120, tc.mask_br),
+    UDE_ITEM(35, 120, tc.mask_color),
+    UDE_ITEM(36, 120, tc.reverse_lpf),
+    UDE_ITEM(37, 120, tc.shmask_mode),
+    UDE_ITEM(38, 120, tc.shmask_str),
+    UDE_ITEM(39, 120, tc.lumacode_mode),
+    UDE_ITEM(40, 120, tc.lumacode_pal),
+    UDE_ITEM(41, 120, tc.sync_vth),
+    UDE_ITEM(42, 120, tc.linelen_tol),
+    UDE_ITEM(43, 120, tc.vsync_thold),
+    UDE_ITEM(44, 120, tc.pre_coast),
+    UDE_ITEM(45, 120, tc.post_coast),
+    UDE_ITEM(46, 120, tc.ypbpr_cs),
+    UDE_ITEM(47, 120, tc.video_lpf),
+    UDE_ITEM(48, 120, tc.sync_lpf),
+    UDE_ITEM(49, 120, tc.stc_lpf),
+    UDE_ITEM(50, 120, tc.alc_h_filter),
+    UDE_ITEM(51, 120, tc.alc_v_filter),
+    UDE_ITEM(52, 120, tc.col),
+    UDE_ITEM(53, 120, tc.full_vs_bypass),
+    UDE_ITEM(54, 120, tc.audio_dw_sampl),
+    UDE_ITEM(55, 120, tc.audio_swap_lr),
+    UDE_ITEM(56, 120, tc.audio_gain),
+    UDE_ITEM(57, 120, tc.audio_mono),
+    UDE_ITEM(58, 120, tc.tx_mode),
+    UDE_ITEM(59, 120, tc.hdmi_itc),
+    UDE_ITEM(60, 120, tc.hdmi_hdr),
+    UDE_ITEM(61, 120, tc.hdmi_vrr),
+    UDE_ITEM(62, 120, tc.full_tx_setup),
+    UDE_ITEM(63, 120, tc.av3_alt_rgb),
+    UDE_ITEM(64, 120, tc.link_av),
+};
+
+int write_userdata(uint8_t entry) {
+    ude_hdr hdr;
+    FIL name_file;
+    char p_filename[14];
+    const ude_item_map *target_map;
+    uint32_t flash_addr, bytes_written;
+    int i=0;
 
     if (entry > MAX_USERDATA_ENTRY) {
         printf("invalid entry\n");
         return -1;
     }
 
-    strncpy(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8);
-    ((ude_hdr*)databuf)->type = (entry > MAX_PROFILE) ? UDE_INITCFG : UDE_PROFILE;
+    memset(&hdr, 0x00, sizeof(ude_hdr));
+    strlcpy(hdr.userdata_key, "USRDATA", 8);
+    hdr.type = (entry > MAX_PROFILE) ? UDE_INITCFG : UDE_PROFILE;
 
-    switch (((ude_hdr*)databuf)->type) {
-    case UDE_INITCFG:
-        ((ude_hdr*)databuf)->version_major = INITCFG_VER_MAJOR;
-        ((ude_hdr*)databuf)->version_minor = INITCFG_VER_MINOR;
-        ((ude_initcfg*)databuf)->data_len = sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile);
-        memcpy(((ude_initcfg*)databuf)->last_profile, input_profiles, sizeof(input_profiles));
-        ((ude_initcfg*)databuf)->last_input = target_input;
-        ((ude_initcfg*)databuf)->def_input = def_input;
-        ((ude_initcfg*)databuf)->profile_link = profile_link;
-        ((ude_initcfg*)databuf)->lcd_bl_timeout = lcd_bl_timeout;
-        ((ude_initcfg*)databuf)->auto_input = auto_input;
-        ((ude_initcfg*)databuf)->auto_av1_ypbpr = auto_av1_ypbpr;
-        ((ude_initcfg*)databuf)->auto_av2_ypbpr = auto_av2_ypbpr;
-        ((ude_initcfg*)databuf)->auto_av3_ypbpr = auto_av3_ypbpr;
-        ((ude_initcfg*)databuf)->osd_enable = osd_enable;
-        ((ude_initcfg*)databuf)->osd_status_timeout = osd_status_timeout;
-        ((ude_initcfg*)databuf)->osd_highlight_color = osd_highlight_color;
-        ((ude_initcfg*)databuf)->phase_hotkey_enable = phase_hotkey_enable;
-        memcpy(((ude_initcfg*)databuf)->keys, rc_keymap, sizeof(rc_keymap));
-        for (i=0; i<sizeof(ude_initcfg); i++)
-            databuf[i] = bitswap8(databuf[i]);
-        /*retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, sizeof(ude_initcfg));
-        if (retval != 0)
-            return retval;*/
+    if (hdr.type == UDE_INITCFG) {
+        target_map = ude_initcfg_items;
+        hdr.num_items = sizeof(ude_initcfg_items)/sizeof(ude_item_map);
 
-        printf("Initconfig data written (%u bytes)\n", sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile));
-        break;
-    case UDE_PROFILE:
-        ((ude_hdr*)databuf)->version_major = PROFILE_VER_MAJOR;
-        ((ude_hdr*)databuf)->version_minor = PROFILE_VER_MINOR;
-        vm_to_write = sizeof(video_modes_plm_default);
-        ((ude_profile*)databuf)->avc_data_len = sizeof(avconfig_t);
-        ((ude_profile*)databuf)->vm_data_len = vm_to_write;
+        sniprintf(hdr.name, USERDATA_NAME_LEN+1, "INITCFG");
+    } else if (hdr.type == UDE_PROFILE) {
+        target_map = ude_profile_items;
+        hdr.num_items = sizeof(ude_profile_items)/sizeof(ude_item_map);
 
-        if (target_profile_name[0] == 0)
-            sniprintf(target_profile_name, PROFILE_NAME_LEN+1, "<used>");
+        // Check if name override file exists
+        sniprintf(p_filename, sizeof(p_filename), "prof_n_i.txt");
+        if (!file_open(&name_file, p_filename)) {
 
-        strncpy(((ude_profile*)databuf)->name, target_profile_name, PROFILE_NAME_LEN+1);
+            for (i=0; i<=entry; i++) {
+                if (file_get_string(&name_file, target_profile_name, sizeof(target_profile_name)) == NULL)
+                    break;
+            }
 
-        pageoffset = offsetof(ude_profile, avc);
-
-        // assume that sizeof(avconfig_t) << PAGESIZE
-        memcpy(databuf+pageoffset, &tc, sizeof(avconfig_t));
-        pageoffset += sizeof(avconfig_t);
-
-        // erase sector and write a full page first, assume sizeof(video_modes_plm) >> PAGESIZE
-        memcpy(databuf+pageoffset, (char*)video_modes_plm, PAGESIZE-pageoffset);
-        srcoffset = PAGESIZE-pageoffset;
-        vm_to_write -= PAGESIZE-pageoffset;
-        for (i=0; i<PAGESIZE; i++)
-            databuf[i] = bitswap8(databuf[i]);
-        /*retval = alt_epcq_controller2_write(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
-        if (retval != 0)
-            return retval;*/
-
-        // then write the rest page by page
-        pageno = 1;
-        while (vm_to_write > 0) {
-            memcpy(databuf, (char*)video_modes_plm+srcoffset, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
-            for (i=0; i<PAGESIZE; i++)
-                databuf[i] = bitswap8(databuf[i]);
-            /*retval = alt_epcq_controller2_write_block(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, (vm_to_write > PAGESIZE) ? PAGESIZE : vm_to_write);
-            if (retval != 0)
-                return retval;*/
-
-            srcoffset += PAGESIZE;
-            vm_to_write = (vm_to_write < PAGESIZE) ? 0 : (vm_to_write - PAGESIZE);
-            pageno++;
+            file_close(&name_file);
         }
 
-        printf("Profile %u data written (%u bytes)\n", entry, sizeof(avconfig_t)+sizeof(video_modes_plm_default));
-        break;
-    default:
-        break;
+        if (i == entry+1) {
+            // strip CR / CRLF
+            target_profile_name[strcspn(target_profile_name, "\r\n")] = 0;
+
+            strlcpy(hdr.name, target_profile_name, USERDATA_NAME_LEN+1);
+        } else if (cur_profile_name[0] == 0) {
+            sniprintf(hdr.name, USERDATA_NAME_LEN+1, "<used>");
+        } else {
+            strlcpy(hdr.name, cur_profile_name, USERDATA_NAME_LEN+1);
+        }
     }
+
+    flash_addr = flashctrl_dev.flash_size - (16-entry)*FLASH_SECTOR_SIZE;
+
+    // Disable flash write protect and erase sector
+    flash_write_protect(&flashctrl_dev, 0);
+    flash_sector_erase(&flashctrl_dev, flash_addr);
+
+    // Write data into erased sector
+    memcpy((uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr), &hdr, sizeof(ude_hdr));
+    bytes_written = sizeof(ude_hdr);
+    for (i=0; i<hdr.num_items; i++) {
+        memcpy((uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr + bytes_written), &target_map[i].hdr, sizeof(ude_item_hdr));
+        bytes_written += sizeof(ude_item_hdr);
+        memcpy((uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr + bytes_written), target_map[i].data, target_map[i].hdr.data_size);
+        bytes_written += target_map[i].hdr.data_size;
+    }
+
+    // Re-enable write protection
+    flash_write_protect(&flashctrl_dev, 1);
+
+    printf("%lu bytes written into userdata entry %u\n", bytes_written, entry);
 
     return 0;
 }
 
-int read_userdata(alt_u8 entry, int dry_run)
-{
-    int retval, i;
-    alt_u8 databuf[PAGESIZE];
-    alt_u16 vm_to_read;
-    alt_u16 pageoffset, dstoffset;
-    alt_u8 pageno;
-
-    target_profile_name[0] = 0;
+int read_userdata(uint8_t entry, int dry_run) {
+    ude_hdr hdr;
+    ude_item_hdr item_hdr;
+    const ude_item_map *target_map;
+    uint32_t flash_addr, bytes_read;
+    int i, j, target_map_items;
 
     if (entry > MAX_USERDATA_ENTRY) {
         printf("invalid entry\n");
         return -1;
     }
 
-    //retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE), databuf, PAGESIZE);
-    for (i=0; i<PAGESIZE; i++)
-        databuf[i] = bitswap8(databuf[i]);
-    if (retval != 0)
-        return retval;
+    flash_addr = flashctrl_dev.flash_size - (16-entry)*FLASH_SECTOR_SIZE;
+    memcpy(&hdr, (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr), sizeof(ude_hdr));
+    bytes_read = sizeof(ude_hdr);
 
-    if (strncmp(((ude_hdr*)databuf)->userdata_key, "USRDATA", 8)) {
+    if (strncmp(hdr.userdata_key, "USRDATA", 8)) {
         printf("No userdata found on entry %u\n", entry);
         return 1;
     }
 
-    switch (((ude_hdr*)databuf)->type) {
-    case UDE_INITCFG:
-        if ((((ude_hdr*)databuf)->version_major != INITCFG_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != INITCFG_VER_MINOR)) {
-            printf("Initconfig version %u.%.2u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
-            return 2;
-        }
-        if (((ude_initcfg*)databuf)->data_len == sizeof(ude_initcfg) - offsetof(ude_initcfg, last_profile)) {
-            if (dry_run)
-                return 0;
+    strlcpy(target_profile_name, hdr.name, USERDATA_NAME_LEN+1);
+    if (dry_run)
+        return 0;
 
-            for (i = 0; i < sizeof(input_profiles)/sizeof(*input_profiles); ++i)
-                if (((ude_initcfg*)databuf)->last_profile[i] <= MAX_PROFILE)
-                    input_profiles[i] = ((ude_initcfg*)databuf)->last_profile[i];
-            def_input = ((ude_initcfg*)databuf)->def_input;
-            if (def_input < AV_LAST)
-                target_input = def_input;
-            else if (((ude_initcfg*)databuf)->last_input < AV_LAST)
-                target_input = ((ude_initcfg*)databuf)->last_input;
-            auto_input = ((ude_initcfg*)databuf)->auto_input;
-            auto_av1_ypbpr = ((ude_initcfg*)databuf)->auto_av1_ypbpr;
-            auto_av2_ypbpr = ((ude_initcfg*)databuf)->auto_av2_ypbpr;
-            auto_av3_ypbpr = ((ude_initcfg*)databuf)->auto_av3_ypbpr;
-            osd_enable = ((ude_initcfg*)databuf)->osd_enable;
-            osd_status_timeout = ((ude_initcfg*)databuf)->osd_status_timeout;
-            osd_highlight_color = ((ude_initcfg*)databuf)->osd_highlight_color;
-            profile_link = ((ude_initcfg*)databuf)->profile_link;
-            profile_sel = input_profiles[AV_TESTPAT]; // Global profile
-            lcd_bl_timeout = ((ude_initcfg*)databuf)->lcd_bl_timeout;
-            phase_hotkey_enable = ((ude_initcfg*)databuf)->phase_hotkey_enable;
-            memcpy(rc_keymap, ((ude_initcfg*)databuf)->keys, sizeof(rc_keymap));
-            printf("RC data read (%u bytes)\n", sizeof(rc_keymap));
-        }
-        break;
-    case UDE_PROFILE:
-        if ((((ude_hdr*)databuf)->version_major != PROFILE_VER_MAJOR) || (((ude_hdr*)databuf)->version_minor != PROFILE_VER_MINOR)) {
-            printf("Profile version %u.%.2u does not match current one\n", ((ude_hdr*)databuf)->version_major, ((ude_hdr*)databuf)->version_minor);
-            return 2;
-        }
-        if ((((ude_profile*)databuf)->avc_data_len == sizeof(avconfig_t)) && (((ude_profile*)databuf)->vm_data_len == sizeof(video_modes_plm_default))) {
-            strncpy(target_profile_name, ((ude_profile*)databuf)->name, PROFILE_NAME_LEN+1);
-            if (dry_run)
-                return 0;
+    target_map = (hdr.type == UDE_INITCFG) ? ude_initcfg_items : ude_profile_items;
+    target_map_items = (hdr.type == UDE_INITCFG) ? sizeof(ude_initcfg_items)/sizeof(ude_item_map) : sizeof(ude_profile_items)/sizeof(ude_item_map);
 
-            vm_to_read = ((ude_profile*)databuf)->vm_data_len;
-
-            pageno = 0;
-            pageoffset = offsetof(ude_profile, avc);
-
-            // assume that sizeof(avconfig_t) << PAGESIZE
-            memcpy(&tc, databuf+pageoffset, sizeof(avconfig_t));
-            pageoffset += sizeof(avconfig_t);
-
-            dstoffset = 0;
-            while (vm_to_read > 0) {
-                if (vm_to_read >= PAGESIZE-pageoffset) {
-                    memcpy((char*)video_modes_plm+dstoffset, databuf+pageoffset, PAGESIZE-pageoffset);
-                    dstoffset += PAGESIZE-pageoffset;
-                    vm_to_read -= PAGESIZE-pageoffset;
-                    pageoffset = 0;
-                    pageno++;
-                    // check
-                    //retval = alt_epcq_controller2_read(epcq_dev, (USERDATA_OFFSET+entry*SECTORSIZE+pageno*PAGESIZE), databuf, PAGESIZE);
-                    for (i=0; i<PAGESIZE; i++)
-                        databuf[i] = bitswap8(databuf[i]);
-                    if (retval != 0)
-                        return retval;
-                } else {
-                    memcpy((char*)video_modes_plm+dstoffset, databuf+pageoffset, vm_to_read);
-                    pageoffset += vm_to_read;
-                    vm_to_read = 0;
-                }
+    for (i=0; i<hdr.num_items; i++) {
+        memcpy(&item_hdr, (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr + bytes_read), sizeof(ude_item_hdr));
+        bytes_read += sizeof(ude_item_hdr);
+        for (j=0; j<target_map_items; j++) {
+            if (!memcmp(&item_hdr, &target_map[j].hdr, sizeof(ude_item_hdr))) {
+                memcpy(target_map[j].data, (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr + bytes_read), item_hdr.data_size);
+                break;
             }
-            update_cur_vm = 1;
-
-            printf("Profile %u data read (%u bytes)\n", entry, sizeof(avconfig_t)+sizeof(video_modes_plm_default));
         }
-        break;
-    default:
-        printf("Unknown userdata entry\n");
-        break;
+        bytes_read += item_hdr.data_size;
+
+        if (bytes_read >= FLASH_SECTOR_SIZE) {
+            printf("userdata entry %u corrupted\n", entry);
+            return -1;
+        }
     }
+
+    if (hdr.type == UDE_PROFILE)
+        update_cur_vm = 1;
+
+    strlcpy(cur_profile_name, target_profile_name, USERDATA_NAME_LEN+1);
+    printf("%lu bytes read from userdata entry %u\n", bytes_read, entry);
 
     return 0;
 }
 
-int import_userdata()
-{
-    SDRESULTS res;
-    int retval;
-    int n, entries_imported=0;
-    char *errmsg;
-    alt_u8 databuf[SD_BLK_SIZE];
-    ude_hdr header;
-    alt_u32 btn_vec;
+int write_userdata_sd(uint8_t entry) {
+    FIL p_file, name_file;
+    ude_hdr hdr;
+    const ude_item_map *target_map;
+    unsigned int bytes_written, bytes_written_tot;
+    char p_filename[14];
+    int i=0, retval=0;
 
-    retval = check_sdcard(databuf);
-    SPI_CS_High();
-    if (retval != 0)
-        goto sd_disable;
+    if (entry == SD_INIT_CONFIG_SLOT)
+        sniprintf(p_filename, sizeof(p_filename), "settings.bin");
+    else
+        sniprintf(p_filename, sizeof(p_filename), "prof%.2u.bin", entry);
 
-    strncpy(menu_row2, "Import? 1=Y, 2=N", LCD_ROW_LEN+1);
-    ui_disp_menu(2);
-
-    while (1) {
-        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
-
-        if (btn_vec == rc_keymap[RC_BTN1]) {
-            break;
-        } else if (btn_vec == rc_keymap[RC_BTN2]) {
-            retval = UDATA_IMPT_CANCELLED;
-            strncpy(menu_row2, "Cancelled", LCD_ROW_LEN+1);
-            goto sd_disable;
-        }
-
-        usleep(WAITLOOP_SLEEP_US);
+    if (entry > MAX_SD_USERDATA_ENTRY) {
+        printf("invalid entry\n");
+        return -1;
     }
 
-    strncpy(menu_row2, "Loading...", LCD_ROW_LEN+1);
-    ui_disp_menu(2);
-
-    // Import the userdata
-    for (n=0; n<=MAX_USERDATA_ENTRY; ++n) {
-        res = SD_Read(&sdcard_dev, &header, (512+n*SECTORSIZE)/SD_BLK_SIZE, 0, sizeof(header));
-        if (res != SD_OK) {
-            printf("Failed to read SD card\n");
-            retval = -res;
-            goto sd_disable;
-        }
-
-        if (strncmp(header.userdata_key, "USRDATA", 8)) {
-            printf("Not an userdata entry at 0x%x\n", 512+n*SECTORSIZE);
-            continue;
-        }
-
-        if ((header.type == UDE_PROFILE) && ((header.version_major != PROFILE_VER_MAJOR) || (header.version_minor != PROFILE_VER_MINOR))) {
-            printf("Profile version %u.%.2u does not match current one\n", header.version_major, header.version_minor);
-            continue;
-        } else if ((header.type == UDE_INITCFG) && ((header.version_major != INITCFG_VER_MAJOR) || (header.version_minor != INITCFG_VER_MINOR))) {
-            printf("Initconfig version %u.%.2u does not match current one\n", header.version_major, header.version_minor);
-            continue;
-        } else if (header.type > UDE_PROFILE) {
-            printf("Unknown userdata entry type %u\n", header.type);
-            continue;
-        }
-
-        // Just blindly write the entry to flash
-        retval = copy_sd_to_flash((512+n*SECTORSIZE)/SD_BLK_SIZE, (n*PAGES_PER_SECTOR)+(USERDATA_OFFSET/PAGESIZE),
-            (header.type == UDE_PROFILE) ? (sizeof(ude_profile)+sizeof(video_modes_plm_default)) : sizeof(ude_initcfg), databuf);
+    if (!sdcard_dev.mount) {
+        retval = file_mount();
         if (retval != 0) {
-            printf("Copy from SD to flash failed (error %d)\n", retval);
-            goto sd_disable;
+            printf("SD card not detected %d\n", retval);
+            return -2;
         }
-
-        entries_imported++;
     }
 
-    // flash read immediately after write might fail, add some delay
-    usleep(1000);
+    if (f_open(&p_file, p_filename, FA_WRITE|FA_CREATE_ALWAYS) != F_OK) {
+        return -3;
+    }
 
-    read_userdata(INIT_CONFIG_SLOT, 0);
-    profile_sel = input_profiles[target_input];
-    read_userdata(profile_sel, 0);
+    memset(&hdr, 0x00, sizeof(ude_hdr));
+    strlcpy(hdr.userdata_key, "USRDATA", 8);
+    hdr.type = (entry > MAX_SD_PROFILE) ? UDE_INITCFG : UDE_PROFILE;
 
-    sniprintf(menu_row2, LCD_ROW_LEN+1, "%d slots loaded", entries_imported);
-    retval = 1;
+    if (hdr.type == UDE_INITCFG) {
+        target_map = ude_initcfg_items;
+        hdr.num_items = sizeof(ude_initcfg_items)/sizeof(ude_item_map);
 
-sd_disable:
-    SPI_CS_High();
+        sniprintf(hdr.name, USERDATA_NAME_LEN+1, "INITCFG");
+    } else if (hdr.type == UDE_PROFILE) {
+        target_map = ude_profile_items;
+        hdr.num_items = sizeof(ude_profile_items)/sizeof(ude_item_map);
 
+        // Check if name override file exists
+        sniprintf(p_filename, sizeof(p_filename), "prof_n.txt");
+        if (!file_open(&name_file, p_filename)) {
+
+            for (i=0; i<=entry; i++) {
+                if (file_get_string(&name_file, target_profile_name, sizeof(target_profile_name)) == NULL)
+                    break;
+            }
+
+            file_close(&name_file);
+        }
+
+        if (i == entry+1) {
+            // strip CR / CRLF
+            target_profile_name[strcspn(target_profile_name, "\r\n")] = 0;
+
+            strlcpy(hdr.name, target_profile_name, USERDATA_NAME_LEN+1);
+        } else if (cur_profile_name[0] == 0) {
+            sniprintf(hdr.name, USERDATA_NAME_LEN+1, "<used>");
+        } else {
+            strlcpy(hdr.name, cur_profile_name, USERDATA_NAME_LEN+1);
+        }
+    }
+
+    // Write header
+    if ((f_write(&p_file, &hdr, sizeof(ude_hdr), &bytes_written) != F_OK) || (bytes_written != sizeof(ude_hdr))) {
+        retval = -4;
+        goto close_file;
+    }
+    bytes_written_tot = bytes_written;
+
+    // Write data
+    for (i=0; i<hdr.num_items; i++) {
+        if ((f_write(&p_file, &target_map[i].hdr, sizeof(ude_item_hdr), &bytes_written) != F_OK) || (bytes_written != sizeof(ude_item_hdr))) {
+            retval = -5;
+            goto close_file;
+        }
+        bytes_written_tot += bytes_written;
+
+        if ((f_write(&p_file, target_map[i].data, target_map[i].hdr.data_size, &bytes_written) != F_OK) || (bytes_written != target_map[i].hdr.data_size)) {
+            retval = -6;
+            goto close_file;
+        }
+        bytes_written_tot += bytes_written;
+    }
+
+    printf("%u bytes written into userdata entry %u\n", bytes_written_tot, entry);
+
+close_file:
+    file_close(&p_file);
     return retval;
 }
 
-static alt_u8 poll_yesno(const useconds_t useconds, alt_u32 *const btn_vec_out)
-{
-    alt_u32 btn_vec;
-    alt_u8 ret = 0U;
+int read_userdata_sd(uint8_t entry, int dry_run) {
+    FIL p_file;
+    ude_hdr hdr;
+    ude_item_hdr item_hdr;
+    const ude_item_map *target_map;
+    unsigned int bytes_read, bytes_read_tot;
+    char p_filename[14];
+    int i, j, target_map_items, retval=0;
 
-    for (alt_u32 i = 0; i < (useconds/WAITLOOP_SLEEP_US); ++i) {
-        btn_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & RC_MASK;
+    if (entry == SD_INIT_CONFIG_SLOT)
+        sniprintf(p_filename, 14, "settings.bin");
+    else
+        sniprintf(p_filename, 14, "prof%.2u.bin", entry);
 
-        for (alt_u32 j = RC_BTN1; j < (REMOTE_MAX_KEYS - 1); ++j) {
-            if (btn_vec == rc_keymap[j]) {
-                ret = 1U;
+    if (entry > MAX_SD_USERDATA_ENTRY) {
+        printf("invalid entry\n");
+        return -1;
+    }
+
+    if (!sdcard_dev.mount) {
+        retval = file_mount();
+        if (retval != 0) {
+            printf("SD card not detected %d\n", retval);
+            return -2;
+        }
+    }
+
+    if (file_open(&p_file, p_filename) != F_OK) {
+        return -3;
+    }
+
+    if ((f_read(&p_file, &hdr, sizeof(ude_hdr), &bytes_read) != F_OK) || (bytes_read != sizeof(ude_hdr))) {
+        printf("Hdr read error\n");
+        retval = -4;
+        goto close_file;
+    }
+    bytes_read_tot = bytes_read;
+
+    if (strncmp(hdr.userdata_key, "USRDATA", 8)) {
+        printf("No userdata found on file\n");
+        retval = -5;
+        goto close_file;
+    }
+
+    strlcpy(target_profile_name, hdr.name, USERDATA_NAME_LEN+1);
+    if (dry_run)
+        goto close_file;
+
+    target_map = (hdr.type == UDE_INITCFG) ? ude_initcfg_items : ude_profile_items;
+    target_map_items = (hdr.type == UDE_INITCFG) ? sizeof(ude_initcfg_items)/sizeof(ude_item_map) : sizeof(ude_profile_items)/sizeof(ude_item_map);
+
+    for (i=0; i<hdr.num_items; i++) {
+        if ((f_read(&p_file, &item_hdr, sizeof(ude_item_hdr), &bytes_read) != F_OK) || (bytes_read != sizeof(ude_item_hdr))) {
+            printf("Item header read fail\n");
+            retval = -6;
+            goto close_file;
+        }
+        bytes_read_tot += sizeof(ude_item_hdr);
+        for (j=0; j<target_map_items; j++) {
+            if (!memcmp(&item_hdr, &target_map[j].hdr, sizeof(ude_item_hdr))) {
+                if ((f_read(&p_file, target_map[j].data, item_hdr.data_size, &bytes_read) != F_OK) || (bytes_read != item_hdr.data_size)) {
+                    printf("Item data read fail\n");
+                    retval = -7;
+                    goto close_file;
+                }
                 break;
             }
         }
-
-        if (ret)
-            break;
-
-        usleep(WAITLOOP_SLEEP_US);
+        bytes_read_tot += item_hdr.data_size;
+        if (j == target_map_items)
+            f_lseek(&p_file, bytes_read_tot);
     }
 
-    if (ret)
-        *btn_vec_out = btn_vec;
+    if (hdr.type == UDE_PROFILE)
+        update_cur_vm = 1;
 
-    return ret;
-}
+    strlcpy(cur_profile_name, target_profile_name, USERDATA_NAME_LEN+1);
+    printf("%u bytes read from userdata entry %u\n", bytes_read_tot, entry);
 
-int export_userdata()
-{
-    int retval;
-    const char *msg;
-    alt_u8 databuf[SD_BLK_SIZE];
-    alt_u8 prompt_state = 0;
-    useconds_t prompt_delay;
-    const alt_u8 prompt_transitions[] = { 1, 2, 0, 0, };
-    const alt_u8 prompt_ofs[] = { 0, 16, 31, LNG(48, 47), };
-    const char *prompt_msgs =
-        LNG(
-        "SD CARD WILL BE" "\0" // [ 0..15]
-        "OVERWRITTEN!!!"  "\0" // [16..30]
-        "Export? 1=Y, 2=N""\0" // [31..47]
-        "Press 1 or 2",        // [48..60]
-        "SDｶｰﾄﾞｦｳﾜｶﾞｷｼﾏｽ" "\0" // [ 0..15]
-        "ｺﾞﾁｭｳｲｸﾀﾞｻｲ!!!"  "\0" // [16..30]
-        "1=ｼﾞｯｺｳｽﾙ 2=ﾔﾒﾙ" "\0" // [31..46]
-        "ﾄﾞﾁﾗｶｴﾗﾝﾃﾞｸﾀﾞｻｲ"      // [47..60]
-        );
-    alt_u32 btn_vec, sd_block_offset;
-
-    _Static_assert(SD_BLK_SIZE == FAT16_SECTOR_SIZE, "Sector size mismatch");
-
-    retval = check_sdcard(databuf);
-    SPI_CS_High();
-    if (retval != 0) {
-        retval = -retval;
-        goto out;
-    }
-
-    usleep(100000U);
-    while (1) {
-        msg = &prompt_msgs[prompt_ofs[prompt_state]];
-        prompt_delay = (prompt_state == 2) ? 2000000U
-            : ((prompt_state == 3) ? 300000U : 1000000U);
-        prompt_state = prompt_transitions[prompt_state];
-
-        strncpy(menu_row2, msg, LCD_ROW_LEN+1);
-        ui_disp_menu(2);
-        if (poll_yesno(prompt_delay, &btn_vec))
-            goto eval_button;
-
-        continue;
-eval_button:
-        if (btn_vec == rc_keymap[RC_BTN1]) {
-            break;
-        } else if (btn_vec == rc_keymap[RC_BTN2] ||
-            btn_vec == rc_keymap[RC_BACK])
-        {
-            retval = UDATA_EXPT_CANCELLED;
-            goto out;
-        }
-        prompt_state = 3;
-    }
-
-    usleep(100000U);
-    strncpy(menu_row1,"SD Format", LCD_ROW_LEN+1);
-    strncpy(menu_row2,"1=FAT16, 2=RAW", LCD_ROW_LEN+1);
-    ui_disp_menu(2);
-    if ((!poll_yesno(5000000U, &btn_vec)) || ((btn_vec != rc_keymap[RC_BTN1]) && (btn_vec != rc_keymap[RC_BTN2])))  {
-        retval = UDATA_EXPT_CANCELLED;
-        goto out;
-    }
-    sd_block_offset = (btn_vec == rc_keymap[RC_BTN1]) ? (PROF_16_DATA_OFS/SD_BLK_SIZE) : 0;
-
-    strncpy(menu_row2, LNG("Exporting...", "ｵﾏﾁｸﾀﾞｻｲ"), LCD_ROW_LEN+1);
-    ui_disp_menu(2);
-
-    // RAW copy
-    if (btn_vec == rc_keymap[RC_BTN2])
-        goto copy_start;
-
-    /* Zero out the boot sector, FATs and root directory. */
-    memset(databuf, 0, SD_BLK_SIZE);
-    for (alt_u32 sector = 0;
-        sector < (FAT16_ROOT_DIR_FIRST_SECTOR + FAT16_ROOT_DIR_SECTORS);
-        ++sector)
-    {
-        retval = SD_Write(&sdcard_dev, databuf, sector);
-        if (retval)
-            goto out;
-    }
-
-    /* Generate and write the boot sector. */
-    generate_boot_sector_16(databuf);
-    retval = SD_Write(&sdcard_dev, databuf, 0);
-    if (retval)
-        goto out;
-
-    /* Generate and write the file allocation tables. */
-    for (alt_u16 clusters_written = 0, sd_blk_idx = 0;
-        clusters_written < (PROF_16_DATA_SIZE/FAT16_CLUSTER_SIZE);)
-    {
-        memset(databuf, 0, SD_BLK_SIZE);
-        clusters_written = generate_fat16(databuf, clusters_written);
-        retval = SD_Write(&sdcard_dev, databuf,
-            (FAT16_1_OFS/SD_BLK_SIZE) + sd_blk_idx);
-        if (retval)
-            goto out;
-
-        retval = SD_Write(&sdcard_dev, databuf,
-            (FAT16_2_OFS/SD_BLK_SIZE) + sd_blk_idx);
-        if (retval)
-            goto out;
-
-        ++sd_blk_idx;
-    }
-
-    /* Write the directory entry of the settings file. */
-    memset(databuf, 0, SD_BLK_SIZE);
-    memcpy(databuf, prof_dirent_16, PROF_DIRENT_16_SIZE);
-    retval = SD_Write(&sdcard_dev, databuf, PROF_DIRENT_16_OFS/SD_BLK_SIZE);
-    if (retval)
-        goto out;
-
-copy_start:
-    // Zero out first 512 bytes (1 SD block) of the file
-    memset(databuf, 0, SD_BLK_SIZE);
-    retval = SD_Write(&sdcard_dev, databuf, sd_block_offset++);
-    if (retval)
-        goto out;
-
-    /* This may wear the SD card a bit more than necessary... */
-    retval = copy_flash_to_sd(USERDATA_OFFSET/PAGESIZE,
-        sd_block_offset,
-        (MAX_USERDATA_ENTRY + 1) * SECTORSIZE,
-        databuf);
-
-out:
-    SPI_CS_High();
-
-    switch (retval) {
-        case 0:
-            msg = LNG("Success", "ｶﾝﾘｮｳｼﾏｼﾀ"); // Alternative: "ｶﾝﾘｮｳｲﾀｼﾏｼﾀ"
-            break;
-        case SD_NOINIT:
-            msg = LNG("No SD card det.", "SDｶｰﾄﾞｶﾞﾐﾂｶﾘﾏｾﾝ");
-            break;
-        case -EINVAL:
-            msg = LNG("Invalid params.", "ﾊﾟﾗﾒｰﾀｶﾞﾑｺｳﾃﾞｽ");
-            break;
-        case UDATA_EXPT_CANCELLED:
-            msg = LNG("Cancelled", "ｷｬﾝｾﾙｻﾚﾏｼﾀ"); // Alternative: "ｷｬﾝｾﾙｻｾﾃｲﾀﾀﾞｷﾏｽ"
-            break;
-        default:
-            msg = LNG("SD/Flash error", "SDｶFLASHﾉｴﾗｰ"); // ﾌﾗｯｼｭ would be NG.
-            break;
-    }
-    strncpy(menu_row2, msg, LCD_ROW_LEN+1);
-
-    if (!retval) {
-        return 1;
-    } else {
-        /*
-         * We want the message above to remain on screen, so return a
-         * positive value which nevertheless stands out when debugging.
-         */
-        return 0x0dead;
-    }
+close_file:
+    file_close(&p_file);
+    return retval;
 }

@@ -33,15 +33,14 @@
 extern char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern avmode_t cm;
 extern avconfig_t tc;
+extern settings_t ts;
 extern mode_data_t video_modes_plm[];
 extern alt_u32 remote_code;
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
-extern alt_u8 vm_sel, profile_sel_menu, lt_sel, def_input, profile_link, lcd_bl_timeout;
-extern alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr, auto_av3_ypbpr;
+extern alt_u8 vm_sel, profile_sel_menu, sd_profile_sel_menu, lt_sel;
 extern alt_u8 update_cur_vm;
-extern alt_u8 osd_enable, osd_status_timeout, osd_highlight_color, phase_hotkey_enable;
 extern uint8_t sl_def_iv_x, sl_def_iv_y;
-extern char target_profile_name[PROFILE_NAME_LEN+1];
+extern char target_profile_name[USERDATA_NAME_LEN+1];
 extern volatile osd_regs *osd;
 extern const int num_video_modes_plm;
 extern c_shmask_t c_shmask;
@@ -104,7 +103,8 @@ static void lt_disp(alt_u8 v) { strncpy(menu_row2, lt_desc[v], LCD_ROW_LEN+1); }
 static void aud_db_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d dB", ((alt_8)v-AUDIO_GAIN_0DB)); }
 static void vm_display_name (alt_u8 v) { strncpy(menu_row2, video_modes_plm[v].name, LCD_ROW_LEN+1); }
 static void link_av_desc (avinput_t v) { strncpy(menu_row2, v == AV_LAST ? "No link" : avinput_str[v], LCD_ROW_LEN+1); }
-static void profile_disp(alt_u8 v) { read_userdata(v, 1); sniprintf(menu_row2, LCD_ROW_LEN+1, "%u: %s", v, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name); }
+static void profile_disp(uint8_t v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u: %s", v, (read_userdata(v, 1) != 0) ? "<empty>" : target_profile_name); }
+static void sd_profile_disp(uint8_t v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%u: %s", v, (read_userdata_sd(v, 1) != 0) ? "<empty>" : target_profile_name); }
 static void alc_v_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u lines","%u ﾗｲﾝ"), (1<<v)); }
 static void alc_h_filter_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, LNG("%u pixels","%u ﾄﾞｯﾄ"), (1<<(v+1))); }
 void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg", (v*11250)/1000); }
@@ -112,6 +112,7 @@ void sampler_phase_disp(alt_u8 v) { sniprintf(menu_row2, LCD_ROW_LEN+1, "%d deg"
 
 static arg_info_t vm_arg_info = {&vm_sel, 0, vm_display_name};
 static const arg_info_t profile_arg_info = {&profile_sel_menu, MAX_PROFILE, profile_disp};
+static const arg_info_t sd_profile_arg_info = {&sd_profile_sel_menu, MAX_SD_PROFILE, sd_profile_disp};
 static const arg_info_t lt_arg_info = {&lt_sel, (sizeof(lt_desc)/sizeof(char*))-1, lt_disp};
 
 
@@ -242,22 +243,24 @@ MENU(menu_audio, P99_PROTECT({ \
 
 MENU(menu_settings, P99_PROTECT({ \
     { LNG("Link prof->input","Link prof->input"), OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.link_av,  OPT_WRAP, AV1_RGBs, AV_LAST, link_av_desc } } },
-    { LNG("Link input->prof","Link input->prof"),   OPT_AVCONFIG_SELECTION, { .sel = { &profile_link,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
-    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
-    { "Autodetect input",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_input,     OPT_WRAP, SETTING_ITEM(auto_input_desc) } } },
-    { "Auto AV1 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av1_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "Auto AV2 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av2_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "Auto AV3 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &auto_av3_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
-    { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
-    { "OSD",                                    OPT_AVCONFIG_SELECTION, { .sel = { &osd_enable,   OPT_WRAP,   SETTING_ITEM(osd_enable_desc) } } },
-    { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_status_timeout,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
-    { "OSD cursor color",                       OPT_AVCONFIG_SELECTION, { .sel = { &osd_highlight_color,   OPT_WRAP,   SETTING_ITEM(osd_color_desc) } } },
-    { "Phase hotkey",                           OPT_AVCONFIG_SELECTION, { .sel = { &phase_hotkey_enable,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { LNG("Link input->prof","Link input->prof"),   OPT_AVCONFIG_SELECTION, { .sel = { &ts.profile_link,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { LNG("Initial input","ｼｮｷﾆｭｳﾘｮｸ"),          OPT_AVCONFIG_SELECTION, { .sel = { &ts.def_input,       OPT_WRAP, SETTING_ITEM(avinput_str) } } },
+    { "Autodetect input",                          OPT_AVCONFIG_SELECTION, { .sel = { &ts.auto_input,     OPT_WRAP, SETTING_ITEM(auto_input_desc) } } },
+    { "Auto AV1 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &ts.auto_av1_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+    { "Auto AV2 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &ts.auto_av2_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+    { "Auto AV3 Y/Gs",                          OPT_AVCONFIG_SELECTION, { .sel = { &ts.auto_av3_ypbpr,     OPT_WRAP, SETTING_ITEM(rgsb_ypbpr_desc) } } },
+    { "LCD BL timeout",                         OPT_AVCONFIG_SELECTION, { .sel = { &ts.lcd_bl_timeout,  OPT_WRAP, SETTING_ITEM(lcd_bl_timeout_desc) } } },
+    { "OSD",                                    OPT_AVCONFIG_SELECTION, { .sel = { &ts.osd_enable,   OPT_WRAP,   SETTING_ITEM(osd_enable_desc) } } },
+    { "OSD status disp.",                       OPT_AVCONFIG_SELECTION, { .sel = { &ts.osd_status_timeout,   OPT_WRAP,   SETTING_ITEM(osd_status_desc) } } },
+    { "OSD cursor color",                       OPT_AVCONFIG_SELECTION, { .sel = { &ts.osd_highlight_color,   OPT_WRAP,   SETTING_ITEM(osd_color_desc) } } },
+    { "Phase hotkey",                           OPT_AVCONFIG_SELECTION, { .sel = { &ts.phase_hotkey_enable,  OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("<Load profile >","<ﾌﾟﾛﾌｧｲﾙﾛｰﾄﾞ    >"),   OPT_FUNC_CALL,         { .fun = { load_profile, &profile_arg_info } } },
     { LNG("<Save profile >","<ﾌﾟﾛﾌｧｲﾙｾｰﾌﾞ    >"),  OPT_FUNC_CALL,          { .fun = { save_profile, &profile_arg_info } } },
-    { LNG("<Reset settings>","<ｾｯﾃｲｦｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { set_default_avconfig, NULL } } },
-    { LNG("<Import sett.  >","<ｾｯﾃｲﾖﾐｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
-    { LNG("<Export sett.  >","<ｾｯﾃｲｶｷｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { export_userdata, NULL } } },
+    { "<SD Load profile>" ,                      OPT_FUNC_CALL,          { .fun = { load_profile_sd, &sd_profile_arg_info } } },
+    { "<SD Save profile>" ,                      OPT_FUNC_CALL,          { .fun = { save_profile_sd, &sd_profile_arg_info } } },
+    { LNG("<Reset profile>","<ｾｯﾃｲｦｼｮｷｶ    >"),  OPT_FUNC_CALL,          { .fun = { reset_profile, NULL } } },
+    //{ LNG("<Import sett.  >","<ｾｯﾃｲﾖﾐｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
+    //{ LNG("<Export sett.  >","<ｾｯﾃｲｶｷｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { export_userdata, NULL } } },
     { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"), OPT_FUNC_CALL,        { .fun = { fw_update, NULL } } },
 }))
 
@@ -338,7 +341,7 @@ void render_osd_page() {
     const menuitem_t *item;
     uint32_t row_mask[2] = {0, 0};
 
-    if (!menu_active || (osd_enable != 1))
+    if (!menu_active || (ts.osd_enable != 1))
         return;
 
     for (i=0; i < navi[navlvl].m->num_items; i++) {
@@ -500,6 +503,14 @@ void update_osd_size(mode_data_t *vm_out) {
 
     osd->osd_config.x_size = ((osd_size + vm_out->timings.interlaced + xadj_log2) >= 0) ? (osd_size + vm_out->timings.interlaced + xadj_log2) : 0;
     osd->osd_config.y_size = osd_size;
+}
+
+void refresh_osd() {
+    if (menu_active) {
+        remote_code = 0;
+        render_osd_page();
+        display_menu(1);
+    }
 }
 
 static void vm_select() {

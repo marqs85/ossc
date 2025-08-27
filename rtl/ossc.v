@@ -377,7 +377,7 @@ sys sys_inst(
     .reset_po_reset_n                       (po_reset_n),
     .ibex_0_ndm_ndmreset_o                  (ndmreset_req),
     .ibex_0_ndm_ndmreset_ack_i              (ndmreset_ack),
-    .ibex_0_config_boot_addr_i              (32'h02080000),
+    .ibex_0_config_boot_addr_i              (32'h02050000),
     .ibex_0_config_core_sleep_o             (),
     .master_0_master_reset_reset            (jtagm_reset_req),
     .i2c_opencores_0_export_scl_pad_io      (scl),

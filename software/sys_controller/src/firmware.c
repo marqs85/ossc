@@ -54,10 +54,12 @@ int fw_update() {
     uint8_t databuf[SD_BLK_SIZE]; // temp buffer for data
     uint16_t fs_csize, fs_startsec, cl_iter, cl_soffs;
 
-    retval = file_mount();
-    if (retval != 0) {
-        printf("SD card not detected %d\n", retval);
-        return -1;
+    if (!sdcard_dev.mount) {
+        retval = file_mount();
+        if (retval != 0) {
+            printf("SD card not detected %d\n", retval);
+            return -1;
+        }
     }
 
     //sniprintf(dirname_root, sizeof(dirname_root), "/%s", dirname);

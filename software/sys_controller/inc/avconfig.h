@@ -157,6 +157,11 @@ typedef struct {
     avinput_t link_av;
 } __attribute__((packed)) avconfig_t;
 
-int set_default_avconfig();
+int set_default_profile(int update_cc);
+int reset_profile();
+int load_profile();
+int save_profile();
+int load_profile_sd();
+int save_profile_sd();
 
 #endif

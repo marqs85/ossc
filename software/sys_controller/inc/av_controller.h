@@ -90,6 +90,20 @@ typedef struct {
 } avmode_t;
 
 typedef struct {
+    uint8_t profile_link;
+    avinput_t def_input;
+    uint8_t auto_input;
+    uint8_t auto_av1_ypbpr;
+    uint8_t auto_av2_ypbpr;
+    uint8_t auto_av3_ypbpr;
+    uint8_t lcd_bl_timeout;
+    uint8_t osd_enable;
+    uint8_t osd_status_timeout;
+    uint8_t osd_highlight_color;
+    uint8_t phase_hotkey_enable;
+} settings_t;
+
+typedef struct {
     uint8_t iv_x;
     uint8_t iv_y;
     uint16_t v[16][16];
@@ -117,10 +131,9 @@ void ui_disp_status(alt_u8 refresh_osd_timer);
 
 void set_sampler_phase(uint8_t sampler_phase, uint8_t update_sc);
 
-int load_profile();
-int save_profile();
-
 void print_vm_stats();
 int latency_test();
+
+void update_settings(int init_setup);
 
 #endif

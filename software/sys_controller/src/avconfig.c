@@ -21,12 +21,15 @@
 #include "system.h"
 #include "avconfig.h"
 #include "av_controller.h"
+#include "userdata.h"
 #include "altera_avalon_pio_regs.h"
 #include "tvp7002.h"
 
 #define DEFAULT_ON              1
 
+extern avmode_t cm;
 extern alt_u8 update_cur_vm;
+extern uint8_t sd_profile_sel_menu;
 
 // Target configuration
 avconfig_t tc;
@@ -65,14 +68,37 @@ const avconfig_t tc_default = {
     .link_av = AV_LAST,
 };
 
-int set_default_avconfig()
+int set_default_profile(int update_cc)
 {
     memcpy(&tc, &tc_default, sizeof(avconfig_t));
 
     tc.tx_mode = (IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE) & HDMITX_MODE_MASK) ? TX_DVI : TX_HDMI_RGB;
 
+    if (update_cc)
+        memcpy(&cm.cc, &tc, sizeof(avconfig_t));
+
     set_default_vm_table();
     update_cur_vm = 1;
 
     return 0;
+}
+
+int reset_profile() {
+    set_default_profile(0);
+
+    return 0;
+}
+
+int load_profile_sd() {
+    return read_userdata_sd(sd_profile_sel_menu, 0);
+}
+
+int save_profile_sd() {
+    int retval;
+
+    retval = write_userdata_sd(sd_profile_sel_menu);
+    if (retval == 0)
+        write_userdata_sd(SD_INIT_CONFIG_SLOT);
+
+    return retval;
 }

@@ -65,18 +65,24 @@ extern alt_u16 rc_keymap_default[REMOTE_MAX_KEYS];
 extern alt_u32 remote_code;
 extern alt_u32 btn_code, btn_code_prev;
 extern alt_u8 remote_rpt, remote_rpt_prev;
-extern avconfig_t tc, tc_default;
+extern avconfig_t tc;
 extern alt_u8 vm_sel;
-extern char target_profile_name[PROFILE_NAME_LEN+1];
+extern char target_profile_name[USERDATA_NAME_LEN+1];
 
 tvp_input_t target_tvp;
 tvp_sync_input_t target_tvp_sync;
 alt_u8 target_type;
 alt_u8 update_cur_vm;
 
-alt_u8 profile_sel, profile_sel_menu, input_profiles[AV_LAST], lt_sel, def_input, profile_link, lcd_bl_timeout;
-alt_u8 osd_enable=1, osd_status_timeout=1, osd_highlight_color=4;
-alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
+// Default settings
+const settings_t ts_default = {
+    .osd_enable = 1,
+    .osd_status_timeout = 1,
+    .osd_highlight_color = 4,
+    .auto_av2_ypbpr = 1,
+};
+
+alt_u8 profile_sel, profile_sel_menu, sd_profile_sel_menu, input_profiles[AV_LAST], lt_sel;
 
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
@@ -96,6 +102,8 @@ alt_u32 read_it2(alt_u32 regaddr);
 
 mode_data_t vmode_in, vmode_out;
 vm_proc_config_t vm_conf;
+
+settings_t cs, ts;
 
 // Manually (see cyiv-51005.pdf) or automatically (MIF/HEX from PLL megafunction) generated config may not
 // provide fully correct scan chain data (e.g. mismatches in C3) and lead to incorrect PLL configuration.
@@ -140,9 +148,9 @@ int loaded_lc_palette = -1;
 
 void ui_disp_menu(alt_u8 osd_mode)
 {
-    alt_u8 menu_page;
+    uint8_t menu_page;
 
-    if ((osd_mode == 1) || (osd_enable == 2)) {
+    if ((osd_mode == 1) || (ts.osd_enable == 2)) {
         strncpy((char*)osd->osd_array.data[0][0], menu_row1, OSD_CHAR_COLS);
         strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
         osd->osd_row_color.mask = 0;
@@ -763,7 +771,7 @@ int load_profile() {
             target_input = tc.link_av;
 
         // Update profile link (also prevents the change of input from inducing a profile load).
-        input_profiles[profile_link ? target_input : AV_TESTPAT] = profile_sel;
+        input_profiles[ts.profile_link ? target_input : AV_TESTPAT] = profile_sel;
         write_userdata(INIT_CONFIG_SLOT);
     }
 
@@ -777,11 +785,16 @@ int save_profile() {
     if (retval == 0) {
         profile_sel = profile_sel_menu;
 
-        input_profiles[profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
+        input_profiles[ts.profile_link ? cm.avinput : AV_TESTPAT] = profile_sel;
         write_userdata(INIT_CONFIG_SLOT);
     }
 
     return retval;
+}
+
+void set_default_settings() {
+    memcpy(&ts, &ts_default, sizeof(settings_t));
+    set_default_keymap();
 }
 
 void set_default_c_shmask() {
@@ -857,17 +870,19 @@ int init_hw()
     }*/
 
     // Set defaults
-    set_default_avconfig();
-    memcpy(&cm.cc, &tc_default, sizeof(avconfig_t));
+    set_default_profile(1);
     set_default_c_shmask();
-    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
+    set_default_settings();
 
     // Init menu
     init_menu();
 
     // Load initconfig and profile
-    //read_userdata(INIT_CONFIG_SLOT, 0);
-    //read_userdata(profile_sel, 0);
+    read_userdata(INIT_CONFIG_SLOT, 0);
+    profile_sel = input_profiles[AV_TESTPAT]; // Global profile
+    read_userdata(profile_sel, 0);
+
+    update_settings(1);
 
     // Setup test pattern
     get_vmode(VMODE_480p, &vmode_in, &vmode_out, &vm_conf);
@@ -977,6 +992,19 @@ int latency_test() {
     return 0;
 }
 
+void update_settings(int init_setup) {
+    if (init_setup || (ts.osd_enable != cs.osd_enable) || (ts.osd_status_timeout != cs.osd_status_timeout) || (ts.osd_highlight_color != cs.osd_highlight_color)) {
+        osd->osd_config.enable = !!ts.osd_enable;
+        osd->osd_config.status_timeout = ts.osd_status_timeout;
+        osd->osd_config.highlight_color = 2+ts.osd_highlight_color;
+        refresh_osd();
+    }
+    if (init_setup)
+        target_input = ts.def_input;
+
+    memcpy(&cs, &ts, sizeof(settings_t));
+}
+
 int main()
 {
     ths_input_t target_ths = 0;
@@ -1044,19 +1072,19 @@ int main()
         }
 
         // Auto input switching
-        if ((auto_input != AUTO_OFF) && (cm.avinput != AV_TESTPAT) && !cm.sync_active && !menu_active
+        if ((cs.auto_input != AUTO_OFF) && (cm.avinput != AV_TESTPAT) && !cm.sync_active && !menu_active
             && (alt_timestamp() >= auto_input_timestamp + 300 * (alt_timestamp_freq() >> 10)) && (auto_input_ctr < AUTO_MAX_COUNT)) {
 
             // Keep switching on the same physical input when set to Current input or a short time after losing sync.
-            auto_input_keep_current = (auto_input == AUTO_CURRENT_INPUT || auto_input_current_ctr < AUTO_CURRENT_MAX_COUNT);
+            auto_input_keep_current = (cs.auto_input == AUTO_CURRENT_INPUT || auto_input_current_ctr < AUTO_CURRENT_MAX_COUNT);
 
             switch(cm.avinput) {
             case AV1_RGBs:
-                target_input = auto_av1_ypbpr ? AV1_YPBPR : AV1_RGsB;
+                target_input = cs.auto_av1_ypbpr ? AV1_YPBPR : AV1_RGsB;
                 break;
             case AV1_RGsB:
             case AV1_YPBPR:
-                target_input = auto_input_keep_current ? AV1_RGBs : (auto_av2_ypbpr ? AV2_YPBPR : AV2_RGsB);
+                target_input = auto_input_keep_current ? AV1_RGBs : (cs.auto_av2_ypbpr ? AV2_YPBPR : AV2_RGsB);
                 break;
             case AV2_YPBPR:
             case AV2_RGsB:
@@ -1066,7 +1094,7 @@ int main()
                 target_input = AV3_RGBs;
                 break;
             case AV3_RGBs:
-                target_input = auto_av3_ypbpr ? AV3_YPBPR : AV3_RGsB;
+                target_input = cs.auto_av3_ypbpr ? AV3_YPBPR : AV3_RGsB;
                 break;
             case AV3_RGsB:
             case AV3_YPBPR:
@@ -1097,7 +1125,7 @@ int main()
         if ((target_input != cm.avinput && man_input_change) || (auto_input_changed && cm.sync_active))  {
             // The input changed, so load the appropriate profile if
             // input->profile link is enabled
-            if (profile_link && (profile_sel != input_profiles[target_input])) {
+            if (cs.profile_link && (profile_sel != input_profiles[target_input])) {
                 profile_sel = input_profiles[target_input];
                 read_userdata(profile_sel, 0);
             }
@@ -1182,7 +1210,7 @@ int main()
             ui_disp_status(1);
             if (man_input_change) {
                 // record last input if it was selected manually
-                if (def_input == AV_LAST)
+                if (cs.def_input == AV_LAST)
                     write_userdata(INIT_CONFIG_SLOT);
                 // Set auto_input_timestamp when input is manually changed
                 auto_input_ctr = 0;
@@ -1222,16 +1250,8 @@ int main()
             printf("Changing AV3 RGB source\n");
             cm.cc.av3_alt_rgb = tc.av3_alt_rgb;
         }
-        if ((!!osd_enable != osd->osd_config.enable) || (osd_status_timeout != osd->osd_config.status_timeout) || (osd_highlight_color != osd->osd_config.highlight_color)) {
-            osd->osd_config.enable = !!osd_enable;
-            osd->osd_config.status_timeout = osd_status_timeout;
-            osd->osd_config.highlight_color = 2+osd_highlight_color;
-            if (menu_active) {
-                remote_code = 0;
-                render_osd_page();
-                display_menu(1);
-            }
-        }
+
+        update_settings(0);
 
         if (cm.avinput != AV_TESTPAT) {
             status = get_status(target_tvp_sync);

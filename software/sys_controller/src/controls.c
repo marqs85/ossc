@@ -43,12 +43,12 @@ extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern mode_data_t video_modes_plm[];
 extern avmode_t cm;
 extern avconfig_t tc;
+extern settings_t ts;
 extern avinput_t target_input;
 extern alt_u8 menu_active;
 extern alt_u32 sys_ctrl;
 extern alt_u16 tc_sampler_phase;
 extern alt_u8 profile_sel, profile_sel_menu;
-extern alt_u8 lcd_bl_timeout;
 extern alt_u8 vm_edit;
 extern volatile osd_regs *osd;
 
@@ -94,7 +94,7 @@ void setup_rc()
 
             if ((btn_code_prev == 0) && (btn_code == PB0_BIT)) {
                 if (i == 0) {
-                    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
+                    set_default_keymap();
                     i=REMOTE_MAX_KEYS;
                 } else {
                     i-=2;
@@ -114,6 +114,10 @@ void setup_rc()
     write_userdata(INIT_CONFIG_SLOT);
 
     osd->osd_config.menu_active = 0;
+}
+
+void set_default_keymap() {
+    memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
 }
 
 int parse_control()
@@ -341,7 +345,7 @@ Button_Check:
 
     sys_ctrl &= ~(3<<LCD_BL_TIMEOUT_OFFS);
     if (!menu_active)
-        sys_ctrl |= (lcd_bl_timeout << LCD_BL_TIMEOUT_OFFS);
+        sys_ctrl |= (ts.lcd_bl_timeout << LCD_BL_TIMEOUT_OFFS);
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
 

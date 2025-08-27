@@ -1,6 +1,6 @@
 # flash details
 set flash_base                  0x02000000
-set flash_imem_offset           0x00080000
+set flash_imem_offset           0x00050000
 set flash_imem_base             [format 0x%.8x [expr $flash_base + $flash_imem_offset]]
 set flash_secsize               65536
 

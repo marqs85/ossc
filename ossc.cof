@@ -16,7 +16,7 @@
 	<hex_block>
 		<hex_filename>software/sys_controller/mem_init/flash.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>524288</hex_offset>
+		<hex_offset>327680</hex_offset>
 		<hex_little_endian>0</hex_little_endian>
 	</hex_block>
 	<version>10</version>

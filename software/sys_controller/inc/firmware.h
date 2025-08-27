@@ -21,25 +21,16 @@
 #define FIRMWARE_H_
 
 #include <stdint.h>
-#include "alt_types.h"
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            1
 #define FW_VER_MINOR            20
-
-#define PROFILE_VER_MAJOR       1
-#define PROFILE_VER_MINOR       12
-
-#define INITCFG_VER_MAJOR       1
-#define INITCFG_VER_MINOR       20
 
 #ifdef OSDLANG_JP
 #define FW_SUFFIX              "j"
 #else
 #define FW_SUFFIX              ""
 #endif
-
-#define FW_UPDATE_RETRIES       3
 
 typedef struct {
     char fw_key[4];

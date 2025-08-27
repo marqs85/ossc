@@ -1,14 +1,14 @@
 SEARCH_DIR(.)
 __DYNAMIC  =  0;
 
-/* First 16 flash sectors reserved for firmware image (1MB).
+/* First 16 flash sectors reserved for 2 firmware images (2x 0.5MB).
    In typical configuration a firmware image consists of
-   * compressed bitstream (8 sectors / 0.5MB)
-   * flash_imem (8 sectors / 0.5MB)
+   * compressed bitstream (5 sectors / 0.3MB)
+   * flash_imem (3 sectors / 0.2MB)
    Last 16 flash sectors reserved for userdata (16x 64KB). */
 MEMORY
 {
-    flash_imem : ORIGIN = 0x02080000, LENGTH = 524288
+    flash_imem : ORIGIN = 0x02050000, LENGTH = 196608
     dataram    : ORIGIN = 0x00010000, LENGTH = 16384
 }
 
