@@ -33,10 +33,12 @@
 
 static const char *rc_keydesc[REMOTE_MAX_KEYS] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", \
                                                    "MENU", "OK", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "SCANLINE_MODE", \
-                                                   "SCANLINE_TYPE", "SCANLINE_INT+", "SCANLINE_INT-", "LINEMULT_MODE", "PHASE+", "PHASE-", "PROFILE_HOTKEY"};
+                                                   "SCANLINE_TYPE", "SCANLINE_INT+", "SCANLINE_INT-", "SHMASK_MODE+", "SHMASK_MODE-", "SHMASK_INT+", "SHMASK_INT-", "LINEMULT_MODE", "PHASE+", "PHASE-",
+                                                   "PROFILE_HOTKEY"};
 const alt_u16 rc_keymap_default[REMOTE_MAX_KEYS] = {0x3E29, 0x3EA9, 0x3E69, 0x3EE9, 0x3E19, 0x3E99, 0x3E59, 0x3ED9, 0x3E39, 0x3EC9, \
                                               0x3E4D, 0x3E1D, 0x3EED, 0x3E2D, 0x3ECD, 0x3EAD, 0x3E6D, 0x3E65, 0x3E01, 0x1C48, \
-                                              0x1C18, 0x1C50, 0x1CD0, 0x1CC8, 0x5E58, 0x5ED8, 0x3EB9};
+                                              0x1C18, 0x1C50, 0x1CD0, 0x3E5D, 0x3E9D, 0x1C70, 0x1CF0, 0x1CC8, 0x5E58, 0x5ED8,
+                                              0x3EB9};
 alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
@@ -52,7 +54,7 @@ extern alt_u8 profile_sel, profile_sel_menu;
 extern alt_u8 vm_edit;
 extern volatile osd_regs *osd;
 
-extern menu_t menu_scanlines, menu_advtiming;
+extern menu_t menu_scanlines, menu_advtiming, menu_postproc;
 
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
@@ -217,6 +219,43 @@ int parse_control()
                 osd->osd_sec_enable[0].mask = 3;
                 osd->osd_sec_enable[1].mask = 0;
             } else if (get_current_menunavi()->m == &menu_scanlines) {
+                render_osd_page();
+            }
+            break;
+        case RC_SHMMODE_MINUS:
+        case RC_SHMMODE_PLUS:
+            if (i == RC_SHMMODE_MINUS)
+                tc.shmask_mode = tc.shmask_mode ? (tc.shmask_mode - 1) : menu_postproc.items[0].sel.max;
+            else
+                tc.shmask_mode = (tc.shmask_mode < menu_postproc.items[0].sel.max) ? (tc.shmask_mode + 1) : 0;
+
+            if (!menu_active) {
+                strncpy((char*)osd->osd_array.data[0][0], menu_postproc.items[0].name, OSD_CHAR_COLS);
+                strncpy((char*)osd->osd_array.data[1][0], menu_postproc.items[0].sel.setting_str[tc.shmask_mode], OSD_CHAR_COLS);
+                osd->osd_config.status_refresh = 1;
+                osd->osd_row_color.mask = 0;
+                osd->osd_sec_enable[0].mask = 3;
+                osd->osd_sec_enable[1].mask = 0;
+            } else if (get_current_menunavi()->m == &menu_postproc) {
+                render_osd_page();
+            }
+            break;
+        case RC_SHMINT_MINUS:
+        case RC_SHMINT_PLUS:
+            if (i == RC_SHMINT_MINUS)
+                tc.shmask_str = tc.shmask_str ? (tc.shmask_str - 1) : 0;
+            else
+                tc.shmask_str = (tc.shmask_str < SCANLINESTR_MAX) ? (tc.shmask_str + 1) : SCANLINESTR_MAX;
+
+            if (!menu_active) {
+                strncpy((char*)osd->osd_array.data[0][0], menu_postproc.items[1].name, OSD_CHAR_COLS);
+                menu_postproc.items[1].num.df(tc.shmask_str);
+                strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
+                osd->osd_config.status_refresh = 1;
+                osd->osd_row_color.mask = 0;
+                osd->osd_sec_enable[0].mask = 3;
+                osd->osd_sec_enable[1].mask = 0;
+            } else if (get_current_menunavi()->m == &menu_postproc) {
                 render_osd_page();
             }
             break;
