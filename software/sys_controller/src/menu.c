@@ -262,6 +262,7 @@ MENU(menu_settings, P99_PROTECT({ \
     //{ LNG("<Import sett.  >","<ｾｯﾃｲﾖﾐｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { import_userdata, NULL } } },
     //{ LNG("<Export sett.  >","<ｾｯﾃｲｶｷｺﾐ      >"), OPT_FUNC_CALL,        { .fun = { export_userdata, NULL } } },
     { LNG("<Fw. update    >","<ﾌｧｰﾑｳｪｱｱｯﾌﾟﾃﾞｰﾄ>"), OPT_FUNC_CALL,        { .fun = { fw_update, NULL } } },
+    { "<Launch 2nd FW >",                        OPT_FUNC_CALL,        { .fun = { fw_init_secondary, NULL } } },
 }))
 
 

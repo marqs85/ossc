@@ -45,7 +45,14 @@ typedef struct {
 } __attribute__((packed)) fw_hdr;
 
 typedef struct {
-    uint32_t unused[29];
+    uint32_t sm_cur_state[4];
+    uint32_t force_early_confdone[4];
+    uint32_t wdog_timeout[4];
+    uint32_t wdog_enable[4];
+    uint32_t image_addr[4];
+    uint32_t force_int_osc[4];
+    uint32_t reg_trig_cnd[4];
+    uint32_t reset_timer;
     uint32_t reconfig_start;
 } rem_update_regs;
 
@@ -53,8 +60,8 @@ typedef struct {
     volatile rem_update_regs *regs;
 } rem_update_dev;
 
+int fw_init_secondary();
 int fw_update();
-
-void fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec);
+void fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr);
 
 #endif

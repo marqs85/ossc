@@ -625,7 +625,7 @@
   <parameter name="GUI_config_device" value="EPCS16" />
   <parameter name="check_app_pof" value="false" />
   <parameter name="check_avalon_interface" value="true" />
-  <parameter name="m_support_write_config_check" value="false" />
+  <parameter name="m_support_write_config_check" value="true" />
   <parameter name="operation_mode" value="REMOTE" />
  </module>
  <module name="sc_config_0" kind="sc_config" version="1.0" enabled="1" />

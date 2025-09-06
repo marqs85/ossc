@@ -34,12 +34,33 @@
 #include "file.h"
 #include "altera_avalon_pio_regs.h"
 
+#define SECONDARY_FW_ADDR 0x00080000
+#define FW_FINGERPRINT 0xEFEFEF56
+#define FW_FINGERPRINT_OFFSET 0x20
+
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern SD_DEV sdcard_dev;
 extern alt_u32 sys_ctrl;
 extern flash_ctrl_dev flashctrl_dev;
 extern rem_update_dev rem_reconfig_dev;
+
+int fw_init_secondary() {
+    uint32_t fingerprint = *(uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + SECONDARY_FW_ADDR + FW_FINGERPRINT_OFFSET);
+
+    if (fingerprint != FW_FINGERPRINT) {
+        printf("Invalid FW fingerprint (0x%.8x instead of 0x%.8x)\n", fingerprint, FW_FINGERPRINT);
+        return -1;
+    }
+
+    rem_reconfig_dev.regs->image_addr[0] = SECONDARY_FW_ADDR;
+    rem_reconfig_dev.regs->wdog_enable[0] = 0;
+    rem_reconfig_dev.regs->reconfig_start = 1;
+
+    while (1) {}
+
+    return 0;
+}
 
 //int fw_update(char *dirname, char *filename) {
 int fw_update() {
@@ -53,6 +74,7 @@ int fw_update() {
     uint32_t cluster_idx[100]; // enough for >=4kB cluster size
     uint8_t databuf[SD_BLK_SIZE]; // temp buffer for data
     uint16_t fs_csize, fs_startsec, cl_iter, cl_soffs;
+    uint32_t flash_addr;
 
     if (!sdcard_dev.mount) {
         retval = file_mount();
@@ -79,11 +101,14 @@ int fw_update() {
 
         hdr_len = bswap32(hdr.hdr_len);
 
-        if (strncmp(hdr.fw_key, "OSSC", 4) || (hdr_len < 26 || hdr_len > 508)) {
+        if (!(!strncmp(hdr.fw_key, "OSSC", 4) || !strncmp(hdr.fw_key, "OSS2", 4)) || (hdr_len < 26 || hdr_len > 508)) {
             printf("Invalid FW header\n");
             retval = -4;
             goto close_file;
         }
+
+        // Set target flash address
+        flash_addr = hdr.fw_key[3] == 'C' ? 0x00000000 : SECONDARY_FW_ADDR;
 
         crcval = crc32((unsigned char *)&hdr, hdr_len, 1);
         hdr.hdr_len = bswap32(hdr.hdr_len);
@@ -105,7 +130,7 @@ int fw_update() {
             goto close_file;
         }
 
-        sniprintf(menu_row1, LCD_ROW_LEN+1, "v%u.%u%s%s", hdr.version_major, hdr.version_minor, hdr.version_suffix[0] ? "-" : "", hdr.version_suffix);
+        sniprintf(menu_row1, LCD_ROW_LEN+1, "v%u.%u%s%s%s", hdr.version_major, hdr.version_minor, hdr.version_suffix[0] ? "-" : "", hdr.version_suffix, (hdr.fw_key[3] == 'C') ? "" : " (sec)" );
         sniprintf(menu_row2, LCD_ROW_LEN+1, "Update? 1=Y, 2=N");
         ui_disp_menu(1);
 
@@ -184,7 +209,7 @@ int fw_update() {
         usleep(10000);
 
         // No return from here
-        fw_update_commit(cluster_idx, databuf, hdr.data_len, fs_csize, fs_startsec);
+        fw_update_commit(cluster_idx, databuf, hdr.data_len, fs_csize, fs_startsec, flash_addr);
         return 0;
     } else {
         printf("FW file not found\n");
@@ -199,7 +224,7 @@ close_file:
 }
 
 // commit FW update. Do not call functions located in flash during update
-void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec) {
+void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr) {
     int i, sectors;
     SDRESULTS res;
     uint16_t cl_iter, cl_soffs;
@@ -209,9 +234,9 @@ void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_
     flash_write_protect(&flashctrl_dev, 0);
 
     // Erase sectors
-    addr = 0;
+    addr = flash_addr;
     sectors = (bytes_to_copy/FLASH_SECTOR_SIZE) + ((bytes_to_copy % FLASH_SECTOR_SIZE) != 0);
-    data_to = (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE);
+    data_to = (uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE + flash_addr);
 
     for (i=0; i<sectors; i++) {
         flash_sector_erase(&flashctrl_dev, addr);
