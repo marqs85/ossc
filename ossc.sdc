@@ -62,6 +62,9 @@ set_input_delay -clock flash_clk_out -clock_fall 5 [get_ports *ALTERA_DATA0]
 set_output_delay -clock flash_clk_out 4 [get_ports *ALTERA_SCE]
 set_output_delay -clock flash_clk_out 2 [get_ports *ALTERA_SDO]
 
+# Latency tester
+set_false_path -from [get_registers lat_tester:lt0|mode_synced*]
+
 
 ### CPU/scanconverter clock relations ###
 

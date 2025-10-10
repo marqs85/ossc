@@ -17,6 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+`include "lat_tester_includes.v"
+
 module scanconverter (
     input PCLK_CAP_i,
     input PCLK_OUT_i,
@@ -63,6 +65,8 @@ module scanconverter (
     output reg [3:0] y_ctr_shmask,
     input [11:0] shmask_data,
     output reg resync_strobe,
+    input lt_active,
+    input [1:0] lt_mode,
     input emif_br_clk,
     input emif_br_reset,
     output [27:0] emif_rd_addr,
@@ -162,6 +166,12 @@ wire [7:0] MASK_R = MISC_MASK_COLOR[2] ? {2{MISC_MASK_BR}} : 8'h00;
 wire [7:0] MASK_G = MISC_MASK_COLOR[1] ? {2{MISC_MASK_BR}} : 8'h00;
 wire [7:0] MASK_B = MISC_MASK_COLOR[0] ? {2{MISC_MASK_BR}} : 8'h00;
 
+// Latency tester box bounds
+wire [11:0] LT_BOX_X_START = (lt_mode == `LT_POS_TOPLEFT) ? 0 : ((lt_mode == `LT_POS_CENTER) ? ((H_ACTIVE/2'h2)-(H_ACTIVE/(`LT_WIDTH_DIV*2'h2))) : (H_ACTIVE-(H_ACTIVE/`LT_WIDTH_DIV)));
+wire [11:0] LT_BOX_X_STOP  = (lt_mode == `LT_POS_TOPLEFT) ? (H_ACTIVE/`LT_WIDTH_DIV) : ((lt_mode == `LT_POS_CENTER) ? ((H_ACTIVE/2'h2)+(H_ACTIVE/(`LT_WIDTH_DIV*2'h2))) : H_ACTIVE);
+wire [11:0] LT_BOX_Y_START = (lt_mode == `LT_POS_TOPLEFT) ? 0 : ((lt_mode == `LT_POS_CENTER) ? ((V_ACTIVE/2'h2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2'h2))) : (V_ACTIVE-(V_ACTIVE/`LT_HEIGHT_DIV)));
+wire [11:0] LT_BOX_Y_STOP  = (lt_mode == `LT_POS_TOPLEFT) ? (V_ACTIVE/`LT_HEIGHT_DIV) : ((lt_mode == `LT_POS_CENTER) ? ((V_ACTIVE/2'h2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2'h2))) : V_ACTIVE);
+
 
 reg frame_change_sync1_reg, frame_change_sync2_reg, frame_change_prev, frame_change_resync;
 wire frame_change = frame_change_sync2_reg;
@@ -206,6 +216,7 @@ reg DE_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [11:0] xpos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg [10:0] ypos_pp[PP_PL_START:PP_PL_END] /* synthesis ramstyle = "logic" */;
 reg mask_enable_pp[PP_MASK_END:PP_TP_START] /* synthesis ramstyle = "logic" */;
+reg lt_box_enable_pp[PP_MASK_END:PP_TP_START] /* synthesis ramstyle = "logic" */;
 reg draw_sl_pp[(PP_SLGEN_START+1):(PP_SLGEN_END-1)] /* synthesis ramstyle = "logic" */;
 reg [3:0] x_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
 reg [2:0] y_ctr_sl_pp[PP_PL_START:PP_SLGEN_START] /* synthesis ramstyle = "logic" */;
@@ -356,8 +367,6 @@ linebuf_top #(
 
 videogen vg0 (
     .pclk           (PCLK_OUT_i),
-    .lt_active      (1'b0),
-    .lt_mode        (2'h0),
     .xpos           (xpos_pp[PP_TP_START]),
     .ypos           (ypos_pp[PP_TP_START]),
     .R_out          (R_vg),
@@ -418,6 +427,7 @@ end
 // | SYNC/DE  |          |         |         |         |         |         |         |         |         |         |         |
 // | X/Y POS  |          |         |         |         |         |         |         |         |         |         |         |
 // |          |   MASK   |         |         |         |         |         |         |         |         |         |         |
+// |          |  LT_BOX  |         |         |         |         |         |         |         |         |         |         |
 // |          | LB_SETUP | LINEBUF |         |         |         |         |         |         |         |         |         |
 // |          |          |         | SRCSEL  |         |         |         |         |         |         |         |         |
 // |          | SHM_BUF  | SHM_BUF | SHMASK  | SHMASK  | SHMASK  |         |         |         |         |         |         |
@@ -529,7 +539,7 @@ always @(posedge PCLK_OUT_i) begin
         B_pp[pp_idx] <= B_pp[pp_idx-1];
     end
 
-    /* ---------- Mask enable calculation (1 cycle) ---------- */
+    /* ---------- Mask / Latency tester overlay enable calculation (1 cycle) ---------- */
     if (($signed({1'b0, xpos_pp[PP_MASK_START]}) >= X_OFFSET) &
         ($signed({1'b0, xpos_pp[PP_MASK_START]}) < X_OFFSET+X_SIZE) &
         ($signed({1'b0, ypos_pp[PP_MASK_START]}) >= Y_OFFSET) &
@@ -539,8 +549,16 @@ always @(posedge PCLK_OUT_i) begin
     end else begin
         mask_enable_pp[PP_MASK_END] <= 1'b1;
     end
+    if ((xpos_pp[PP_MASK_START] >= LT_BOX_X_START) & (xpos_pp[PP_MASK_START] < LT_BOX_X_STOP) &
+        (ypos_pp[PP_MASK_START] >= LT_BOX_Y_START) & (ypos_pp[PP_MASK_START] < LT_BOX_Y_STOP))
+    begin
+        lt_box_enable_pp[PP_MASK_END] <= (lt_mode != 0);
+    end else begin
+        lt_box_enable_pp[PP_MASK_END] <= 1'b0;
+    end
     for(pp_idx = PP_MASK_END+1; pp_idx <= PP_TP_START; pp_idx = pp_idx+1) begin
         mask_enable_pp[pp_idx] <= mask_enable_pp[pp_idx-1];
+        lt_box_enable_pp[pp_idx] <= lt_box_enable_pp[pp_idx-1];
     end
 
     /* ---------- Source selection (1 cycle) ---------- */
@@ -608,10 +626,10 @@ always @(posedge PCLK_OUT_i) begin
     G_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? G_sl_mult : G_pp[PP_SLGEN_START+4];
     B_pp[PP_SLGEN_END] <= (draw_sl_pp[PP_SLGEN_START+4] & sl_method) ? B_sl_mult : B_pp[PP_SLGEN_START+4];
 
-    /* ---------- Testpattern / mask generation ---------- */
-    R_pp[PP_TP_END] <= testpattern_enable ? R_vg : (mask_enable_pp[PP_TP_START] ? MASK_R : R_pp[PP_TP_START]);
-    G_pp[PP_TP_END] <= testpattern_enable ? G_vg : (mask_enable_pp[PP_TP_START] ? MASK_G : G_pp[PP_TP_START]);
-    B_pp[PP_TP_END] <= testpattern_enable ? B_vg : (mask_enable_pp[PP_TP_START] ? MASK_B : B_pp[PP_TP_START]);
+    /* ---------- Testpattern / mask / lt_box generation ---------- */
+    R_pp[PP_TP_END] <= lt_active ? {8{lt_box_enable_pp[PP_TP_START]}} : (testpattern_enable ? R_vg : (mask_enable_pp[PP_TP_START] ? MASK_R : R_pp[PP_TP_START]));
+    G_pp[PP_TP_END] <= lt_active ? {8{lt_box_enable_pp[PP_TP_START]}} : (testpattern_enable ? G_vg : (mask_enable_pp[PP_TP_START] ? MASK_G : G_pp[PP_TP_START]));
+    B_pp[PP_TP_END] <= lt_active ? {8{lt_box_enable_pp[PP_TP_START]}} : (testpattern_enable ? B_vg : (mask_enable_pp[PP_TP_START] ? MASK_B : B_pp[PP_TP_START]));
 end
 
 // Output

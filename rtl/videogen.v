@@ -17,12 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-`include "lat_tester_includes.v"
-
 module videogen (
     input pclk,
-    input lt_active,
-    input [1:0] lt_mode,
     input [11:0] xpos,
     input [10:0] ypos,
     output reg [7:0] R_out,
@@ -56,31 +52,14 @@ parameter   V_BORDER        =   ((V_AREA-V_GRADIENT)>>1);
 // Pattern gen
 always @(posedge pclk)
 begin
-    if (lt_active) begin
-        case (lt_mode)
-            default: begin
-                {R_out, G_out, B_out} <= {3{8'h00}};
-            end
-            `LT_POS_TOPLEFT: begin
-                {R_out, G_out, B_out} <= {3{((xpos < (H_ACTIVE/`LT_WIDTH_DIV)) && (ypos < (V_ACTIVE/`LT_HEIGHT_DIV))) ? 8'hff : 8'h00}};
-            end
-            `LT_POS_CENTER: begin
-                {R_out, G_out, B_out} <= {3{((xpos >= ((H_ACTIVE/2)-(H_ACTIVE/(`LT_WIDTH_DIV*2)))) && (xpos < ((H_ACTIVE/2)+(H_ACTIVE/(`LT_WIDTH_DIV*2)))) && (ypos >= ((V_ACTIVE/2)-(V_ACTIVE/(`LT_HEIGHT_DIV*2)))) && (ypos < ((V_ACTIVE/2)+(V_ACTIVE/(`LT_HEIGHT_DIV*2))))) ? 8'hff : 8'h00}};
-            end
-            `LT_POS_BOTTOMRIGHT: begin
-                {R_out, G_out, B_out} <= {3{((xpos >= (H_ACTIVE-(H_ACTIVE/`LT_WIDTH_DIV))) && (ypos >= (V_ACTIVE-(V_ACTIVE/`LT_HEIGHT_DIV)))) ? 8'hff : 8'h00}};
-            end
-        endcase
-    end else begin
-        if ((xpos < H_OVERSCAN) || (xpos >= H_OVERSCAN+H_AREA) || (ypos < V_OVERSCAN) || (ypos >= V_OVERSCAN+V_AREA))
-            {R_out, G_out, B_out} <= {3{(xpos[0] ^ ypos[0]) ? 8'hff : 8'h00}};
-        else if ((xpos < H_OVERSCAN+H_BORDER) || (xpos >= H_OVERSCAN+H_AREA-H_BORDER) || (ypos < V_OVERSCAN+V_BORDER) || (ypos >= V_OVERSCAN+V_AREA-V_BORDER))
-            {R_out, G_out, B_out} <= {3{8'h50}};
-        else if (ypos >= V_OVERSCAN+V_BORDER+V_GRADIENT-V_GRAYRAMP)
-            {R_out, G_out, B_out} <= {3{8'((((xpos - (H_OVERSCAN+H_BORDER)) >> 4) << 3) + (xpos - (H_OVERSCAN+H_BORDER) >> 6))}};
-        else
-            {R_out, G_out, B_out} <= {3{8'((xpos - (H_OVERSCAN+H_BORDER)) >> 1)}};
-    end
+    if ((xpos < H_OVERSCAN) || (xpos >= H_OVERSCAN+H_AREA) || (ypos < V_OVERSCAN) || (ypos >= V_OVERSCAN+V_AREA))
+        {R_out, G_out, B_out} <= {3{(xpos[0] ^ ypos[0]) ? 8'hff : 8'h00}};
+    else if ((xpos < H_OVERSCAN+H_BORDER) || (xpos >= H_OVERSCAN+H_AREA-H_BORDER) || (ypos < V_OVERSCAN+V_BORDER) || (ypos >= V_OVERSCAN+V_AREA-V_BORDER))
+        {R_out, G_out, B_out} <= {3{8'h50}};
+    else if (ypos >= V_OVERSCAN+V_BORDER+V_GRADIENT-V_GRAYRAMP)
+        {R_out, G_out, B_out} <= {3{8'((((xpos - (H_OVERSCAN+H_BORDER)) >> 4) << 3) + (xpos - (H_OVERSCAN+H_BORDER) >> 6))}};
+    else
+        {R_out, G_out, B_out} <= {3{8'((xpos - (H_OVERSCAN+H_BORDER)) >> 1)}};
 end
 
 endmodule

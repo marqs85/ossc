@@ -390,7 +390,7 @@ sys sys_inst(
     .pio_1_controls_in_export               (controls),
     .sc_config_0_sc_if_fe_status_i          ({19'h0, TVP_sync_active, TVP_fe_interlace, TVP_fe_vtotal}),
     .sc_config_0_sc_if_fe_status2_i         ({4'h0, TVP_hsync_width, TVP_fe_pcnt_field}),
-    .sc_config_0_sc_if_lt_status_i          (32'h00000000),
+    .sc_config_0_sc_if_lt_status_i          ({lt_finished, 3'h0, lt_stb_result, lt_lat_result}),
     .sc_config_0_sc_if_hv_in_config_o       (hv_in_config),
     .sc_config_0_sc_if_hv_in_config2_o      (hv_in_config2),
     .sc_config_0_sc_if_hv_in_config3_o      (hv_in_config3),
@@ -477,6 +477,8 @@ scanconverter #(
     .y_ctr_shmask(y_ctr_shmask),
     .shmask_data(shmask_data),
     .resync_strobe(resync_strobe_i),
+    .lt_active(lt_active),
+    .lt_mode(lt_mode_synced),
     .emif_br_clk(1'b0),
     .emif_br_reset(1'b0),
     .emif_rd_addr(),
@@ -501,7 +503,7 @@ ir_rcv ir0 (
     .ir_code_cnt    (ir_code_cnt)
 );
 
-/*lat_tester lt0 (
+lat_tester lt0 (
     .clk27          (clk27),
     .pclk           (PCLK_sc),
     .active         (lt_active),
@@ -515,6 +517,6 @@ ir_rcv ir0 (
     .stb_result     (lt_stb_result),
     .trig_waiting   (lt_trig_waiting),
     .finished       (lt_finished)
-);*/
+);
 
 endmodule
