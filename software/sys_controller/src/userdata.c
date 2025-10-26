@@ -49,6 +49,7 @@ extern mode_data_t video_modes_plm[];
 extern uint8_t update_cur_vm;
 extern SD_DEV sdcard_dev;
 extern c_shmask_t c_shmask;
+extern c_lc_palette_set_t c_lc_palette_set;
 
 char target_profile_name[USERDATA_NAME_LEN+1], cur_profile_name[USERDATA_NAME_LEN+1];
 
@@ -71,6 +72,7 @@ const ude_item_map ude_initcfg_items[] = {
 const ude_item_map ude_profile_items[] = {
     {{0, 120, sizeof(video_modes_plm_default)}, video_modes_plm},
     UDE_ITEM(1, 120, c_shmask),
+    UDE_ITEM(65, 120, c_lc_palette_set),
     // avconfig_t
     UDE_ITEM(2, 120, tc.pm_240p),
     UDE_ITEM(3, 120, tc.pm_384p),
@@ -135,6 +137,8 @@ const ude_item_map ude_profile_items[] = {
     UDE_ITEM(62, 120, tc.full_tx_setup),
     UDE_ITEM(63, 120, tc.av3_alt_rgb),
     UDE_ITEM(64, 120, tc.link_av),
+    // 65 reserved
+    UDE_ITEM(66, 120, tc.panasonic_hack),
 };
 
 int write_userdata(uint8_t entry) {

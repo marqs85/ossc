@@ -111,7 +111,8 @@ typedef union {
         uint8_t shmask_enable:1;
         uint8_t shmask_iv_x:4;
         uint8_t shmask_iv_y:4;
-        uint32_t misc_rsv:8;
+        uint8_t panasonic_hack:1;
+        uint32_t misc_rsv:7;
     } __attribute__((packed, __may_alias__));
     uint32_t data;
 } misc_config_reg;
@@ -152,8 +153,7 @@ typedef struct {
 
 // lumacode palatte ram
 typedef struct {
-    uint32_t padding[16];
-    uint32_t data[496];
+    uint32_t data[512];
 } lc_pal_ram;
 
 typedef struct {

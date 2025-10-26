@@ -64,6 +64,15 @@ localparam FID_ODD = 1'b1;
 localparam VSYNC_SEPARATED = 1'b0;
 localparam VSYNC_RAW = 1'b1;
 
+localparam LC_DISABLED = 3'd0;
+localparam LC_C64      = 3'd1;
+localparam LC_SPECTRUM = 3'd2;
+localparam LC_MSX      = 3'd3;
+localparam LC_INTV     = 3'd4;
+localparam LC_NES      = 3'd5;
+localparam LC_GTIA     = 3'd6;
+localparam LC_CTIA     = 3'd7;
+
 localparam PP_PL_START      = 1;
 localparam PP_DE_POS_START  = PP_PL_START;
 localparam PP_DE_POS_LENGTH = 1;
@@ -150,8 +159,8 @@ wire HSYNC_i_np = (HSYNC_i ^ ~hsync_i_pol);
 wire [3:0] H_SKIP = hv_in_config3[27:24];
 wire [3:0] H_SAMPLE_SEL = hv_in_config3[31:28];
 
-// Lumacode uses 2 samples for {C64, C128, VIC20, Spectrum, TMS99xxA}, 3 samples for NES, 6 samples for Atari 8bit (3 per pixel) and 4 samples for VCS (2 per half-pixel)
-wire [2:0] LC_SAMPLES = (MISC_LUMACODE_MODE <= 3) ? 2 : ((MISC_LUMACODE_MODE <= 5) ? 3 : 2);
+// Lumacode
+wire [2:0] LC_SAMPLES;
 wire [2:0] LC_H_SKIP = ((H_SKIP+1) / LC_SAMPLES) - 1;
 
 // SOF position for scaler
@@ -168,6 +177,15 @@ function [7:0] apply_reverse_lpf;
     end
 endfunction
 
+// Lumacode number of samples selection
+always @(*) begin
+    case(MISC_LUMACODE_MODE)
+      LC_C64,LC_SPECTRUM,LC_MSX,LC_CTIA : LC_SAMPLES = 2; // 2 samples for {C64, C128, VIC20, Spectrum, TMS99xxA} / 4 samples for VCS (2 per half-pixel)
+      LC_INTV                           : LC_SAMPLES = 1; // 2 samples for Intellivision (1 per doubled pixel)
+      LC_NES,LC_GTIA                    : LC_SAMPLES = 3; // 3 samples for NES / 6 samples for Atari 8bit (3 per pixel)
+      default                           : LC_SAMPLES = 1;
+    endcase
+end
 
 // Pipeline stage 1
 always @(posedge PCLK_i) begin
@@ -264,11 +282,16 @@ always @(posedge PCLK_i) begin
 
     // Lumacode related source-specific registers (used as part of palette RAM addressing / data processing)
     // Lumacode NES
-    if (MISC_LUMACODE_MODE == 4) begin
+    if (MISC_LUMACODE_MODE == LC_NES) begin
         if ((h_ctr == H_SAMPLE_SEL) & ({lc_code[1], lc_code[2], lc_code[3]} < 8))
             lc_emp_nes <= {lc_code[2][0], lc_code[3]};
+    // Lumacode Intellivision
+    end else if (MISC_LUMACODE_MODE == LC_INTV) begin
+        if ((h_ctr == H_SAMPLE_SEL) & lc_atari_ctr) begin
+            lc_atari_luma[1:0] <= lc_code[1];
+        end
     // Lumacode Atari GTIA
-    end else if (MISC_LUMACODE_MODE == 5) begin
+    end else if (MISC_LUMACODE_MODE == LC_GTIA) begin
         if (h_ctr == H_SAMPLE_SEL) begin
             if (lc_atari_ctr) begin
                 // Store hue and luma (high bits) for 1st pixel, and display last pixel of previous pair
@@ -344,15 +367,15 @@ always @(posedge PCLK_i) begin
     B_diff_s15 <= (B_diff_s15_pre * MISC_REV_LPF_STR);
 
     // Cycle 3
-    if (MISC_REV_LPF_ENABLE & (MISC_LUMACODE_MODE == 0)) begin
+    if (MISC_REV_LPF_ENABLE & (MISC_LUMACODE_MODE == LC_DISABLED)) begin
         R_pp[PP_RLPF_END] <= apply_reverse_lpf(R_pp[PP_RLPF_START+2], R_diff_s15);
         G_pp[PP_RLPF_END] <= apply_reverse_lpf(G_pp[PP_RLPF_START+2], G_diff_s15);
         B_pp[PP_RLPF_END] <= apply_reverse_lpf(B_pp[PP_RLPF_START+2], B_diff_s15);
     end
 
     /* --- Lumacode overwrite data from RAM --- */
-    if (MISC_LUMACODE_MODE != 0) begin
-        if (MISC_LUMACODE_MODE == 4) begin
+    if (MISC_LUMACODE_MODE != LC_DISABLED) begin
+        if (MISC_LUMACODE_MODE == LC_NES) begin
             // NES
             R_pp[PP_RLPF_START+1] <= &lc_emp_nes[1:0] ? (lumacode_data[23:16]/2) : (|lc_emp_nes[1:0] ? (lumacode_data[23:16] - lumacode_data[23:16]/4) : lumacode_data[23:16]);
             G_pp[PP_RLPF_START+1] <= (lc_emp_nes[2] & lc_emp_nes[0]) ? (lumacode_data[15:8]/2) : ((lc_emp_nes[2] | lc_emp_nes[0]) ? (lumacode_data[15:8] - lumacode_data[15:8]/4) : lumacode_data[15:8]);
@@ -369,29 +392,33 @@ end
 // Lumacode palette RAM inputs
 always @(*)
 case (MISC_LUMACODE_MODE)
-    1: begin // C64, C128, VIC20
+    LC_C64: begin // C64, C128, VIC20
+        lumacode_addr = {5'h0, lc_code[1], lc_code[2]};
+        lumacode_rden = 1;
+    end
+    LC_SPECTRUM: begin // Spectrum
         lumacode_addr = {5'h1, lc_code[1], lc_code[2]};
         lumacode_rden = 1;
     end
-    2: begin // Spectrum
+    LC_MSX: begin // TMS99xxA
         lumacode_addr = {5'h2, lc_code[1], lc_code[2]};
         lumacode_rden = 1;
     end
-    3: begin // TMS99xxA
-        lumacode_addr = {5'h3, lc_code[1], lc_code[2]};
-        lumacode_rden = 1;
+    LC_INTV: begin // Intellivision
+        lumacode_addr = {5'h3, lc_atari_luma[1:0], lc_code[1]};
+        lumacode_rden = (h_ctr == H_SAMPLE_SEL) & !lc_atari_ctr;
     end
-    4: begin // NES
+    LC_NES: begin // NES
         lumacode_addr = {3'h1, lc_code[1], lc_code[2], lc_code[3]};
         lumacode_rden = 1;
     end
-    6: begin // Atari CTIA/TIA
-        lumacode_addr = {2'h1, lc_atari_hue, lc_code[1], lc_code[2][1]};
-        lumacode_rden = (h_ctr == H_SAMPLE_SEL) & !lc_atari_ctr;
-    end
-    5: begin // Atari GTIA
+    LC_GTIA: begin // Atari GTIA
         lumacode_addr = lc_atari_ctr ? {1'h1, lc_atari_hue, lc_atari_luma} : {1'h1, lc_atari_hue, lc_atari_luma[3:2], lc_code[1]};
         lumacode_rden = (h_ctr == H_SAMPLE_SEL);
+    end
+    LC_CTIA: begin // Atari CTIA/TIA
+        lumacode_addr = {2'h1, lc_atari_hue, lc_code[1], lc_code[2][1]};
+        lumacode_rden = (h_ctr == H_SAMPLE_SEL) & !lc_atari_ctr;
     end
     default: begin // Standard output
         lumacode_addr = '0;

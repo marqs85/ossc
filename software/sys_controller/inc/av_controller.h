@@ -119,20 +119,31 @@ typedef union {
         uint32_t c64_pal[16];
         uint32_t zx_pal[16];
         uint32_t msx_pal[16];
+        uint32_t intv_pal[16];
         uint32_t nes_pal[64];
         uint32_t tia_pal[128];
         uint32_t gtia_pal[256];
     } __attribute__((packed, __may_alias__));
-    uint32_t data[496];
+    uint32_t data[512];
 } lc_palette_set;
+
+typedef struct {
+    char name[20];
+    lc_palette_set pal;
+} c_lc_palette_set_t;
 
 void ui_disp_menu(alt_u8 osd_mode);
 void ui_disp_status(alt_u8 refresh_osd_timer);
 
 void set_sampler_phase(uint8_t sampler_phase, uint8_t update_sc);
 
+void set_default_c_shmask();
+void set_default_c_lc_palette_set();
+
 void print_vm_stats();
 int latency_test();
+
+void update_sc_config();
 
 void update_settings(int init_setup);
 

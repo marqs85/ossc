@@ -143,7 +143,8 @@ int shmask_loaded_array = 0;
 int shmask_loaded_str = -1;
 #define SHMASKS_SIZE  (sizeof(shmask_data_arr_list) / sizeof((shmask_data_arr_list)[0]))
 
-const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal};
+c_lc_palette_set_t c_lc_palette_set;
+const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal, &c_lc_palette_set.pal};
 int loaded_lc_palette = -1;
 
 void ui_disp_menu(alt_u8 osd_mode)
@@ -461,10 +462,14 @@ status_t get_status(tvp_sync_input_t syncinput)
     return status;
 }
 
-void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t *vm_conf, avconfig_t *avconfig)
+void update_sc_config()
 {
     int i, p, t;
     shmask_data_arr *shmask_data_arr_ptr;
+
+    mode_data_t *vm_in = &vmode_in;
+    mode_data_t *vm_out = &vmode_out;
+    avconfig_t *avconfig = &cm.cc;
 
     hv_config_reg hv_in_config = {.data=0x00000000};
     hv_config2_reg hv_in_config2 = {.data=0x00000000};
@@ -511,8 +516,8 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     hv_in_config3.v_backporch = vm_in->timings.v_backporch;
     hv_in_config2.interlaced = vm_in->timings.interlaced;
     hv_in_config3.v_startline = vm_in->timings.v_synclen+vm_in->timings.v_backporch+12;
-    hv_in_config3.h_skip = vm_conf->h_skip;
-    hv_in_config3.h_sample_sel = vm_conf->h_sample_sel;
+    hv_in_config3.h_skip = vm_conf.h_skip;
+    hv_in_config3.h_sample_sel = vm_conf.h_sample_sel;
 
     // Set output params
     hv_out_config.h_total = vm_out->timings.h_total;
@@ -524,16 +529,16 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     hv_out_config3.v_synclen = vm_out->timings.v_synclen;
     hv_out_config3.v_backporch = vm_out->timings.v_backporch;
     hv_out_config2.interlaced = vm_out->timings.interlaced;
-    hv_out_config3.v_startline = vm_conf->framesync_line;
+    hv_out_config3.v_startline = vm_conf.framesync_line;
 
-    xy_out_config.x_size = vm_conf->x_size;
-    xy_out_config.y_size = vm_conf->y_size;
-    xy_out_config.y_offset = vm_conf->y_offset;
-    xy_out_config2.x_offset = vm_conf->x_offset;
-    xy_out_config2.x_start_lb = vm_conf->x_start_lb;
-    xy_out_config2.y_start_lb = vm_conf->y_start_lb;
-    xy_out_config2.x_rpt = vm_conf->x_rpt;
-    xy_out_config2.y_rpt = vm_conf->y_rpt;
+    xy_out_config.x_size = vm_conf.x_size;
+    xy_out_config.y_size = vm_conf.y_size;
+    xy_out_config.y_offset = vm_conf.y_offset;
+    xy_out_config2.x_offset = vm_conf.x_offset;
+    xy_out_config2.x_start_lb = vm_conf.x_start_lb;
+    xy_out_config2.y_start_lb = vm_conf.y_start_lb;
+    xy_out_config2.x_rpt = vm_conf.x_rpt;
+    xy_out_config2.y_rpt = vm_conf.y_rpt;
 
     misc_config.mask_br = avconfig->mask_br;
     misc_config.mask_color = avconfig->mask_color;
@@ -542,16 +547,13 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     misc_config.shmask_iv_x = shmask_data_arr_ptr->iv_x;
     misc_config.shmask_iv_y = shmask_data_arr_ptr->iv_y;
     misc_config.lumacode_mode = avconfig->lumacode_mode;
+    misc_config.panasonic_hack = avconfig->panasonic_hack;
     /*misc_config.lm_deint_mode = 0;
-    misc_config.nir_even_offset = 0;
-    misc_config.ypbpr_cs = (avconfig->ypbpr_cs == 0) ? ((vm_in->type & VIDEO_HDTV) ? 1 : 0) : avconfig->ypbpr_cs-1;
-    misc_config.vip_enable = 0;
-    misc_config.bfi_enable = 0;
-    misc_config.bfi_str = 0;*/
+    misc_config.nir_even_offset = 0;*/
 
     // set default/custom scanline interval
-    sl_def_iv_y = (vm_conf->y_rpt > 0) ? vm_conf->y_rpt : 1;
-    sl_def_iv_x = (vm_conf->x_rpt > 0) ? vm_conf->x_rpt : sl_def_iv_y;
+    sl_def_iv_y = (vm_conf.y_rpt > 0) ? vm_conf.y_rpt : 1;
+    sl_def_iv_x = (vm_conf.x_rpt > 0) ? vm_conf.x_rpt : sl_def_iv_y;
     sl_config3.sl_iv_x = ((avconfig->sl_type == 3) && (avconfig->sl_cust_iv_x)) ? avconfig->sl_cust_iv_x : sl_def_iv_x;
     sl_config3.sl_iv_y = ((avconfig->sl_type == 3) && (avconfig->sl_cust_iv_y)) ? avconfig->sl_cust_iv_y : sl_def_iv_y;
 
@@ -592,7 +594,7 @@ void update_sc_config(mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t 
     sl_config3.sl_hybr_str = avconfig->sl_hybr_str;
 
     // disable scanlines if configured so
-    if (((avconfig->sl_mode == 1) && (!vm_conf->y_rpt)) || (avconfig->sl_mode == 0)) {
+    if (((avconfig->sl_mode == 1) && (!vm_conf.y_rpt)) || (avconfig->sl_mode == 0)) {
         sl_config.sl_l_overlay = 0;
         sl_config3.sl_c_overlay = 0;
     }
@@ -710,7 +712,7 @@ void program_mode()
 
     update_osd_size(&vmode_out);
 
-    update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
+    update_sc_config();
 
     TX_SetPixelRepetition(vm_conf.tx_pixelrep, ((cm.cc.tx_mode!=TX_DVI) && (vm_conf.tx_pixelrep == vm_conf.hdmitx_pixr_ifr)) ? 1 : 0);
 
@@ -756,7 +758,7 @@ void set_sampler_phase(uint8_t sampler_phase, uint8_t update_sc) {
     tvp_set_hpll_phase(tvp_phase);
 
     if (update_sc)
-        update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
+        update_sc_config();
 }
 
 int load_profile() {
@@ -800,6 +802,11 @@ void set_default_settings() {
 void set_default_c_shmask() {
     memset(&c_shmask, 0, sizeof(c_shmask));
     strncpy(c_shmask.name, "Custom: <none>", 20);
+}
+
+void set_default_c_lc_palette_set() {
+    memset(&c_lc_palette_set, 0, sizeof(c_lc_palette_set));
+    strncpy(c_lc_palette_set.name, "Custom: <none>", 20);
 }
 
 // Initialize hardware
@@ -872,6 +879,7 @@ int init_hw()
     // Set defaults
     set_default_profile(1);
     set_default_c_shmask();
+    set_default_c_lc_palette_set();
     set_default_settings();
 
     // Init menu
@@ -886,7 +894,7 @@ int init_hw()
 
     // Setup test pattern
     get_vmode(VMODE_480p, &vmode_in, &vmode_out, &vm_conf);
-    update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
+    update_sc_config();
 
     // init always in HDMI mode (fixes yellow screen bug)
     TX_enable(TX_HDMI_RGB);
@@ -1288,7 +1296,7 @@ int main()
             case SC_CONFIG_CHANGE:
                 if (cm.sync_active) {
                     printf("Scanconverter config change\n");
-                    update_sc_config(&vmode_in, &vmode_out, &vm_conf, &cm.cc);
+                    update_sc_config();
                 }
                 break;
             default:
