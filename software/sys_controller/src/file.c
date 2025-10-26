@@ -9,6 +9,11 @@ FRESULT file_mount()
     return f_mount(&fs, "", 1);
 }
 
+FRESULT file_unmount()
+{
+    return f_unmount("");
+}
+
 FRESULT file_open(FIL* fil, char* path)
 {
     return f_open(fil, path, FA_READ);

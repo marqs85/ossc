@@ -40,6 +40,7 @@
 
 extern char menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
+extern char tmpbuf[SD_BLK_SIZE];
 extern SD_DEV sdcard_dev;
 extern alt_u32 sys_ctrl;
 extern flash_ctrl_dev flashctrl_dev;
@@ -62,8 +63,7 @@ int fw_init_secondary() {
     return 0;
 }
 
-//int fw_update(char *dirname, char *filename) {
-int fw_update() {
+int fw_update(char *dirname, char *filename) {
     FIL fw_file;
     SDRESULTS res;
     char dirname_root[10];
@@ -72,7 +72,6 @@ int fw_update() {
     unsigned bytes_read, bytes_to_copy;
     uint32_t crcval, hdr_len, btn_vec;
     uint32_t cluster_idx[100]; // enough for >=4kB cluster size
-    uint8_t databuf[SD_BLK_SIZE]; // temp buffer for data
     uint16_t fs_csize, fs_startsec, cl_iter, cl_soffs;
     uint32_t flash_addr;
 
@@ -84,11 +83,10 @@ int fw_update() {
         }
     }
 
-    //sniprintf(dirname_root, sizeof(dirname_root), "/%s", dirname);
-    sniprintf(dirname_root, sizeof(dirname_root), "/");
+    sniprintf(dirname_root, sizeof(dirname_root), "/%s", dirname);
     f_chdir(dirname_root);
 
-    if (!file_open(&fw_file, "ossc.bin")) {
+    if (!file_open(&fw_file, filename)) {
         strlcpy(menu_row1, "Checking FW", LCD_ROW_LEN+1);
         strlcpy(menu_row2, "Please wait...", LCD_ROW_LEN+1);
         ui_disp_menu(1);
@@ -140,7 +138,7 @@ int fw_update() {
             if (btn_vec == rc_keymap[RC_BTN1]) {
                 break;
             } else if (btn_vec == rc_keymap[RC_BTN2]) {
-                //set_func_ret_msg("Cancelled");
+                set_func_ret_msg("Cancelled");
                 retval = 1;
                 goto close_file;
             }
@@ -175,14 +173,14 @@ int fw_update() {
         printf("Checking copied data...\n");
         while (bytes_to_copy > 0) {
             bytes_read = (bytes_to_copy > SD_BLK_SIZE) ? SD_BLK_SIZE : bytes_to_copy;
-            res = SD_Read(&sdcard_dev, databuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
+            res = SD_Read(&sdcard_dev, tmpbuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
             if (res != SD_OK) {
                 printf("FW data read error\n");
                 retval = -8;
                 goto close_file;
             }
 
-            crcval = crc32((unsigned char *)&databuf, bytes_read, (bytes_to_copy==hdr.data_len));
+            crcval = crc32((unsigned char *)&tmpbuf, bytes_read, (bytes_to_copy==hdr.data_len));
             bytes_to_copy -= bytes_read;
 
             cl_soffs += 1;
@@ -209,7 +207,7 @@ int fw_update() {
         usleep(10000);
 
         // No return from here
-        fw_update_commit(cluster_idx, databuf, hdr.data_len, fs_csize, fs_startsec, flash_addr);
+        fw_update_commit(cluster_idx, hdr.data_len, fs_csize, fs_startsec, flash_addr);
         return 0;
     } else {
         printf("FW file not found\n");
@@ -224,7 +222,7 @@ close_file:
 }
 
 // commit FW update. Do not call functions located in flash during update
-void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr) {
+void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_update_commit(uint32_t* cluster_idx, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr) {
     int i, sectors;
     SDRESULTS res;
     uint16_t cl_iter, cl_soffs;
@@ -254,14 +252,14 @@ void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_
     // Write data
     while (bytes_to_copy > 0) {
         bytes_read = (bytes_to_copy > SD_BLK_SIZE) ? SD_BLK_SIZE : bytes_to_copy;
-        res = SD_Read(&sdcard_dev, databuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
+        res = SD_Read(&sdcard_dev, tmpbuf, ((cluster_idx[cl_iter]-2)*fs_csize+fs_startsec+cl_soffs), 0, bytes_read);
         //TODO: retry if read fails
 
         bytes_to_copy -= bytes_read;
         for (i=0; i<bytes_read; i++)
-            databuf[i] = bitswap8(databuf[i]);
+            tmpbuf[i] = bitswap8(tmpbuf[i]);
         for (i=0; i<bytes_read; i+=4)
-            *data_to++ = *((uint32_t*)&databuf[i]);
+            *data_to++ = *((uint32_t*)&tmpbuf[i]);
 
         cl_soffs += 1;
         if (cl_soffs == fs_csize) {

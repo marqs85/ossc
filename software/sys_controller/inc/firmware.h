@@ -62,6 +62,6 @@ typedef struct {
 
 int fw_init_secondary();
 int fw_update();
-void fw_update_commit(uint32_t* cluster_idx, uint8_t* databuf, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr);
+void fw_update_commit(uint32_t* cluster_idx, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr);
 
 #endif

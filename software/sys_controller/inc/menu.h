@@ -32,10 +32,21 @@
 #endif
 
 typedef enum {
+    NO_ACTION    = 0,
+    OPT_SELECT   = RC_OK,
+    PREV_MENU    = RC_BACK,
+    PREV_PAGE    = RC_UP,
+    NEXT_PAGE    = RC_DOWN,
+    VAL_MINUS    = RC_LEFT,
+    VAL_PLUS     = RC_RIGHT,
+} menucode_id; // order must be consequential with rc_code_t
+
+typedef enum {
     OPT_AVCONFIG_SELECTION,
     OPT_AVCONFIG_NUMVALUE,
     OPT_AVCONFIG_NUMVAL_U16,
     OPT_SUBMENU,
+    OPT_CUSTOMMENU,
     OPT_FUNC_CALL,
 } menuitem_type;
 
@@ -43,6 +54,7 @@ typedef int (*func_call)(void);
 typedef void (*arg_func)(void);
 typedef void (*disp_func)(alt_u8);
 typedef void (*disp_func_u16)(alt_u16*);
+typedef void (*cstm_disp_func)(menucode_id, int);
 
 typedef struct {
     alt_u8 *data;
@@ -87,6 +99,10 @@ typedef struct {
 } opt_submenu;
 
 typedef struct {
+    cstm_disp_func cstm_f;
+} opt_custommenu;
+
+typedef struct {
     const char *name;
     menuitem_type type;
     union {
@@ -94,6 +110,7 @@ typedef struct {
         opt_avconfig_numvalue num;
         opt_avconfig_numvalue_u16 num_u16;
         opt_submenu sub;
+        opt_custommenu cstm;
         opt_func_call fun;
     };
 } menuitem_t;
@@ -107,28 +124,25 @@ struct menustruct {
 #define MENU(X, Y) const menuitem_t X##_items[] = Y; const menu_t X = { sizeof(X##_items)/sizeof(menuitem_t), X##_items };
 #define P99_PROTECT(...) __VA_ARGS__
 
-typedef enum {
-    NO_ACTION    = 0,
-    OPT_SELECT   = RC_OK,
-    PREV_MENU    = RC_BACK,
-    PREV_PAGE    = RC_UP,
-    NEXT_PAGE    = RC_DOWN,
-    VAL_MINUS    = RC_LEFT,
-    VAL_PLUS     = RC_RIGHT,
-} menucode_id; // order must be consequential with rc_code_t
-
 typedef struct {
     const menu_t *m;
     alt_u8 mp;
 } menunavi;
+
+typedef int (*load_func)(char*, char*);
 
 menunavi* get_current_menunavi();
 void init_menu();
 void render_osd_page();
 void display_menu(alt_u8 forcedisp);
 void sampler_phase_disp(alt_u8 v);
+void set_func_ret_msg(char *msg);
 void update_osd_size(mode_data_t *vm_out);
 void refresh_osd();
+void cstm_shmask_load(menucode_id code, int setup_disp);
+void cstm_lc_palette_set_load(menucode_id code, int setup_disp);
+void cstm_fw_update(menucode_id code, int setup_disp);
+void enter_cstm(const menuitem_t *item, int detached_mode);
 static void vm_select();
 static void vm_tweak(alt_u16 *v);
 
