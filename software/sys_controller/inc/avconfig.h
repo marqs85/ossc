@@ -105,6 +105,7 @@ typedef struct {
     alt_u8 tvp_hpll2x;
     alt_u8 adc_pll_bw;
     alt_u8 fpga_pll_bw;
+    alt_u8 panasonic_hack;
 
     /* Postprocessing settings */
     alt_u8 sl_mode;

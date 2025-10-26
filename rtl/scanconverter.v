@@ -161,6 +161,7 @@ wire MISC_BFI_ENABLE = 1'b0;
 wire MISC_SHMASK_ENABLE = misc_config[15];
 wire [3:0] MISC_SHMASK_IV_X = misc_config[19:16];
 wire [3:0] MISC_SHMASK_IV_Y = misc_config[23:20];
+wire MISC_PANASONIC_HACK = misc_config[24];
 
 wire [7:0] MASK_R = MISC_MASK_COLOR[2] ? {2{MISC_MASK_BR}} : 8'h00;
 wire [7:0] MASK_G = MISC_MASK_COLOR[1] ? {2{MISC_MASK_BR}} : 8'h00;
@@ -180,6 +181,7 @@ reg [11:0] h_cnt;
 reg [10:0] v_cnt;
 reg h_avidstart, v_avidstart;
 reg src_fid, dst_fid;
+wire [6:0] panasonic_adjust = (MISC_PANASONIC_HACK & (Y_RPT == 4'h1) & (v_cnt == V_SYNCLEN+V_BACKPORCH+V_ACTIVE-1)) ? 8'd128 : 7'd0;
 
 reg [10:0] xpos_lb;
 wire [10:0] xpos_lb_start = (X_OFFSET < 10'sd0) ? 11'd0 : {1'b0, X_OFFSET};
@@ -443,7 +445,7 @@ always @(posedge PCLK_OUT_i) begin
         VSYNC_pp[1] <= ((v_cnt < V_SYNCLEN) | ((v_cnt == V_TOTAL) & (h_cnt >= (H_TOTAL/2)))) ? 1'b0 : 1'b1;
     else
         VSYNC_pp[1] <= ((v_cnt < V_SYNCLEN-1) | ((v_cnt == V_SYNCLEN-1) & (h_cnt < (H_TOTAL/2)))) ? 1'b0 : 1'b1;
-    DE_pp[1] <= (h_cnt >= H_SYNCLEN+H_BACKPORCH) & (h_cnt < H_SYNCLEN+H_BACKPORCH+H_ACTIVE) & (v_cnt >= V_SYNCLEN+V_BACKPORCH) & (v_cnt < V_SYNCLEN+V_BACKPORCH+V_ACTIVE);
+    DE_pp[1] <= (h_cnt >= H_SYNCLEN+H_BACKPORCH) & (h_cnt < H_SYNCLEN+H_BACKPORCH+H_ACTIVE-panasonic_adjust) & (v_cnt >= V_SYNCLEN+V_BACKPORCH) & (v_cnt < V_SYNCLEN+V_BACKPORCH+V_ACTIVE);
 
     if (h_avidstart) begin
         // Start 1 line before active so that linebuffer can be filled from DRAM in time
