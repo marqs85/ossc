@@ -133,7 +133,7 @@ uint32_t calculate_pclk(uint32_t src_clk_hz, mode_data_t *vm_out, vm_proc_config
 
 int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t *vm_conf)
 {
-    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000;
+    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000, x_rpt_decr=0;
     mode_data_t *mode_preset;
     mode_flags valid_lm[] = { (MODE_PT | (cc->pt_mode ? (MODE_L5_GEN_4_3<<(cc->pt_mode-1)) : 0)),
                               (MODE_L2 | (MODE_L2<<cc->l2_mode)),
@@ -267,7 +267,10 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
         case MODE_PT:
             vm_out->vic = vm_in->vic;
 
-            if ((cc->pt_mode == 1) && ((mode_preset->group >= GROUP_384P) && (mode_preset->group <= GROUP_576P))) {
+            if ((cc->pt_mode == 0) && (cc->o480p_pbox) && ((mode_preset->group >= GROUP_480P) && (mode_preset->group <= GROUP_576P))) {
+                vm_conf->x_rpt = vm_conf->h_skip = 3;
+                x_rpt_decr += 1;
+            } else if ((cc->pt_mode == 1) && ((mode_preset->group >= GROUP_384P) && (mode_preset->group <= GROUP_576P))) {
                 vmode_hv_mult(vm_in, 2, 1);
                 vmode_hv_mult(vm_out, 2, 1);
             } else if ((cc->pt_mode >= 2) && (mode_preset->group >= GROUP_240P) && (mode_preset->group <= GROUP_288P)) {
@@ -291,6 +294,10 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                     vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
                 }
             } else {
+                if (cc->o480p_pbox) {
+                    vm_conf->x_rpt = vm_conf->h_skip = 3;
+                    x_rpt_decr += 1;
+                }
                 vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             }
             break;
@@ -338,6 +345,14 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
         case MODE_L2_512_COL:
         case MODE_L2_384_COL:
         case MODE_L2_320_COL:
+            if (cc->o480p_pbox) {
+                vm_conf->x_rpt = vm_conf->h_skip = 3;
+                x_rpt_decr += 1;
+            } else {
+                vm_conf->x_rpt = vm_conf->h_skip = 1;
+            }
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            break;
         case MODE_L3_512_COL:
         case MODE_L4_512_COL:
         case MODE_L6_512_COL:
@@ -345,6 +360,14 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L2_256_COL:
+            if (cc->o480p_pbox) {
+                vm_conf->x_rpt = vm_conf->h_skip = 7;
+                x_rpt_decr += 2;
+            } else {
+                vm_conf->x_rpt = vm_conf->h_skip = 2;
+            }
+            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            break;
         case MODE_L3_384_COL:
         case MODE_L4_384_COL:
         case MODE_L5_512_COL:
@@ -391,7 +414,9 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
         vm_conf->x_rpt = cc->ar_256col ? 2 : 3;
 
     if (mindiff_lm & (MODE_L3_320_COL|MODE_L2_240x360|MODE_L3_240x360))
-        vm_conf->x_rpt--;
+        x_rpt_decr += 1;
+
+    vm_conf->x_rpt -= x_rpt_decr;
 
     if (mindiff_lm == MODE_L2_240x360) {
         vm_out->timings.h_active += 80;

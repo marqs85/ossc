@@ -153,7 +153,7 @@ set_interface_property osd_if CMSIS_SVD_VARIABLES ""
 set_interface_property osd_if SVD_ADDRESS_GROUP ""
 
 add_interface_port osd_if vclk vclk Input 1
-add_interface_port osd_if xpos xpos Input 11
+add_interface_port osd_if xpos xpos Input 12
 add_interface_port osd_if ypos ypos Input 11
 add_interface_port osd_if osd_enable osd_enable Output 1
 add_interface_port osd_if osd_color osd_color Output 3

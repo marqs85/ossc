@@ -930,7 +930,9 @@ void print_vm_stats() {
         sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "Profile:");
         sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u: %s", profile_sel, (target_profile_name[0] == 0) ? "<empty>" : target_profile_name);
         sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "FW:");
-        sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX " @ " __DATE__, FW_VER_MAJOR, FW_VER_MINOR);
+        sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, "%u.%.2u" FW_SUFFIX, FW_VER_MAJOR, FW_VER_MINOR);
+        sniprintf((char*)osd->osd_array.data[++row][0], OSD_CHAR_COLS, "FW date:");
+        sniprintf((char*)osd->osd_array.data[row][1], OSD_CHAR_COLS, __DATE__);
 
         osd->osd_config.status_refresh = 1;
         osd->osd_row_color.mask = 0;

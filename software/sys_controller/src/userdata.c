@@ -139,6 +139,7 @@ const ude_item_map ude_profile_items[] = {
     UDE_ITEM(64, 120, tc.link_av),
     // 65 reserved
     UDE_ITEM(66, 120, tc.panasonic_hack),
+    UDE_ITEM(67, 120, tc.o480p_pbox),
 };
 
 int write_userdata(uint8_t entry) {

@@ -32,7 +32,7 @@ module osd_generator_top (
     output avalon_s_waitrequest_n,
     // OSD interface
     input vclk,
-    input [10:0] xpos,
+    input [11:0] xpos,
     input [10:0] ypos,
     output reg osd_enable,
     output reg [2:0] osd_color
@@ -56,7 +56,7 @@ localparam OSD_ROW_COLOR_REGNUM =       8'hf3;
 reg [31:0] osd_config;
 reg [31:0] config_reg[OSD_ROW_LSEC_ENABLE_REGNUM:OSD_ROW_COLOR_REGNUM] /* synthesis ramstyle = "logic" */;
 
-reg [10:0] xpos_osd_area_scaled, xpos_text_scaled;
+reg [11:0] xpos_osd_area_scaled, xpos_text_scaled;
 reg [10:0] ypos_osd_area_scaled, ypos_text_scaled;
 reg [7:0] x_ptr[2:5], y_ptr[2:5] /* synthesis ramstyle = "logic" */;
 reg osd_text_act_lsec_x_hit, osd_text_act_lsec_en, osd_text_act_rsec_x_hit, osd_text_act_rsec_en, osd_text_act_y_hit;
@@ -76,7 +76,7 @@ wire [1:0] y_size = osd_config[14:13];
 wire [2:0] border_color = osd_config[17:15];
 wire [2:0] highlight_color = osd_config[20:18];
 
-wire [10:0] xpos_scaled_w = (xpos >> x_size)-({3'h0, x_offset} << 3);
+wire [11:0] xpos_scaled_w = (xpos >> x_size)-({3'h0, x_offset} << 3);
 wire [10:0] ypos_scaled_w = (ypos >> y_size)-({3'h0, y_offset} << 3);
 wire [7:0] rom_rdaddr;
 wire [0:7] char_data[7:0];

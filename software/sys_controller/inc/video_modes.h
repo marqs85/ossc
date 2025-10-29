@@ -28,14 +28,14 @@
 #define DEF_PHASE   0x10
 
 #define H_TOTAL_MIN 300
-#define H_TOTAL_MAX 2800
+#define H_TOTAL_MAX 3200
 #define H_TOTAL_ADJ_MAX 19
 #define H_SYNCLEN_MIN 10
 #define H_SYNCLEN_MAX 255
 #define H_BPORCH_MIN 0
 #define H_BPORCH_MAX 511
 #define H_ACTIVE_MIN 200
-#define H_ACTIVE_MAX 2560
+#define H_ACTIVE_MAX 3000
 #define H_ACTIVE_SMP_MAX 2048
 #define V_SYNCLEN_MIN 1
 #define V_SYNCLEN_MAX 15

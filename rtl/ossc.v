@@ -140,7 +140,7 @@ wire lcd_bl_timeout;
 wire [2:0] osd_color;
 wire osd_enable_pre;
 wire osd_enable = osd_enable_pre & ~lt_active;
-wire [10:0] xpos_sc;
+wire [11:0] xpos_sc;
 wire [10:0] ypos_sc;
 wire [3:0] x_ctr_shmask, y_ctr_shmask;
 wire [10:0] shmask_data;
