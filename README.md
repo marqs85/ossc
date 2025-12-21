@@ -27,7 +27,20 @@ Architecture
 
 SW toolchain build procedure
 --------------------------
-1. Download and install RISC-V GNU toolchain and Picolibc
+1. Download, configure, build and install RISC-V toolchain (with RV32EMC support) and Picolibc.
+
+From sources:
+~~~~
+git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+git clone --recursive https://github.com/picolibc/picolibc
+cd riscv-gnu-toolchain
+./configure --prefix=/opt/riscv --with-arch=rv32emc --with-abi=ilp32e
+sudo make    # sudo needed if installing under default /opt/riscv location
+~~~~
+On Debian-style Linux distros:
+~~~~
+sudo apt install gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf picolibc-riscv64-unknown-elf
+~~~~
 
 2. Compile custom binary to IHEX converter:
 ~~~~
@@ -37,9 +50,9 @@ gcc tools/bin2hex.c -o tools/bin2hex
 
 Building RTL (bitstream)
 --------------------------
-1. Initialize pulpino submodules (once after cloning ossc project or when submoduled have been updated)
+1. Initialize project submodules (once after cloning ossc project or when submoduled have been updated)
 ~~~~
-git submodule update --init --recursive ip/pulpino_qsys
+git submodule update --init --recursive
 ~~~~
 2. Load the project (ossc.qpf) in Quartus
 3. Generate QSYS output files (only needed before first compilation or when QSYS structure has been modified)
@@ -49,11 +62,8 @@ git submodule update --init --recursive ip/pulpino_qsys
     * Close Platform Designer
     * Run "patch -p0 <scripts/qsys.patch" to patch generated files to optimize block RAM usage
     * Run "touch software/sys_controller_bsp/bsp_timestamp" to acknowledge QSYS update
-3. Generate the FPGA bitstream (Processing -> Start Compilation)
-4. Ensure that there are no timing violations by looking into Timing Analyzer report
-
-NOTE: If the software image (software/sys_controller/mem_init/sys_onchip_memory2_0.hex) was not up to date at the time of compilation, bitstream can be quickly rebuilt with updated hex by running "Processing->Update Memory Initialization File" and "Processing->Start->Start Assembler" in Quartus.
-
+4. Generate the FPGA bitstream (Processing -> Start Compilation)
+5. Ensure that there are no timing violations by looking into Timing Analyzer report
 
 Building software image
 --------------------------
@@ -70,10 +80,9 @@ OPTIONS may include following definitions:
 
 TARGET is typically one of the following:
 * all (Default target. Compiles an ELF file)
-* generate_hex (Generates a memory initialization file required for bitstream and direct download)
 * clean (cleans ELF and intermediate files. Should be invoked every time OPTIONS are changed between compilations, expect with generate_hex where it is done automatically)
 
-3. Optionally test updated SW by directly downloading memory image to block RAM via JTAG
+3. Optionally test updated SW by directly downloading SW image to flash via JTAG (requires valid FPGA bitstream to be present):
 ~~~~
 make rv-reprogram
 ~~~~
@@ -81,16 +90,16 @@ make rv-reprogram
 
 Installing firmware via JTAG
 --------------------------
-The bitstream can be either directly programmed into FPGA (volatile method, suitable for quick testing), or into serial flash chip where it is automatically loaded every time FPGA is subsequently powered on (nonvolatile method, suitable for long-term use).
+The bitstream can be either directly programmed into FPGA (volatile method, suitable for quick testing), or into serial flash chip alongside SW image where it is automatically loaded every time FPGA is subsequently powered on (nonvolatile method, suitable for long-term use).
 
-To program FPGA, open Programmer in Quartus, select your USB Blaster device, add configuration file (output_files/ossc.sof) and press Start
+To directly program FPGA, open Programmer in Quartus, select your USB Blaster device, add configuration file (output_files/ossc.sof) and press Start. Download SW image if it not present / up to date in flash.
 
-To program flash, FPGA configuration file must be first converted into JTAG indirect Configuration file (.jic). Open conversion tool ("File->Convert Programming Files") in Quartus, click "Open Conversion Setup Data", select "ossc.cof" and press Generate. Then open Programmer, add generated file (output_files/ossc.jic) and press Start after which flash is programmed. Installed/updated firmware is activated after power-cycling the board.
+To program flash, a combined FPGA image must be first generated and converted into JTAG indirect Configuration file (.jic). Open conversion tool ("File->Convert Programming Files") in Quartus, click "Open Conversion Setup Data", select "ossc.cof" and press Generate. Then open Programmer and ensure that "Initiate configuration after programming" and "Unprotect EPCS/EPCQ devices selected for Erase/Program operation" are checked in Tools->Options. Then clear file list, add generated file (output_files/ossc.jic) and press Start after which flash is programmed. Installed/updated firmware is activated when programming finishes (or after power-cycling the board in case of a fresh flash chip).
 
 
 Generating SD card image
 --------------------------
-Bitstream file (Altera propiertary format) must be wrapped with custom header structure (including checksums) so that it can be processed reliably on the CPU. This can be done with included helper application which generates a disk image which can written to a SD card and subsequently loaded on OSSC:
+Bitstream file (Altera propiertary format) must be wrapped with custom header structure (including checksums) so that it can be processed reliably on the CPU. This can be done with included helper application which generates an image file which can written on FAT32/exFAT-formatted SD card and subsequently loaded on OSSC:
 
 1. Compile tools/create_fw_img.c
 ~~~~
@@ -98,24 +107,31 @@ cd tools && gcc create_fw_img.c -o create_fw_img
 ~~~~
 2. Generate the firmware image:
 ~~~~
-./create_fw_img <rbf> <version> [version_suffix]
+./create_fw_img <rbf> <sw_image> <offset> <version> [version_suffix]
 ~~~~
 where
 * \<rbf\> is RBF format bitstream file (typically ../output_files/ossc.rbf)
-* \<version\> is version string (e.g. 0.78)
+* \<sw_image\> is SW image binary (typically ../output_files/ossc.rbf)
+* \<offset\> is target offset for the SW image binary (typically 0x50000)
+* \<version\> is version string (e.g. 1.20)
 * \[version_suffix\] is optional max. 8 character suffix name (e.g. "mytest")
 
+The command creates ossc_\<version\>-\<version_suffix\>.bin which can be copied to fw folder of SD card. A secondary FW (identified by specific key in header) gets automatically installed at flash address 0x00080000.
 
 Debugging
 --------------------------
 1. Rebuild the software in debug mode:
 ~~~~
-make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG" generate_hex
+make clean && make APP_CFLAGS_DEBUG_LEVEL="-DDEBUG"
 ~~~~
-NOTE: Fw update functionality via SD card is disabled in debug builds due to code space limitations. If audio support is enabled on debug build, other functionality needs to be disabled as well.
 
-2. Download memory image via JTAG and open terminal for UART
+2. Flash SW image via JTAG and open terminal for UART
 ~~~~
 make rv-reprogram && nios2-terminal
 ~~~~
 Remember to close nios2-terminal after debug session, otherwise any JTAG transactions will hang/fail.
+
+
+License
+---------------------------------------------------
+[GPL3](LICENSE)
