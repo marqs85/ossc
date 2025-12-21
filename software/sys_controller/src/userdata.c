@@ -261,8 +261,10 @@ int read_userdata(uint8_t entry, int dry_run) {
         }
     }
 
-    if (hdr.type == UDE_PROFILE)
+    if (hdr.type == UDE_PROFILE) {
+        invalidate_loaded_arrays();
         update_cur_vm = 1;
+    }
 
     strlcpy(cur_profile_name, target_profile_name, USERDATA_NAME_LEN+1);
     printf("%lu bytes read from userdata entry %u\n", bytes_read, entry);
@@ -439,8 +441,10 @@ int read_userdata_sd(uint8_t entry, int dry_run) {
             f_lseek(&p_file, bytes_read_tot);
     }
 
-    if (hdr.type == UDE_PROFILE)
+    if (hdr.type == UDE_PROFILE) {
+        invalidate_loaded_arrays();
         update_cur_vm = 1;
+    }
 
     strlcpy(cur_profile_name, target_profile_name, USERDATA_NAME_LEN+1);
     printf("%u bytes read from userdata entry %u\n", bytes_read_tot, entry);

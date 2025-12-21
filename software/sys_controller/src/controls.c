@@ -59,7 +59,6 @@ extern menu_t menu_scanlines, menu_advtiming, menu_postproc;
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
-alt_u8 phase_hotkey_enable;
 
 void setup_rc()
 {
@@ -248,8 +247,8 @@ int parse_control()
                 tc.shmask_str = (tc.shmask_str < SCANLINESTR_MAX) ? (tc.shmask_str + 1) : SCANLINESTR_MAX;
 
             if (!menu_active) {
-                strncpy((char*)osd->osd_array.data[0][0], menu_postproc.items[1].name, OSD_CHAR_COLS);
-                menu_postproc.items[1].num.df(tc.shmask_str);
+                strncpy((char*)osd->osd_array.data[0][0], menu_postproc.items[2].name, OSD_CHAR_COLS);
+                menu_postproc.items[2].num.df(tc.shmask_str);
                 strncpy((char*)osd->osd_array.data[1][0], menu_row2, OSD_CHAR_COLS);
                 osd->osd_config.status_refresh = 1;
                 osd->osd_row_color.mask = 0;
@@ -298,7 +297,7 @@ int parse_control()
             break;
         case RC_PHASE_MINUS:
         case RC_PHASE_PLUS:
-            if (phase_hotkey_enable) {
+            if (ts.phase_hotkey_enable) {
                 if (i == RC_PHASE_MINUS)
                     video_modes_plm[cm.id].sampler_phase = video_modes_plm[cm.id].sampler_phase ? (video_modes_plm[cm.id].sampler_phase - 1) : SAMPLER_PHASE_MAX;
                 else

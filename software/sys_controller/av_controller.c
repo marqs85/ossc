@@ -1002,6 +1002,11 @@ int latency_test() {
     return 0;
 }
 
+void invalidate_loaded_arrays() {
+    shmask_loaded_array = -1;
+    loaded_lc_palette = -1;
+}
+
 void update_settings(int init_setup) {
     if (init_setup || (ts.osd_enable != cs.osd_enable) || (ts.osd_status_timeout != cs.osd_status_timeout) || (ts.osd_highlight_color != cs.osd_highlight_color)) {
         osd->osd_config.enable = !!ts.osd_enable;

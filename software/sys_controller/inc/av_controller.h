@@ -145,6 +145,7 @@ int latency_test();
 
 void update_sc_config();
 
+void invalidate_loaded_arrays();
 void update_settings(int init_setup);
 
 #endif
