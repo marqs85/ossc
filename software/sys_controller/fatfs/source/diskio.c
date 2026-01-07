@@ -99,7 +99,7 @@ DRESULT disk_write (
         return STA_NOINIT;
 
     for (i=0; i<count; i++) {
-        res = SD_Write(&sdcard_dev, (void*)&buff[i*SD_BLK_SIZE], sector);
+        res = SD_Write(&sdcard_dev, (void*)&buff[i*SD_BLK_SIZE], sector+i);
         if (res != SD_OK)
             return RES_PARERR;
     }
