@@ -111,12 +111,16 @@ cd tools && gcc create_fw_img.c -o create_fw_img
 ~~~~
 where
 * \<rbf\> is RBF format bitstream file (typically ../output_files/ossc.rbf)
-* \<sw_image\> is SW image binary (typically ../output_files/ossc.rbf)
-* \<offset\> is target offset for the SW image binary (typically 0x50000)
+* \<sw_image\> is SW image binary (typically ../software/sys_controller/mem_init/flash.bin)
+* \<offset\> is relative offset for the SW image binary
 * \<version\> is version string (e.g. 1.20)
 * \[version_suffix\] is optional max. 8 character suffix name (e.g. "mytest")
 
-The command creates ossc_\<version\>-\<version_suffix\>.bin which can be copied to fw folder of SD card. A secondary FW (identified by specific key in header) gets automatically installed at flash address 0x00080000.
+The primary firmware has FPGA bitstream at offset 0x0 and SW image at 0x50000 so the command is typically as follows:
+~~~~
+./create_fw_img ../output_files/ossc.rbf ../software/sys_controller/mem_init/flash.bin 0x50000 1.21 mytest
+~~~~
+The command creates ossc_\<version\>-\<version_suffix\>.bin which can be copied to fw folder of SD card. A secondary FW (identified by specific key in header) gets automatically installed at flash base address 0x00080000.
 
 Debugging
 --------------------------
