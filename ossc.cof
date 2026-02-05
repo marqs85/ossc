@@ -7,10 +7,11 @@
 	<width>1</width>
 	<mode>7</mode>
 	<sof_data>
+		<start_address>00080000</start_address>
 		<user_name>Page_0</user_name>
 		<page_flags>1</page_flags>
 		<bit0>
-			<sof_filename>output_files/ossc.sof<compress_bitstream>1</compress_bitstream></sof_filename>
+			<sof_filename>output_files/ossc.sof<compress_bitstream>1</compress_bitstream></sof_filename> 
 		</bit0>
 	</sof_data>
 	<hex_block>

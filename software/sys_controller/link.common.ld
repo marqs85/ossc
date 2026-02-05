@@ -8,7 +8,7 @@ __DYNAMIC  =  0;
    Last 16 flash sectors reserved for userdata (16x 64KB). */
 MEMORY
 {
-    flash_imem : ORIGIN = 0x02050000, LENGTH = 196608
+    flash_imem : ORIGIN = 0x020D0000, LENGTH = 196608
     dataram    : ORIGIN = 0x00010000, LENGTH = 16384
 }
 

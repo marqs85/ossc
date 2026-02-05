@@ -1150,8 +1150,8 @@ src/userdata_sjis.c: src/userdata.c
 	iconv -f UTF-8 -t SHIFT-JIS src/userdata.c > src/userdata_sjis.c
 
 mem_init/flash.hex: sys_controller.elf
-	$(RV_OBJCOPY) --change-addresses -0x02050000 -O binary --gap-fill 0 $< mem_init/flash.bin
-	$(RV_OBJCOPY) --change-addresses -0x02050000 -O ihex --gap-fill 0 $< mem_init/flash.hex
+	$(RV_OBJCOPY) --change-addresses -0x020D0000 -O binary --gap-fill 0 $< mem_init/flash.bin
+	$(RV_OBJCOPY) --change-addresses -0x020D0000 -O ihex --gap-fill 0 $< mem_init/flash.hex
 	mkdir -p mem_init/chunks
 	rm -f mem_init/chunks/*
 	split -d -b 1024 -a 4 mem_init/flash.bin mem_init/chunks/flash.

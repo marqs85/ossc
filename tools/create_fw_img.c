@@ -161,7 +161,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    snprintf(hdr.fw_key, FW_KEY_SIZE+1, "OSSC");
+    snprintf(hdr.fw_key, FW_KEY_SIZE+1, "OSS2");
     hdr.version_major = (uint8_t)fw_version_major;
     hdr.version_minor = (uint8_t)fw_version_minor;
     snprintf(hdr.version_suffix, FW_SUFFIX_MAX_SIZE, legacy_mode ? ((argc == 4) ? argv[3] : "") : ((argc == 6) ? argv[5] : ""));
