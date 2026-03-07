@@ -68,11 +68,16 @@ DRESULT disk_read (
 )
 {
     SDRESULTS res;
+    int i;
 
     if (!sdcard_dev.mount)
         return STA_NOINIT;
 
-    res = SD_Read(&sdcard_dev, buff, sector, 0, count*SD_BLK_SIZE);
+    for (i=0; i<count; i++) {
+        res = SD_Read(&sdcard_dev, (void*)&buff[i*SD_BLK_SIZE], sector+i, 0, SD_BLK_SIZE);
+        if (res != SD_OK)
+            return RES_PARERR;
+    }
 
     return (res == SD_OK) ? RES_OK : RES_PARERR;
 }
