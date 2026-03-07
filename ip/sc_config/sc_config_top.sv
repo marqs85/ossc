@@ -53,7 +53,7 @@ module sc_config_top(
     output [10:0] shmask_data,
     // Lumacode interface
     input lumacode_clk_i,
-    input [8:0] lumacode_addr_i,
+    input [7:0] lumacode_addr_i,
     input lumacode_rden_i,
     output [31:0] lumacode_data_o
 );
@@ -128,7 +128,7 @@ defparam
 
 // Lumacode palette RAM
 altsyncram lumacode_pal_ram (
-            .address_a (avalon_s_address[8:0]),
+            .address_a (avalon_s_address[7:0]),
             .address_b (lumacode_addr_i),
             .clock0 (clk_i),
             .clock1 (lumacode_clk_i),
@@ -159,15 +159,15 @@ defparam
     lumacode_pal_ram.clock_enable_output_b = "BYPASS",
     lumacode_pal_ram.intended_device_family = "Cyclone IV E",
     lumacode_pal_ram.lpm_type = "altsyncram",
-    lumacode_pal_ram.numwords_a = 512,
-    lumacode_pal_ram.numwords_b = 512,
+    lumacode_pal_ram.numwords_a = 256,
+    lumacode_pal_ram.numwords_b = 256,
     lumacode_pal_ram.operation_mode = "DUAL_PORT",
     lumacode_pal_ram.outdata_aclr_b = "NONE",
     lumacode_pal_ram.outdata_reg_b = "UNREGISTERED",
     lumacode_pal_ram.power_up_uninitialized = "FALSE",
     lumacode_pal_ram.rdcontrol_reg_b = "CLOCK1",
-    lumacode_pal_ram.widthad_a = 9,
-    lumacode_pal_ram.widthad_b = 9,
+    lumacode_pal_ram.widthad_a = 8,
+    lumacode_pal_ram.widthad_b = 8,
     lumacode_pal_ram.width_a = 32,
     lumacode_pal_ram.width_b = 32,
     lumacode_pal_ram.width_byteena_a = 1;

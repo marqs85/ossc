@@ -72,7 +72,7 @@ const ude_item_map ude_initcfg_items[] = {
 const ude_item_map ude_profile_items[] = {
     {{0, 120, sizeof(video_modes_plm_default)}, video_modes_plm},
     UDE_ITEM(1, 120, c_shmask),
-    UDE_ITEM(65, 120, c_lc_palette_set),
+    UDE_ITEM(65, 121, c_lc_palette_set),
     // avconfig_t
     UDE_ITEM(2, 120, tc.pm_240p),
     UDE_ITEM(3, 120, tc.pm_384p),
@@ -111,8 +111,8 @@ const ude_item_map ude_profile_items[] = {
     UDE_ITEM(36, 120, tc.reverse_lpf),
     UDE_ITEM(37, 120, tc.shmask_mode),
     UDE_ITEM(38, 120, tc.shmask_str),
-    UDE_ITEM(39, 120, tc.lumacode_mode),
-    UDE_ITEM(40, 120, tc.lumacode_pal),
+    UDE_ITEM(39, 121, tc.lumacode_mode),
+    UDE_ITEM(40, 121, tc.lumacode_pal),
     UDE_ITEM(41, 120, tc.sync_vth),
     UDE_ITEM(42, 120, tc.linelen_tol),
     UDE_ITEM(43, 120, tc.vsync_thold),

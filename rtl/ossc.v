@@ -130,7 +130,7 @@ wire lt_trig_waiting;
 wire lt_finished;
 
 wire [31:0] lumacode_data;
-wire [8:0] lumacode_addr;
+wire [7:0] lumacode_addr;
 wire lumacode_rden;
 
 reg remote_event_prev;

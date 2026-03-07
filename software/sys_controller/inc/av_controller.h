@@ -123,8 +123,13 @@ typedef union {
         uint32_t nes_pal[64];
         uint32_t tia_pal[128];
         uint32_t gtia_pal[256];
+        uint32_t maria_pal[256];
+        uint32_t sms_pal[64];
+        uint32_t vic20_pal[16];
+        uint32_t g7000_pal[16];
+        uint32_t mc6847_pal[16];
     } __attribute__((packed, __may_alias__));
-    uint32_t data[512];
+    uint32_t data[880];
 } lc_palette_set;
 
 typedef struct {

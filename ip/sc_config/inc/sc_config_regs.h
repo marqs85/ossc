@@ -153,7 +153,7 @@ typedef struct {
 
 // lumacode palatte ram
 typedef struct {
-    uint32_t data[512];
+    uint32_t data[256];
 } lc_pal_ram;
 
 typedef struct {

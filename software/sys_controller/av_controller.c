@@ -144,7 +144,7 @@ int shmask_loaded_str = -1;
 #define SHMASKS_SIZE  (sizeof(shmask_data_arr_list) / sizeof((shmask_data_arr_list)[0]))
 
 c_lc_palette_set_t c_lc_palette_set;
-const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal, &c_lc_palette_set.pal};
+const lc_palette_set* lc_palette_set_list[] = {&lc_palette_pal, &lc_palette_ntsc, &c_lc_palette_set.pal};
 int loaded_lc_palette = -1;
 
 void ui_disp_menu(alt_u8 osd_mode)
@@ -466,6 +466,19 @@ void update_sc_config()
 {
     int i, p, t;
     shmask_data_arr *shmask_data_arr_ptr;
+    struct {uint32_t offset; uint32_t size; uint8_t mode;} lc_cfg_arr[] = {{0, 0, 0},
+                                                             {offsetof(lc_palette_set, vic20_pal), sizeof(lc_palette_pal.vic20_pal), 2},
+                                                             {offsetof(lc_palette_set, c64_pal), sizeof(lc_palette_pal.c64_pal), 1},
+                                                             {offsetof(lc_palette_set, zx_pal), sizeof(lc_palette_pal.zx_pal), 1},
+                                                             {offsetof(lc_palette_set, msx_pal), sizeof(lc_palette_pal.msx_pal), 1},
+                                                             {offsetof(lc_palette_set, intv_pal), sizeof(lc_palette_pal.intv_pal), 2},
+                                                             {offsetof(lc_palette_set, g7000_pal), sizeof(lc_palette_pal.g7000_pal), 2},
+                                                             {offsetof(lc_palette_set, mc6847_pal), sizeof(lc_palette_pal.mc6847_pal), 1},
+                                                             {offsetof(lc_palette_set, sms_pal), sizeof(lc_palette_pal.sms_pal), 3},
+                                                             {offsetof(lc_palette_set, nes_pal), sizeof(lc_palette_pal.nes_pal), 5},
+                                                             {offsetof(lc_palette_set, gtia_pal), sizeof(lc_palette_pal.gtia_pal), 6},
+                                                             {offsetof(lc_palette_set, tia_pal), sizeof(lc_palette_pal.tia_pal), 7},
+                                                             {offsetof(lc_palette_set, maria_pal), sizeof(lc_palette_pal.maria_pal), 4}};
 
     mode_data_t *vm_in = &vmode_in;
     mode_data_t *vm_out = &vmode_out;
@@ -500,10 +513,10 @@ void update_sc_config()
         shmask_data_arr_ptr = shmask_loaded_array ? (shmask_data_arr*)shmask_data_arr_list[shmask_loaded_array] : (shmask_data_arr*)shmask_data_arr_list[1];
     }
 
-    if (avconfig->lumacode_mode && (avconfig->lumacode_pal != loaded_lc_palette)) {
-        for (i=0; i<(sizeof(lc_palette_set)/4); i++)
-            sc->lumacode_pal_ram.data[i] = lc_palette_set_list[avconfig->lumacode_pal]->data[i];
-        loaded_lc_palette = avconfig->lumacode_pal;
+    if (avconfig->lumacode_mode && ((avconfig->lumacode_pal*100)+avconfig->lumacode_mode != loaded_lc_palette)) {
+        for (i=0; i<lc_cfg_arr[avconfig->lumacode_mode].size/4; i++)
+            sc->lumacode_pal_ram.data[i] = lc_palette_set_list[avconfig->lumacode_pal]->data[(lc_cfg_arr[avconfig->lumacode_mode].offset/4)+i];
+        loaded_lc_palette = (avconfig->lumacode_pal*100)+avconfig->lumacode_mode;
     }
 
     // Set input params
@@ -546,7 +559,7 @@ void update_sc_config()
     misc_config.shmask_enable = (avconfig->shmask_mode != 0);
     misc_config.shmask_iv_x = shmask_data_arr_ptr->iv_x;
     misc_config.shmask_iv_y = shmask_data_arr_ptr->iv_y;
-    misc_config.lumacode_mode = avconfig->lumacode_mode;
+    misc_config.lumacode_mode = lc_cfg_arr[avconfig->lumacode_mode].mode;
     misc_config.panasonic_hack = avconfig->panasonic_hack;
     /*misc_config.lm_deint_mode = 0;
     misc_config.nir_even_offset = 0;*/
@@ -1051,7 +1064,7 @@ int main()
         printf("### DIY VIDEO DIGITIZER / SCANCONVERTER INIT OK ###\n\n");
         sniprintf(row1, LCD_ROW_LEN+1, " OSSC fw. %u.%.2u" FW_SUFFIX, FW_VER_MAJOR, FW_VER_MINOR);
 #ifndef DEBUG
-        strncpy(row2, "2014-2025  marqs", LCD_ROW_LEN+1);
+        strncpy(row2, "2014-2026  marqs", LCD_ROW_LEN+1);
 #else
         strncpy(row2, "** DEBUG BUILD *", LCD_ROW_LEN+1);
 #endif

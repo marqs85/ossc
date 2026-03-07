@@ -191,6 +191,6 @@ set_interface_property lc_ram_if CMSIS_SVD_VARIABLES ""
 set_interface_property lc_ram_if SVD_ADDRESS_GROUP ""
 
 add_interface_port lc_ram_if lumacode_clk_i lumacode_clk_i Input 1
-add_interface_port lc_ram_if lumacode_addr_i lumacode_addr_i Input 9
+add_interface_port lc_ram_if lumacode_addr_i lumacode_addr_i Input 8
 add_interface_port lc_ram_if lumacode_rden_i lumacode_rden_i Input 1
 add_interface_port lc_ram_if lumacode_data_o lumacode_data_o Output 32

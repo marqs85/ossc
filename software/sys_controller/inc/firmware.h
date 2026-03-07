@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            1
-#define FW_VER_MINOR            20
+#define FW_VER_MINOR            21
 
 #ifdef OSDLANG_JP
 #define FW_SUFFIX              "j"
