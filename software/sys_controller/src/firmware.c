@@ -271,6 +271,8 @@ void __attribute__((noinline, flatten, noreturn, __section__(".text_bram"))) fw_
     // flush command FIFO before FPGA reconfiguration start
     *(volatile uint32_t*)(INTEL_GENERIC_SERIAL_FLASH_INTERFACE_TOP_0_AVL_MEM_BASE);
 
+    rem_reconfig_dev.regs->image_addr[0] = flash_addr;
+    rem_reconfig_dev.regs->wdog_enable[0] = 0;
     rem_reconfig_dev.regs->reconfig_start = 1;
 
     while (1) {}
