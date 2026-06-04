@@ -154,7 +154,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
         switch (mode_preset->group) {
             case GROUP_384P:
                 //fixed Line2x/3x mode for 240x360p/400p
-                valid_lm[2] = MODE_L3_GEN_16_9;
+                valid_lm[2] = MODE_L3_GEN_16_9 | MODE_L3_GEN_4_3;
                 valid_lm[3] = MODE_L2_240x360;
                 valid_lm[4] = MODE_L3_240x360;
                 if ((!vm_in->timings.h_total) && (mode_preset->timings.v_total == 449)) {
@@ -316,6 +316,11 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             }
             break;
         case MODE_L3_GEN_4_3:
+            // Upsample by 3x on GBI Line3x generic
+            if (mode_preset->group == GROUP_384P) {
+                vmode_hv_mult(vm_in, 3, 1);
+                vmode_hv_mult(vm_out, 3, 1);
+            }
             vm_conf->x_size = vm_out->timings.h_active-2*vm_in->mask.h;
             vm_out->timings.h_synclen /= 3;
             vm_out->timings.h_backporch /= 3;
