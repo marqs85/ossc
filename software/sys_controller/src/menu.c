@@ -75,6 +75,7 @@ static const char* const pm_480p_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ")
 static const char* const pm_1080i_desc[] = { LNG("Passthru","ﾊﾟｽｽﾙｰ"), "Line2x (bob)" };
 static const char* const ar_256col_desc[] = { "Pseudo 4:3 DAR", "1:1 PAR" };
 static const char* const tx_mode_desc[] = { "HDMI (RGB)", "HDMI (YCbCr444)", "DVI" };
+static const char* const hdmi_ar_desc[] = { "Not set", "4:3", "16:9" };
 static const char* const sl_mode_desc[] = { LNG("Off","ｵﾌ"), LNG("Auto","ｵｰﾄ"), LNG("On","ｵﾝ") };
 static const char* const sl_method_desc[] = { LNG("Multiplication","Multiplication"), LNG("Subtraction","Subtraction") };
 static const char* const sl_type_desc[] = { LNG("Horizontal","ﾖｺ"), LNG("Vertical","ﾀﾃ"), "Horiz. + Vert.", "Custom" };
@@ -213,6 +214,7 @@ MENU(menu_lm, P99_PROTECT({ \
 MENU(menu_output, P99_PROTECT({ \
     { LNG("TX mode","TXﾓｰﾄﾞ"),                  OPT_AVCONFIG_SELECTION, { .sel = { &tc.tx_mode,         OPT_WRAP, SETTING_ITEM(tx_mode_desc) } } },
     { "HDMI ITC",                              OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_itc,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "HDMI Aspect flag",                      OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_ar,         OPT_WRAP, SETTING_ITEM(hdmi_ar_desc) } } },
     { "HDMI HDR flag",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_hdr,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "HDMI VRR flag",                         OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_vrr,        OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "480p/576p pbox",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.o480p_pbox,       OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
