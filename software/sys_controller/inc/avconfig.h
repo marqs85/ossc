@@ -152,6 +152,7 @@ typedef struct {
     /* TX / extra settings */
     alt_u8 tx_mode;
     alt_u8 hdmi_itc;
+    alt_u8 hdmi_ar;
     alt_u8 hdmi_hdr;
     alt_u8 hdmi_vrr;
     alt_u8 full_tx_setup;

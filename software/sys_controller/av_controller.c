@@ -216,12 +216,13 @@ inline void TX_enable(tx_mode_t mode)
     EnableVideoOutput(cm.hdmitx_pclk_level ? PCLK_HIGH : PCLK_MEDIUM, COLOR_RGB444, (mode == TX_HDMI_YCBCR444) ? COLOR_YUV444 : COLOR_RGB444, (mode != TX_DVI));
 
     if (mode != TX_DVI) {
-        HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(vmode_out.vic, (mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, tc.hdmi_ar, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
         if (tc.hdmi_vrr)
             HDMITX_SetVRRInfoFrame(tc.hdmi_vrr);
         if (tc.hdmi_hdr)
             HDMITX_SetHDRInfoFrame(tc.hdmi_hdr ? 3 : 0);
         cm.cc.hdmi_itc = tc.hdmi_itc;
+        cm.cc.hdmi_ar = tc.hdmi_ar;
         cm.cc.hdmi_hdr = tc.hdmi_hdr;
         cm.cc.hdmi_vrr = tc.hdmi_vrr;
     }
@@ -743,7 +744,7 @@ void program_mode()
         cm.hdmitx_pclk_level = hdmitx_pclk_level;
         TX_enable(cm.cc.tx_mode);
     } else if (cm.cc.tx_mode!=TX_DVI) {
-        HDMITX_SetAVIInfoFrame(vmode_out.vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, cm.cc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
+        HDMITX_SetAVIInfoFrame(vmode_out.vic, (cm.cc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, cm.cc.hdmi_ar, 0, cm.cc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
 #ifdef MANUAL_CTS
         SetupAudio(cm.cc.tx_mode);
 #endif
@@ -1257,11 +1258,12 @@ int main()
             cm.clkcnt = 0; //TODO: proper invalidate
         }
         if (tc.tx_mode != TX_DVI) {
-            if (tc.hdmi_itc != cm.cc.hdmi_itc) {
+            if (tc.hdmi_itc != cm.cc.hdmi_itc || tc.hdmi_ar != cm.cc.hdmi_ar) {
                 //EnableAVIInfoFrame(FALSE, NULL);
-                printf("setting ITC to %d\n", tc.hdmi_itc);
-                HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, 0, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
+                printf("setting ITC to %d\nsetting Aspect-Ratio to %d\n", tc.hdmi_itc, tc.hdmi_ar);
+                HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, tc.hdmi_ar, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);
                 cm.cc.hdmi_itc = tc.hdmi_itc;
+                cm.cc.hdmi_ar = tc.hdmi_ar;
             }
             if (tc.hdmi_vrr != cm.cc.hdmi_vrr) {
                 printf("setting VRR flag to %d\n", tc.hdmi_vrr);
