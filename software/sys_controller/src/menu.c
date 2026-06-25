@@ -705,9 +705,6 @@ int load_lc_palette_set(char *dirname, char *filename) {
                 } else if (strncmp(tmpbuf, "maria_pal", 10) == 0) {
                     offset = offsetof(lc_palette_set, maria_pal)/4;
                     entries_remaining = 256;
-                } else if (strncmp(tmpbuf, "gtia_pal", 10) == 0) {
-                    offset = offsetof(lc_palette_set, gtia_pal)/4;
-                    entries_remaining = 128;
                 } else if (strncmp(tmpbuf, "sms_pal", 10) == 0) {
                     offset = offsetof(lc_palette_set, sms_pal)/4;
                     entries_remaining = 64;

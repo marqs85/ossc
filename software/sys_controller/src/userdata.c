@@ -50,6 +50,7 @@ extern uint8_t update_cur_vm;
 extern SD_DEV sdcard_dev;
 extern c_shmask_t c_shmask;
 extern c_lc_palette_set_t c_lc_palette_set;
+extern avinput_t last_input;
 
 char target_profile_name[USERDATA_NAME_LEN+1], cur_profile_name[USERDATA_NAME_LEN+1];
 
@@ -67,6 +68,7 @@ const ude_item_map ude_initcfg_items[] = {
     UDE_ITEM(10, 120, ts.osd_status_timeout),
     UDE_ITEM(11, 120, ts.osd_highlight_color),
     UDE_ITEM(12, 120, ts.phase_hotkey_enable),
+    UDE_ITEM(13, 122, last_input),
 };
 
 const ude_item_map ude_profile_items[] = {
@@ -140,6 +142,7 @@ const ude_item_map ude_profile_items[] = {
     // 65 reserved
     UDE_ITEM(66, 120, tc.panasonic_hack),
     UDE_ITEM(67, 120, tc.o480p_pbox),
+    UDE_ITEM(61, 122, tc.hdmi_ar),
 };
 
 int write_userdata(uint8_t entry) {

@@ -36,7 +36,7 @@ typedef union {
 
 // char regs
 typedef struct {
-    char data[160];
+    alt_u32 data[5];
 } pll_config_data_regs;
 
 typedef struct {

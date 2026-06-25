@@ -87,7 +87,7 @@ alt_u8 profile_sel, profile_sel_menu, sd_profile_sel_menu, input_profiles[AV_LAS
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 extern alt_u8 menu_active;
-avinput_t target_input;
+avinput_t target_input, last_input;
 
 alt_u8 pcm1862_active;
 
@@ -1029,12 +1029,12 @@ void update_settings(int init_setup) {
         refresh_osd();
     }
     if (init_setup)
-        target_input = ts.def_input;
+        target_input = (ts.def_input == AV_LAST) ? last_input : ts.def_input;
 
     memcpy(&cs, &ts, sizeof(settings_t));
 }
 
-int main()
+int main(int argc, char **argv, char **envp)
 {
     ths_input_t target_ths = 0;
     pcm_input_t target_pcm = 0;
@@ -1223,6 +1223,7 @@ int main()
 
             cm.avinput = target_input;
             cm.sync_active = 0;
+            last_input = target_input;
             ths_source_sel(target_ths, (cm.cc.video_lpf > 1) ? (VIDEO_LPF_MAX-cm.cc.video_lpf) : THS_LPF_BYPASS);
             tvp_powerdown();
             DisableAudioOutput();
@@ -1258,7 +1259,7 @@ int main()
             cm.clkcnt = 0; //TODO: proper invalidate
         }
         if (tc.tx_mode != TX_DVI) {
-            if (tc.hdmi_itc != cm.cc.hdmi_itc || tc.hdmi_ar != cm.cc.hdmi_ar) {
+            if ((tc.hdmi_itc != cm.cc.hdmi_itc) || (tc.hdmi_ar != cm.cc.hdmi_ar)) {
                 //EnableAVIInfoFrame(FALSE, NULL);
                 printf("setting ITC to %d\nsetting Aspect-Ratio to %d\n", tc.hdmi_itc, tc.hdmi_ar);
                 HDMITX_SetAVIInfoFrame(vmode_out.vic, (tc.tx_mode == TX_HDMI_RGB) ? F_MODE_RGB444 : F_MODE_YUV444, tc.hdmi_ar, 0, tc.hdmi_itc, vm_conf.hdmitx_pixr_ifr);

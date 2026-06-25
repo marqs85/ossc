@@ -24,7 +24,7 @@
 #include "sysconfig.h"
 
 #define FW_VER_MAJOR            1
-#define FW_VER_MINOR            21
+#define FW_VER_MINOR            22
 
 #ifdef OSDLANG_JP
 #define FW_SUFFIX              "j"
@@ -61,7 +61,7 @@ typedef struct {
 } rem_update_dev;
 
 int fw_init_secondary();
-int fw_update();
+int fw_update(char *dirname, char *filename);
 void fw_update_commit(uint32_t* cluster_idx, uint32_t bytes_to_copy, uint16_t fs_csize, uint16_t fs_startsec, uint32_t flash_addr);
 
 #endif

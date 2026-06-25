@@ -17,7 +17,7 @@
 
 
 #ifdef SUPPORT_SYNCEMBEDDED
-#pragma message("defined SUPPORT_SYNCEMBEDDED for Sync Embedded timing input or CCIR656 input.") 
+#pragma message("defined SUPPORT_SYNCEMBEDDED for Sync Embedded timing input or CCIR656 input.")
 #endif
 
 #ifndef _MCU_ // DSSSHA need large computation data rather than 8051 supported.
@@ -52,7 +52,6 @@
 //#define NULL 0
 
 //typedef unsigned char bool;
-typedef unsigned char  bool;
 #include "sysconfig.h"
 
 // Hardwired to CPU reset
