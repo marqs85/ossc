@@ -133,7 +133,7 @@ uint32_t calculate_pclk(uint32_t src_clk_hz, mode_data_t *vm_out, vm_proc_config
 
 int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t *vm_conf)
 {
-    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000, x_rpt_decr=0;
+    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000, x_rpt_decr=0, skip_hv_mult=0;
     mode_data_t *mode_preset;
     mode_flags valid_lm[] = { (MODE_PT | (cc->pt_mode ? (MODE_L5_GEN_4_3<<(cc->pt_mode-1)) : 0)),
                               (MODE_L2 | (MODE_L2<<cc->l2_mode)),
@@ -281,7 +281,6 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             while ((((vm_out->timings.v_hz_x100*vm_out->timings.v_total)/100)*vm_out->timings.h_total*(vm_conf->h_skip+1))>>vm_out->timings.interlaced < 25000000UL) {
                 vm_conf->x_rpt = vm_conf->h_skip = 2*(vm_conf->h_skip+1)-1;
             }
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L2:
             // Upsample / pixel-repeat horizontal resolution of 384p/480p/960i modes
@@ -289,16 +288,15 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                 if (upsample2x) {
                     vmode_hv_mult(vm_in, 2, 1);
                     vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                    skip_hv_mult = 1;
                 } else {
                     vm_conf->x_rpt = 1;
-                    vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
                 }
             } else {
                 if (cc->o480p_pbox) {
                     vm_conf->x_rpt = vm_conf->h_skip = 3;
                     x_rpt_decr += 1;
                 }
-                vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             }
             break;
         case MODE_L3_GEN_16_9:
@@ -307,12 +305,14 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                 if (upsample2x) {
                     vmode_hv_mult(vm_in, 2, 1);
                     vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                    skip_hv_mult = 1;
                 } else {
                     vm_conf->x_rpt = 1;
-                    vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
                 }
-            } else {
-                vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            } else if (cc->hdmi_pr2x_disable && ((mode_preset->group == GROUP_480P) || (mode_preset->group == GROUP_576P))) {
+                vmode_hv_mult(vm_in, 2, 1);
+                vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                skip_hv_mult = 1;
             }
             break;
         case MODE_L3_GEN_4_3:
@@ -328,6 +328,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_out->timings.h_total /= 3;
             vm_out->timings.h_total_adj = 0;
             vmode_hv_mult(vm_out, 4, VM_OUT_YMULT);
+            skip_hv_mult = 1;
             break;
         case MODE_L4_GEN_4_3:
             // Upsample / pixel-repeat horizontal resolution of 480i mode
@@ -335,17 +336,30 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                 if (upsample2x) {
                     vmode_hv_mult(vm_in, 2, 1);
                     vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                    skip_hv_mult = 1;
                 } else {
                     vm_conf->x_rpt = 1;
-                    vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
                 }
-            } else {
-                vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             }
             break;
         case MODE_L5_GEN_4_3:
+            if (cc->hdmi_pr2x_disable && mode_preset->group == GROUP_288P) {
+                vmode_hv_mult(vm_in, 2, 1);
+                vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                skip_hv_mult = 1;
+            }
+            break;
         case MODE_L6_GEN_4_3:
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            if (cc->hdmi_pr2x_disable) {
+                if (mode_preset->group == GROUP_288P) {
+                    // upsampled active would exceed 2048, must pixel-repeat
+                    vm_conf->x_rpt = 1;
+                } else {
+                    vmode_hv_mult(vm_in, 2, 1);
+                    vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
+                    skip_hv_mult = 1;
+                }
+            }
             break;
         case MODE_L2_512_COL:
         case MODE_L2_384_COL:
@@ -356,13 +370,13 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             } else {
                 vm_conf->x_rpt = vm_conf->h_skip = 1;
             }
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L3_512_COL:
         case MODE_L4_512_COL:
-        case MODE_L6_512_COL:
             vm_conf->x_rpt = vm_conf->h_skip = 1;
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            break;
+        case MODE_L6_512_COL:
+            vm_conf->x_rpt = vm_conf->h_skip = cc->hdmi_pr2x_disable ? 3 : 1;
             break;
         case MODE_L2_256_COL:
             if (cc->o480p_pbox) {
@@ -371,40 +385,44 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             } else {
                 vm_conf->x_rpt = vm_conf->h_skip = 2;
             }
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L3_384_COL:
         case MODE_L4_384_COL:
         case MODE_L5_512_COL:
+            vm_conf->x_rpt = vm_conf->h_skip = 2;
+            break;
         case MODE_L6_384_COL:
         case MODE_L6_320_COL:
-            vm_conf->x_rpt = vm_conf->h_skip = 2;
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            vm_conf->x_rpt = vm_conf->h_skip = cc->hdmi_pr2x_disable ? 5 : 2;
             break;
         case MODE_L3_240x360:
+            vm_conf->x_rpt = vm_conf->h_skip = 7;
+            break;
         case MODE_L3_320_COL:
         case MODE_L4_320_COL:
         case MODE_L5_384_COL:
-        case MODE_L6_256_COL:
             vm_conf->x_rpt = vm_conf->h_skip = 3;
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
+            break;
+        case MODE_L6_256_COL:
+            vm_conf->x_rpt = vm_conf->h_skip = cc->hdmi_pr2x_disable ? 7 : 3;
             break;
         case MODE_L2_240x360:
         case MODE_L3_256_COL:
         case MODE_L4_256_COL:
         case MODE_L5_320_COL:
             vm_conf->x_rpt = vm_conf->h_skip = 4;
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         case MODE_L5_256_COL:
             vm_conf->x_rpt = vm_conf->h_skip = 5;
-            vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
             break;
         default:
             printf("WARNING: invalid mindiff_lm\n");
             return -1;
             break;
     }
+
+    if (!skip_hv_mult)
+        vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
 
     // Set clock multiplication factor
     if (mindiff_lm == MODE_L3_GEN_4_3)
@@ -415,11 +433,15 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     // Reduce x_rpt for 1:1 PAR 256col mode
     if (mindiff_lm & (MODE_L2_256_COL|MODE_L4_256_COL|MODE_L5_256_COL))
         vm_conf->x_rpt -= cc->ar_256col;
-    else if (mindiff_lm & (MODE_L3_256_COL|MODE_L6_256_COL))
+    else if (mindiff_lm & MODE_L3_256_COL)
         vm_conf->x_rpt = cc->ar_256col ? 2 : 3;
+    else if (mindiff_lm & MODE_L6_256_COL)
+        vm_conf->x_rpt = cc->ar_256col ? (cc->hdmi_pr2x_disable+1)*3-1 : (cc->hdmi_pr2x_disable+1)*4-1;
 
-    if (mindiff_lm & (MODE_L3_320_COL|MODE_L2_240x360|MODE_L3_240x360))
+    if (mindiff_lm & (MODE_L3_320_COL|MODE_L2_240x360))
         x_rpt_decr += 1;
+    else if (mindiff_lm & (MODE_L3_240x360))
+        x_rpt_decr += 2;
 
     vm_conf->x_rpt -= x_rpt_decr;
 
@@ -429,9 +451,9 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     }
 
     // Force TX pixel-repeat for high bandwidth modes
-    if (((mindiff_lm == MODE_L5_GEN_4_3) && (mode_preset->group == GROUP_288P)) ||
+    if (!cc->hdmi_pr2x_disable && (((mindiff_lm == MODE_L5_GEN_4_3) && (mode_preset->group == GROUP_288P)) ||
        ((mindiff_lm == MODE_L3_GEN_16_9) && ((mode_preset->group == GROUP_480P) || (mode_preset->group == GROUP_576P))) ||
-       (mindiff_lm == MODE_L3_240x360) || (mindiff_lm >= MODE_L6_GEN_4_3))
+       (mindiff_lm >= MODE_L6_GEN_4_3)))
         vm_conf->tx_pixelrep = 1;
 
     sniprintf(vm_out->name, 11, "%s x%u", vm_in->name, vm_conf->y_rpt+1);

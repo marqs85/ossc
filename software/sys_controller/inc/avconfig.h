@@ -107,6 +107,7 @@ typedef struct {
     alt_u8 fpga_pll_bw;
     alt_u8 panasonic_hack;
     alt_u8 o480p_pbox;
+    alt_u8 hdmi_pr2x_disable;
 
     /* Postprocessing settings */
     alt_u8 sl_mode;

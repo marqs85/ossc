@@ -163,8 +163,6 @@ set_location_assignment PIN_129 -to btn[1]
 set_location_assignment PIN_128 -to btn[0]
 
 
-
-
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
@@ -220,20 +218,33 @@ set_global_assignment -name USE_SIGNALTAP_FILE output_files/ossc_new.stp
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
 set_global_assignment -name SEED 1
 
-
-
-
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[0]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[1]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[2]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[3]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[4]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[5]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[6]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_BD[7]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[0]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[1]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[2]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[3]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[4]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[5]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[6]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_GD[7]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[0]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[1]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[2]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[3]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[4]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[5]
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[6]
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_RD[7]
-
-
-
-
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_HS
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_VS
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to HDMI_TX_DE
 
 
 set_global_assignment -name VERILOG_FILE rtl/videogen.v
@@ -259,4 +270,6 @@ set_global_assignment -name SEARCH_PATH software/sys_controller/mem_init/
 set_global_assignment -name SEARCH_PATH ip/ibex_qsys/rtl_extra
 set_global_assignment -name VERILOG_MACRO "SYNTHESIS=<None>"
 set_global_assignment -name STRATIXIII_UPDATE_MODE REMOTE
+
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
