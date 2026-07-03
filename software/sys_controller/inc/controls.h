@@ -65,6 +65,7 @@ typedef enum {
 
 void setup_rc();
 void set_default_keymap();
+void read_controls();
 int parse_control();
 
 #endif

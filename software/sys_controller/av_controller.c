@@ -62,9 +62,6 @@ extern mode_data_t video_modes_plm[];
 extern ypbpr_to_rgb_csc_t csc_coeffs[];
 extern alt_u16 rc_keymap[REMOTE_MAX_KEYS];
 extern alt_u16 rc_keymap_default[REMOTE_MAX_KEYS];
-extern alt_u32 remote_code;
-extern alt_u32 btn_code, btn_code_prev;
-extern alt_u8 remote_rpt, remote_rpt_prev;
 extern avconfig_t tc;
 extern alt_u8 vm_sel;
 extern char target_profile_name[USERDATA_NAME_LEN+1];
@@ -1042,8 +1039,6 @@ int main(int argc, char **argv, char **envp)
 
     status_t status;
 
-    alt_u32 input_vec;
-
     alt_timestamp_type start_ts;
     alt_timestamp_type auto_input_timestamp = 0;
     alt_u8 auto_input_changed = 0;
@@ -1081,24 +1076,6 @@ int main(int argc, char **argv, char **envp)
     // Mainloop
     while(1) {
         start_ts = alt_timestamp();
-
-        // Read remote control and PCB button status
-        input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
-        remote_code = input_vec & RC_MASK;
-        btn_code = ~input_vec & PB_MASK;
-        remote_rpt = input_vec >> 24;
-
-        if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
-            remote_code = 0;
-
-        remote_rpt_prev = remote_rpt;
-
-        if (btn_code_prev == 0) {
-            btn_code_prev = btn_code;
-        } else {
-            btn_code_prev = btn_code;
-            btn_code = 0;
-        }
 
         // Auto input switching
         if ((cs.auto_input != AUTO_OFF) && (cm.avinput != AV_TESTPAT) && !cm.sync_active && !menu_active
@@ -1145,6 +1122,7 @@ int main(int argc, char **argv, char **envp)
             auto_input_timestamp = alt_timestamp();
         }
 
+        read_controls();
         man_input_change = parse_control();
 
         if (menu_active)

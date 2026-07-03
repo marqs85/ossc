@@ -238,7 +238,7 @@ int read_userdata(uint8_t entry, int dry_run) {
 
     if (strncmp(hdr.userdata_key, "USRDATA", 8)) {
         printf("No userdata found on entry %u\n", entry);
-        return 1;
+        return -2;
     }
 
     strlcpy(target_profile_name, hdr.name, USERDATA_NAME_LEN+1);

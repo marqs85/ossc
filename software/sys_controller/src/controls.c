@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include "system.h"
 #include "alt_types.h"
 #include "controls.h"
@@ -28,8 +29,12 @@
 #include "video_modes.h"
 #include "userdata.h"
 #include "firmware.h"
+#include "utils.h"
 #include "lcd.h"
+#include "altera_avalon_jtag_uart.h"
 #include "altera_avalon_pio_regs.h"
+
+#define UART_RX_BUF_SIZE 15
 
 static const char *rc_keydesc[REMOTE_MAX_KEYS] = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", \
                                                    "MENU", "OK", "BACK", "UP", "DOWN", "LEFT", "RIGHT", "INFO", "LCD_BACKLIGHT", "SCANLINE_MODE", \
@@ -56,9 +61,17 @@ extern volatile osd_regs *osd;
 
 extern menu_t menu_scanlines, menu_advtiming, menu_postproc;
 
+extern altera_avalon_jtag_uart_state jtag_uart_0;
+extern int altera_avalon_jtag_uart_read(altera_avalon_jtag_uart_state* sp, char* buffer, int space, int flags);
+extern int altera_avalon_jtag_uart_write(altera_avalon_jtag_uart_state* sp, const char * ptr, int count, int flags);
+
+char uart_rx_buf[UART_RX_BUF_SIZE+1];
+char *uart_rx_buf_ptr = uart_rx_buf;
+
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
+int uart_rx_ret;
 
 void setup_rc()
 {
@@ -121,12 +134,43 @@ void set_default_keymap() {
     memcpy(rc_keymap, rc_keymap_default, sizeof(rc_keymap));
 }
 
+void read_controls() {
+    uint32_t input_vec;
+
+    // Read remote control and PCB button status
+    input_vec = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
+    remote_code = input_vec & RC_MASK;
+    btn_code = ~input_vec & PB_MASK;
+    remote_rpt = input_vec >> 24;
+
+    if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
+        remote_code = 0;
+
+    remote_rpt_prev = remote_rpt;
+
+    if (btn_code_prev == 0) {
+        btn_code_prev = btn_code;
+    } else {
+        btn_code_prev = btn_code;
+        btn_code = 0;
+    }
+
+    uart_rx_ret = altera_avalon_jtag_uart_read(&jtag_uart_0, uart_rx_buf_ptr, UART_RX_BUF_SIZE-(uart_rx_buf_ptr-uart_rx_buf), O_NONBLOCK);
+    if (uart_rx_ret > 0) {
+        // echo
+        altera_avalon_jtag_uart_write(&jtag_uart_0, uart_rx_buf_ptr, uart_rx_ret, 0);
+        uart_rx_buf_ptr += uart_rx_ret;
+    }
+}
+
 int parse_control()
 {
-    int i, prof_x10=0, ret=0, retval;
+    int i, prof_x10=0, ret;
     alt_u32 btn_vec, btn_vec_prev=1;
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
+    char *pos;
+    unsigned uart_rx_arg;
 
     // one for each video_group
     alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &pt_only, &tc.pm_1080i, &pt_only };
@@ -339,8 +383,8 @@ Prof_Hotkey_Prompt:
 
                     if ((i == RC_BTN0) || (i < (RC_BTN1 + (prof_x10 == (MAX_PROFILE/10)) ? (MAX_PROFILE%10) : 9))) {
                         profile_sel_menu = prof_x10*10 + ((i+1)%10);
-                        retval = load_profile();
-                        sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (retval==0) ? "Done" : "Failed");
+                        ret = load_profile();
+                        sniprintf(menu_row2, LCD_ROW_LEN+1, "%s", (ret==0) ? "Done" : "Failed");
                         ui_disp_menu(1);
                         usleep(500000);
                         break;
@@ -376,9 +420,44 @@ Button_Check:
     if (btn_code & PB1_BIT)
         tc.sl_mode = tc.sl_mode < SL_MODE_MAX ? tc.sl_mode + 1 : 0;
 
+    // Parse UART RX buffer
+    if (uart_rx_ret > 0) {
+        pos = strpbrk(uart_rx_buf, "\r\n");
+
+        if (pos != NULL) {
+            *pos = 0;
+            if (sscanf(uart_rx_buf, "input %u", &uart_rx_arg) == 1) {
+                if ((uart_rx_arg > AV_TESTPAT) && (uart_rx_arg <= AV3_YPBPR)) {
+                    man_target_input = uart_rx_arg;
+                    dd_printf("Input %u selected\n", uart_rx_arg);
+                } else {
+                    dd_printf("Invalid input ID\n");
+                }
+            } else if (sscanf(uart_rx_buf, "prof %u", &uart_rx_arg) == 1) {
+                if (uart_rx_arg <= MAX_PROFILE) {
+                    ret = read_userdata(uart_rx_arg, 0);
+                    if (ret >= 0)
+                        dd_printf("Profile %u loaded\n", uart_rx_arg);
+                    else
+                        dd_printf("Profile load failed\n");
+                } else {
+                    dd_printf("Invalid profile ID\n");
+                }
+            } else {
+                dd_printf("Unrecognized command\n");
+            }
+            uart_rx_buf_ptr = uart_rx_buf;
+        } else if (uart_rx_buf_ptr >= uart_rx_buf+UART_RX_BUF_SIZE) {
+            dd_printf("\nUnrecognized sequence, RX buffer cleared\n");
+            uart_rx_buf_ptr = uart_rx_buf;
+        }
+    }
+
     if (man_target_input != AV_LAST) {
         target_input = man_target_input;
         ret = 1;
+    } else {
+        ret = 0;
     }
 
     sys_ctrl &= ~(3<<LCD_BL_TIMEOUT_OFFS);
