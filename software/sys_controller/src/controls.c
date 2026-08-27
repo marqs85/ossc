@@ -71,7 +71,7 @@ char *uart_rx_buf_ptr = uart_rx_buf;
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
-int uart_rx_ret;
+int uart_rx_ret, rc_disable;
 
 void setup_rc()
 {
@@ -143,7 +143,7 @@ void read_controls() {
     btn_code = ~input_vec & PB_MASK;
     remote_rpt = input_vec >> 24;
 
-    if ((remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
+    if (rc_disable || (remote_rpt == 0) || ((remote_rpt > 1) && (remote_rpt < 6)) || (remote_rpt == remote_rpt_prev))
         remote_code = 0;
 
     remote_rpt_prev = remote_rpt;
@@ -443,6 +443,8 @@ Button_Check:
                 } else {
                     dd_printf("Invalid profile ID\n");
                 }
+            } else if (sscanf(uart_rx_buf, "rc %u", &uart_rx_arg) == 1) {
+                rc_disable = !uart_rx_arg;
             } else {
                 dd_printf("Unrecognized command\n");
             }
