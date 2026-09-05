@@ -174,7 +174,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                 valid_lm[3] = MODE_L4_GEN_4_3;
                 break;
             case GROUP_480P:
-                 if (mode_preset->vic == HDMI_480p60) {
+                if (mode_preset->vic == HDMI_480p60) {
                     switch (cc->s480p_mode) {
                         case 0: // Auto
                             if (vm_in->timings.h_synclen > 82)
@@ -244,7 +244,6 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     vm_out->vic = HDMI_Unknown;
 
     memset(vm_conf, 0, sizeof(vm_proc_config_t));
-    vm_conf->si_pclk_mult = 1;
 
     mindiff_lm &= mode_preset->flags;    //ensure L2 mode uniqueness
 
@@ -310,9 +309,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                     vm_conf->x_rpt = 1;
                 }
             } else if (cc->hdmi_pr2x_disable && ((mode_preset->group == GROUP_480P) || (mode_preset->group == GROUP_576P))) {
-                vmode_hv_mult(vm_in, 2, 1);
-                vmode_hv_mult(vm_out, 2, VM_OUT_YMULT);
-                skip_hv_mult = 1;
+                vm_conf->x_rpt = 1;
             }
             break;
         case MODE_L3_GEN_4_3:
@@ -329,6 +326,7 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_out->timings.h_total_adj = 0;
             vmode_hv_mult(vm_out, 4, VM_OUT_YMULT);
             skip_hv_mult = 1;
+            vm_conf->si_pclk_mult = 4;
             break;
         case MODE_L4_GEN_4_3:
             // Upsample / pixel-repeat horizontal resolution of 480i mode
@@ -392,6 +390,8 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
             vm_conf->x_rpt = vm_conf->h_skip = 2;
             break;
         case MODE_L6_384_COL:
+            vm_conf->x_rpt = vm_conf->h_skip = cc->hdmi_pr2x_disable ? 4 : 2;
+            break;
         case MODE_L6_320_COL:
             vm_conf->x_rpt = vm_conf->h_skip = cc->hdmi_pr2x_disable ? 5 : 2;
             break;
@@ -424,10 +424,8 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     if (!skip_hv_mult)
         vmode_hv_mult(vm_out, VM_OUT_XMULT, VM_OUT_YMULT);
 
-    // Set clock multiplication factor
-    if (mindiff_lm == MODE_L3_GEN_4_3)
-        vm_conf->si_pclk_mult = 4;
-    else
+    // Set clock multiplication factor if not done earlier
+    if (!vm_conf->si_pclk_mult)
         vm_conf->si_pclk_mult = VM_OUT_PCLKMULT;
 
     // Reduce x_rpt for 1:1 PAR 256col mode
