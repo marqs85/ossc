@@ -70,6 +70,7 @@ tvp_input_t target_tvp;
 tvp_sync_input_t target_tvp_sync;
 alt_u8 target_type;
 alt_u8 update_cur_vm;
+static alt_u8 glitch_dev_ctr;   // "Sync glitch filt": consecutive deviating status reads while locked
 
 // Default settings
 const settings_t ts_default = {
@@ -369,8 +370,36 @@ status_t get_status(tvp_sync_input_t syncinput)
     pcnt_field = (unsigned long)sc->fe_status2.pcnt_field;
     hsync_width = (unsigned long)sc->fe_status2.hsync_width;
 
-    clkcnt = (totlines>>!progressive) ? pcnt_field/(totlines>>!progressive) : 0;
     valid_mode = (pcnt_field > 0) && check_linecnt(progressive, totlines);
+
+    // Optional glitch filter: while locked, act on a changed measurement (line count, field period, hsync width,
+    // activity flag or validity) only once it has deviated on 3 consecutive status reads (30 ms, up to ~105 ms if
+    // the vsync wait above times out on every read); until then keep the previous values. Single-shot glitches
+    // (e.g. 868 -> 814 -> 868 lines seen on a NeXT SoG source) otherwise trigger a mode re-program or a
+    // sync-loss/re-lock cycle. Counting reads rather than requiring identical candidate values guarantees that a
+    // real change or loss is always accepted on the third read.
+    if (!tc.sync_glitch_filt || !cm.sync_active) {
+        glitch_dev_ctr = 0;
+    } else {
+        alt_u8 deviates = !sync_active || !valid_mode ||
+                          (totlines != cm.totlines) || (progressive != cm.progressive) ||
+                          (pcnt_field < (cm.pcnt_field - PCNT_TOLERANCE)) || (pcnt_field > (cm.pcnt_field + PCNT_TOLERANCE)) ||
+                          (abs(((int)hsync_width - (int)cm.hsync_width)) > HSYNC_WIDTH_TOLERANCE);
+
+        if (!deviates) {
+            glitch_dev_ctr = 0;
+        } else if (glitch_dev_ctr < 2) {
+            glitch_dev_ctr++;
+            sync_active = 1;
+            valid_mode = 1;
+            totlines = cm.totlines;
+            progressive = cm.progressive;
+            pcnt_field = cm.pcnt_field;
+            hsync_width = cm.hsync_width;
+        }
+    }
+
+    clkcnt = (totlines>>!progressive) ? pcnt_field/(totlines>>!progressive) : 0;
 
     // Check sync activity
     if (!cm.sync_active && sync_active && valid_mode) {
