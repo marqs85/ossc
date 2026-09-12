@@ -369,7 +369,7 @@ status_t get_status(tvp_sync_input_t syncinput)
     pcnt_field = (unsigned long)sc->fe_status2.pcnt_field;
     hsync_width = (unsigned long)sc->fe_status2.hsync_width;
 
-    clkcnt = pcnt_field/(totlines>>!progressive);
+    clkcnt = (totlines>>!progressive) ? pcnt_field/(totlines>>!progressive) : 0;
     valid_mode = (pcnt_field > 0) && check_linecnt(progressive, totlines);
 
     // Check sync activity
