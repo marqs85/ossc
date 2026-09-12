@@ -159,6 +159,7 @@ typedef struct {
     alt_u8 full_tx_setup;
     alt_u8 av3_alt_rgb;
     avinput_t link_av;
+    alt_u8 pc_sog_coast;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_profile(int update_cc);

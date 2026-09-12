@@ -90,6 +90,8 @@ inline void tvp_powerup();
 
 inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post);
 
+void tvp_set_coast_enable(alt_u8 enable);
+
 inline void tvp_set_linelen_tol(alt_u8 val);
 
 inline void tvp_set_ssthold(alt_u8 vsdetect_thold);

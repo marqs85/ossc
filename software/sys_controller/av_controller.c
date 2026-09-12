@@ -392,7 +392,7 @@ status_t get_status(tvp_sync_input_t syncinput)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
         }
 
-        if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1))
+        if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1) || (tc.pc_sog_coast != cm.cc.pc_sog_coast))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         cm.totlines = totlines;
@@ -714,6 +714,12 @@ void program_mode()
                      (alt_u8)h_synclen_px,
                      (alt_8)(cm.cc.clamp_offset-SIGNED_NUMVAL_ZERO),
                      vmode_changed);
+
+    // tvp_source_setup() disables the internal coast signal for PC-type presets, which is correct for RGBHV but
+    // leaves the H-PLL exposed to vsync serration pulses on sync-on-green / composite-sync inputs. Keep coast
+    // enabled for those when the option is set (needed e.g. for 13W3 workstation displays).
+    if ((target_type & VIDEO_PC) && cm.cc.pc_sog_coast && ((target_tvp_sync <= TVP_SOG3) || (target_tvp_sync >= TVP_CS_A)))
+        tvp_set_coast_enable(1);
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
 
