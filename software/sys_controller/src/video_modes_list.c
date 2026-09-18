@@ -82,4 +82,17 @@ const mode_data_t video_modes_plm_default[] = {
     { "1080p_60",      HDMI_1080p60,     {1920, 1080,   6000,  2200, 0, 1125,  148, 36,   44, 5,  0},  DEF_PHASE,  {{ 0,  0}},  (VIDEO_HDTV | VIDEO_PC),  GROUP_1080P,  MODE_PT,                                                                                    },
     /* VESA UXGA mode */
     { "1600x1200",     HDMI_Unknown,     {1600, 1200,   6000,  2160, 0, 1250,  304, 46,  192, 3,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_NONE,   MODE_PT,                                                                                    },
+    /* Fixed-refresh workstation modes (GROUP_FIXED_VHZ): matched only within FIXED_VHZ_TOL_X100 of their refresh. */
+    /* NeXTstation Color (ADB configuration) 1120x832@72: 62.50kHz, 868 lines, 90MHz; measured and tuned on hardware */
+    { "1120x832",      HDMI_Unknown,     {1120,  832,   7200,  1440, 0,  868,  185, 30,  110, 3,  0},  4,          {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
+    /* Sun framebuffer modes, timings from the cg6 (GX/TGX) and cg14 (SX) PROMs. 1152x900@66 is the same on cg6, cg14
+       and ZX and was verified on a SPARCstation 20 with ZX (Leo) and TurboGX boards; the other Sun entries are not
+       yet verified on hardware. 76 Hz differs by board: cg6 1504x937 @ 76.64 Hz, cg14 1504x943 @ 76.15 Hz ("HS"). */
+    { "1152x900",      HDMI_Unknown,     {1152,  900,   6600,  1528, 0,  937,  208, 31,  128, 4,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
+    { "1152x900H",     HDMI_Unknown,     {1152,  900,   7664,  1504, 0,  937,  192, 31,  128, 4,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
+    { "1152x900HS",    HDMI_Unknown,     {1152,  900,   7615,  1504, 0,  943,  260, 33,   64, 8,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
+    /* Sun 1280x1024: @67 = 118.125MHz 1648x1075 (66.68 Hz), @76 = 135MHz 1664x1066 (76.11 Hz; same line count as VESA,
+       told apart by refresh only) */
+    { "1280x1024L",    HDMI_Unknown,     {1280, 1024,   6668,  1648, 0, 1075,  216, 41,  128, 8,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
+    { "1280x1024H",    HDMI_Unknown,     {1280, 1024,   7611,  1664, 0, 1066,  288, 32,   64, 8,  0},  DEF_PHASE,  {{ 0,  0}},  VIDEO_PC,                 GROUP_FIXED_VHZ, MODE_PT,                                                                                    },
 };

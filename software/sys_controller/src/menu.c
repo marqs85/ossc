@@ -248,6 +248,8 @@ MENU(menu_compatibility, P99_PROTECT({ \
     { "Default HDMI VIC",                       OPT_AVCONFIG_NUMVALUE,  { .num = { &tc.default_vic,     OPT_NOWRAP, 0, HDMI_1080p50, value_disp } } },
     { "Panasonic hack",                        OPT_AVCONFIG_SELECTION, { .sel = { &tc.panasonic_hack,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { "Disable PR2x",                          OPT_AVCONFIG_SELECTION, { .sel = { &tc.hdmi_pr2x_disable, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "PC SoG/CS coast",                       OPT_AVCONFIG_SELECTION, { .sel = { &tc.pc_sog_coast,     OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
+    { "Sync glitch filt",                      OPT_AVCONFIG_SELECTION, { .sel = { &tc.sync_glitch_filt, OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
 }))
 
 MENU(menu_audio, P99_PROTECT({ \

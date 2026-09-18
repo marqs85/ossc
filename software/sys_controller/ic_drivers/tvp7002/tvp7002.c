@@ -180,6 +180,13 @@ inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
     tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
+// Enable/disable the internal H-PLL coast signal (MISCCTRL4 bit 2, "Coast Dis")
+void tvp_set_coast_enable(alt_u8 enable)
+{
+    alt_u8 val = tvp_readreg(TVP_MISCCTRL4) & 0xFB;
+    tvp_writereg(TVP_MISCCTRL4, val | (enable ? 0x00 : 0x04));
+}
+
 inline void tvp_set_linelen_tol(alt_u8 val) {
     tvp_writereg(TVP_LINELENTOL, val);
 }

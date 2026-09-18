@@ -70,7 +70,10 @@ typedef enum {
     GROUP_720P      = 8,
     GROUP_1080I     = 9,
     GROUP_1080P     = 10,
+    GROUP_FIXED_VHZ = 11,   // fixed-refresh workstation modes: only matched when the input refresh is within FIXED_VHZ_TOL_X100
 } video_group;
+
+#define FIXED_VHZ_TOL_X100  30      // +-0.30 Hz (measured refresh is exact to ~0.01 Hz)
 
 typedef enum {
     MODE_INTERLACED     = (1<<0), //deprecated

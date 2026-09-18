@@ -133,7 +133,7 @@ uint32_t calculate_pclk(uint32_t src_clk_hz, mode_data_t *vm_out, vm_proc_config
 
 int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm_proc_config_t *vm_conf)
 {
-    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000, x_rpt_decr=0, skip_hv_mult=0;
+    int i, diff_lines, diff_v_hz_x100, mindiff_id=0, mindiff_lines=1000, mindiff_v_hz_x100=10000, x_rpt_decr=0, skip_hv_mult=0, settled=0;
     mode_data_t *mode_preset;
     mode_flags valid_lm[] = { (MODE_PT | (cc->pt_mode ? (MODE_L5_GEN_4_3<<(cc->pt_mode-1)) : 0)),
                               (MODE_L2 | (MODE_L2<<cc->l2_mode)),
@@ -146,10 +146,22 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
     uint8_t upsample2x = cc->upsample2x;
 
     // one for each video_group
-    uint8_t* group_ptr[] = { &pt_only, &cc->pm_240p, &cc->pm_240p, &cc->pm_384p, &cc->pm_480i, &cc->pm_480i, &cc->pm_480p, &cc->pm_480p, &pt_only, &cc->pm_1080i, &pt_only };
+    uint8_t* group_ptr[] = { &pt_only, &cc->pm_240p, &cc->pm_240p, &cc->pm_384p, &cc->pm_480i, &cc->pm_480i, &cc->pm_480p, &cc->pm_480p, &pt_only, &cc->pm_1080i, &pt_only, &pt_only };
 
     for (i=0; i<num_video_modes_plm; i++) {
         mode_preset = &video_modes_plm[i];
+
+        // Workstation presets share line counts with each other and with VESA modes but each has one fixed refresh
+        // rate; consider them only when the refresh matches, so other sources are matched exactly as before and a
+        // small line-count wobble cannot flip between them.
+        if ((mode_preset->group == GROUP_FIXED_VHZ) &&
+            (abs((int)vm_in->timings.v_hz_x100 - (int)mode_preset->timings.v_hz_x100) > FIXED_VHZ_TOL_X100))
+            continue;
+
+        // After the early exit below, only the fixed-refresh presets (appended at the end of the table) may still
+        // compete, so a preset sharing its line count with a VESA mode can win the equal-line refresh tie-break.
+        if (settled && (mode_preset->group != GROUP_FIXED_VHZ))
+            continue;
 
         switch (mode_preset->group) {
             case GROUP_384P:
@@ -213,8 +225,8 @@ int get_pure_lm_mode(avconfig_t *cc, mode_data_t *vm_in, mode_data_t *vm_out, vm
                 mindiff_v_hz_x100 = diff_v_hz_x100;
                 mindiff_lm = target_lm;
             } else if ((mindiff_lines <= 2) && (diff_lines > mindiff_lines)) {
-                // Break out if suitable mode already found
-                break;
+                // Stop considering regular presets once a suitable mode has been found
+                settled = 1;
             }
         }
     }
