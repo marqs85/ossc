@@ -173,8 +173,8 @@ int parse_control()
     unsigned uart_rx_arg;
 
     // one for each video_group
-    alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &pt_only, &tc.pm_1080i, &pt_only };
-    alt_u8 valid_pm[] = { 0x1, 0x3f, 0x3f, 0x7, 0xf, 0xf, 0x7, 0x7, 0x1, 0x3, 0x1 };
+    alt_u8* pmcfg_ptr[] = { &pt_only, &tc.pm_240p, &tc.pm_240p, &tc.pm_384p, &tc.pm_480i, &tc.pm_480i, &tc.pm_480p, &tc.pm_480p, &pt_only, &tc.pm_1080i, &pt_only, &pt_only };
+    alt_u8 valid_pm[] = { 0x1, 0x3f, 0x3f, 0x7, 0xf, 0xf, 0x7, 0x7, 0x1, 0x3, 0x1, 0x1 };
 
     avinput_t next_input = (cm.avinput == AV3_YPBPR) ? AV1_RGBs : (cm.avinput+1);
 
@@ -315,7 +315,7 @@ int parse_control()
                         break;
                 }
 
-                if (video_modes_plm[cm.id].group > GROUP_1080P) {
+                if (video_modes_plm[cm.id].group > GROUP_FIXED_VHZ) {
                     printf("WARNING: Corrupted mode (id %d)\n", cm.id);
                     break;
                 }
