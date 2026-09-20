@@ -142,8 +142,8 @@ const ude_item_map ude_profile_items[] = {
     // 65 reserved
     UDE_ITEM(66, 120, tc.panasonic_hack),
     UDE_ITEM(67, 120, tc.o480p_pbox),
-    UDE_ITEM(61, 122, tc.hdmi_ar),
-    UDE_ITEM(61, 122, tc.hdmi_pr2x_disable),
+    UDE_ITEM(68, 122, tc.hdmi_ar),
+    UDE_ITEM(69, 122, tc.hdmi_pr2x_disable),
 };
 
 int write_userdata(uint8_t entry) {
