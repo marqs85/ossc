@@ -180,13 +180,6 @@ inline void tvp_set_hpllcoast(alt_u8 pre, alt_u8 post)
     tvp_writereg(TVP_HPLLPOSTCOAST, post);
 }
 
-// Enable/disable the internal H-PLL coast signal (MISCCTRL4 bit 2, "Coast Dis")
-void tvp_set_coast_enable(alt_u8 enable)
-{
-    alt_u8 val = tvp_readreg(TVP_MISCCTRL4) & 0xFB;
-    tvp_writereg(TVP_MISCCTRL4, val | (enable ? 0x00 : 0x04));
-}
-
 inline void tvp_set_linelen_tol(alt_u8 val) {
     tvp_writereg(TVP_LINELENTOL, val);
 }
@@ -402,22 +395,6 @@ void tvp_source_setup(video_type type, alt_u16 h_samplerate, alt_u16 pixs_per_li
     // Clamp and ALC
     tvp_set_clamp_alc(type, clamp_ref_offset, clamp_user_offset, 1);
 
-    // Setup Macrovision stripper and H-PLL coast signal.
-    // Coast needs to be enabled when HSYNC is missing during VSYNC. RGBHV mode cannot use it, so turn off the internal signal for this mode.
-    // Macrovision stripper filters out glitches and serration pulses that may occur outside of sync window (HSYNC_lead +- TVP_MVSWIDTH*37ns). Enabled for all inputs.
-    switch (type) {
-    case VIDEO_PC:
-        tvp_writereg(TVP_MISCCTRL4, 0x0D);
-        break;
-    //case VIDEO_LDTV:
-    case VIDEO_SDTV:
-    case VIDEO_EDTV:
-    case VIDEO_HDTV:
-    default:
-        tvp_writereg(TVP_MISCCTRL4, 0x09);
-        break;
-    }
-
     tvp_setup_hpll(h_samplerate, pixs_per_line, refclks_per_line, plldivby2);
 }
 
@@ -464,6 +441,14 @@ void tvp_source_sel(tvp_input_t input, tvp_sync_input_t syncinput, video_format 
         tvp_writereg(TVP_SYNCBYPASS, full_vs_bypass ? 0x02 : 0x00);
     else
         tvp_writereg(TVP_SYNCBYPASS, 0x00);
+
+    // Setup Macrovision stripper and H-PLL coast signal.
+    // Coast needs to be enabled when HSYNC is missing during VSYNC. RGBHV mode cannot use it, so turn off the internal signal for this mode.
+    // Macrovision stripper filters out glitches and serration pulses that may occur outside of sync window (HSYNC_lead +- TVP_MVSWIDTH*37ns). Enabled for all inputs.
+    if (fmt == FORMAT_RGBHV)
+        tvp_writereg(TVP_MISCCTRL4, 0x0D);
+    else
+        tvp_writereg(TVP_MISCCTRL4, 0x09);
 
     //TODO:
     //TVP_ADCSETUP

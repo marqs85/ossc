@@ -68,7 +68,8 @@ extern char target_profile_name[USERDATA_NAME_LEN+1];
 
 tvp_input_t target_tvp;
 tvp_sync_input_t target_tvp_sync;
-alt_u8 target_type;
+video_format target_format;
+video_type target_type;
 alt_u8 update_cur_vm;
 static alt_u8 glitch_dev_ctr;   // "Sync glitch filt": consecutive deviating status reads while locked
 
@@ -421,7 +422,7 @@ status_t get_status(tvp_sync_input_t syncinput)
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
         }
 
-        if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1) || (tc.pc_sog_coast != cm.cc.pc_sog_coast))
+        if (memcmp(&tc, &cm.cc, offsetof(avconfig_t, sl_mode)) || (update_cur_vm == 1))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         cm.totlines = totlines;
@@ -744,11 +745,6 @@ void program_mode()
                      (alt_8)(cm.cc.clamp_offset-SIGNED_NUMVAL_ZERO),
                      vmode_changed);
 
-    // tvp_source_setup() disables the internal coast signal for PC-type presets, which is correct for RGBHV but
-    // leaves the H-PLL exposed to vsync serration pulses on sync-on-green / composite-sync inputs. Keep coast
-    // enabled for those when the option is set (needed e.g. for 13W3 workstation displays).
-    if ((target_type & VIDEO_PC) && cm.cc.pc_sog_coast && ((target_tvp_sync <= TVP_SOG3) || (target_tvp_sync >= TVP_CS_A)))
-        tvp_set_coast_enable(1);
     set_lpf(cm.cc.video_lpf);
     set_csc(cm.cc.ypbpr_cs);
 
@@ -1070,7 +1066,6 @@ int main(int argc, char **argv, char **envp)
 {
     ths_input_t target_ths = 0;
     pcm_input_t target_pcm = 0;
-    video_format target_format = 0;
 
     status_t status;
 

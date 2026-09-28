@@ -143,6 +143,7 @@ typedef struct {
     alt_u8 alc_v_filter;
     color_setup_t col;
     alt_u8 full_vs_bypass;
+    alt_u8 sync_glitch_filt;
 
     /* Audio settings */
     alt_u8 audio_dw_sampl;
@@ -159,8 +160,6 @@ typedef struct {
     alt_u8 full_tx_setup;
     alt_u8 av3_alt_rgb;
     avinput_t link_av;
-    alt_u8 pc_sog_coast;
-    alt_u8 sync_glitch_filt;
 } __attribute__((packed)) avconfig_t;
 
 int set_default_profile(int update_cc);
